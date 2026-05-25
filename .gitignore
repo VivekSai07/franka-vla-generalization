@@ -1,0 +1,30 @@
+# Credentials — never commit
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Training outputs
+outputs/
+
+# Cache directories written by containers (HOME=/vla, so these land here)
+.hf_cache/
+.torch_cache/
+.nv/
+.cache/
+
+# Large dataset files (push to HF Hub instead)
+datasets/*/data/
+datasets/*/videos/
+
+# Inference videos (keep directory structure, ignore video files)
+inference/inference_videos/*/*.mp4
+inference/inference_videos/*/*.avi
+
+# Editor
+.vscode/
+*.swp

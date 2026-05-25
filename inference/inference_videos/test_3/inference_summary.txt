@@ -1,0 +1,16 @@
+🟢 Inference Starting! The SmolVLA model is now controlling the Franka arm.
+
+--- Starting Evaluation Episode 1/5 ---
+❌ AI failed to complete task within timeout.
+
+--- Starting Evaluation Episode 2/5 ---
+❌ AI failed to complete task within timeout.
+
+--- Starting Evaluation Episode 3/5 ---
+❌ AI failed to complete task within timeout.
+
+--- Starting Evaluation Episode 4/5 ---
+❌ AI failed to complete task within timeout.
+
+--- Starting Evaluation Episode 5/5 ---
+❌ AI failed to complete task within timeout.

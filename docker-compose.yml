@@ -1,0 +1,110 @@
+services:
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # push — upload a local dataset to the HuggingFace Hub
+  # Usage: docker compose run --rm push
+  # ─────────────────────────────────────────────────────────────────────────────
+  push:
+    build: .
+    image: smolvla:latest
+    user: "1001:1001"
+    volumes:
+      - .:/vla
+    environment:
+      - HF_HOME=/vla/.hf_cache
+      - TORCHINDUCTOR_CACHE_DIR=/vla/.torch_cache/inductor
+      - HOME=/vla
+    env_file: .env
+    working_dir: /vla
+    command: python huggingface/push_dataset_to_hub.py
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # train — fine-tune SmolVLA on the franka_libero_stacking dataset
+  # Usage: docker compose run --rm train
+  # ─────────────────────────────────────────────────────────────────────────────
+  train:
+    build: .
+    image: smolvla:latest
+    user: "1001:1001"
+    runtime: nvidia
+    shm_size: '8gb'
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - HF_HOME=/vla/.hf_cache
+      - TORCHINDUCTOR_CACHE_DIR=/vla/.torch_cache/inductor
+      - HOME=/vla
+    volumes:
+      - .:/vla
+    env_file: .env
+    working_dir: /vla
+    command: >
+      lerobot-train
+        --policy.type=smolvla
+        --policy.pretrained_path=HuggingFaceVLA/smolvla_libero
+        --dataset.repo_id=${HF_USERNAME}/franka_libero_stacking_v1
+        --policy.repo_id=${HF_USERNAME}/smolvla_franka_libero_stacking_finetuned
+        --batch_size=24
+        --steps=20000
+        --output_dir=outputs/train/smolvla_libero_stacking_finetuned
+        --job_name=franka_libero_stacking_run
+        --policy.device=cuda
+        --policy.use_amp=true
+        --policy.expert_width_multiplier=0.5
+        --wandb.enable=true
+        --wandb.project=smolvla_franka_project
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # server — SmolVLA inference brain (FastAPI on port 8000)
+  # Start this first:  docker compose up server
+  # Wait for: "✅ Policy & Processors loaded! Starting inference server..."
+  # ─────────────────────────────────────────────────────────────────────────────
+  server:
+    build: .
+    image: smolvla:latest
+    user: "1001:1001"
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - HF_HOME=/vla/.hf_cache
+      - TORCHINDUCTOR_CACHE_DIR=/vla/.torch_cache/inductor
+      - HOME=/vla
+    volumes:
+      - .:/vla
+    env_file: .env
+    working_dir: /vla
+    ports:
+      - "8000:8000"
+    command: python inference/policy_server_libero.py --policy_path ${HF_USERNAME}/smolvla_franka_libero_stacking_finetuned
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # client — MuJoCo simulation body; queries the server for actions
+  # Start after server is ready:  docker compose run --rm client
+  # Requires X11 display for the MuJoCo viewer window.
+  # On the host run:  xhost +local:docker
+  # ─────────────────────────────────────────────────────────────────────────────
+  client:
+    build: .
+    image: smolvla:latest
+    user: "1001:1001"
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics,display
+      - DISPLAY=${DISPLAY}
+      - MUJOCO_GL=glx
+      - HF_HOME=/vla/.hf_cache
+      - TORCHINDUCTOR_CACHE_DIR=/vla/.torch_cache/inductor
+      - HOME=/vla
+      # The server runs as a separate container; use its service name, not localhost
+      - SERVER_URL=http://server:8000/predict
+    volumes:
+      - .:/vla
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    env_file: .env
+    working_dir: /vla
+    depends_on:
+      - server
+    network_mode: host
+    command: python -m inference.franka_inference_libero --episodes 10
