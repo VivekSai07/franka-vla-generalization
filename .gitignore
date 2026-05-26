@@ -16,6 +16,8 @@ outputs/
 .torch_cache/
 .nv/
 .cache/
+.local/
+.bash_history
 
 # Datasets — push to HF Hub instead, never commit locally
 datasets/
