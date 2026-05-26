@@ -1,6 +1,28 @@
 services:
 
   # ─────────────────────────────────────────────────────────────────────────────
+  # collect — run dataset collection with MuJoCo simulation
+  # Usage: docker compose run --rm collect
+  # To enter interactively: docker compose run --rm collect bash
+  # ─────────────────────────────────────────────────────────────────────────────
+  collect:
+    build: .
+    image: smolvla:latest
+    user: "1001:1001"
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics,display
+      - MUJOCO_GL=osmesa
+      - HOME=/vla
+      - TORCHINDUCTOR_CACHE_DIR=/vla/.torch_cache/inductor
+    volumes:
+      - .:/vla
+    env_file: .env
+    working_dir: /vla
+    command: python data_collection/collect_libero_dataset.py --episodes 300 --headless
+
+  # ─────────────────────────────────────────────────────────────────────────────
   # push — upload a local dataset to the HuggingFace Hub
   # Usage: docker compose run --rm push
   # ─────────────────────────────────────────────────────────────────────────────

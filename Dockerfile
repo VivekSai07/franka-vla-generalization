@@ -27,6 +27,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libglfw3 \
     libglfw3-dev \
     libglew-dev \
+    libosmesa6 \
     libosmesa6-dev \
     # Video encoding (OpenCV + lerobot video ops)
     ffmpeg \
@@ -70,11 +71,18 @@ RUN pip install --no-cache-dir \
     uvicorn[standard] \
     requests \
     opencv-python-headless \
-    Pillow
+    Pillow \
+    matplotlib \
+    PyOpenGL \
+    PyOpenGL_accelerate
 
 # HuggingFace + experiment tracking
 RUN pip install --no-cache-dir \
     huggingface_hub \
     wandb
+
+# Create a user matching the host UID/GID so bind-mounted files are owned
+# correctly and the shell prompt shows a real name instead of "I have no name!".
+RUN groupadd -g 1001 vivek && useradd -u 1001 -g 1001 -m -s /bin/bash vivek
 
 WORKDIR /vla

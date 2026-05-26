@@ -3,9 +3,7 @@ import sys
 import time
 import random
 import argparse
-
-# Fix Windows OpenMP multi-runtime conflict
-os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+import collections
 
 import numpy as np
 import pinocchio as pin
@@ -13,14 +11,12 @@ import mujoco
 import mujoco.viewer
 from pathlib import Path
 
-# Try importing lerobot (must be installed in the env)
 try:
     from lerobot.datasets.lerobot_dataset import LeRobotDataset
 except ImportError:
-    print("ERROR: lerobot not installed! Please run 'pip install lerobot' in your environment.")
+    print("ERROR: lerobot not installed.")
     sys.exit(1)
 
-# Ensure the root of Smolvla is in path so we can import src
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(CURRENT_DIR, ".."))
 if PROJECT_ROOT not in sys.path:
@@ -37,111 +33,167 @@ from src.robots.franka_panda.config import (
     ACTIVE_JOINTS
 )
 
-INSTRUCTION = "pick up the red cube and place it perfectly on top of the blue cube"
+# ---------------------------------------------------------------------------
+# All 12 valid pick-place colour combinations.
+# v1 used only "red → blue" for every episode, which prevented the VLM from
+# grounding colour tokens to specific objects. v2 samples uniformly so every
+# colour appears as both a pick target and a place target. See DATASET_DESIGN.md.
+# ---------------------------------------------------------------------------
+CUBE_COLORS = ["red", "green", "blue", "yellow"]
+ALL_INSTRUCTIONS = [
+    (pick, place, f"pick up the {pick} cube and place it on top of the {place} cube")
+    for pick in CUBE_COLORS
+    for place in CUBE_COLORS
+    if pick != place
+]
 
-def randomize_cubes(model, data):
-    """Randomly spawn the 4 cubes on the table without overlapping."""
-    cubes = ["target_cube_red", "target_cube_green", "target_cube_blue", "target_cube_yellow"]
+# Minimum XY clearance between spawned cubes (v1 used 0.12 m — too close).
+MIN_CUBE_CLEARANCE = 0.15
+
+# Success threshold: top-cube must be within 2 cm XY of bottom cube centre.
+# v1 used 3 cm, which allowed visibly misaligned stacks into the dataset.
+SUCCESS_XY_THRESHOLD = 0.02
+SUCCESS_Z_MIN = 0.035
+SUCCESS_Z_MAX = 0.045
+
+
+def sample_episode_task():
+    """Return (pick_color, place_color, instruction_string) sampled uniformly."""
+    return random.choice(ALL_INSTRUCTIONS)
+
+
+def get_cube_body_name(color: str) -> str:
+    return f"target_cube_{color}"
+
+
+def randomize_cubes(model, data, colors_present: list[str]):
+    """
+    Spawn only the cubes needed for this episode.
+    Remaining cubes are moved off-table so they are invisible.
+
+    v2 changes vs v1:
+    - Spawn range widened: x=[0.20, 0.60], y=[-0.40, 0.40]
+    - Min clearance raised from 0.12 m to MIN_CUBE_CLEARANCE (0.15 m)
+    - Only colors_present are placed on the table; others are parked off-scene.
+    """
+    all_colors = ["red", "green", "blue", "yellow"]
     spawned_positions = []
-    
-    for cube in cubes:
-        body_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, cube)
-        if body_id == -1: continue
+
+    for color in all_colors:
+        body_name = get_cube_body_name(color)
+        body_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, body_name)
+        if body_id == -1:
+            continue
         jnt_id = model.body_jntadr[body_id]
-        if jnt_id == -1: continue
+        if jnt_id == -1:
+            continue
         qpos_idx = model.jnt_qposadr[jnt_id]
-        
-        while True:
-            x = random.uniform(0.25, 0.55)
-            y = random.uniform(-0.35, 0.35)
-            conflict = False
-            for (sx, sy) in spawned_positions:
-                # Increased clearance from 6cm to 12cm to prevent gripper collision
-                if (x - sx)**2 + (y - sy)**2 < 0.12**2:
-                    conflict = True
-                    break
-            
-            if not conflict:
+
+        if color not in colors_present:
+            # Park off-table so the camera never sees it.
+            data.qpos[qpos_idx:qpos_idx + 3] = [2.0, 2.0, -1.0]
+            data.qpos[qpos_idx + 3:qpos_idx + 7] = [1, 0, 0, 0]
+            qvel_idx = model.jnt_dofadr[jnt_id]
+            data.qvel[qvel_idx:qvel_idx + 6] = 0.0
+            continue
+
+        # Place on table with no overlap.
+        for _ in range(1000):
+            x = random.uniform(0.20, 0.60)
+            y = random.uniform(-0.40, 0.40)
+            if all((x - sx) ** 2 + (y - sy) ** 2 >= MIN_CUBE_CLEARANCE ** 2
+                   for sx, sy in spawned_positions):
                 spawned_positions.append((x, y))
-                data.qpos[qpos_idx:qpos_idx+3] = [x, y, 0.05]
-                data.qpos[qpos_idx+3:qpos_idx+7] = [1, 0, 0, 0]
+                data.qpos[qpos_idx:qpos_idx + 3] = [x, y, 0.05]
+                data.qpos[qpos_idx + 3:qpos_idx + 7] = [1, 0, 0, 0]
                 qvel_idx = model.jnt_dofadr[jnt_id]
-                data.qvel[qvel_idx:qvel_idx+6] = 0.0
+                data.qvel[qvel_idx:qvel_idx + 6] = 0.0
                 break
 
-def generate_task_states(z_offset, robot_speed=1.0):
+
+def sample_distractor_colors(pick_color: str, place_color: str) -> list[str]:
+    """
+    Return a scene colour list with a random number of distractors (0–2).
+    v1 always included all 4 cubes; v2 varies this so the model cannot rely
+    on object count as a cue.
+    """
+    distractors_available = [c for c in CUBE_COLORS if c not in (pick_color, place_color)]
+    n_distractors = random.randint(0, len(distractors_available))
+    distractors = random.sample(distractors_available, n_distractors)
+    return [pick_color, place_color] + distractors
+
+
+def generate_task_states(z_offset: float, robot_speed: float = 1.0):
     STACK_OFFSET = 0.04
-    # Placement offset: changed from 0.002 to 0.01 as requested
     return [
-        {"name": "Approach Pick", "target": "red", "offset": np.array([0, 0, z_offset + 0.15]), "gripper": 255, "duration": 2.0 / robot_speed},
-        {"name": "Descend to Pick", "target": "red", "offset": np.array([0, 0, z_offset]), "gripper": 255, "duration": 1.5 / robot_speed},
-        {"name": "Grasping", "target": "red", "offset": np.array([0, 0, z_offset]), "gripper": 0, "duration": 1.0 / robot_speed},
-        {"name": "Verify Lift", "target": "red", "offset": np.array([0, 0, z_offset + 0.2]), "gripper": 0, "duration": 2.0 / robot_speed},
-        {"name": "Move to Place", "target": "blue", "offset": np.array([0, 0, z_offset + 0.2]), "gripper": 0, "duration": 3.0 / robot_speed},
-        {"name": "Lower to Place", "target": "blue", "offset": np.array([0, 0, z_offset + STACK_OFFSET + 0.01]), "gripper": 0, "duration": 2.0 / robot_speed},
-        {"name": "Release", "target": "blue", "offset": np.array([0, 0, z_offset + STACK_OFFSET + 0.01]), "gripper": 255, "duration": 1.0 / robot_speed},
-        {"name": "Retract", "target": "blue", "offset": np.array([0, 0, z_offset + 0.2]), "gripper": 255, "duration": 2.0 / robot_speed},
-        {"name": "Return to Home", "target": "home", "offset": np.zeros(3), "gripper": 255, "duration": 3.0 / robot_speed},
+        {"name": "Approach Pick",  "phase": "pick",  "offset": np.array([0, 0, z_offset + 0.15]), "gripper": 255, "duration": 2.0 / robot_speed, "jitter": True},
+        {"name": "Descend to Pick","phase": "pick",  "offset": np.array([0, 0, z_offset]),         "gripper": 255, "duration": 1.5 / robot_speed, "jitter": True},
+        {"name": "Grasping",       "phase": "pick",  "offset": np.array([0, 0, z_offset]),         "gripper": 0,   "duration": 1.0 / robot_speed, "jitter": False},
+        {"name": "Verify Lift",    "phase": "pick",  "offset": np.array([0, 0, z_offset + 0.2]),   "gripper": 0,   "duration": 2.0 / robot_speed, "jitter": False},
+        {"name": "Move to Place",  "phase": "place", "offset": np.array([0, 0, z_offset + 0.2]),   "gripper": 0,   "duration": 3.0 / robot_speed, "jitter": True},
+        {"name": "Lower to Place", "phase": "place", "offset": np.array([0, 0, z_offset + STACK_OFFSET + 0.01]), "gripper": 0, "duration": 2.0 / robot_speed, "jitter": True},
+        {"name": "Release",        "phase": "place", "offset": np.array([0, 0, z_offset + STACK_OFFSET + 0.01]), "gripper": 255, "duration": 1.0 / robot_speed, "jitter": False},
+        {"name": "Retract",        "phase": "place", "offset": np.array([0, 0, z_offset + 0.2]),   "gripper": 255, "duration": 2.0 / robot_speed, "jitter": False},
+        {"name": "Return to Home", "phase": "home",  "offset": np.zeros(3),                         "gripper": 255, "duration": 3.0 / robot_speed, "jitter": False},
     ]
 
+
 def main():
-    parser = argparse.ArgumentParser(description="Franka LeRobot Data Collection")
-    parser.add_argument("--episodes", type=int, default=50, help="Number of episodes to collect")
-    parser.add_argument("--fps", type=int, default=30, help="Frames per second for data collection")
-    parser.add_argument("--robot_speed", type=float, default=1.0, help="Physical speed of the robot")
-    parser.add_argument("--playback_speed", type=float, default=1.0, help="Simulation playback speed (1.0 = real-time, 5.0 = 5x faster, 0 = as fast as possible)")
-    parser.add_argument("--headless", action="store_true", help="Run completely off-screen without a passive viewer")
+    parser = argparse.ArgumentParser(description="Franka LeRobot Data Collection v2")
+    parser.add_argument("--episodes",       type=int,   default=300,  help="Total episodes to collect")
+    parser.add_argument("--fps",            type=int,   default=30,   help="Frames per second")
+    parser.add_argument("--robot_speed",    type=float, default=1.0,  help="Physical robot speed multiplier")
+    parser.add_argument("--playback_speed", type=float, default=1.0,  help="Sim playback speed (0 = max)")
+    parser.add_argument("--headless",       action="store_true",      help="No viewer window")
     args = parser.parse_args()
-    
+
     FPS = args.fps
     dt_control = 1.0 / FPS
-    
-    # --- DATASET VERSIONING SYSTEM ---
+
+    # --- Dataset versioning ---
     BASE_DATASETS_DIR = os.path.join(PROJECT_ROOT, "datasets")
     os.makedirs(BASE_DATASETS_DIR, exist_ok=True)
-    
-    # Determine the next version number folder
     version = 1
     while os.path.exists(os.path.join(BASE_DATASETS_DIR, f"franka_libero_stacking_v{version}")):
         version += 1
-        
     DATASET_REPO_ID = f"franka_libero_stacking_v{version}"
     DATASET_DIR = os.path.join(BASE_DATASETS_DIR, DATASET_REPO_ID)
-    
-    print(f"📁 Initializing NEW LeRobot Dataset at {DATASET_DIR}...")
-    
-    # FORMAT UPDATED FOR smolvla_libero (Requires exactly "image" and "image2")
+
+    print(f"Initializing dataset: {DATASET_DIR}")
+    print(f"Target: {args.episodes} episodes across {len(ALL_INSTRUCTIONS)} instruction variants")
+
     dataset = LeRobotDataset.create(
         repo_id=DATASET_REPO_ID,
-        root=DATASET_DIR,  
+        root=DATASET_DIR,
         fps=FPS,
         features={
             "action": {
-                "dtype": "float32", "shape": (8,), 
-                "names": ["panda_joint1.pos", "panda_joint2.pos", "panda_joint3.pos", "panda_joint4.pos", "panda_joint5.pos", "panda_joint6.pos", "panda_joint7.pos", "gripper.pos"]
+                "dtype": "float32", "shape": (8,),
+                "names": ["panda_joint1.pos", "panda_joint2.pos", "panda_joint3.pos",
+                          "panda_joint4.pos", "panda_joint5.pos", "panda_joint6.pos",
+                          "panda_joint7.pos", "gripper.pos"]
             },
             "observation.state": {
-                "dtype": "float32", "shape": (9,), 
-                "names": ["panda_joint1.pos", "panda_joint2.pos", "panda_joint3.pos", "panda_joint4.pos", "panda_joint5.pos", "panda_joint6.pos", "panda_joint7.pos", "finger1.pos", "finger2.pos"]
+                "dtype": "float32", "shape": (9,),
+                "names": ["panda_joint1.pos", "panda_joint2.pos", "panda_joint3.pos",
+                          "panda_joint4.pos", "panda_joint5.pos", "panda_joint6.pos",
+                          "panda_joint7.pos", "finger1.pos", "finger2.pos"]
             },
-            "observation.images.image": {"dtype": "video", "shape": (480, 640, 3), "names": ["height", "width", "channels"]},
-            "observation.images.image2": {"dtype": "video", "shape": (480, 640, 3), "names": ["height", "width", "channels"]},
+            "observation.images.image":  {"dtype": "video", "shape": (512, 512, 3), "names": ["height", "width", "channels"]},
+            "observation.images.image2": {"dtype": "video", "shape": (512, 512, 3), "names": ["height", "width", "channels"]},
         }
     )
-    
-    # --- SYSTEM INITIALIZATION ---
-    print(f"Initializing High-Speed Stacking Pipeline at {FPS} FPS...")
-    
+
     robot = FrankaPanda()
     ik = IKController(robot, active_joint_indices=ACTIVE_JOINTS, kp_pos=10.0, kp_rot=5.0)
 
     m = mujoco.MjModel.from_xml_path(SCENE_PATH)
     d = mujoco.MjData(m)
-    
-    grasp_sys = GraspController(m, d, target="target_cube_red")
-    
-    # Offscreen renderer for datasets
-    renderer = mujoco.Renderer(m, height=480, width=640)
+
+    # Collect at 512×512 — matches SmolVLM2's max_image_size.longest_edge=512.
+    # The VLM upscales anything below 512, so 256×256 would be blurred.
+    # Square aspect ratio avoids the padding bars that 480×640 (v1) produced.
+    renderer = mujoco.Renderer(m, height=512, width=512)
 
     n_joints = min(len(Q_HOME), m.nq)
     q_home_pin = pin.neutral(robot.model)
@@ -149,111 +201,111 @@ def main():
     home_pose = robot.forward_kinematics(q_home_pin)
     fixed_rotation = home_pose.rotation.copy()
     HOME_POS = home_pose.translation.copy()
-    
-    GRIPPER_Z_OFFSET = 0.105 
 
-    # Launch viewer optionally
+    GRIPPER_Z_OFFSET = 0.105
+
     viewer = None
     if not args.headless:
         viewer = mujoco.viewer.launch_passive(m, d)
         viewer.sync()
 
-    # --- EPISODE LOOP ---
+    # Track per-instruction counts for balanced coverage reporting.
+    instruction_counts = {instr: 0 for _, _, instr in ALL_INSTRUCTIONS}
     episodes_collected = 0
-    total_episodes = args.episodes
-    
-    while episodes_collected < total_episodes:
-        print(f"\n🎬 --- Starting Episode {episodes_collected + 1}/{total_episodes} ---")
-        
-        # Fresh physics state
+
+    # ETA tracking — rolling average over the last 10 successful episodes.
+    collection_start = time.time()
+    episode_times: collections.deque = collections.deque(maxlen=10)
+
+    while episodes_collected < args.episodes:
+        # --- Sample this episode's task ---
+        pick_color, place_color, instruction = sample_episode_task()
+        colors_present = sample_distractor_colors(pick_color, place_color)
+        episode_wall_start = time.time()
+
+        print(f"\n[{episodes_collected + 1}/{args.episodes}] "
+              f"Task: '{instruction}' | cubes on table: {colors_present}")
+
+        # --- Reset physics ---
         mujoco.mj_resetData(m, d)
-        randomize_cubes(m, d)
-        
+        randomize_cubes(m, d, colors_present)
+
         d.qpos[:n_joints] = Q_HOME[:n_joints]
         d.qvel[:] = 0.0
         q_target = np.zeros(m.nq)
         q_target[:n_joints] = Q_HOME[:n_joints]
-        
+
         for _ in range(100):
             mujoco.mj_step(m, d)
         mujoco.mj_forward(m, d)
-        
+
+        grasp_sys = GraspController(m, d, target=get_cube_body_name(pick_color))
         states = generate_task_states(GRIPPER_Z_OFFSET, robot_speed=args.robot_speed)
-        
+
         current_state_idx = 0
         state_start_time = d.time
         current_trajectory = None
-
         episode_buffer = []
         episode_success = False
 
         while current_state_idx < len(states):
             step_start = time.time()
 
-            # ==========================================
-            # 1. RENDER & LOG EXISTING STATE
-            # ==========================================
-            # Primary Agent View (mapped to "image" for LIBERO compatibility)
-            renderer.update_scene(d, camera="front_cam") 
+            # --- Observations ---
+            renderer.update_scene(d, camera="front_cam")
             img_agent = renderer.render()
-            
-            # Eye-in-Hand View (mapped to "image2" for LIBERO compatibility)
             renderer.update_scene(d, camera="gripper_cam")
             img_gripper = renderer.render()
-            
-            # Pack observation and action
+
             q_current = d.qpos[:robot.model.nq].copy()
-            
             obs_state = np.zeros(9, dtype=np.float32)
             act_state = np.zeros(8, dtype=np.float32)
-            
-            # observation.state requires 7 arm joints + 2 finger joints
             obs_state[:7] = q_current[:7]
-            obs_state[7] = q_current[7]  # finger1.pos
-            obs_state[8] = q_current[8]  # finger2.pos
-            
-            # action requires 7 arm targets + 1 gripper command
+            obs_state[7] = q_current[7]
+            obs_state[8] = q_current[8]
             act_state[:7] = q_target[:7]
-            act_state[7] = states[current_state_idx]["gripper"] if current_state_idx < len(states) else 0.0
-            
+            act_state[7] = float(states[current_state_idx]["gripper"])
+
             episode_buffer.append({
-                "observation.images.image": img_agent,
+                "observation.images.image":  img_agent,
                 "observation.images.image2": img_gripper,
                 "observation.state": obs_state,
                 "action": act_state,
-                "task": INSTRUCTION
+                "task": instruction,
             })
-            
-            # ==========================================
-            # 2. RUN CONTROLLERS
-            # ==========================================
+
+            # --- Controller ---
             state = states[current_state_idx]
 
             if current_trajectory is None:
-                if state["target"] == "red":
-                    target_id = m.body("target_cube_red").id
-                    base_pos = d.xpos[target_id].copy()
-                elif state["target"] == "blue":
-                    target_id = m.body("target_cube_blue").id
-                    base_pos = d.xpos[target_id].copy()
+                if state["phase"] == "pick":
+                    body_id = m.body(get_cube_body_name(pick_color)).id
+                    base_pos = d.xpos[body_id].copy()
+                elif state["phase"] == "place":
+                    body_id = m.body(get_cube_body_name(place_color)).id
+                    base_pos = d.xpos[body_id].copy()
                 else:
                     base_pos = HOME_POS - state["offset"]
-                    
+
                 target_pos = base_pos + state["offset"]
+
+                # Approach jitter: ±5 mm noise on jitter-enabled states.
+                # Prevents the model from memorising a single canonical path.
+                if state["jitter"]:
+                    target_pos += np.random.normal(0, 0.005, 3)
 
                 start_se3 = robot.forward_kinematics(q_current)
                 end_se3 = pin.SE3(fixed_rotation, target_pos)
                 current_trajectory = TaskSpaceTrajectory(
-                    start_pose=start_se3, end_pose=end_se3, 
+                    start_pose=start_se3, end_pose=end_se3,
                     duration=state["duration"], method="cubic"
                 )
 
             t_state = d.time - state_start_time
             target_se3 = current_trajectory.get_pose(t_state)
-            
+
             dq, err, done = ik.compute_velocity(q_current, target_se3, q_posture=q_home_pin)
             dq = np.clip(dq, -2.0, 2.0)
-            
             for idx in ACTIVE_JOINTS:
                 q_target[idx] += dq[idx] * dt_control
                 d.ctrl[idx] = q_target[idx]
@@ -261,41 +313,37 @@ def main():
             grasp_sys.command(state["gripper"])
             is_holding = grasp_sys.is_grasped()
 
-            # State Transitions
+            # --- State transitions ---
             if t_state > state["duration"]:
                 if state["name"] == "Verify Lift":
                     if not is_holding:
-                        print(f"[{d.time:.2f}s] [WARNING] Grasp Failed or Dropped! Restarting Episode Loop...")
+                        print(f"  [{d.time:.2f}s] Grasp failed — discarding episode.")
                         break
-                    else:
-                        print(f"[{d.time:.2f}s] [OK] Grasp verified! Proceeding to place.")
-                
+                    print(f"  [{d.time:.2f}s] Grasp verified.")
+
                 current_state_idx += 1
                 state_start_time = d.time
                 current_trajectory = None
-                
-                if current_state_idx < len(states):
-                    print(f"[{d.time:.2f}s] State → {states[current_state_idx]['name']}")
-                else:
-                    # Final Placement Verification logic
-                    red_id = m.body("target_cube_red").id
-                    blue_id = m.body("target_cube_blue").id
-                    pos_red = d.xpos[red_id]
-                    pos_blue = d.xpos[blue_id]
-                    
-                    xy_dist = np.linalg.norm(pos_red[:2] - pos_blue[:2])
-                    z_diff = pos_red[2] - pos_blue[2]
-                    
-                    if xy_dist < 0.03 and 0.035 < z_diff < 0.045:
-                        print(f"[{d.time:.2f}s] [SUCCESS] Fast-Stacking Sequence Finished. Perfect placement verified!")
+
+                if current_state_idx >= len(states):
+                    # Verify the instructed pair, not hardcoded red/blue.
+                    pick_id  = m.body(get_cube_body_name(pick_color)).id
+                    place_id = m.body(get_cube_body_name(place_color)).id
+                    pos_pick  = d.xpos[pick_id]
+                    pos_place = d.xpos[place_id]
+
+                    xy_dist = np.linalg.norm(pos_pick[:2] - pos_place[:2])
+                    z_diff  = pos_pick[2] - pos_place[2]
+
+                    if xy_dist < SUCCESS_XY_THRESHOLD and SUCCESS_Z_MIN < z_diff < SUCCESS_Z_MAX:
+                        print(f"  [{d.time:.2f}s] SUCCESS (xy={xy_dist*100:.1f}cm, z={z_diff*100:.1f}cm)")
                         episode_success = True
                     else:
-                        print(f"[{d.time:.2f}s] [FAILURE] Stack misaligned (xy_dist={xy_dist:.3f}, z_diff={z_diff:.3f}). Discarding episode.")
-                        episode_success = False
+                        print(f"  [{d.time:.2f}s] FAILURE (xy={xy_dist*100:.1f}cm, z={z_diff*100:.1f}cm) — discarding.")
+                else:
+                    print(f"  [{d.time:.2f}s] → {states[current_state_idx]['name']}")
 
-            # ==========================================
-            # 3. PHYSICS STEP
-            # ==========================================
+            # --- Physics step ---
             target_sim_time = d.time + dt_control
             while d.time < target_sim_time:
                 d.qfrc_applied[:ARM_DOF] = d.qfrc_bias[:ARM_DOF]
@@ -303,31 +351,53 @@ def main():
 
             if viewer is not None and viewer.is_running():
                 viewer.sync()
-                
+
             if args.playback_speed > 0:
                 elapsed = time.time() - step_start
-                expected_time_per_step = dt_control / args.playback_speed
-                if elapsed < expected_time_per_step:
-                    time.sleep(expected_time_per_step - elapsed)
+                sleep_time = dt_control / args.playback_speed - elapsed
+                if sleep_time > 0:
+                    time.sleep(sleep_time)
 
-        # Check if episode was fully successful to save
+        # --- Save or discard ---
         if episode_success:
-            print(f"💾 Saving episode with {len(episode_buffer)} frames to dataset...")
+            print(f"  Saving {len(episode_buffer)} frames...")
             for frame in episode_buffer:
                 dataset.add_frame(frame)
-                
             dataset.save_episode()
+            instruction_counts[instruction] += 1
             episodes_collected += 1
-        else:
-            print("🗑️ Discarding failed episode buffer. (Will auto-retry next iteration)")
 
-    # finalize Dataset
-    print(f"\n✅ Data Collection Complete! Finalizing Dataset...")
+            episode_times.append(time.time() - episode_wall_start)
+            avg_time = sum(episode_times) / len(episode_times)
+            remaining = args.episodes - episodes_collected
+            eta_sec = int(avg_time * remaining)
+            eta_h, eta_rem = divmod(eta_sec, 3600)
+            eta_m, eta_s = divmod(eta_rem, 60)
+            elapsed_total = time.time() - collection_start
+            print(f"  Progress: {episodes_collected}/{args.episodes} | "
+                  f"avg {avg_time:.1f}s/ep | "
+                  f"ETA {eta_h:02d}h{eta_m:02d}m{eta_s:02d}s | "
+                  f"elapsed {elapsed_total / 3600:.2f}h")
+
+            # Progress per instruction variant.
+            if episodes_collected % 20 == 0:
+                print("\nInstruction coverage so far:")
+                for instr, count in sorted(instruction_counts.items(), key=lambda x: x[1]):
+                    print(f"  {count:3d}  {instr}")
+        else:
+            print("  Discarding — will retry.")
+
+    print(f"\nData collection complete: {episodes_collected} episodes saved.")
+    print("\nFinal instruction coverage:")
+    for instr, count in sorted(instruction_counts.items(), key=lambda x: x[1]):
+        print(f"  {count:3d}  {instr}")
+
     dataset.finalize()
-    print(f"Dataset successfully finalized and stored at: {DATASET_DIR}")
-    
+    print(f"Dataset saved at: {DATASET_DIR}")
+
     if viewer is not None:
         viewer.close()
+
 
 if __name__ == "__main__":
     main()

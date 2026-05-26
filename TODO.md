@@ -43,7 +43,31 @@
 - [ ] Review evaluation videos in `inference/inference_videos/`
 - [ ] Compare stacking success rate vs. previous RTX 5080 run
 
+## Dataset v2 — Rich Fine-Tuning Collection
+> Root cause of 0% success: single fixed instruction, 50 episodes, deterministic trajectories.
+> Full analysis in DATASET_DESIGN.md.
+
+- [x] Document v1 failure analysis and v2 design rationale → `DATASET_DESIGN.md`
+- [x] Upgrade `data_collection/collect_libero_dataset.py`:
+  - [x] 12 instruction variants (all colour-pair combinations, not just red→blue)
+  - [x] 300 episodes target (~25 per variant)
+  - [x] Variable distractor count per scene (0–2 distractors)
+  - [x] Wider spawn range: x=[0.20,0.60], y=[-0.40,0.40]
+  - [x] Min cube clearance: 15 cm (up from 12 cm)
+  - [x] ±5 mm Gaussian jitter on approach trajectories
+  - [x] Success threshold tightened: xy < 2 cm (was 3 cm)
+  - [x] Success verification uses instructed colour pair (not hardcoded red/blue)
+- [ ] Collect dataset v2 inside Docker container
+  ```bash
+  docker compose run --rm -it -e DISPLAY=$DISPLAY \
+    -v /tmp/.X11-unix:/tmp/.X11-unix \
+    smolvla:latest \
+    python data_collection/collect_libero_dataset.py --episodes 300
+  ```
+- [ ] Push dataset v2 to HF Hub (update HF_REPO_ID in .env first)
+- [ ] Re-train SmolVLA on dataset v2
+- [ ] Re-run inference and compare success rate vs v1 (0%)
+
 ## Future / Optional
-- [ ] Collect additional episodes with `data_collection/collect_libero_dataset.py` to expand dataset
 - [ ] Experiment with higher batch size (5090 has 32GB — try batch_size=32 or 48)
 - [ ] Try `smolvla_base` (not fine-tuned on LIBERO) and compare zero-shot performance
