@@ -17,9 +17,8 @@ outputs/
 .nv/
 .cache/
 
-# Large dataset files (push to HF Hub instead)
-datasets/*/data/
-datasets/*/videos/
+# Datasets — push to HF Hub instead, never commit locally
+datasets/
 
 # Inference videos (keep directory structure, ignore video files)
 inference/inference_videos/*/*.mp4
