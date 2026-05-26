@@ -26,6 +26,10 @@ datasets/
 inference/inference_videos/*/*.mp4
 inference/inference_videos/*/*.avi
 
+# Generated script outputs
+src/scripts/cam_view_output.png
+cam_check.png
+
 # Editor
 .vscode/
 *.swp
