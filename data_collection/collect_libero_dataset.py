@@ -247,6 +247,7 @@ def main():
         current_trajectory = None
         episode_buffer = []
         episode_success = False
+        _live_print_t = time.time()
 
         while current_state_idx < len(states):
             step_start = time.time()
@@ -317,9 +318,9 @@ def main():
             if t_state > state["duration"]:
                 if state["name"] == "Verify Lift":
                     if not is_holding:
-                        print(f"  [{d.time:.2f}s] Grasp failed — discarding episode.")
+                        print(f"\r\033[K  [{d.time:.2f}s] Grasp failed — discarding episode.")
                         break
-                    print(f"  [{d.time:.2f}s] Grasp verified.")
+                    print(f"\r\033[K  [{d.time:.2f}s] Grasp verified.")
 
                 current_state_idx += 1
                 state_start_time = d.time
@@ -336,18 +337,35 @@ def main():
                     z_diff  = pos_pick[2] - pos_place[2]
 
                     if xy_dist < SUCCESS_XY_THRESHOLD and SUCCESS_Z_MIN < z_diff < SUCCESS_Z_MAX:
-                        print(f"  [{d.time:.2f}s] SUCCESS (xy={xy_dist*100:.1f}cm, z={z_diff*100:.1f}cm)")
+                        print(f"\r\033[K  [{d.time:.2f}s] SUCCESS (xy={xy_dist*100:.1f}cm, z={z_diff*100:.1f}cm)")
                         episode_success = True
                     else:
-                        print(f"  [{d.time:.2f}s] FAILURE (xy={xy_dist*100:.1f}cm, z={z_diff*100:.1f}cm) — discarding.")
-                else:
-                    print(f"  [{d.time:.2f}s] → {states[current_state_idx]['name']}")
+                        print(f"\r\033[K  [{d.time:.2f}s] FAILURE (xy={xy_dist*100:.1f}cm, z={z_diff*100:.1f}cm) — discarding.")
 
             # --- Physics step ---
             target_sim_time = d.time + dt_control
             while d.time < target_sim_time:
                 d.qfrc_applied[:ARM_DOF] = d.qfrc_bias[:ARM_DOF]
                 mujoco.mj_step(m, d)
+
+            _now = time.time()
+            if _now - _live_print_t >= 0.4:
+                _live_print_t = _now
+                phase_frac = min(t_state / max(state["duration"], 0.001), 1.0)
+                filled = int(20 * phase_frac)
+                bar = "█" * filled + "░" * (20 - filled)
+                if episode_times:
+                    _avg = sum(episode_times) / len(episode_times)
+                    _eta = int(_avg * (args.episodes - episodes_collected))
+                    _h, _r = divmod(_eta, 3600)
+                    _m, _s = divmod(_r, 60)
+                    eta_str = f"{_h:02d}h{_m:02d}m{_s:02d}s"
+                else:
+                    eta_str = "--:--:--"
+                print(
+                    f"\r  [{bar}] {state['name']:<20s}  sim {d.time:5.1f}s | ETA {eta_str}   ",
+                    end="", flush=True,
+                )
 
             if viewer is not None and viewer.is_running():
                 viewer.sync()

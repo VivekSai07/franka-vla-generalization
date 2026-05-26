@@ -4,7 +4,7 @@
 - [x] Identify RTX 5090 + CUDA 13.0 (driver 580.142) on new lab machine
 - [x] Confirm Docker 29.4.2 + NVIDIA runtime already configured
 - [x] Write `Dockerfile` — CUDA 12.8.1 + PyTorch nightly cu128 (required for Blackwell sm_120)
-- [x] Write `docker-compose.yml` — 4 services: `push`, `train`, `server`, `client`
+- [x] Write `docker-compose.yml` — 5 services: `collect`, `push`, `train`, `server`, `client`
 - [x] Write `.env.example` + `.gitignore`
 - [x] Build `smolvla:latest` image
 - [x] Verify GPU inside container — PyTorch 2.10.0+cu128, no sm_120 warning, RTX 5090 detected
@@ -57,12 +57,12 @@
   - [x] ±5 mm Gaussian jitter on approach trajectories
   - [x] Success threshold tightened: xy < 2 cm (was 3 cm)
   - [x] Success verification uses instructed colour pair (not hardcoded red/blue)
-- [ ] Collect dataset v2 inside Docker container
+  - [x] 512×512 images (matches SmolVLM2 max_image_size.longest_edge=512)
+  - [x] Rolling ETA + live \r status line (phase bar, sim time, ETA overwrites in place)
+- [ ] Collect dataset v2 inside Docker container  ← IN PROGRESS (~40/300 done)
   ```bash
-  docker compose run --rm -it -e DISPLAY=$DISPLAY \
-    -v /tmp/.X11-unix:/tmp/.X11-unix \
-    smolvla:latest \
-    python data_collection/collect_libero_dataset.py --episodes 300
+  docker compose run --rm collect
+  # runs: python data_collection/collect_libero_dataset.py --episodes 300 --headless --playback_speed 0
   ```
 - [ ] Push dataset v2 to HF Hub (update HF_REPO_ID in .env first)
 - [ ] Re-train SmolVLA on dataset v2
