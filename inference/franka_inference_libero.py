@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import random
 import argparse
 import numpy as np
 import requests
@@ -32,7 +33,7 @@ from src.robots.franka_panda.config import (
 # or leave unset to use localhost (works when both run on the host directly).
 SERVER_URL = os.getenv("SERVER_URL", "http://localhost:8000/predict")
 SIM_FPS = 30
-MAX_STEPS = 600  # 20 seconds timeout at 30 FPS
+MAX_STEPS = 1200  # 40 seconds timeout — model paths less efficient than IK planner
 
 # --- DIRECTORY SETUP ---
 BASE_VIDEO_DIR = os.path.join(CURRENT_DIR, "inference_videos")
@@ -46,7 +47,6 @@ def encode_image(img_arr):
 
 def randomize_cubes(model, data):
     """Randomly spawn the 4 cubes on the table without overlapping."""
-    import random
     cubes = ["target_cube_red", "target_cube_green", "target_cube_blue", "target_cube_yellow"]
     spawned_positions = []
     
@@ -58,11 +58,11 @@ def randomize_cubes(model, data):
         qpos_idx = model.jnt_qposadr[jnt_id]
         
         while True:
-            x = random.uniform(0.25, 0.55)
-            y = random.uniform(-0.35, 0.35)
+            x = random.uniform(0.20, 0.60)
+            y = random.uniform(-0.40, 0.40)
             conflict = False
             for (sx, sy) in spawned_positions:
-                if (x - sx)**2 + (y - sy)**2 < 0.12**2:
+                if (x - sx)**2 + (y - sy)**2 < 0.15**2:
                     conflict = True
                     break
             
@@ -78,6 +78,7 @@ def main():
     parser = argparse.ArgumentParser(description="Franka SmolVLA Inference")
     parser.add_argument("--episodes", type=int, default=5, help="Number of inference episodes")
     parser.add_argument("--render", action="store_true", help="Open MuJoCo UI viewer (WARNING: Can severely slow down inference)")
+    parser.add_argument("--policy_name", type=str, default="smolvla", help="Policy identifier used for video output folder naming")
     args = parser.parse_args()
 
     # 1. Check if the policy server is running
@@ -88,11 +89,12 @@ def main():
         print("❌ Server not found! Please start `policy_server.py` first.")
         sys.exit(1)
 
-    # Automatically find the next run directory
+    # Videos saved under inference_videos/<policy_name>/run_1, run_2, ...
+    policy_video_dir = os.path.join(BASE_VIDEO_DIR, args.policy_name)
     run_idx = 1
-    while os.path.exists(os.path.join(BASE_VIDEO_DIR, f"test_{run_idx}")):
+    while os.path.exists(os.path.join(policy_video_dir, f"run_{run_idx}")):
         run_idx += 1
-    VIDEO_OUT_DIR = os.path.join(BASE_VIDEO_DIR, f"test_{run_idx}")
+    VIDEO_OUT_DIR = os.path.join(policy_video_dir, f"run_{run_idx}")
     os.makedirs(VIDEO_OUT_DIR, exist_ok=True)
     print(f"📁 Created new run directory: {VIDEO_OUT_DIR}")
 
@@ -107,8 +109,8 @@ def main():
     # We will dynamically update the target in the loop, default to red
     grasp_sys = GraspController(m, d, target="target_cube_red")
     
-    # Setup renderer for Neural Network cameras
-    renderer = mujoco.Renderer(m, height=480, width=640)
+    # 512×512 matches SmolVLM2 max_image_size and training resolution
+    renderer = mujoco.Renderer(m, height=512, width=512)
     
     n_joints = min(len(Q_HOME), m.nq)
     dt_control = 1.0 / SIM_FPS
@@ -140,15 +142,14 @@ def main():
             mujoco.mj_step(m, d)
         mujoco.mj_forward(m, d)
         
-        # ✨ Dynamically pick task instruction to test Vision-Language grounding
-        if np.random.rand() > 0.5:
-            pick_color, base_color = "red", "blue"
-            target_cube, base_cube = "target_cube_red", "target_cube_blue"
-        else:
-            pick_color, base_color = "blue", "red"
-            target_cube, base_cube = "target_cube_blue", "target_cube_red"
-            
-        current_instruction = f"pick up the {pick_color} cube and place it perfectly on top of the {base_color} cube"
+        # Sample uniformly from all 12 colour-pair combinations — matches training distribution.
+        # Instruction format must match training exactly (no "perfectly").
+        cube_colors = ["red", "green", "blue", "yellow"]
+        all_pairs = [(p, b) for p in cube_colors for b in cube_colors if p != b]
+        pick_color, base_color = random.choice(all_pairs)
+        target_cube = f"target_cube_{pick_color}"
+        base_cube = f"target_cube_{base_color}"
+        current_instruction = f"pick up the {pick_color} cube and place it on top of the {base_color} cube"
         print(f"📝 Instruction: {current_instruction}")
         
         # Update the grasp controller with the correct target for this episode

@@ -22,9 +22,9 @@ outputs/
 # Datasets — push to HF Hub instead, never commit locally
 datasets/
 
-# Inference videos (keep directory structure, ignore video files)
-inference/inference_videos/*/*.mp4
-inference/inference_videos/*/*.avi
+# Inference videos — nested under policy_name/run_N/; ignore all video files
+inference/inference_videos/**/*.mp4
+inference/inference_videos/**/*.avi
 
 # Generated script outputs
 src/scripts/cam_view_output.png

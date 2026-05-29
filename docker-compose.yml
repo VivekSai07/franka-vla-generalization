@@ -60,21 +60,32 @@ services:
       - .:/vla
     env_file: .env
     working_dir: /vla
-    command: >
-      lerobot-train
-        --policy.type=smolvla
-        --policy.pretrained_path=HuggingFaceVLA/smolvla_libero
-        --dataset.repo_id=${HF_USERNAME}/franka_libero_stacking_v1
-        --policy.repo_id=${HF_USERNAME}/smolvla_franka_libero_stacking_finetuned
-        --batch_size=24
-        --steps=20000
-        --output_dir=outputs/train/smolvla_libero_stacking_finetuned
-        --job_name=franka_libero_stacking_run
-        --policy.device=cuda
-        --policy.use_amp=true
-        --policy.expert_width_multiplier=0.5
-        --wandb.enable=true
-        --wandb.project=smolvla_franka_project
+    command:
+      bash -c "
+        OUT=outputs/train/smolvla_franka_libero_stacking_finetuned_b32_s80k;
+        LAST=$$(ls $$OUT/checkpoints 2>/dev/null | sort -n | tail -1);
+        if [ -n \"$$LAST\" ]; then
+          echo \"Resuming from checkpoint $$LAST\";
+          exec lerobot-train
+            --config_path=$$OUT/checkpoints/$$LAST/pretrained_model/train_config.json
+            --resume=true;
+        else
+          exec lerobot-train
+            --policy.type=smolvla
+            --policy.pretrained_path=HuggingFaceVLA/smolvla_libero
+            --dataset.repo_id=${HF_USERNAME}/franka_libero_stacking_v2
+            --policy.repo_id=${HF_USERNAME}/smolvla_franka_libero_stacking_finetuned_b32_s80k
+            --batch_size=32
+            --steps=80000
+            --output_dir=$$OUT
+            --job_name=franka_libero_stacking_run_b32_s80k
+            --policy.device=cuda
+            --policy.use_amp=true
+            --policy.expert_width_multiplier=0.5
+            --wandb.enable=true
+            --wandb.project=smolvla_franka_project;
+        fi
+      "
 
   # ─────────────────────────────────────────────────────────────────────────────
   # server — SmolVLA inference brain (FastAPI on port 8000)
@@ -98,7 +109,7 @@ services:
     working_dir: /vla
     ports:
       - "8000:8000"
-    command: python inference/policy_server_libero.py --policy_path ${HF_USERNAME}/smolvla_franka_libero_stacking_finetuned
+    command: python inference/policy_server_libero.py --policy_path ${HF_USERNAME}/smolvla_franka_libero_stacking_finetuned_b32_s80k
 
   # ─────────────────────────────────────────────────────────────────────────────
   # client — MuJoCo simulation body; queries the server for actions
@@ -119,8 +130,8 @@ services:
       - HF_HOME=/vla/.hf_cache
       - TORCHINDUCTOR_CACHE_DIR=/vla/.torch_cache/inductor
       - HOME=/vla
-      # The server runs as a separate container; use its service name, not localhost
-      - SERVER_URL=http://server:8000/predict
+      # client uses network_mode: host, so reach the server via localhost (port mapped to host)
+      - SERVER_URL=http://localhost:8000/predict
     volumes:
       - .:/vla
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
@@ -129,4 +140,4 @@ services:
     depends_on:
       - server
     network_mode: host
-    command: python -m inference.franka_inference_libero --episodes 10
+    command: python -m inference.franka_inference_libero --episodes 30 --policy_name smolvla_franka_libero_stacking_finetuned_b32_s80k
