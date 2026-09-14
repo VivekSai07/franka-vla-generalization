@@ -38,6 +38,10 @@ def main():
         start = ep["dataset_from_index"]
         end = ep["dataset_to_index"]
 
+        if end - start < 2:
+            print(f"Skipping episode {ep_idx}: only {end - start} frame(s), need >=2")
+            continue
+
         states = np.stack([dataset[i]["observation.state"][:7].numpy() for i in range(start, end)])
         actions = np.stack([dataset[i]["action"][:7].numpy() for i in range(start, end)])
 
@@ -45,6 +49,10 @@ def main():
         # for every t where a "next" frame exists in this episode.
         diffs_action_to_current_state.append(np.abs(actions[:-1] - states[:-1]).mean())
         diffs_action_to_next_state.append(np.abs(actions[:-1] - states[1:]).mean())
+
+    if not diffs_action_to_current_state:
+        print("FAIL: no episode had >=2 frames — nothing to verify.")
+        sys.exit(1)
 
     mean_to_current = float(np.mean(diffs_action_to_current_state))
     mean_to_next = float(np.mean(diffs_action_to_next_state))
