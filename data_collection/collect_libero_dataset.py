@@ -260,22 +260,13 @@ def main():
 
             q_current = d.qpos[:robot.model.nq].copy()
             obs_state = np.zeros(9, dtype=np.float32)
-            act_state = np.zeros(8, dtype=np.float32)
             obs_state[:7] = q_current[:7]
             obs_state[7] = q_current[7]
             obs_state[8] = q_current[8]
-            act_state[:7] = q_target[:7]
-            act_state[7] = float(states[current_state_idx]["gripper"])
 
-            episode_buffer.append({
-                "observation.images.image":  img_agent,
-                "observation.images.image2": img_gripper,
-                "observation.state": obs_state,
-                "action": act_state,
-                "task": instruction,
-            })
-
-            # --- Controller ---
+            # --- Controller: compute and send this tick's action BEFORE
+            # recording it, so the saved action matches what was actually
+            # sent (mirrors lerobot_record.py's observe -> act -> send -> save).
             state = states[current_state_idx]
 
             if current_trajectory is None:
@@ -310,6 +301,19 @@ def main():
             for idx in ACTIVE_JOINTS:
                 q_target[idx] += dq[idx] * dt_control
                 d.ctrl[idx] = q_target[idx]
+
+            # --- Record the action that was just computed and sent above ---
+            act_state = np.zeros(8, dtype=np.float32)
+            act_state[:7] = q_target[:7]
+            act_state[7] = float(state["gripper"])
+
+            episode_buffer.append({
+                "observation.images.image":  img_agent,
+                "observation.images.image2": img_gripper,
+                "observation.state": obs_state,
+                "action": act_state,
+                "task": instruction,
+            })
 
             grasp_sys.command(state["gripper"])
             is_holding = grasp_sys.is_grasped()
