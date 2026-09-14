@@ -190,43 +190,30 @@ def main():
             step_start = time.time()
 
             # ==========================================
-            # 1. RENDER & LOG EXISTING STATE
+            # 1. RENDER & READ CURRENT STATE
             # ==========================================
             renderer.update_scene(d, camera="top_cam")
             img_top = renderer.render()
-            
+
             renderer.update_scene(d, camera="front_cam")
             img_front = renderer.render()
-            
+
             renderer.update_scene(d, camera="gripper_cam")
             img_gripper = renderer.render()
-            
-            # Pack observation and action (before taking the step)
+
             q_current = d.qpos[:robot.model.nq].copy()
-            
+
             obs_state = np.zeros(9, dtype=np.float32)
-            act_state = np.zeros(8, dtype=np.float32)
-            
+
             # observation.state requires 7 arm joints + 2 finger joints
             obs_state[:7] = q_current[:7]
             obs_state[7] = q_current[7]  # finger1.pos
             obs_state[8] = q_current[8]  # finger2.pos
-            
-            # action requires 7 arm targets + 1 gripper command
-            act_state[:7] = q_target[:7]
-            act_state[7] = states[current_state_idx]["gripper"] if current_state_idx < len(states) else 0.0
-            
-            episode_buffer.append({
-                "observation.images.up": img_top,
-                "observation.images.wrist": img_gripper,
-                "observation.images.front": img_front,
-                "observation.state": obs_state,
-                "action": act_state,
-                "task": INSTRUCTION
-            })
-            
+
             # ==========================================
-            # 2. RUN CONTROLLERS
+            # 2. RUN CONTROLLERS — compute and send this tick's action
+            #    BEFORE recording it, so the saved action matches what
+            #    was actually sent.
             # ==========================================
             state = states[current_state_idx]
 
@@ -239,25 +226,41 @@ def main():
                     base_pos = d.xpos[target_id].copy()
                 else:
                     base_pos = HOME_POS - state["offset"]
-                    
+
                 target_pos = base_pos + state["offset"]
 
                 start_se3 = robot.forward_kinematics(q_current)
                 end_se3 = pin.SE3(fixed_rotation, target_pos)
                 current_trajectory = TaskSpaceTrajectory(
-                    start_pose=start_se3, end_pose=end_se3, 
+                    start_pose=start_se3, end_pose=end_se3,
                     duration=state["duration"], method="cubic"
                 )
 
             t_state = d.time - state_start_time
             target_se3 = current_trajectory.get_pose(t_state)
-            
+
             dq, err, done = ik.compute_velocity(q_current, target_se3, q_posture=q_home_pin)
             dq = np.clip(dq, -2.0, 2.0)
-            
+
             for idx in ACTIVE_JOINTS:
                 q_target[idx] += dq[idx] * dt_control
                 d.ctrl[idx] = q_target[idx]
+
+            # ==========================================
+            # 3. RECORD the action that was just computed and sent above
+            # ==========================================
+            act_state = np.zeros(8, dtype=np.float32)
+            act_state[:7] = q_target[:7]
+            act_state[7] = state["gripper"]
+
+            episode_buffer.append({
+                "observation.images.up": img_top,
+                "observation.images.wrist": img_gripper,
+                "observation.images.front": img_front,
+                "observation.state": obs_state,
+                "action": act_state,
+                "task": INSTRUCTION
+            })
 
             grasp_sys.command(state["gripper"])
             is_holding = grasp_sys.is_grasped()
