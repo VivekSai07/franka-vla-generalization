@@ -84,3 +84,39 @@
   - Update `docker-compose.yml` collect command: `--episodes 600`
   - Retrain with steps=120K
 - [ ] Try `smolvla_base` (not fine-tuned on LIBERO) — compare zero-shot vs fine-tuned
+
+## Action/Observation Alignment Fix (2026-09-14) — READ THIS FIRST if inference still fails to pick
+
+Root cause found: all three data collectors (`collect_libero_dataset.py`, `collect_v2_dataset.py`,
+`collect_stacking_dataset.py`) recorded each frame's `action` as the *previous* control tick's
+stale commanded joint target instead of the action actually computed and sent that tick — so every
+episode in `franka_libero_stacking_v1` and `v2` has `(state_t, action_{t-1})` instead of the correct
+`(state_t, action_t)`. Confirmed against lerobot's own `lerobot_record.py` reference loop
+(`observe → act → send → save`, always in that order). This is a strong candidate for why the
+fine-tuned model in v1/v2 "reaches around" the cube but never picks it — see
+`docs/superpowers/specs/2026-09-14-fix-action-observation-alignment-design.md` for the full
+analysis and `docs/superpowers/plans/2026-09-14-fix-action-observation-alignment.md` for exactly
+what changed.
+
+- [x] Fix the reorder bug in all 3 collector scripts so `action` matches what was actually sent
+- [x] Add `data_collection/verify_action_alignment.py` — sanity-checks that a collected dataset's
+      `action_t` is closer to `state_{t+1}` than to `state_t`
+- [ ] **On the actual GPU/Linux collection rig** (this fix was authored on a Windows dev machine
+      with no Docker/GPU access — none of this has been runtime-verified yet):
+  ```bash
+  docker compose run --rm collect python data_collection/collect_libero_dataset.py --episodes 2 --headless
+  docker compose run --rm collect python data_collection/verify_action_alignment.py \
+    --root datasets/<the_new_versioned_dir> --repo-id <same_name>
+  ```
+  Confirm it prints `PASS`. If `FAIL`, something in the reorder is still wrong — re-check
+  `collect_libero_dataset.py`'s per-tick loop against the design doc before going further.
+- [ ] Once verified: re-collect a fresh `franka_libero_stacking_v3` (or overwrite v2 collection
+      logic is unchanged otherwise — same 12 instructions, same episode count) with the fixed
+      collector, push to HF Hub (`v3.0` branch), and retrain from scratch (previous checkpoints
+      were trained on mislabeled data — do not resume from them)
+- [ ] Re-run the 30-episode inference evaluation and compare success rate against v1/v2 (both 0%
+      or near-0%) to confirm whether this was in fact the root cause
+- [ ] If success rate is still poor after this fix, the next suspects (not yet investigated) are:
+      the one-tick control latency between `d.ctrl` write and `d.qpos` read at the top of the next
+      loop iteration, and whether SmolVLA's `delta_timestamps`/action-chunking config expects a
+      different temporal convention than a single-step `(state_t, action_t)` pair
