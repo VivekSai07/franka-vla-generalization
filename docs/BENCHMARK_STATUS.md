@@ -2,6 +2,18 @@
 
 ## Current status and authorization — 2026-09-16
 
+**TRAINING COMPLETE:** `smolvla-pilot-train-20000` exited 0/no OOM at
+21:16:00 UTC. Verified 20,000 consecutive finite updates, all 11 checkpoint
+model hashes and fresh dataset/runtime/training-source bindings. Selected
+checkpoint **020000** by predefined full-chunk held-out arm MAE: **0.016913 rad**;
+first-ten **0.008329 rad**, gripper accuracy **93.60%**. No closed-loop success
+claim. See [completion report](SMOLVLA_PILOT_TRAINING_20260916.md#verified-completion).
+No active training remains from this job. Next proposed task: selected-checkpoint
+evaluation on 120 independent tuning scenes, 40 seconds/horizon 10; approval
+required. Final 240 scenes remain untouched. No restart, collection or upload.
+
+### Historical training launch — completed
+
 **CURRENT AUTHORIZATION / LAUNCH:** user deferred Hub upload and explicitly
 approved local **20,000-update SmolVLA pilot training**, batch 8 x accumulation 4,
 FP32 trainable/BF16 autocast, 1e-4 peak LR, 1,000-step warmup/cosine to 1e-5.

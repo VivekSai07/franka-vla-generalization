@@ -1,5 +1,50 @@
 # Local SmolVLA pilot training — 2026-09-16
 
+## Verified completion
+
+**Complete: 20,000/20,000 updates, exit 0, no OOM.** Container ran from
+2026-09-16 16:25:22 to 21:16:00 UTC (approximately 4 h 51 min including setup,
+evaluation and checkpoints). Optimizer-update wall time total: 4.584 hours.
+640,000 sampled chunks represent approximately 4.45 training passes.
+
+Fresh completion inspection verified all 20,000 consecutive metric records were
+finite, all 11 saved model hashes matched their checkpoint markers, and current
+dataset/runtime/source bindings passed. Each checkpoint's recorded GPU reload
+check preserved FP32 trainable weights exactly with zero prediction difference.
+The completion inspection did not rerun GPU inference or full demonstration replay.
+
+| Update | Held-out arm MAE, 50 actions (rad) | First 10 MAE (rad) | Gripper accuracy |
+|---|---:|---:|---:|
+| 0 | 0.256941 | 0.175772 | 64.67% |
+| 6,000 | 0.030419 | 0.016812 | 87.53% |
+| 12,000 | 0.020165 | 0.012727 | 93.12% |
+| 18,000 | 0.017288 | 0.007938 | 93.71% |
+| 20,000 | 0.016913 | 0.008329 | 93.60% |
+
+The predefined lowest held-out full-chunk arm-MAE selector chooses **20,000**:
+[checkpoint marker](../outputs/train/smolvla_pilot_20260916/checkpoints/020000/checkpoint_result.json).
+Model SHA256: `a4cc794608091d6b6cab552c373fe745b8c81b6dd4ca18d092bbef15d7402b29`.
+Full-chunk validation error improved 93.42% from baseline. Final first-ten error
+is approximately 0.477 degrees per joint/action. First/last 200-update mean
+training loss: 0.238879 / 0.005393 (different batches/noise, not a fixed objective).
+
+The 18,000 checkpoint is slightly better on first-ten arm MAE and gripper
+agreement. This is a metric trade-off, not proof of significant degradation or a
+reason to silently change the predefined selection criterion. Preserve both.
+Training probes finish at 0.015995 rad arm MAE and 100% gripper agreement, while
+held-out agreement is 93.60%; remaining generalization and grasp/release risks
+must be assessed in closed loop. These are 360 fixed held-out probes, not an
+exhaustive validation loss or autonomous success rate.
+
+Evidence: [final result](../outputs/train/smolvla_pilot_20260916/result.json).
+**No closed-loop task evaluation has run.** Recommended next milestone: evaluate
+the selected 20,000 checkpoint on the independent 120 tuning scenes with the
+fixed 40-second/horizon-10 protocol, saving videos and intervention diagnostics.
+Keep the 240 final scenes sealed. No further training, rollout or upload was
+started by this completion check; obtain authorization for the next job.
+
+The launch/progress descriptions below are historical, not an active-job claim.
+
 ## Authorization
 
 The user deferred the blocked Hugging Face upload and authorized actual local

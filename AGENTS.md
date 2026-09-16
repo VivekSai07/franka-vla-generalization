@@ -6,9 +6,10 @@ its historical command defaults are not current authorization.
 
 - Current status: the authorized 420-episode pilot completed and passed final
   validation on 2026-09-16 (300 train / 120 validation). User deferred the proxy-
-  blocked upload and approved a fresh 20,000-update local SmolVLA training run.
-  See current status before any jobs; do not duplicate the active trainer or
-  modify bound sources. No further collection, uploads or final-scene evaluation.
+  blocked upload and approved a fresh 20,000-update local SmolVLA training run,
+  now complete (exit 0, all completion gates passed). See current status before
+  any jobs; tuning-scene evaluation is proposed, not yet authorized. Preserve
+  bound sources. No further training, collection, uploads or final-scene evaluation.
   Never resume pre-fix checkpoints.
 - Run Python and install dependencies only inside Docker, not host Conda.
 - Preserve secrets and existing artifacts. Never display credential files or
