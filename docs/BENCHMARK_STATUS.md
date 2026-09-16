@@ -2,6 +2,14 @@
 
 ## Current status and authorization — 2026-09-16
 
+**CURRENT AUTHORIZED JOB:** user approved rollouts. Selected 020000 checkpoint
+is running on exactly 120 tuning scenes in `smolvla-pilot-eval-tuning-120`,
+40-second timeout/horizon 10; final 240 scenes are not evaluated. Model loaded,
+first trial started; launch is not a success score. See
+[evaluation handoff](PILOT_EVALUATION_20260916.md). No training/upload; preserve
+bound sources and do not duplicate this job. The pending-approval note below
+is historical and superseded by this authorization.
+
 **TRAINING COMPLETE:** `smolvla-pilot-train-20000` exited 0/no OOM at
 21:16:00 UTC. Verified 20,000 consecutive finite updates, all 11 checkpoint
 model hashes and fresh dataset/runtime/training-source bindings. Selected
