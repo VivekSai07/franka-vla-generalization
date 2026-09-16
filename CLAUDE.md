@@ -1,5 +1,14 @@
 # CLAUDE.md
 
+## Current work: read first
+
+Read [docs/BENCHMARK_STATUS.md](docs/BENCHMARK_STATUS.md) before executing
+commands. It supersedes historical defaults below. The validated 420-episode
+pilot is complete; a fresh 20,000-update local SmolVLA run is now authorized
+and launched (see current status). Do not duplicate it or use the historical
+auto-resuming train service. Never resume a pre-fix checkpoint. Research findings
+and compatibility caveats are indexed there for humans and other agents.
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## What this is
