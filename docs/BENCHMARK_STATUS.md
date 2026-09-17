@@ -1,5 +1,15 @@
 # Franka benchmark: start here
 
+## Current authorized diagnostic — 2026-09-17
+
+User approved **48 policy rollouts**: 36 same-scene original/reversed/seed-control
+tuning comparisons plus 12 two-cube training-scene reproductions. Container
+`smolvla-paired-diagnostic-48` launched with unchanged 020000 checkpoint,
+40-second timeout and horizon 10. See [protocol and handoff](PAIRED_DIAGNOSTIC_20260917.md).
+90 tests passed; original-condition reproduction is a live gate, not yet a
+completion claim. No new training, demonstration collection, upload or final-scene
+evaluation. Do not change bound sources or duplicate the running diagnostic.
+
 ## Full tuning evaluation complete — 2026-09-17
 
 **4/120 correct stacks (3.33%), 0/120 without any clipping.** All four successes

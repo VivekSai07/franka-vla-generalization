@@ -9,7 +9,8 @@ its historical command defaults are not current authorization.
   blocked upload and approved a fresh 20,000-update local SmolVLA training run,
   now complete (exit 0, all completion gates passed). See current status before
   any jobs; the 120-scene tuning evaluation is complete: 4/120 correct successes.
-  Read the full evaluation review before proposing follow-up jobs. Preserve
+  User approved the 48-rollout paired-instruction/training-scene diagnostic;
+  see current status before any jobs and do not duplicate its run. Preserve
   bound sources. No further training, collection, uploads or final-scene evaluation.
   Never resume pre-fix checkpoints.
 - Run Python and install dependencies only inside Docker, not host Conda.
