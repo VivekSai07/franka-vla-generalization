@@ -1,5 +1,43 @@
 # Franka benchmark: start here
 
+## Current paired collection — 2026-09-17
+
+User approved the exact three-legacy-episode geometry exception. Fresh 129-test
+CPU suite passed. Container `smolvla-paired-collect-36` launched into
+`outputs/paired_demonstrations/paired_20260917`, automatically running full paired
+validation only after successful collection. Startup confirmed; no completed-demo
+or training-readiness claim yet. See [live preparation handoff](PAIRED_LEARNING_PREPARATION_20260917.md).
+No duplicate jobs, source/spec edits, retries, new training or uploads while this
+gate runs. Two-model training/evaluation remain gated subsequent stages.
+
+## Paired stage one prepared — launch held for review, 2026-09-17
+
+User explicitly approved the narrow exception for two legacy v1 episodes and one
+v2 episode without initial geometry. Implemented test-first: literal-message
+allowlist only, visible **unchecked** gaps, approval reason and actual metadata
+file hashes in inventory/manifest/results, fresh validation and readiness-gate
+rechecks. Unknown gaps and all non-geometric integrity errors still fail.
+Old sources/artifacts remain unchanged; all new train/eval uses new paired data.
+
+**129 CPU Docker tests pass. Actual read-only CLI preflight exits 0:** configuration
+passed, collection `not_started`, 1,906 files / 1,164 geometry hashes, both approved
+missing messages retained, zero expert trajectories and `training_ready: false`.
+See [approved amendment and current preparation evidence](PAIRED_LEARNING_PREPARATION_20260917.md).
+**No collection, GPU jobs or commits. Main launch follows review.** The 36-demo
+record/validate commands are prepared, not executed; downstream two-model training
+and 72-rollout evaluation implementation remain pending.
+
+## Historical paired preparation blocker — superseded by approval above
+
+User approved the paired-demonstration two-model design. Isolated stage-one
+collection/validation implementation is prepared; 124 CPU tests reported passing.
+Fresh configuration-only preflight passes configuration but blocks collection:
+two old v1 episodes and one incomplete v2 episode lack full initial geometry
+needed by the approved historical duplicate check. No expert trajectories or
+training jobs executed. See [preparation and proposed narrow amendment](PAIRED_LEARNING_PREPARATION_20260917.md).
+Do not bypass this gate or claim training readiness. Downstream training/evaluation
+implementation remains pending; new stage-one files are uncommitted.
+
 ## Paired diagnostic complete — 2026-09-17
 
 48/48 trials, exit 0/no OOM, 12/12 original traces bit-exact, all 48 saved-action

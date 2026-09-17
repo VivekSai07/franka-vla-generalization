@@ -51,6 +51,49 @@ because each condition fits its own training subset. Report those limitations.
 - Canonical old datasets remain unchanged. Create a new exclusive dataset root
   and separate scene records. No data or model uploads.
 
+## Approved historical-geometry amendment — 2026-09-17
+
+The user explicitly approved proceeding with stage-one preparation despite exactly
+three legacy episodes lacking full initial cube geometry. This narrowly amends
+the historical duplicate-comparison requirement above, not any other gate:
+
+- Allow only the exact inventory message
+  `datasets/franka_libero_stacking_v1: 2 episodes without full initial geometry`.
+- Allow only the exact inventory message
+  `datasets/franka_libero_stacking_v2: 1 episodes without full initial geometry`.
+- Keep both messages visible. These episodes remain **geometrically unchecked**;
+  no claim of geometric non-overlap with them is possible. Do not infer poses,
+  mark them checked, delete them, or modify old metadata/manifests/artifacts.
+- Continue checking every recoverable historical layout, including all prior
+  paired reset sets and partial runs, and all new layouts against one another.
+  Exclude only the current paired root when rescanning its historical inventory.
+- Record the observed exceptions machine-readably in the historical inventory,
+  new run manifest and validation results, with reason `userapproved20260917`,
+  dataset/count, exact message, `geometry_checked: false`, explicit exclusion
+  from new train/eval, and actual metadata SHA256 values from that inventory.
+  The current existing inventory binds these files:
+  - [v1 metadata](../../../datasets/franka_libero_stacking_v1/meta/info.json):
+    `7561ab94498836e48a26e182f98aa9d59ed94fcb09b2bd5e64b64c5edc18d649`.
+  - [v2 metadata](../../../datasets/franka_libero_stacking_v2/meta/info.json):
+    `67f2bee9ece73ad6a85cf08b40b5a0b901d3e299a3aaf44831dc36fabe26229d`.
+  These are file bindings, **not recovered geometry hashes**. No additional
+  legacy file or episode geometry is claimed checked by this exception.
+- Validation and the final paired readiness gate must reconstruct this same
+  exception policy, verify inventory/manifest/result bindings, and compare a
+  fresh historical inventory including file hashes. Missing/tampered exception
+  evidence, new gaps, changed counts/paths, metadata/replay count mismatches,
+  corrupt/hash-mismatched/nonfinite/unindexed artifacts and all other integrity
+  errors still fail. No broad ignore-missing flag or root exclusion is allowed.
+- All training/evaluation in this design consumes **only the new paired dataset
+  and its reset states**. The three legacy episodes are never candidates for
+  either model's train/held-out subsets or any of the 72 evaluation trials.
+
+This approval permits the narrow code/spec/test preparation, not a launch in this
+implementation session. CPU Docker tests and read-only CLI preflight only; no
+collection, GPU jobs or commits. Main launch follows review. The full 36-demo
+validation and downstream training/evaluation remain pending; configuration
+preflight alone never grants `training_ready`.
+
 ## Training conditions
 
 **Paired:** all 24 training demonstrations, both directions per training layout.
