@@ -1,5 +1,49 @@
 # Paired learning preparation — 2026-09-17
 
+## Current: stopped on expert placement failure
+
+Container `smolvla-paired-collect-36` stopped with record exit 1. Manifest is
+failed, training_ready false. Four successful demonstrations (both directions
+on the first two red/green layouts) were saved; the fifth failed transcript is
+preserved. Full validation did not start; no training is permitted on this root.
+
+Failed episode: `train/red-blue/0/forward`, expert seed 488840035, state
+`states/layout_02.npz`, transcript `transcripts/episode_000004.npz`. Reason:
+not_released_and_stable_one_second, 528 recorded trace ticks, stable streak 0.
+
+Read-only CPU replay of all saved float64 controls reproduced every qpos exactly
+(maximum error 0). Red was grasped and lifted successfully: bilateral contact
+28 grasp ticks, 60 Verify Lift ticks, 90 transport ticks and 60 lowering ticks;
+maximum lift about 23.91 cm. Placement missed, rather than initial grasp failing.
+
+Joint 4 commanded target saturated at its lower bound (interior target
+-3.071799 rad; limit -3.0718) for **202 ticks**, first at tick **233** during
+Move to Place. Saturation counts by phase: transport 54, lowering 58, release
+30, retract 60. No other joint target saturated. At end of lowering the cube
+was 7.52 cm off in XY and 8.71 cm above the destination cube center. The
+time-driven expert still released at tick 347. Final cubes both rested on the
+table, separated 8.09 cm in XY, Z difference effectively zero.
+
+This establishes a placement failure with prolonged joint-limit saturation and
+release before a placement-accuracy gate. It does not prove the layout physically
+unreachable or prove that changing a bound, orientation, duration or posture will
+fix it. The governor correctly prevented out-of-range commands; it does not
+solve constrained Cartesian planning. Do not disable it or relax stack scoring.
+
+SVT preset mapping and MP4 moov messages are encoder notices, not this failure.
+The stop-on-first-failure behavior worked as specified. No retries, resampling,
+deletion or metadata repair were performed. All 18 original reset artifacts and
+the partial run must remain preserved.
+
+Recommended next design decision: bounded same-layout expert reachability/IK
+diagnosis followed by an explicitly versioned placement-feasibility correction,
+including a no-release-until-placement-valid gate. A release gate alone only
+prevents a bad demonstration; it does not solve the stuck approach. Verify any
+correction on this exact failed layout before seeking approval for a fresh batch.
+Do not jump directly to model retraining or a replacement random layout.
+
+Earlier running statements below are historical and superseded.
+
 ## Current: collection launched under approved exception
 
 Main verification reran all **129 CPU tests**, passing in 26.026 seconds.

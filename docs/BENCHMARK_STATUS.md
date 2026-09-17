@@ -1,5 +1,29 @@
 # Franka benchmark: start here
 
+## Placement investigation — 2026-09-17
+
+Bounded CPU IK found joint-valid solutions for all three exact failed placement
+endpoints; no continuous-path feasibility claim. Independently confirmed a
+planner bug: FK returns a mutable frame pose and TaskSpaceTrajectory retains
+it, so later FK calls move its stored start. Minimal reproduction moved t=0
+start 6.13 cm; previous-tick-start reconstruction matches failed trace velocities
+exactly. See [investigation](PLACEMENT_REACHABILITY_20260917.md).
+No source fix, expert rerun, recollection or training was performed. Recommend
+versioned immutable-pose correction and bounded same-layout test first, not
+disabling limits or replacing the layout. Correction requires approval.
+
+## Paired collection stopped — 2026-09-17
+
+`smolvla-paired-collect-36` record exited 1 after four successful saved demos;
+fifth `train/red-blue/0/forward` (seed 488840035) failed placement. Saved-control
+CPU replay qpos error 0: grasp/lift succeeded, joint 4 target lower-bound
+saturation persisted 202 ticks, time-driven release occurred off-target;
+final XY gap 8.09 cm, no stack. Full validator and training never started.
+Preserve all partial artifacts; no retry/resample/resume or loosened criteria.
+See [failure diagnosis](PAIRED_LEARNING_PREPARATION_20260917.md#current-stopped-on-expert-placement-failure).
+Next proposed step is bounded same-layout expert planning diagnosis, not model
+training or automatic recollection. Historical running banners below superseded.
+
 ## Current paired collection — 2026-09-17
 
 User approved the exact three-legacy-episode geometry exception. Fresh 129-test
