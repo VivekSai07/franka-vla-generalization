@@ -1,5 +1,11 @@
 # Pilot tuning evaluation — 2026-09-16
 
+**Completed 2026-09-17:** 120 trials, 4 correct successes (3.33%), no
+intervention-free successes, exit 0/no OOM, unchanged final fingerprints.
+See [full inspection](FULL_EVALUATION_REVIEW_20260917.md) for independently
+replayed outcomes, video checks and the next-step recommendation. Launch notes
+below are historical; no baseline evaluation remains running.
+
 User approved evaluation/inference/rollout after training completion.
 
 ## Fixed protocol

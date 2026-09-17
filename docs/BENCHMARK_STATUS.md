@@ -1,5 +1,23 @@
 # Franka benchmark: start here
 
+## Full tuning evaluation complete — 2026-09-17
+
+**4/120 correct stacks (3.33%), 0/120 without any clipping.** All four successes
+are two-cube scenes (4/40); three/four cubes each 0/40. Container exited 0/no OOM,
+post-run fingerprints unchanged. Independent all-120 saved-action replay matched
+recorded states exactly, all pairwise 30-tick scoring checks agree, 141,121 video
+frames decoded. 110 trials had no bilateral instructed-target contact; first
+contact was wrong-object in 17, requested-target in 9, absent in 94. Eight wrong
+stable ordered-pair stacks correctly failed. See
+[full review and decision tree](FULL_EVALUATION_REVIEW_20260917.md).
+
+Additional inspection found 300 unique training layouts, identical gripper
+transition frames 107/347 in all train demos, and original offline probe blind
+spots. No new collection/training/policy rollouts started. Recommended next:
+bounded paired-instruction comparison, optionally training-scene reproduction,
+then one evidence-selected intervention. Exact follow-up budget needs confirmation;
+final 240 scenes remain sealed. Historical running notes below are superseded.
+
 ## Instruction audit — 2026-09-17
 
 User reported mismatched instruction/video behavior. [Detailed audit](INSTRUCTION_AUDIT_20260917.md)
