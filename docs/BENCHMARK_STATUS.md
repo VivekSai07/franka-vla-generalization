@@ -1,5 +1,17 @@
 # Franka benchmark: start here
 
+## Instruction audit — 2026-09-17
+
+User reported mismatched instruction/video behavior. [Detailed audit](INSTRUCTION_AUDIT_20260917.md)
+confirms wrong-pair terminal stacks in trial_002 (green on red), trial_008
+(green on yellow), trial_035 (yellow on red); all correctly scored failures.
+At the 41-completed snapshot only trial_022 succeeds, correctly red on yellow.
+No label/color/normalizer/scoring mismatch demonstrated; all 221,760 row tasks
+match, saved stats exact, three full saved-action replays exact. Controlled
+fixed-observation instruction swaps suggest weak immediate language sensitivity,
+not a proven sole cause. No training/scoring/source changes or new policy rollouts.
+Authorized 120-scene baseline continues unchanged; final bank remains sealed.
+
 ## Current status and authorization — 2026-09-16
 
 **CURRENT AUTHORIZED JOB:** user approved rollouts. Selected 020000 checkpoint
