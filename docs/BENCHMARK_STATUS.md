@@ -1,5 +1,15 @@
 # Franka benchmark: start here
 
+## Current X-VLA full run — 2026-09-18
+
+Corrected two-update micro4xaccum2preflight PASSED exactFP32model/Adam/prediction
+reload(error0) and data binding. User authorized deleting only failedscratch
+weight/optimizer artifacts for space; all reports and other checkpoints preserved.
+Freshbase5k+final13rollouts job `xvla-single-task-5000-20260918` launched into
+`outputs/train/xvla_single_task_20260918`. See [current launch](XVLA_TRIAL_20260917.md#current-launch--2026-09-18).
+No source/admission edits, duplicates, recipe changes, uploads or extensions
+while running. Prior blocked messages below are historical. No task result yet.
+
 ## Current X-VLA trial — 2026-09-17
 
 User approved bounded X-VLA comparison, then explicit5k micro4xaccum2 fullFP32/

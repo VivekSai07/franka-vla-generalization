@@ -1,5 +1,36 @@
 # X-VLA bounded trial: compatibility passed, batch preflight checker corrected
 
+## Current launch — 2026-09-18
+
+User explicitly authorized corrected preflight and full training. The exact
+micro4/accum2 scratch now passes: two finite updates, FP32 model/Adam reload
+exact, prediction difference0, final data binding passed, no scratch rollouts.
+Container `xvla-single-task-preflight-20260918` exited0/noOOM. Outputs and freshly
+generated CPU admission use new dated names; failed reports were not overwritten.
+47 relevant CPU tests passed before the new admission was generated. Test suites
+ran in separate processes to avoid duplicate test-module name collisions.
+
+The user separately approved deleting ONLY three failed-scratch weight artifacts:
+model.safetensors at checkpoints000001/000002 and optimizer.pt at000002, within
+outputs/train/xvla_single_task_20260917_preflight. They totaled14,074,777,030bytes.
+Failed logs/configs/processors/statistics/reload reference/report remain; old
+recorded hashes are historical and those three files can no longer be verified.
+All SmolVLA checkpoints, public base assets and successful micro1 proof remain.
+This freed space for the fresh scratch; approximately42GiB remained at full launch.
+
+Full run: `xvla-single-task-5000-20260918`, container ID
+`e1f6a4fb3024e62c35e0236de508896be7c67555ed7294ded51cefdd84877993`.
+Output: `outputs/train/xvla_single_task_20260918`.
+Fresh pinned pretrained initialization, unchanged approved5k/micro4xaccum2
+recipe. Final-only13rollouts follow only if all training/reload/integrity gates
+pass. Project is read-only, training outputs writable, network disabled,
+CPU OSMesa rendering/GPU learning; no credentials or dependency changes.
+
+Launch is not completion. Preserve sources and the new CPU admission while
+running; do not start duplicates or automatically extend budgets. No upload.
+The historical blocked/approval-needed statements below are superseded by this
+explicit authorization and measured successful scratch gate.
+
 ## Scope and approved recipe
 
 User approved a bounded model comparison and then explicitly selected the

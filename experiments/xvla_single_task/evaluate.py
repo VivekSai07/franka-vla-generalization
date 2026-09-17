@@ -144,7 +144,7 @@ def verify_final(output,binding):
                 'selected_checkpoint_update':5000,'final_data_binding_passed':True,
                 'strict_reload_fp32_exact':True,'reload_max_absolute_error':0.,'binding':binding}
     if (any(report.get(k) != v for k,v in expected.items())
-            or report['cpu_admission_sha256'] != c.sha256(c.PACKAGE/'CPU_ADMISSION.json')
+            or report['cpu_admission_sha256'] != c.sha256(c.CPU_ADMISSION)
             or report['final_checkpoint_files'] != c.inventory(checkpoint)
             or report['training_stats_sha256'] != c.sha256(output/'training_stats.json')
             or [m['update'] for m in report['checkpoints']] != [1,1000,2000,3000,4000,5000]):

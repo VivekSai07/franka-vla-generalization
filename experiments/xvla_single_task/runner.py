@@ -73,7 +73,7 @@ def train(output,preflight,report):
     report['stage'] = 'admission'
     ds,starts,stats,gate = c.p.prepare_data()
     binding = c.admission(gate)
-    cpu_path = c.PACKAGE/'CPU_ADMISSION.json'
+    cpu_path = c.CPU_ADMISSION
     c.validate_cpu(json.loads(cpu_path.read_text()),binding)
     cpu_hash = c.sha256(cpu_path)
     encoded_stats = statistics_json(stats)
@@ -225,7 +225,7 @@ def reload_final(output,preflight,report):
     if actual.shape != (1,30,8) or not torch.isfinite(actual).all() or not torch.equal(actual,expected):
         raise ValueError('Strict reload prediction must have exactly zero error')
     if (c.admission(gate) != report['binding'] or before != c.inventory(checkpoint)
-            or c.sha256(c.PACKAGE/'CPU_ADMISSION.json') != report['cpu_admission_sha256']
+            or c.sha256(c.CPU_ADMISSION) != report['cpu_admission_sha256']
             or c.sha256(output/'training_stats.json') != report['training_stats_sha256']
             or statistics_json(stats) != json.loads((output/'training_stats.json').read_text())):
         raise ValueError('Post-training data/source/cache/checkpoint/statistics binding failed')
@@ -249,7 +249,7 @@ def main(argv=None):
     torch.set_num_threads(8)
     if args.check:
         # Never rewrite a CPU report to admit new sources after a successful scratch.
-        path = c.PACKAGE/'CPU_ADMISSION.json'
+        path = c.CPU_ADMISSION
         if path.exists():
             raise FileExistsError('Preserve existing CPU admission report')
         binding = c.admission()

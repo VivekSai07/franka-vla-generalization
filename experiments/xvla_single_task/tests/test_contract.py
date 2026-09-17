@@ -156,7 +156,7 @@ class ContractTests(unittest.TestCase):
         torch.nn.Module.__init__(policy)
         policy.config, policy.model = cfg, SimpleNamespace(dim_proprio=20,dim_action=20)
         pre,_ = make_pre_post_processors(
-            cfg,pretrained_path=str(c.SCRATCH/'checkpoints/000002'),
+            cfg,pretrained_path=str(c.ROOT/'outputs/train/xvla_single_task_20260917_preflight/checkpoints/000002'),
             preprocessor_overrides={'device_processor':{'device':'cpu'}})
         sample = frame()
         sample['observation.state'] = torch.arange(9).float()

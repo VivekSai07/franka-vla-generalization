@@ -12,8 +12,9 @@ from experiments.xvla_trial.assets import claim_directory, require_assets, sha25
 ROOT, DATA, CACHE = old.ROOT, old.DATA, old.CACHE
 TRAIN, VAL, TASK, OBS, CAMERAS, SEED = old.TRAIN, old.VAL, old.TASK, old.OBS, old.CAMERAS, old.SEED
 PACKAGE = ROOT/'experiments/xvla_single_task'
-OUTPUT = ROOT/'outputs/train/xvla_single_task_20260917'
+OUTPUT = ROOT/'outputs/train/xvla_single_task_20260918'
 SCRATCH = OUTPUT.with_name(OUTPUT.name+'_preflight')
+CPU_ADMISSION = PACKAGE/'CPU_ADMISSION_20260918.json'
 OLD_RESULT = old.OUTPUT/'result.json'
 OLD_CPU = p.CPU_REPORT
 PRIOR_FILES = {
