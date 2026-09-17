@@ -1,0 +1,1 @@
+"""Isolated bounded-placement experiment. Importing never executes a trial."""

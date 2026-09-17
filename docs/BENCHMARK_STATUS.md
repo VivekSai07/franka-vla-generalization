@@ -1,5 +1,16 @@
 # Franka benchmark: start here
 
+## Bounded placement v3 stopped — 2026-09-17
+
+Approved v3 implemented in isolated package; 168 CPU tests and independent review
+passed. One actual case (episode4) stopped after 197 pick/lift ticks at
+waypoint_branch_jump: max joint displacement0.0697633rad > approved0.05rad.
+Rejected waypoint not executed, no intentional release, no remaining four cases
+or retry. Reference replay qposerror0/fullstatesexact; old hashes unchanged.
+Container exit1/noOOM. See [v3 report](BOUNDED_PLACEMENT_V3_20260917.md).
+Expert placement still unresolved; new adaptive-subdivision design would need
+approval. No collection/training or final-scene rollout follows this failure.
+
 ## Pose-copy correction tested — 2026-09-17
 
 User approved a versioned endpoint-copy fix and one same-layout test. New
