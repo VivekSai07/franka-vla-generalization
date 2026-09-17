@@ -1,5 +1,17 @@
 # Franka benchmark: start here
 
+## Current X-VLA trial — 2026-09-17
+
+User approved bounded X-VLA comparison, then explicit5k micro4xaccum2 fullFP32/
+BF16 recipe+13rollouts. Publicpinnedassets downloaded. Initialmicro1two-updateGPU
+preflight passed exactweights/Adam/predictionreload. Exactbatch4scratch completed
+2updates peak21.33GB, then failed assistant checker on action=None duringreload.
+Checkerfixed with3regressions;47CPUtests passed. Failedscratch/evidence preserved,
+CPUadmission now intentionally stale; nofulltraining orrollouts launched.
+See [X-VLA status and correction](XVLA_TRIAL_20260917.md). Needapprovalforonefresh
+corrected scratch underno-retryagreement; do notoverwritefailureroot or bypass
+admission. SmolVLA/planner/recollection remainpaused.
+
 ## Single-task experiment complete; stop for decision — 2026-09-17
 
 5,000 updates and13rollouts complete, exit0/noOOM. Capability **failed**:
