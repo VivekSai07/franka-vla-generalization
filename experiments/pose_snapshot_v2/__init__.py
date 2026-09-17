@@ -1,0 +1,1 @@
+"""Isolated endpoint-snapshot correction; no old provenance-bound files changed."""

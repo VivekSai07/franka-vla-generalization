@@ -1,5 +1,17 @@
 # Franka benchmark: start here
 
+## Pose-copy correction tested — 2026-09-17
+
+User approved a versioned endpoint-copy fix and one same-layout test. New
+`experiments/pose_snapshot_v2` preserves old bound sources. 129 existing +8 new
+CPU tests passed; exactly one corrected expert invocation on failed episode4
+still failed placement (exit1/noOOM): saturation202->169ticks, finalXY80.95->97.77mm,
+stable0. Alias defect fixed, task not fixed. No retries/recollection/training.
+See [results and external-advice assessment](POSE_FIX_AND_EXTERNAL_ADVICE_20260917.md).
+Next proposed bounded change: joint-limit-aware continuous placement planning
+and measured release gating; design approval required. Existing paired data stays
+failed/not-training-ready. Old source and artifact hashes were preserved.
+
 ## Placement investigation — 2026-09-17
 
 Bounded CPU IK found joint-valid solutions for all three exact failed placement
