@@ -1,5 +1,16 @@
 # Franka benchmark: start here
 
+## Adaptive subdivision numerical stop — 2026-09-17
+
+Approved bounded subdivision executed one saved-state numerical route, no physics.
+It passed the original 0.069763rad continuity rejection, completed93/113 original
+waypoints, then failed lowering IK backtracking at1.707mm position residual
+(required<=1mm), joints1/3atinteriorbounds. Limits unchanged, no retry. 188 tests
+passed and independent review confirmed narrow numerical claims. See
+[v4 result](ADAPTIVE_PLACEMENT_V4_20260917.md). No complete path or dynamic task
+success. Next requires route/posture redesign rather than tolerance relaxation;
+no new collection/training is authorized by this failed gate.
+
 ## Bounded placement v3 stopped — 2026-09-17
 
 Approved v3 implemented in isolated package; 168 CPU tests and independent review
