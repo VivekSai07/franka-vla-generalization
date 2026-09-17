@@ -1,5 +1,10 @@
 # Agent handoff
 
+Current priority: user approved the single-task existing-data capability run
+(fresh5k training then13rollouts); planner development and paired learning are
+paused. Read docs/SINGLE_TASK_20260917.md and current status before any jobs.
+Do not duplicate the run, modify bound sources or expand the approved budget.
+
 Read [docs/BENCHMARK_STATUS.md](docs/BENCHMARK_STATUS.md) first, then the
 design/plan/research it indexes. Read [CLAUDE.md](CLAUDE.md) for architecture;
 its historical command defaults are not current authorization.

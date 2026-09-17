@@ -1,5 +1,16 @@
 # Franka benchmark: start here
 
+## Current priority: single-task capability — 2026-09-17
+
+User paused planner debugging and approved one simplified existing-data run:
+red-on-green/two-cube train0–8, held-out300–303, freshbase5kupdates batch8x4,
+FP32trainable/BF16autocast,500warmup1e-4decay1e-5, final-only13rollouts.
+219CPUtests andtwo-updateGPUpreflight passed, reloaderror0. Detached job
+`smolvla-single-task-5000` launched; see [single-task protocol](SINGLE_TASK_20260917.md).
+No recollection, planner changes, extensions or final-bank evaluation. Do not
+duplicate job or edit its sources. Historical v3/v4 and paired-learning plans
+below are paused, not instructions for further work.
+
 ## Adaptive subdivision numerical stop — 2026-09-17
 
 Approved bounded subdivision executed one saved-state numerical route, no physics.
