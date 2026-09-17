@@ -1,5 +1,18 @@
 # Franka benchmark: start here
 
+## Paired diagnostic complete — 2026-09-17
+
+48/48 trials, exit 0/no OOM, 12/12 original traces bit-exact, all 48 saved-action
+replays and unchanged final fingerprints. Correct stacks: original 2/12,
+reversed 1/12, alternate seed 1/12, seen training scenes 1/12. Four original/
+reversed scene pairs contacted a cube in both runs and chose the same cube;
+eight pairs had no contact in either run. No demonstrated object-choice switch.
+Poor performance on seen scenes rules out an exclusively unseen-layout problem.
+See [results and next design recommendation](PAIRED_DIAGNOSTIC_20260917.md#verified-completion-and-interpretation).
+No job is active from this diagnostic. Proposed small contrastive two-cube
+learning intervention needs exact design/budget approval; no bulk collection,
+training, upload or final-scene evaluation automatically follows completion.
+
 ## Current authorized diagnostic — 2026-09-17
 
 User approved **48 policy rollouts**: 36 same-scene original/reversed/seed-control
