@@ -1,5 +1,59 @@
 # Single-task capability experiment — 2026-09-17
 
+## Completed: capability gate failed
+
+Container `smolvla-single-task-5000` exited **0**, no OOM, from18:06:53 to20:07:11
+UTC (about2h00m18s). All5,000 updates and13rollouts executed. Successful program
+completion is not task success: **seen1/9, held-out0/4**, below approved8/9 and3/4.
+`provisional_capability` is false. No expansion, retry or additional training.
+
+Fresh completion check verified5,000 consecutive finite loss/gradient/LR/time
+records, all six model checkpoint hashes, selected005000 data/source/cache/stats
+bindings, unchanged training-byte inventory and recomputed evaluation summaries.
+Every checkpoint's recorded GPU reload error is0 with exact FP32 trainable weights.
+Completion inspection did not rerun GPU inference or full physical replay.
+
+Final offline fixed-probe results:
+
+| Metric | Train | Held-out |
+|---|---:|---:|
+| Full50 arm MAE(rad) |0.011930|0.079761|
+| First10 arm MAE(rad) |0.009787|0.041201|
+| Gripper binary accuracy |97.96%|92.80%|
+
+These probe sets include frame0 unlike the broad pilot's original validation
+probes; do not directly rank experiments by their aggregate MAE. Held-out
+full-chunk error is approximately6.7times training error in this run.
+
+Recorded-trace stage decomposition:
+- Seen: six trials contacted and lifted the target above5cm; one stacked
+  (episode7), five failed after lifting (episodes0,1,2,4,5).
+- Seen: two had only brief bilateral contact without5cm lift (episodes6,8);
+  one had no target bilateral contact (episode3).
+- Held-out: all four had no target bilateral contact; none exceeded5cm target lift.
+Contact/lift are proxies, not a guarantee of a stable load-bearing grasp. These
+counts are from saved traces, not a new all-object replay audit.
+
+Interpretation: narrowing the task produced substantial seen-scene grasp/lift
+behavior, but did not establish reliable stacking or held-out grasping. Both
+execution beyond the grasp and layout generalization remain problems. Removing
+instruction ambiguity is not sufficient. This was not a matched causal ablation
+of the previous run, so improvement cannot be attributed to task restriction alone.
+
+The fixed-budget stopping rule now applies. Preserve outputs and stop for a
+decision; do not resume planner development, collect more data, extend epochs,
+switch architecture or run additional rollouts automatically. Any next proposal
+must distinguish the seen-scene placement/continuation failure from the held-out
+approach/grasp failure rather than treating both as one language-grounding issue.
+
+Evidence: [training result](../outputs/train/smolvla_single_task_20260917/result.json),
+[evaluation result](../outputs/train/smolvla_single_task_20260917/evaluation/result.json).
+The parent training report retains `task_success_evaluated:false` because it was
+finalized before evaluation and byte-frozen. The separate complete evaluation
+report is authoritative for the13 task outcomes; do not rewrite either artifact.
+
+The launch text below is historical; this job is no longer running.
+
 User approved and requested launch of this fixed experiment. Planner development
 and the blocked paired collection/training program are paused. No new expert
 data, difficult-layout repair or model architecture change is included.

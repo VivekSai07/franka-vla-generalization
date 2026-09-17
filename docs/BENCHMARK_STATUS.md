@@ -1,5 +1,15 @@
 # Franka benchmark: start here
 
+## Single-task experiment complete; stop for decision — 2026-09-17
+
+5,000 updates and13rollouts complete, exit0/noOOM. Capability **failed**:
+seen1/9, held-out0/4 (required8/9,3/4). Six seen trials lifted requested target;
+only one stacked; all four held-out trials lacked target bilateral contact.
+Fresh model/data/source/cache/stat/inventory checks pass; program integrity is
+not task success. See [completion findings](SINGLE_TASK_20260917.md#completed-capability-gate-failed).
+No retries/extensions/newtraining/collection/planner work. The agreed stopping
+rule applies; wait for a decision before starting another experiment.
+
 ## Current priority: single-task capability — 2026-09-17
 
 User paused planner debugging and approved one simplified existing-data run:
