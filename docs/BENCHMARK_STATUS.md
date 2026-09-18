@@ -1,5 +1,13 @@
 # Franka benchmark: start here
 
+## Fixed-layout collector launched — 2026-09-18
+
+Container smolvla-fixed-layout-24-20260918 ID728c7a71c5da started13:31:39Z,
+verified running in pinned offline CPU sandbox.122.22GiB free at preflight.
+Read [launch report](FIXED_LAYOUT_LAUNCH_20260918.md). Startup is not24/24success;
+inspect journal/failure/validation and actual container exit. Do not restart,
+duplicate, edit bound sources/spec or start training. Firstfailure stops.
+
 ## Fixed-layout collection authorized and software verified — 2026-09-18
 
 User authorized safe cache cleanup and collection. Docker build-cache-only cleanup

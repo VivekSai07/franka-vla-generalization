@@ -52,3 +52,12 @@ Output: `outputs/fixed_layout/fixed_layout_20260918`.
 Container name: `smolvla-fixed-layout-24-20260918`.
 Software validation is not evidence of actual expert success. Actual launch
 and episode outcomes must be recorded from container/output state.
+
+## Actual launch
+
+Launched at2026-09-18T13:31:39Z, container
+`728c7a71c5da0bb7c55d603fc9c99f9e9b70e9382b4625b3479c8f478309cb43`.
+Docker confirmed running, exact pinned image, read-only root and networknone.
+Implementation commit5e6e88d; launch preflight measured122.22GiB free,
+valid source/reset, all tested Python hashes unchanged and output absent.
+This records startup only, not completion or any admitted demonstration count.
