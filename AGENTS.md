@@ -1,5 +1,11 @@
 # Agent handoff
 
+Latest direction (2026-09-18): fixed-layout baseline approved conceptually;
+the 12-layout proposal is superseded. Read the fixed-layout spec/current status.
+Exact24-execution data budget review pending; collection also blocked by about
+19 GB free versus30 GiB reserve. No new jobs or artifact deletion authorized
+by this status note; no automatic training or planner restart.
+
 Current direction (2026-09-18): user approved targeted dataset preparation after
 the spatial/HF review. Read the latest BENCHMARK_STATUS section and proposed
 12-demonstration preparation spec. Exact written design review is pending;

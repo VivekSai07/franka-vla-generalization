@@ -1,5 +1,16 @@
 # Franka benchmark: start here
 
+## Fixed-layout direction approved — 2026-09-18
+
+User approved replacing spatial expansion with one fixed arrangement first.
+The [fixed-layout data-stage design](superpowers/specs/2026-09-18-fixed-layout-baseline-design.md)
+uses the exact pilot episode7 reset (expert and both policies previously succeeded),
+proposes24 repeated expert executions (20train/4same-geometry validation), with
+first-three preparation, unchanged snapshot-v2 expert and no automatic training.
+Exact budget/spec review precedes implementation. Only about19 GB free: existing
+30 GiB collection reserve blocks launch. No deletion/reserve reduction authorized.
+The 12-layout proposal below is superseded, not an execution instruction.
+
 ## Targeted dataset preparation proposed — 2026-09-18
 
 User approved the dataset-first direction after the coverage review. The exact
