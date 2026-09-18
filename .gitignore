@@ -32,3 +32,11 @@ cam_check.png
 # Editor
 .vscode/
 *.swp
+
+# Existing machine-local offline setup — preserved on disk, not portable source.
+/Dockerfile.offline
+/Dockerfile.offline.dockerignore
+/compose.offline.yml
+/docker/offline-constraints.txt
+/docker/offline-wheels.sha256
+/docs/RTC_LOCAL_WHEELS.md

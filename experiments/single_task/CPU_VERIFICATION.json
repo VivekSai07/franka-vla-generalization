@@ -1,0 +1,52 @@
+{
+  "date": "2026-09-17",
+  "status": "passed",
+  "docker_image": "sha256:08de1e09200539a26f7564bbf095fb846b8104ba07a72564b8232feb58714abc",
+  "runtime": "runc",
+  "network": "none",
+  "gpu_visible": false,
+  "repository_mount": "read_only",
+  "suites": {
+    "tests": 168,
+    "experiments/adaptive_placement_v4/tests": 20,
+    "experiments/single_task/tests": 31
+  },
+  "total": 219,
+  "review_gap_tests_added": 7,
+  "review_gap_fail_first": {
+    "tests_run": 5,
+    "passing_control_tests": 1,
+    "failing_test_methods": 4,
+    "failed_subtests": 21,
+    "errors": 0,
+    "skips": 0
+  },
+  "review_gap_checks": {
+    "scratch_asset_files_equal_current_cache_inventory": true,
+    "absolute_reload_error_maximum": 0.00001,
+    "scratch_reload_updates_rechecked": [1, 2],
+    "orchestration_save_positions_tested": 8,
+    "legacy_helper_rtol_unchanged": true,
+    "orchestration_tests_use_cpu_stubs_not_actual_training": true
+  },
+  "failures": 0,
+  "errors": 0,
+  "skips": 0,
+  "actual_full_original_replay_gate_passed": true,
+  "actual_training_frames": 4752,
+  "actual_complete_training_starts": 4311,
+  "actual_saved_initializations_restored_without_stepping": 13,
+  "gpu_preflight_executed": false,
+  "training_executed": false,
+  "actual_policy_rollouts_executed": 0,
+  "independent_review": "not_performed_tool_unavailable",
+  "protected_tracked_source_digest_before_and_after": "0dce7b33f871759f3817244a440858379f86d2ce5c6fbf3b08bd1bcd0c69d703",
+  "source_hashes": {
+    "experiments/single_task/contract.py": "5b9a2df5eefdd76a0b4df9d6dfbf93845946ea06685a8520d5896f3d5b5514d9",
+    "experiments/single_task/evaluate.py": "6b6e8e52b2a6adeaf2e7a5d6ad25e31d452850cda6f3e7e8571d5d1e8e62e31a",
+    "experiments/single_task/runner.py": "ef78766c9418b38a086664636a64802f0bc9da498c9f55239ff87d7764eb3bbd",
+    "experiments/single_task/tests/test_contract.py": "b51581ba040b5cac250a3857996209481b9352d85b8177daa4ba3455b013d93f",
+    "experiments/single_task/tests/test_data.py": "1054cf18bb3e22ad58b317ea3cafdbccacdb98f1849d39232d3c4675aaca5fcf",
+    "experiments/single_task/tests/test_runner.py": "e4ca980ca3a684016f1d8005760e8bbac506b16dc215c64c99b53ccc77335dad"
+  }
+}

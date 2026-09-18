@@ -1,0 +1,348 @@
+{
+  "status": "cpu_compatible_gpu_unmeasured",
+  "assets": {
+    "status": "complete",
+    "assets": {
+      "model": {
+        "repo": "lerobot/xvla-base",
+        "revision": "cdb7964e4fe842935d671bfab5a5ebe00a96648c",
+        "files": {
+          "config.json": 5463,
+          "policy_preprocessor.json": 2078,
+          "policy_postprocessor.json": 575,
+          "model.safetensors": 3519073692
+        }
+      },
+      "tokenizer": {
+        "repo": "facebook/bart-large",
+        "revision": "cb48c1365bd826bd521f650dc2e0940aee54720c",
+        "files": {
+          "config.json": 1628,
+          "tokenizer_config.json": 26,
+          "tokenizer.json": 1355863,
+          "vocab.json": 898822,
+          "merges.txt": 456318
+        }
+      }
+    },
+    "files": {
+      "model/config.json": {
+        "bytes": 5463,
+        "sha256": "f0138e2bfcfecf5d356b6cce6814d6078ce40fce0811613ac753dbb1fced593b"
+      },
+      "model/policy_preprocessor.json": {
+        "bytes": 2078,
+        "sha256": "5ec5a0797eb4c782ef6035553cbbdd9c62ac0f96350a5b744ea92fe0ae783f7a"
+      },
+      "model/policy_postprocessor.json": {
+        "bytes": 575,
+        "sha256": "30871f359b5fe3c7e7d4597b5629d022cfe0312820bb9827613ec7c6316b93d1"
+      },
+      "tokenizer/config.json": {
+        "bytes": 1628,
+        "sha256": "1ef73a85a141b1c46315c3c0f72c4dc678842c5d198f939510e6543ac847b17b"
+      },
+      "tokenizer/tokenizer_config.json": {
+        "bytes": 26,
+        "sha256": "5e04eb606e3a1583530a42e36c2a6b6615c86f34fe77e44d9ddeb43ff940931f"
+      },
+      "tokenizer/tokenizer.json": {
+        "bytes": 1355863,
+        "sha256": "847bbeab6174d66a88898f729d52fa8d355fafe1bea101cf960dd404581df70e"
+      },
+      "tokenizer/vocab.json": {
+        "bytes": 898822,
+        "sha256": "06b4d46c8e752d410213d9548eb27a54db70fda0319b6271fb8d59dead5e1cab"
+      },
+      "tokenizer/merges.txt": {
+        "bytes": 456318,
+        "sha256": "1ce1664773c50f3e0cc8842619a93edc4624525b728b188a9e0be33b7726adc5"
+      },
+      "model/model.safetensors": {
+        "bytes": 3519073692,
+        "sha256": "f05bc0fab1c9523d7f5d6b41a651313641ca2227a88822249845da8e20e036c9"
+      }
+    },
+    "metadata": {
+      "model/config.json": {
+        "bytes": 5463,
+        "blob_id": "a11780285ea2a19c5196e2240a58f55eca3172a3",
+        "sha256": null
+      },
+      "model/policy_preprocessor.json": {
+        "bytes": 2078,
+        "blob_id": "2366ff221c419c3779b759c0a09c6be5b8ac2269",
+        "sha256": null
+      },
+      "model/policy_postprocessor.json": {
+        "bytes": 575,
+        "blob_id": "ab48d64c33d98a17cd4411b8fcccfe130879792d",
+        "sha256": null
+      },
+      "model/model.safetensors": {
+        "bytes": 3519073692,
+        "blob_id": "768713b490c2be2289f227265eec8f7f07018902",
+        "sha256": "f05bc0fab1c9523d7f5d6b41a651313641ca2227a88822249845da8e20e036c9"
+      },
+      "tokenizer/config.json": {
+        "bytes": 1628,
+        "blob_id": "79568cb2491a1a4da49f32fb723018158c222712",
+        "sha256": null
+      },
+      "tokenizer/tokenizer_config.json": {
+        "bytes": 26,
+        "blob_id": "be4d21d94f3b4687e5a54d84bf6ab46ed0f8defd",
+        "sha256": null
+      },
+      "tokenizer/tokenizer.json": {
+        "bytes": 1355863,
+        "blob_id": "ad0bcbeb288f0d1373d88e0762e66357f55b8311",
+        "sha256": null
+      },
+      "tokenizer/vocab.json": {
+        "bytes": 898822,
+        "blob_id": "0a39732b2d8be8e493cab3da68b68cc3e28221de",
+        "sha256": null
+      },
+      "tokenizer/merges.txt": {
+        "bytes": 456318,
+        "blob_id": "226b0752cac7789c48f0cb3ec53eda48b7be36cc",
+        "sha256": null
+      }
+    }
+  },
+  "source_hashes": {
+    "data_collection/benchmark.py": "1c11e65b620da8d4aa3b89cba46d1fc832e718f5d6a5615104a4be05d03c10e4",
+    "data_collection/collect_libero_dataset.py": "35209e08f874689e643f01ac5ff3db6ce493ac81a0e17270511e4470448869cf",
+    "data_collection/collect_stacking_dataset.py": "bd2c7c8729d19cb0c44eb97bafe9e18f50d7d35f9faf09bc099656f5d50cf826",
+    "data_collection/collect_v2_dataset.py": "ef1e66ad72c31c97290704281507fb5706b048bb9e9592fba7cbef7365384767",
+    "data_collection/pilot_integrity.py": "8054764e42217243c96439cf68391bff929167b43d8740f523896d5a5152ac0f",
+    "data_collection/pilot_plan.py": "33d34963e300ca87e8b6668a550624ffc3ea065be7de105a76ea1f9ee114dd7c",
+    "data_collection/replay_benchmark.py": "e0edc2ca43cb71e76390dd05ca83bd8374456fab17f375f42a89b7af7e21941e",
+    "data_collection/scene_bank.py": "41473432f149c1513946506b858a99a4a063db10cdece018c0332a091f0b48f8",
+    "data_collection/verify_action_alignment.py": "4eba2f2f76ca2d2759e1fbb79538ad27087d0e1efcb0a5a2d007383fc2d6869d",
+    "experiments/adaptive_placement_v4/diagnostic.py": "4da779e8c45f4fe0c9c59257beb0f5cca377f98f4c7e8dfbc40bbd30b13ca331",
+    "experiments/adaptive_placement_v4/planner.py": "1dab9da2d77893121d3eae7d991f1232bc0ef23d19eb92d512ada5e7f202c086",
+    "experiments/adaptive_placement_v4/tests/test_diagnostic.py": "905326d98484335ab8000cfdbe45f3bde7ce5932cf7996d95f45fc718e902e85",
+    "experiments/adaptive_placement_v4/tests/test_planner.py": "20c52e5463d062963306fa7294b093db52cc74d1b3fa1b5c9859b8ccd67128ce",
+    "experiments/bounded_placement_v3/__init__.py": "e88820985bd6361986a36cea6324b31361c9cf98f1c209f900ee80126b3d1cd7",
+    "experiments/bounded_placement_v3/artifacts.py": "0458525b81710ef48e70ba83631f51f47c4903320f5ec5ad1812de1c82369c07",
+    "experiments/bounded_placement_v3/collision.py": "160a9a305ff5468ce6dfc26bf08bc18e09c22df228766f03458d28a7b776073c",
+    "experiments/bounded_placement_v3/diagnostic.py": "9cdcf25d4d8287bb8002930e9454a0f5781e8ed067f2ef2681b0133ee7099264",
+    "experiments/bounded_placement_v3/expert.py": "e155bdb09905efbd5494ff6dcac78abeb84f0b1c58d30983cc0af94604a933a2",
+    "experiments/bounded_placement_v3/gates.py": "c67ad6fb18a562579e25f9fb99d574327ce58cdbd8c6b2c56a1f1bcec574f14a",
+    "experiments/bounded_placement_v3/path.py": "8c2b4b870da7e84b2d2cc18b44412f25dcf8f8efb5b9edfa7a0cfde5fc27dbdd",
+    "experiments/bounded_placement_v3/prefix.py": "bbae1134bde728ab1494dda71d75e5ee46063e7db565a72383daf995b15a6699",
+    "experiments/bounded_placement_v3/replay.py": "79b53cdc0ec61e008bfac52748b9fee023f167c2aa65e04c29f2ecd1c26bdaec",
+    "experiments/bounded_placement_v3/solver.py": "3d118a11362f7594817148042395ebd235e7973569954978b29627c4bead2e48",
+    "experiments/bounded_placement_v3/verification.py": "d7f97f9832983df7f6f5bafd8a2bb213e3b6e26fa37a855fbdec961190d0007f",
+    "experiments/paired_demonstrations/expert_v1.py": "82d14688b33b0786ad0764fa9ff8d653464d70362216d6d49fc6961059f7a294",
+    "experiments/paired_demonstrations/media.py": "87201e16b13836e12e0ef8a23639745e1200a4d4f83e488277d3d71b7d60d01d",
+    "experiments/paired_demonstrations/plan.py": "80447fd9f3d187d526cda29d85da221a5eb4d14133f44673b3481ca1d553ef12",
+    "experiments/paired_demonstrations/record.py": "c15c31e961b905b47039d61021af359d4d2e499d35606a6e3ebea3b67003ea4d",
+    "experiments/paired_demonstrations/validate.py": "cc2bcecc50281d349614facab6fd842853394dd5856b2f68fe83fec5f18fd142",
+    "experiments/pose_snapshot_v2/__init__.py": "f9d10da22a20a0ad3df932242afc24e2d6415e9a4678fa60c6f5a94e1be4f154",
+    "experiments/pose_snapshot_v2/diagnostic.py": "48d94fbe2255e55d92866e4fefb3f3c763786dc02b5a2c6b1acad0c56aea59bb",
+    "experiments/pose_snapshot_v2/expert.py": "fa8fa89744d327d1b0b463b0c728051f6d25f4ca4789683c94fee481cc13f825",
+    "experiments/pose_snapshot_v2/planner.py": "df4886ee156083cee7a8f0a1a210e746157bfa4b806a343f9fbce19ca51ca8ad",
+    "experiments/single_task/contract.py": "5b9a2df5eefdd76a0b4df9d6dfbf93845946ea06685a8520d5896f3d5b5514d9",
+    "experiments/single_task/evaluate.py": "6b6e8e52b2a6adeaf2e7a5d6ad25e31d452850cda6f3e7e8571d5d1e8e62e31a",
+    "experiments/single_task/runner.py": "ef78766c9418b38a086664636a64802f0bc9da498c9f55239ff87d7764eb3bbd",
+    "experiments/single_task/tests/test_contract.py": "b51581ba040b5cac250a3857996209481b9352d85b8177daa4ba3455b013d93f",
+    "experiments/single_task/tests/test_data.py": "1054cf18bb3e22ad58b317ea3cafdbccacdb98f1849d39232d3c4675aaca5fcf",
+    "experiments/single_task/tests/test_runner.py": "e4ca980ca3a684016f1d8005760e8bbac506b16dc215c64c99b53ccc77335dad",
+    "experiments/xvla_trial/assets.py": "0171ba9a5fc68cf21e74685d1d6728d17af2b88c85e400a5f4cc12a248b21238",
+    "experiments/xvla_trial/contract.py": "7d40bdbee4e3f720a26665104d4a0225c26fbd901c1fe175821e83bf26c9f69f",
+    "experiments/xvla_trial/preflight.py": "9bfa33f3409b9b4304ed923b6965cd0dafe1b8fcc157769ea4316fe6bc7e6dad",
+    "experiments/xvla_trial/tests/test_assets.py": "0989628cffeb72468a49feebd4ecac2059a6c75811c87e9b6cd9927562a1f118",
+    "experiments/xvla_trial/tests/test_contract.py": "8cf670cc874913e19496c38e32c9cce6eb0ef04f166543d0beed3f90c25b958d",
+    "experiments/xvla_trial/tests/test_preflight.py": "6dd7ac32a11e4732dca1a41a6cd38dd6e7aa3094f112a9e4856a425d7409fdb4",
+    "src/controllers/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/controllers/grasp_controller.py": "d9da36d49f8b43f43c81c1a4a26bf58415b0c0cb7056bc0dc62b626cd88470d9",
+    "src/controllers/ik_controller_m2.py": "ba35382a568d8634a3c44244d35cd0b7bf071577243cea7c696342eb60fa06ac",
+    "src/controllers/joint_target_limits.py": "07a6d42afc3fee5efee340cdbabc6d006749c62dc34e25fa20a2d49301d4a91a",
+    "src/planners/rrt.py": "1c21cbfa05d96f07871f57bbbed5c18278cead6cb334c7ba5c0f50bce274437f",
+    "src/planners/trajectory_planner.py": "e4d0428d713e6caf455222e882edc754a3fc619db9d94f8a2667688d07fe4db9",
+    "src/robots/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/robots/franka_panda/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/robots/franka_panda/config.py": "cdd26519d4fc94bafba9b57bc12df0dcf82ff4bb236d41b23e58e1074619408d",
+    "src/robots/franka_panda/robot.py": "ab1e90fe306533887c426f95161104893b66b51dd8e68d5c097d7f237dfdd7ee",
+    "src/scripts/franka_cam_view.py": "fe9b9232f66d0695ce5cf7242935d7370b3f4afe3774391f9edeece23d7a6474",
+    "src/tasks/franka_pp/stack_m2_franka.py": "14c218e77bcde47a7058309da6a9a1d855d8423eb58cd222033e64351d02efad",
+    "src/tasks/franka_pp/stacking_m4_franka.py": "2f35b5d68c278cf29c7e80fb65f8d07a6bc922582803175560d273c5c719d879",
+    "training/pilot_protocol.py": "b4287c047c76edbc59b402cdfd876ba7c4da971919e3a9583421c5940ec046d8",
+    "training/smolvla_pilot.py": "eb23069c0e2de12674497dfdc0383bccb47577427c110766230cf90dcabd1932",
+    "validation/audit_fitting.py": "0c5fabb7f0351772fd4538ca3a8729de6c789a04ed165e3e9439a2bbfefdee33",
+    "validation/audit_precision.py": "71f1931fea6a0bcbcda86e11199a404d9c8dc6f91974ca080b45febc3a87af37",
+    "validation/diagnose_expert_bounds.py": "5b46d3af5bb8ceddd81aea65224b8cf30180477e55fcdcfe9873a4e1de850092",
+    "validation/download_models.py": "ec4f3c90ef1b9dbfa73fc0c9e6b2c9cc7e07a7b03fb291b495f68de98cd0c0f1",
+    "validation/evaluate_pilot.py": "2306a7a8b83331f97cf62aa4b15cc5b8ab15e2810875906160abd232f345543a",
+    "validation/gates.py": "49309a77f156091d277f36c7e4b7187a7de838a329b834d878479117b2fe3c7e",
+    "validation/paired_instruction_probe.py": "1c3faf912e20d242176a9ebe33bda4e62f2d4fd9c0d4ce86e9f8df73f5c1506b",
+    "validation/precision.py": "45ba7b43cf71855880d8971c4808ac55eb58877fc62452c89f2f3a3119e1f9c8",
+    "validation/replanning_probe.py": "e8baee40abbab43b926895f0cb027f18f4614220e843606427b12d40564d302d",
+    "validation/rollout_diagnostics.py": "43837a54f55adef8066d2aff35a94fe780081f400aecee87eb6b8c3d0792997e",
+    "validation/run_pilot.py": "863a2d7b73349658390945878cccc82624c9bfbb262ff49fdb09b4d41afe9f7c",
+    "validation/smolvla_smoke.py": "5f562f621916e9443ee1eb41edcb9ede9758c09db5ea8b5c43e50f47f50b3ce6",
+    "validation/validate_pilot.py": "716c3d986b3cf395310d190099a3227e4a9b2c90d46fcff1353dfa3930bc9a2f",
+    "installed/lerobot/policies/xvla/configuration_xvla.py": "8cbce94ddb34bf43609e2f8a0f8a7b0d2efb40348f36ae0001684d44f7a2d8a5",
+    "installed/lerobot/policies/xvla/modeling_xvla.py": "d8fc952243f764a33157be2518fddd38ebc071d53fa66a5f9dea8d775f787dbf",
+    "installed/lerobot/policies/xvla/configuration_florence2.py": "4801e6759a91ffa9b113491945a115cfeb481f9813a1369b06ece47c1173f9da",
+    "installed/lerobot/policies/xvla/utils.py": "4693b9b0e1db410d05d730d17c2268d91534a887218b5c863a28f26ee3c6bf0e",
+    "installed/lerobot/policies/xvla/processor_xvla.py": "a701e1707afe5384ccc1be5cf8dd903a0f2232fb6ec4b5f860af663117ec6f7c",
+    "installed/lerobot/policies/xvla/__init__.py": "d55239023813d56be288c49063241cd0f390bb0c7ad46f14975ecfe4606d37dd",
+    "installed/lerobot/policies/xvla/modeling_florence2.py": "f9ea930f0d0c1136cf5c3b90d340ad071f1568333ebefbb31851ed489b24d701",
+    "installed/lerobot/policies/xvla/soft_transformer.py": "92da48b75f7ba14583fe2be89f9eb15157361252084ae18643e279648db817cc",
+    "installed/lerobot/policies/xvla/action_hub.py": "86357301855bf28a27e2e7a8a0f6b79264a915786a94a2232b152cff586cf9bf",
+    "installed/lerobot/processor/core.py": "753621e70b54641c34baccd9ad7dc65a29c45850b358e4fa0b55f54f5e9304ad",
+    "installed/lerobot/processor/env_processor.py": "6d6622d69835f0c3c73dd8700d9b9e9af9e50fc4bebaaf3e87322a09d480ba36",
+    "installed/lerobot/processor/policy_robot_bridge.py": "8d00ad845d184570d3071f45ccf3bebfde61412713f7b6d4d94b193f25d094d9",
+    "installed/lerobot/processor/normalize_processor.py": "5b610f5be7d3bcf371d52e3ccca433846c9ef49adca84ba5ef3c54ad8809338e",
+    "installed/lerobot/processor/tokenizer_processor.py": "b3a235e3a5f9839dfff76d670bd9494e4c51ab6da2127cca172bd7ae404a95d5",
+    "installed/lerobot/processor/converters.py": "2b97131f34c4881e93e7b864091637fac8ce1642a6620ed9330e84372e113640",
+    "installed/lerobot/processor/observation_processor.py": "7b3735a82f5c8bc52c119a1480107c3cba5afd612b0ff5c5e55731c27fee9eb3",
+    "installed/lerobot/processor/pipeline.py": "2fc286b0b541ccefd95c373ad67324a6859a951af306171402d08cb3f9061936",
+    "installed/lerobot/processor/migrate_policy_normalization.py": "11c39295c54467617f90624048be8074ece9fbd023e0ba9e39cad9773f0547c7",
+    "installed/lerobot/processor/__init__.py": "a83594d79eb54532e6b0f0d945f422f88a26ce0db23b29cf803f24bf80048b2c",
+    "installed/lerobot/processor/factory.py": "23bd0d47e9baeeeea61b4c622388e844a1039fbf7cb8b2367f6e0975d3bf87fb",
+    "installed/lerobot/processor/delta_action_processor.py": "20618218cc5e409f37bade516ea83d702ae00abe50a4e7bcaaa8b13ce2fc7ac6",
+    "installed/lerobot/processor/gym_action_processor.py": "f8e1e8d8ce44b411f2f371b3baceaaa7f933bbe39680c9fd942895d75fb9bf22",
+    "installed/lerobot/processor/rename_processor.py": "11c4a25620260fc281cdeef50968280c7d4fcfe549cd272edf638763dcc4eca4",
+    "installed/lerobot/processor/batch_processor.py": "305843a6bf98ddda243422b577ea10cbe105be71d08c5611a8aed3b2bb27d832",
+    "installed/lerobot/processor/device_processor.py": "be81c88d9e7ea304ec49a42ea80557feb08b252bec82eb3c9eb8faf148397d33",
+    "installed/lerobot/processor/hil_processor.py": "fd019663ac727a0b9e50398ac8e779c39ca53feade079fb8073b42928eafc721",
+    "installed/lerobot/policies/pretrained.py": "db9188fba4368234c231e84d4733de36e044391ef72592dd1e3a70b6e370a045",
+    "installed/lerobot/optim/optimizers.py": "9bce2b9e5651b9a4f72aecbb8f54ef3a1143021217d261972bd505126e94f97b"
+  },
+  "dataset_fingerprint": "94d3a6a717c74995c7688a835ccccfee2e27754aad14fb3affb1083e60ee4b28",
+  "train_episodes": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "validation_episodes": [
+    300,
+    301,
+    302,
+    303
+  ],
+  "training_rows": 4752,
+  "complete_chunks": 4491,
+  "parameter_count": 879482456,
+  "trainable_count": 879482456,
+  "fp32_parameter_gradient_adam_bytes_lower_bound": 14071719296,
+  "strict_full_checkpoint_load": true,
+  "checkpoint_dtype": "F32",
+  "image_mask": [
+    [
+      true,
+      true,
+      false
+    ]
+  ],
+  "vision_shape": [
+    1,
+    50,
+    1024
+  ],
+  "instruction_tokens": 16,
+  "transformer_sequence_tokens": 244,
+  "training_stats": {
+    "observation.state": {
+      "mean": [
+        0.11119458824396133,
+        -0.04323100671172142,
+        0.03968917578458786,
+        -2.40553617477417,
+        0.011786546558141708,
+        2.357667922973633,
+        0.9109528064727783,
+        0.031021611765027046,
+        0.031021565198898315
+      ],
+      "std": [
+        0.3348329961299896,
+        0.4546470642089844,
+        0.22838419675827026,
+        0.3660109341144562,
+        0.11622539907693863,
+        0.4627957344055176,
+        0.5176278948783875,
+        0.00946764275431633,
+        0.00946893822401762
+      ],
+      "min": [
+        -0.86470627784729,
+        -0.9413277506828308,
+        -0.8901109099388123,
+        -3.0718793869018555,
+        -0.40036043524742126,
+        0.31404727697372437,
+        -0.4169512987136841,
+        0.005596777889877558,
+        0.005536028649657965
+      ],
+      "max": [
+        0.8191470503807068,
+        0.8395815491676331,
+        0.6868225336074829,
+        -0.6463422179222107,
+        0.4300999641418457,
+        3.400355100631714,
+        1.8796672821044922,
+        0.04000911861658096,
+        0.04001292958855629
+      ]
+    },
+    "action": {
+      "mean": [
+        0.11124338209629059,
+        -0.0476403683423996,
+        0.03967142477631569,
+        -2.4198527336120605,
+        0.011760029010474682,
+        2.3732750415802,
+        0.9167240262031555,
+        139.09091186523438
+      ],
+      "std": [
+        0.33535704016685486,
+        0.461140900850296,
+        0.22963359951972961,
+        0.3414568305015564,
+        0.11824879795312881,
+        0.42044344544410706,
+        0.5144639015197754,
+        126.9720458984375
+      ],
+      "min": [
+        -0.8660309910774231,
+        -0.955115795135498,
+        -0.9185360074043274,
+        -3.0717990398406982,
+        -0.4272664487361908,
+        1.4390838146209717,
+        -0.4258665144443512,
+        0.0
+      ],
+      "max": [
+        0.8568788766860962,
+        0.8416918516159058,
+        0.6935976147651672,
+        -1.58341646194458,
+        0.44131287932395935,
+        3.422356605529785,
+        1.886237621307373,
+        255.0
+      ]
+    }
+  },
+  "gpu_executed": false,
+  "optimizer_updates": 0
+}
