@@ -1,5 +1,17 @@
 # Franka benchmark: start here
 
+## Spatial audit and public references — 2026-09-18
+
+User authorized saved-artifact spatial analysis and publicHFmodel/datasetresearch.
+Exact9train/4heldout audit:3pickpositions outsidehull,300insidecombinedhull;
+X-VLA300–302neverclose,303onlyclosesonetickat919despiteearlier10.07mmhandgoal
+approach; seen8alsoapproaches7.9mmwithoutclosing. Sparsecoverage alone insufficient.
+181oldfilesunchanged,26caseschecked,noGPU/policy/physicsjobs. Ethan50demo bowlplate
+pair hasno verifiedperformance;6otherreferences researched withpinnedcitations.
+See [coverage and reference synthesis](DATA_COVERAGE_AND_PUBLIC_REFERENCES_20260918.md).
+No new collection/training authorized. Targetedcoverage plusclosure/placement
+supervision or nativebenchmarkpositivecontrol are proposals, not launched jobs.
+
 ## X-VLA complete; capability gate failed — 2026-09-18
 
 Fresh5k+13rollouts finished exit0/noOOM (~1h46min). Seen4/9correct stacks,
