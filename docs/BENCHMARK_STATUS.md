@@ -1,5 +1,28 @@
 # Franka benchmark: start here
 
+## Fixed-layout collection authorized and software verified — 2026-09-18
+
+User authorized safe cache cleanup and collection. Docker build-cache-only cleanup
+increased free space18GiB→123GiB; no experiment artifacts/images/containers/volumes
+deleted. All64distinct software tests passed, including synthetic24-slot final
+validation/readmission and8corruption checks. See [launch report](FIXED_LAYOUT_LAUNCH_20260918.md).
+Launch target smolvla-fixed-layout-24-20260918,24fixed-reset expert attempts,
+first3gate within24, two saved-control replays/episode,30GiBfloor,3hcap, firstfailure
+stop. No retries/planner restart/automatic training. Old pending notes below are
+historical. Do not duplicate a running collector or modify bound source/spec.
+
+## Fixed-layout implementation verification in progress — 2026-09-18
+
+User approved the exact24-execution data-stage spec and subagent-led code/tests,
+with collection blocked until30GiB free; no training or deletion. Reset contract
+committed106ad6f after20focusedtests. Recorder/validator implemented; review fixes
+cover finite video intervals, actual output-filesystem reserve, real LeRobot
+save/finalize/continue and ordered encoder-input/media binding. A synthetic24-slot
+full admission test is running; do not claim final software or physical gates pass.
+See outputs/implementation/fixed_layout_20260918/progress.md for execution ledger.
+No real expert/collection/physics replay/model job has been launched. Existing
+unrelated container moveitFrancesco must remain untouched. Storage~18GiB free.
+
 ## Fixed-layout direction approved — 2026-09-18
 
 User approved replacing spatial expansion with one fixed arrangement first.

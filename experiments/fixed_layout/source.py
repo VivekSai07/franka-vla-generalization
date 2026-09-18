@@ -1,5 +1,6 @@
 """Pinned pilot reset and read-only preflight. Never step, settle, render or run."""
 import hashlib
+import importlib.metadata
 import io
 import json
 import platform
@@ -145,12 +146,32 @@ def provenance() -> dict:
     paths += [ROOT / name for name in (
         "experiments/paired_demonstrations/expert_v1.py",
         "experiments/paired_demonstrations/media.py", "experiments/paired_demonstrations/plan.py",
+        "experiments/paired_demonstrations/validate.py", "experiments/paired_demonstrations/record.py",
         "experiments/pose_snapshot_v2/expert.py", "experiments/pose_snapshot_v2/planner.py")]
     paths += sorted(Path(__file__).parent.rglob("*.py"))
     files.update({str(path.relative_to(ROOT)): _hash(path) for path in paths})
+    import av
+    media = {}
+    for name in ("av", "pyarrow", "pandas", "datasets", "Pillow", "imageio", "imageio-ffmpeg"):
+        try:
+            media[name] = importlib.metadata.version(name)
+        except importlib.metadata.PackageNotFoundError:
+            media[name] = "not_installed"
+    media["ffmpeg_libraries"] = {key: list(value) for key, value in av.library_versions.items()}
     return {"files": dict(sorted(files.items())), "runtime": runtime_versions(),
+            "media_runtime": media,
             "python": platform.python_version(), "platform": platform.platform(),
             "required_image": IMAGE}
+
+
+def storage_path(output):
+    """Probe the destination itself, or its nearest existing parent before mkdir."""
+    path = Path(output).absolute()
+    while not path.exists():
+        if path.is_symlink():
+            raise ValueError("Dangling output symlink")
+        path = path.parent
+    return path
 
 
 def preflight() -> dict:
@@ -159,12 +180,14 @@ def preflight() -> dict:
     Constructor only: the existing Expert configures MuJoCo/IK but does not run
     a trajectory or renderer. No learning model is constructed or loaded.
     """
-    free = disk_usage(ROOT).free
+    destination = storage_path(OUTPUT)
+    free = disk_usage(destination).free
     report = {"reset_valid": False, "free_bytes": free, "min_free_bytes": MIN_FREE_BYTES,
+              "storage_path": str(destination),
               "storage_eligible": free >= MIN_FREE_BYTES, "output": str(OUTPUT),
               "output_exists": OUTPUT.exists(), "collection_ready": False,
               "scope": "source_and_reset_only_no_steps_no_render_no_expert_execution",
-              "pending": ["Task 2 recorder/validation", "expert/contact/media/replay gates",
+              "pending": ["actual expert/contact/media/replay gates (software implementation is not data admission)",
                           "collection authorization and storage reserve"]}
     try:
         plan = make_plan()

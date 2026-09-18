@@ -1,5 +1,12 @@
 # Agent handoff
 
+Latest authorization (2026-09-18): user requested cache cleanup and collection.
+Build cache removed, free space~123GiB,64distinct software tests pass. Read
+FIXED_LAYOUT_LAUNCH report/currentstatus and inspect container before acting:
+smolvla-fixed-layout-24-20260918 is the unique approved launch.24attempts,
+first3gate,2controlreplays/episode, no retry or automatic training. Preserve
+sources once launched; prior storage-blocked/no-collection notes are historical.
+
 Latest direction (2026-09-18): fixed-layout baseline approved conceptually;
 the 12-layout proposal is superseded. Read the fixed-layout spec/current status.
 Exact24-execution data budget review pending; collection also blocked by about
