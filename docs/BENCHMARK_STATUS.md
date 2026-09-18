@@ -1,5 +1,16 @@
 # Franka benchmark: start here
 
+## Targeted dataset preparation proposed — 2026-09-18
+
+User approved the dataset-first direction after the coverage review. The exact
+first-stage [preparation design](superpowers/specs/2026-09-18-targeted-dataset-preparation-design.md)
+is now written for review: 12 fixed red-on-green demonstrations, separate closure,
+contact/lift and strict placement gates, plus 24 independently frozen future
+evaluation initializations. No new collection/training has started; exact design
+review precedes implementation. No automatic planner restart or budget expansion.
+Historical CPU reports are now [archived](CPU_REPORT_ARCHIVE_20260918.md) unchanged;
+78 focused CPU tests freshly passed. Machine-local setup remains ignored on disk.
+
 ## Spatial audit and public references — 2026-09-18
 
 User authorized saved-artifact spatial analysis and publicHFmodel/datasetresearch.

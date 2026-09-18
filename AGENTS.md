@@ -1,5 +1,11 @@
 # Agent handoff
 
+Current direction (2026-09-18): user approved targeted dataset preparation after
+the spatial/HF review. Read the latest BENCHMARK_STATUS section and proposed
+12-demonstration preparation spec. Exact written design review is pending;
+no new collection/training has started. Planner work remains paused. Historical
+CPU reports are committed as evidence, not fresh authorization to rerun old jobs.
+
 Latest result: X-VLA fresh5k plus13rollouts complete, seen4/9 held-out0/4;
 capability gate failed. Stop for user decision; no automatic budget extensions.
 Read current status/XVLA_TRIAL report; preserve bound source/admission.
