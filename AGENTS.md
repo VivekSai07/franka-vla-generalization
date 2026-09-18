@@ -1,5 +1,10 @@
 # Agent handoff
 
+Latest VERIFIED (2026-09-18): SmolVLAfixed5k+20 COMPLETE18/20, gatePASS;
+X-VLA20/20 baseline preserved. All20Smolgrasp/lift;2placementfailures(trials6/16).
+Read SMOLVLA_FIXED_LAYOUT completion andcurrentstatus. Bothjobs finished; no
+automatic extension/positionvariation/newjobs. Frozen source/spec/data preserved.
+
 Latest (2026-09-18): SmolVLAfixed-layout5k+20comparison APPROVED and RUNNING,
 container smolvla-fixed-layout-5000-20260918 IDb129f9a53d89 afterCPU+GPUgatesPASS.
 Read SMOLVLA_FIXED_LAYOUT launch/currentstatus. X-VLA20/20 remains baseline.

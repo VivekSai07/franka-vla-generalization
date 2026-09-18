@@ -1,5 +1,16 @@
 # Franka benchmark: start here
 
+## Both fixed-layout capability gates passed — 2026-09-18
+
+SmolVLA5000updates+20trials complete exit0/noOOM19:32:07Z (~1h51m):18/20stacks,
+>=18gatePASS. All20grasp/lift; trials6/16releasedwithoutstable stack,40stimeout.
+0armclipping; successfulXY1.08–15.09mm; peak5.58GB. X-VLA remains20/20,
+XY0.63–4.68mm,peak~21.3GB. Same20train/4samegeometryval and20seedresetprotocol,
+but different nativechunks/objectives/batches/trainableparameters: notarchitecture
+onlycomparison or spatialgeneralization. Freshcompletionbindings/metrics/traces
+verified. See [SmolVLA comparison](SMOLVLA_FIXED_LAYOUT_20260918.md).
+No furthertraining/positionvariation/collection authorized; oldrunningnotes historical.
+
 ## SmolVLA fixed-layout comparison launched — 2026-09-18
 
 User approved comparison afterX-VLA20/20. CPUsemanticadmission+GPU2update scratch

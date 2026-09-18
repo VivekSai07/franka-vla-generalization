@@ -1,5 +1,62 @@
 # SmolVLA fixed-layout comparison — 2026-09-18
 
+## Completed: 18/20 stacks, capability gate passed
+
+Container exited0/noOOM at2026-09-18T19:32:07Z, about1h50m52s after launch.
+All5000updates/160000sampledchunks and20final-checkpoint trials completed.
+**18/20successes (90%); agreed>=18/20gate passed.** No retries or extensions.
+
+All20trials achieved sustained closure, bilateral contact and contact-associated
+lift>50mm. Trials6(seed20260923) and16(seed20260933) released but never reached
+30consecutive stable-stack ticks; both timed out at40s. FinalXYerrors42.167mm
+and42.360mm respectively. This identifies later-stage placement failures, not
+an established causal diagnosis of why placement failed.
+
+Successful trials finished in12.30–12.97simulated seconds, finalXY1.084–15.091mm.
+No arm-joint clipping in any trial. Gripper-range clipping changed zero binary
+open/close decisions; adapter clipping is not human assistance.
+
+| Fixed-layout comparison | SmolVLA | X-VLA |
+|---|---:|---:|
+| Successful stacks |18/20|20/20|
+| Capability gate |Passed|Passed|
+| Total parameters |450,046,176|879,482,456|
+| Trainable parameters |99,880,992|879,482,456|
+| Peak GPU allocation (approx.) |5.58GB|21.3GB|
+| Successful final XY error |1.08–15.09mm|0.63–4.68mm|
+| Arm-clipped ticks |0|0|
+| Optimizer updates |5000|5000|
+| Sampled chunks / native length |160000 /50|40000 /30|
+
+One geometry and one training seed per recipe do not establish architecture
+superiority or general reliability. Same rollout seed numbers do not imply
+identical random noise across models. Neither result tests new object positions.
+
+Final offlineprobes:train60full50armMAE0.0096005rad,first10 0.0109410rad,
+gripper96.87%; validation12full50armMAE0.0120813rad,first10 0.0130845rad,
+gripper95.83%. Validation shares geometry, not a spatialholdout. Loss first/last
+200updates mean0.1489025/0.00322122, not directly comparable toX-VLA's objective.
+All six GPU checkpoint reloads had exactFP32weights and predictiondifference0.
+Peaktraining allocation5,576,195,072bytes.
+
+Fresh read-only completion audit passed currentdata/source/cache/CPU/scratch/
+statistics and sixcheckpointinventories, all5000finiteorderedloss/gradientrecords,
+trainingbytesunchanged,20individualJSONrecords, exactinitialintegrationstates,
+recomputed stages andsuccessstreaks. No newGPUinference/physics/video decoding.
+FinalmodelSHA256:
+`9adf89327fb5b0be5cf886edcb8ca18a5dc44f6bfba47f7b73c7a6d716884916`.
+Parenttraining report's unevaluated fields are frozen pre-evaluation history;
+the separate completed evaluation report is authoritative. Never rewrite them.
+
+Evidence: [evaluation](../outputs/train/smolvla_fixed_layout_20260918/evaluation/result.json),
+[successful trial1](../outputs/train/smolvla_fixed_layout_20260918/evaluation/trial_01_seed_20260918/cameras.mp4),
+[failed trial6](../outputs/train/smolvla_fixed_layout_20260918/evaluation/trial_06_seed_20260923/cameras.mp4),
+[failed trial16](../outputs/train/smolvla_fixed_layout_20260918/evaluation/trial_16_seed_20260933/cameras.mp4).
+No further jobs started. Preserve both baselines; any small-position evaluation
+or collection requires a new bounded protocol, not an automatic training extension.
+
+The launch text below is historical; this job is no longer running.
+
 User approved SmolVLA after X-VLA20/20, same dataset and evaluation seeds, before
 introducing position variation. This is a model-plus-recipe comparison, not an
 architecture-only or compute-matched test.
