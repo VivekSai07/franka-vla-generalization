@@ -1,5 +1,57 @@
 # X-VLA bounded trial: compatibility passed, batch preflight checker corrected
 
+## Completed result — 2026-09-18
+
+Container exited0/noOOM. UTC start2026-09-17T22:37:59, finish2026-09-18T00:23:38:
+about1h45m40s including5,000updates, final reload and13rollouts. Training-loop
+elapsed4073seconds (~68minutes); peakallocatedGPU21.34GB. All5,000consecutive
+metric records finite; first/last200mean loss0.643154/0.004094. These are different
+training batches/noise, not fixed validation losses or comparable SmolVLA objectives.
+
+**Capability gate failed: seen4/9 (44.44%), held-out0/4 (0%).** Targets were8/9
+and3/4. Provisional capability false; no extensions or additional jobs.
+
+| Single-task result | SmolVLA | X-VLA |
+|---|---:|---:|
+| Seen correct stacks |1/9|4/9|
+| Seen target contact plus lift above5cm |6/9|8/9|
+| Held-out correct stacks |0/4|0/4|
+| Held-out target bilateral contact |0/4|0/4|
+
+X-VLA successful episode IDs:1,2,4,7. Seen episodes0,3,5,6 contacted and lifted
+red but did not stack correctly; seen episode8 never made bilateral target
+contact. All held-out300–303 lacked bilateral target contact and failed.
+These are saved-trace proxies, not an independently rerun all-object replay.
+Some successful runs required joint clipping (episode1:86ticks; episode7:10ticks);
+ordinary task success must not be described as intervention-free success.
+
+The same13initializations/instructions/scoring are used, but model, loss,
+trainable modules, native chunk length and effective batch/exposure differ.
+This one-seed small sample supports a **better observed seen-scene result for
+the X-VLA recipe**, not statistical superiority or identified causal mechanism.
+No held-out generalization demonstrated. Lower training loss alone is not a
+reason to extend the budget automatically.
+
+Fresh completion audit passed final checkpoint/config/data/source/cache/stats
+admission, all six checkpoint file inventories, unchanged training-byte inventory
+and recomputed task summaries. Recorded strict finalFP32weight reload and prediction
+agreement passed(error0). Evaluation's own final binding passed. Parent training
+report retains rollouts0 because it was finalized before evaluation; the separate
+evaluation report is authoritative for13completedrollouts. No reports rewritten.
+
+Evidence: [training](../outputs/train/xvla_single_task_20260918/result.json),
+[evaluation](../outputs/train/xvla_single_task_20260918/evaluation/result.json).
+No fresh GPU inference, optimization or full physics replay was run for this
+completion inspection. Final benchmark scenes remain untouched.
+
+Decision boundary: retain X-VLA as a candidate, but do not scale task complexity
+or claim success. If further work is approved, first distinguish held-out spatial
+coverage/perception from the remaining seen-scene placement failures using these
+saved traces; new collection or longer training is not yet a verified remedy.
+Stop under the agreed budget; no training extension, recollection or upload.
+
+The following launch/preflight sections are historical.
+
 ## Current launch — 2026-09-18
 
 User explicitly authorized corrected preflight and full training. The exact

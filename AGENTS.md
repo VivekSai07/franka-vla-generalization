@@ -1,8 +1,8 @@
 # Agent handoff
 
-Latest authorization: X-VLA fresh5k single-task training plus13final-checkpoint
-rollouts launched2026-09-18 after corrected GPUpreflight PASS. Read current
-status/XVLA_TRIAL report; do not duplicate jobs or edit bound source/admission.
+Latest result: X-VLA fresh5k plus13rollouts complete, seen4/9 held-out0/4;
+capability gate failed. Stop for user decision; no automatic budget extensions.
+Read current status/XVLA_TRIAL report; preserve bound source/admission.
 Older stop/paused experiment notes below are historical for those experiments.
 
 Current priority: single-task5k training and13rollouts completed; capability

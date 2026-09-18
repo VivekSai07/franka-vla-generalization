@@ -1,5 +1,16 @@
 # Franka benchmark: start here
 
+## X-VLA complete; capability gate failed — 2026-09-18
+
+Fresh5k+13rollouts finished exit0/noOOM (~1h46min). Seen4/9correct stacks,
+held-out0/4; provisional8/9+3/4gate failed. Eightseen trials contacted/lifted
+target, fourstacked; allheldoutlackbilateraltargetcontact. Freshdata/source/cache/
+checkpoint/stats/inventorychecks passed, all5kmetricsfinite, recordedreloaderror0.
+See [final X-VLA comparison](XVLA_TRIAL_20260917.md#completed-result--2026-09-18).
+Better observed seen performance thanSmolVLA1/9, noheldoutgain; recipeconfounds
+prevent architecture-onlyclaim. Job stopped normally; no automaticextensions,
+collection, planner work, uploads or final-scene rollout. Awaituserdecision.
+
 ## Current X-VLA full run — 2026-09-18
 
 Corrected two-update micro4xaccum2preflight PASSED exactFP32model/Adam/prediction
