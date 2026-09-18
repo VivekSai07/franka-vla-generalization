@@ -1,5 +1,11 @@
 # Agent handoff
 
+Latest VERIFIED result (2026-09-18): X-VLAfixed-layout5000+20finished exit0,
+**20/20stable stacks**,18/20capabilityPASS. Data/source/checkpoint bindings and
+savedtrace reset/stages verified. Read XVLA_FIXED_LAYOUT completion/currentstatus.
+No automaticSmolVLA/randomization/newjobs authorized. Older running notes below
+are historical; preserve all frozen artifacts and bound source/spec.
+
 Latest (2026-09-18): X-VLAfixed-layout5k+20eval APPROVED and launched afterCPU
 admission+GPU2updates exactreload. Containerxvla-fixed-layout-5000-20260918,
 ID016ab837e837. Read XVLA_FIXED_LAYOUT report/currentstatus; no duplicatelaunch,

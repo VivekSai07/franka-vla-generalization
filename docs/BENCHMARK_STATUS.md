@@ -1,5 +1,15 @@
 # Franka benchmark: start here
 
+## X-VLA fixed-layout capability passed — 2026-09-18
+
+Full5000updates+20trials complete, exit0/noOOM16:56:38Z (~1h43m).
+**20/20correct stable stacks**, above18/20gate; samefixedreset20distinct policy
+seeds.0armclipping, finalXY0.628–4.682mm. Freshcompletion audit verifies all
+training/checkpoint/data/source bindings and20savedtrace stages/reset/streaks.
+See [completed result](XVLA_FIXED_LAYOUT_20260918.md). Not spatialgeneralization.
+No automaticSmolVLA, furthertraining/evaluation/collection/extension launched.
+Older running notes below superseded; preserve frozen source/spec/artifacts.
+
 ## X-VLA fixed-layout training launched — 2026-09-18
 
 User approved freshbase5k then20same-reset trials,18/20capabilitygate. CPUdata

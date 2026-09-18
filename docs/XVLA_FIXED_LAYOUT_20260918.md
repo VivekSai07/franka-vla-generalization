@@ -1,5 +1,49 @@
 # X-VLA fixed-layout training — 2026-09-18
 
+## Completed: 20/20 fixed-layout stacks
+
+Full container exited0/noOOM at2026-09-18T16:56:38Z, approximately1h42m31s
+after launch. All5000optimizer updates and20final-checkpoint trials completed.
+**20/20successes; capability gate>=18/20 passed.** No budget extension/retries,
+checkpoint selection changes or automaticSmolVLA run.
+
+All20distinct seeds20260918..20260937 used the same exact saved integration reset.
+Each saved trace has contact/lift/release and30terminal released-stack ticks.
+Completion times12.23–12.83simulated seconds; finalXYerror0.628–4.682mm.
+Arm-joint clipping:0ticks in every trial. Gripper commands were clipped to their
+allowed range; this is adapter processing, not human assistance. Historical
+`unassisted_success` fields count any adapter clipping, not human intervention.
+
+Final offline probes (not success rates):
+
+| Split | Probes | Full30 arm MAE(rad) | First10 MAE(rad) | Gripper binary agreement |
+|---|---:|---:|---:|---:|
+| Train20episodes |60|0.0064924|0.0091442|96.28%|
+| Validation4episodes |12|0.0082725|0.0121941|92.78%|
+
+Fresh CPU completion audit verified current full dataset/source/cache/CPU/scratch/
+statistics bindings, final configuration and six checkpoint file inventories;
+all5000loss/gradient records finite and ordered; training bytes unchanged during
+evaluation; all20episode reports agree with aggregate counts, exact initial
+integration state, recomputed stage metrics and terminal stack streaks. Strict
+GPU final reload had recorded prediction difference0. No additional policy query,
+physics replay or video decode was performed by this completion audit.
+
+Evidence: [evaluation report](../outputs/train/xvla_fixed_layout_20260918/evaluation/result.json),
+[offline probes](../outputs/train/xvla_fixed_layout_20260918/evaluation/offline_probes.json),
+[first rollout video](../outputs/train/xvla_fixed_layout_20260918/evaluation/trial_01_seed_20260918/cameras.mp4).
+The parent training result's rollouts0 is its frozen pre-evaluation state; the
+separate evaluation report records all20completed trials. Do not rewrite either.
+
+Interpretation: this establishes successful learned stacking under the fixed
+arrangement and sampled policy seeds. It does not establish arbitrary-layout
+performance, language grounding, or general reliability from20samples. Fixing
+layout coincided with changed demonstration count/expert; not a pure causal
+ablation of randomization. Recommended next comparison is SmolVLA on this same
+dataset/reset/seeds, separately approved; do not expand randomization yet.
+
+Earlier launch text below is historical; no training job remains running.
+
 ## Authorized and launched
 
 User approved X-VLAfirst5000updates followed by20fixed-reset sampling trials,
