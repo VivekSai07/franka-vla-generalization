@@ -124,7 +124,8 @@ containers. Preserve secrets; do not read environment credential files.
 - [x] Existing source episode and both policy success records inspected read-only.
 - [x] Scope separated from spatial generalization and future training.
 - [x] Self-review: budgets, seeds, split, duplicates and stop rules explicit.
-- [ ] User review of this exact written data-stage budget and implementation mode.
+- [x] User approved exact written scope and subagent-led implementation/testing;
+   collection remains blocked until30GiB free. No training or deletion approved.
 - [ ] Implementation plan, tests and independent source review.
 - [ ] Collection storage gate: currently blocked (about19 GB free on host).
 - [ ] Actual expert/collection/replay gates.
