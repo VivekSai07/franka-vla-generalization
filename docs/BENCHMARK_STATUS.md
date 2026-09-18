@@ -1,5 +1,15 @@
 # Franka benchmark: start here
 
+## Baseline archive/publication update — 2026-09-18
+
+Both historicalbaselines imported toPRIVATE W&Bproject under user-approvedentity
+vivekchaitanya07-university-of-stuttgart:5000updates+20trials each, systemstatsOFF
+(no fabricatedpastGPUutil). PortableCPUverifiedreleasecopies ready. HFprivateSmol
+repo created but weights blockedHTTP407LFSproxy; no modelcommit, XVLAnotattempted.
+See [publication report](BASELINE_PUBLICATION_20260918.md).72publicationtestsPASS.
+Next [smallpositionstudy](superpowers/specs/2026-09-18-local-position-probe-design.md)
+is proposed68trials, notlaunched; no training/newcollection. FutureliveW&Bhookpending.
+
 ## Both fixed-layout capability gates passed — 2026-09-18
 
 SmolVLA5000updates+20trials complete exit0/noOOM19:32:07Z (~1h51m):18/20stacks,
