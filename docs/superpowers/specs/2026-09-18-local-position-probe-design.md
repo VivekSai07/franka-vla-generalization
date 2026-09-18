@@ -1,7 +1,8 @@
 # Local position sensitivity — proposed next study
 
-Status: orderedgoal approved; exactbudget/design below proposed for review.
-No code, resetgeneration, policyrollout ortraining executed for this study.
+Status: exact68-trial design approved by user on2026-09-19. Implement/test then
+launch after admission and independentreview. No newtraining/collection authorized;
+varieddata collection is conditional on measuring and reviewing this boundary.
 
 Question: do frozen final5000SmolVLA/X-VLA checkpoints tolerate small object
 positionchanges around their selected fixedarrangement, without retraining?
@@ -18,7 +19,8 @@ positionchanges around their selected fixedarrangement, without retraining?
  thenX-VLA fixedbeforelaunch. RecordsharedGPUload iflive telemetry added.
 -Use no learnerupdates/expertcollection or alternatecheckpoint. Saveeveryvideo/
  trace/outcome, report eachcondition and graspvsplacement stages, not justaggregate.
--First replicate unchangedcontrol for eachmodel/seed against priorsavedtrace;
+-First replicate unchangedcontrol for eachmodel/seed against priorsavedtrace
+ before that model's perturbedconditions (SmolVLA block thenX-VLA block);
  a reproducibilitymismatch stops study beforeperturbations, no tolerancerelaxation.
 
 ## Reset intervention
