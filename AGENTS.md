@@ -1,5 +1,11 @@
 # Agent handoff
 
+Latest verified result (2026-09-18): fixed-layout collector COMPLETED exit0,
+24/24expert demos and48/48control replays pass;20train/4same-geometryvalidation,
+no exactduplicates, seal/provenance/reset freshly verified. Read currentstatus
+and FIXED_LAYOUT_LAUNCH completion section. No training launched or automatically
+authorized. Preserve bound code/spec/data; older running/blocker banners historical.
+
 Latest authorization (2026-09-18): user requested cache cleanup and collection.
 Build cache removed, free space~123GiB,64distinct software tests pass. Read
 FIXED_LAYOUT_LAUNCH report/currentstatus and inspect container before acting:

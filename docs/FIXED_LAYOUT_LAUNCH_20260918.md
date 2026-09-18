@@ -1,5 +1,35 @@
 # Fixed-layout collection — 2026-09-18
 
+## Completed — all 24 demonstrations admitted
+
+Container exited0/noOOM at2026-09-18T14:33:22Z, about1h01m43s after launch.
+Exactly24started/24admitted attempts, first-three preparation passed, no failure
+markers, retries or substitutions. Final validator reports `training_ready:true`.
+
+- 24episodes /12,672frames /30Hz; train0-19, validation20-23.
+- Both camera streams fully decoded:25,344frames.
+- 48/48saved-control replays passed; maximum reference full-qpos drift0,
+  maximum policy-state drift across replays0.00013670161220646904 (<1e-3).
+- Minimum across episodes:240consecutive closed ticks,238bilateral-contact ticks,
+  0.2013046763m contact-associated lift,180final stable-stack ticks.
+- No exact duplicate state/action sequences. All24initial full-qpos vectors match
+  the same pinned source reset. This is repeated fixed-layout data, not spatial
+  holdout/generalization or learned-policy success.
+- Dataset files136,482,012bytes; complete evidence root1,976,474,588bytes.
+  Filesystem still approximately121GiB free.
+
+Fresh read-only completion audit recomputed the entire file fingerprint, matched
+current source/runtime provenance and saved source reset, checked all24initial
+qpos and48unique successful replay records. It did not repeat media decoding,
+physics replays, expert execution or model inference; those completed in the run.
+
+Seal: `403b8ec2d16094863faf611a13768e770dbf19a363c477f0f509fb67d8d8fba5`.
+Evidence: [validation](../outputs/fixed_layout/fixed_layout_20260918/validation.json),
+[journal](../outputs/fixed_layout/fixed_layout_20260918/journal.jsonl),
+[seal](../outputs/fixed_layout/fixed_layout_20260918/seal.json).
+No training launched. Future training must use20train episodes only for statistics;
+the four validation episodes share geometry and cannot measure spatial generalization.
+
 ## Authorization and storage cleanup
 
 User authorized disposable cache cleanup and collection after restoring storage.

@@ -1,5 +1,15 @@
 # Franka benchmark: start here
 
+## Fixed-layout collection complete — 2026-09-18
+
+Collector exited0/noOOM at14:33:22Z (~1h02m):24/24expert demonstrations admitted,
+48/48control replays pass,12,672rows,25,344decoded camera frames,20train/4same-layout
+validation, no exactduplicates. Fresh complete-file seal/source/runtime/reset audit
+passes; source/spec unchanged. See [completion report](FIXED_LAYOUT_LAUNCH_20260918.md).
+Disk~121GiB free. Dataset readiness is NOT learned-policy success or spatial
+generalization. No training/retry/newcollection automatically authorized.
+Historical running entries below are superseded; do not relaunch the collector.
+
 ## Fixed-layout collector launched — 2026-09-18
 
 Container smolvla-fixed-layout-24-20260918 ID728c7a71c5da started13:31:39Z,
