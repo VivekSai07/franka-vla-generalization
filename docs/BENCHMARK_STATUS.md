@@ -1,5 +1,14 @@
 # Franka benchmark: start here
 
+## Bounded position probe launched — 2026-09-19
+
+User approved exact68trial frozenmodel evaluation.35CPUtests+real17resetnonstep
+preflightPASS. Containerfranka-local-position-probe-68-20260919 ID996f301e2e04
+started2026-09-18T22:34:00Z. See [study launch](LOCAL_POSITION_PROBE_20260919.md).
+SmolthenXVLA controlsbyteexact firstpermodel,5/10mm pickORplaceXYoffsets,2seeds.
+No training/collection/retry/extension; preserveboundsources; no outcomeclaimyet.
+UsercancelledcheckpointGittransfer and will downloadportablepackages onWindows.
+
 ## Baseline archive/publication update — 2026-09-18
 
 Both historicalbaselines imported toPRIVATE W&Bproject under user-approvedentity

@@ -1,5 +1,11 @@
 # Agent handoff
 
+Latest2026-09-19: approved68triallocalpositionprobe RUNNING, container
+franka-local-position-probe-68-20260919 ID996f301e2e04. Readcurrentstatus and
+LOCAL_POSITION_PROBE launchreport. Frozenmodelsevalonly, controlsfirstpermodel;
+no newtraining/collection/retry/sourceedits. UsercancelledcheckpointGitcommit,
+directWindowsdownloadpublicationpackages instead. Olderstatebanners historical.
+
 Latest VERIFIED (2026-09-18): SmolVLAfixed5k+20 COMPLETE18/20, gatePASS;
 X-VLA20/20 baseline preserved. All20Smolgrasp/lift;2placementfailures(trials6/16).
 Read SMOLVLA_FIXED_LAYOUT completion andcurrentstatus. Bothjobs finished; no
