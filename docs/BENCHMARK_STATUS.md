@@ -1,5 +1,13 @@
 # Franka benchmark: start here
 
+## SmolVLA fixed-layout comparison launched — 2026-09-18
+
+User approved comparison afterX-VLA20/20. CPUsemanticadmission+GPU2update scratch
+PASS (bothreloaderrors0,FP32Adam exact),88CPUtests. Fullfreshbase5000then20same-reset
+seeds launched17:41:15Z,containersmolvla-fixed-layout-5000-20260918 IDb129f9a53d89.
+Read [SmolVLA launch](SMOLVLA_FIXED_LAYOUT_20260918.md). No boundcode/spec/plan edits,
+duplicate/resume/extension, newpositions or automaticjobs. No resultyet.
+
 ## X-VLA fixed-layout capability passed — 2026-09-18
 
 Full5000updates+20trials complete, exit0/noOOM16:56:38Z (~1h43m).

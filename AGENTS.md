@@ -1,5 +1,11 @@
 # Agent handoff
 
+Latest (2026-09-18): SmolVLAfixed-layout5k+20comparison APPROVED and RUNNING,
+container smolvla-fixed-layout-5000-20260918 IDb129f9a53d89 afterCPU+GPUgatesPASS.
+Read SMOLVLA_FIXED_LAYOUT launch/currentstatus. X-VLA20/20 remains baseline.
+Do not modify boundnewsource/README/spec/plan, duplicate/resume/extend, or vary
+positions. No completionclaim until actualreports checked. Oldnotes historical.
+
 Latest VERIFIED result (2026-09-18): X-VLAfixed-layout5000+20finished exit0,
 **20/20stable stacks**,18/20capabilityPASS. Data/source/checkpoint bindings and
 savedtrace reset/stages verified. Read XVLA_FIXED_LAYOUT completion/currentstatus.
