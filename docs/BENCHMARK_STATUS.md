@@ -1,5 +1,15 @@
 # Franka benchmark: start here
 
+## X-VLA fixed-layout training launched — 2026-09-18
+
+User approved freshbase5k then20same-reset trials,18/20capabilitygate. CPUdata
+admission andGPU2update scratch passed:FP32weights+Adam exactreload,prediction0,
+10560trainrows/9980starts,20train-onlystats. Fullcontainer
+xvla-fixed-layout-5000-20260918 ID016ab837e837 started15:14:07Z, verifiedrunning.
+See [training launch](XVLA_FIXED_LAYOUT_20260918.md). Do not edit boundsource/spec,
+duplicate/resume/extend jobs, or launchSmolVLAautomatically. Old no-trainingnotes
+below are historical; collectiondata remains immutable. No policy result yet.
+
 ## Fixed-layout collection complete — 2026-09-18
 
 Collector exited0/noOOM at14:33:22Z (~1h02m):24/24expert demonstrations admitted,

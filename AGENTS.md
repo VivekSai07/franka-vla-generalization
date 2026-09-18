@@ -1,5 +1,11 @@
 # Agent handoff
 
+Latest (2026-09-18): X-VLAfixed-layout5k+20eval APPROVED and launched afterCPU
+admission+GPU2updates exactreload. Containerxvla-fixed-layout-5000-20260918,
+ID016ab837e837. Read XVLA_FIXED_LAYOUT report/currentstatus; no duplicatelaunch,
+boundsourceedits, resume/extensions, uploads or automaticSmolVLA. Trainingpending,
+not completed. Newfixeddata20train/4samegeometryval; alloldartifacts preserved.
+
 Latest verified result (2026-09-18): fixed-layout collector COMPLETED exit0,
 24/24expert demos and48/48control replays pass;20train/4same-geometryvalidation,
 no exactduplicates, seal/provenance/reset freshly verified. Read currentstatus
