@@ -1,5 +1,14 @@
 # Franka benchmark: start here
 
+## Local varied60 collection launched — 2026-09-19
+
+Exactspecapproved;85workerCPUtests andmain22newtests+77nonstepinitializationsPASS.
+Collectorfranka-local-varied-60-20260919 ID3eca3bf4aedc started09:07:12Z, confirmed
+running pinnedCPUofflineimage.48train(40varied8center)/12val,24reserved evalscenes,
+first12gatewithin60,120replaysmax,40GiBstart30floor6hcapfirstfailurestop.
+See [launch](LOCAL_VARIED_COLLECTION_20260919.md). No training or policybankruns.
+No duplicate/retry/resume/boundsourceedits. Startup only, notcompletion.
+
 ## Local varied-data direction approved — 2026-09-19
 
 User approved proceeding toward local varied data, not broad workspace randomization.

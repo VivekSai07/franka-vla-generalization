@@ -1,5 +1,11 @@
 # Agent handoff
 
+Latest2026-09-19: localvaried60collection APPROVED and RUNNING CPUcontainer
+franka-local-varied-60-20260919 ID3eca3bf4aedc. Read currentstatus and
+LOCAL_VARIED_COLLECTION launch.48train12val,24evalinitializations frozenunrun,
+first12gate,firstfailurestop,no retries/resume/newtraining. Do not edit bound
+newsource/README/spec/plan/oldhelpers. Earlierproposedstatus historical.
+
 Latest VERIFIED2026-09-19: localposition68trials COMPLETEexit0,4controlsbyteexact,
 Smol19/32shiftedvsXVLA31/32. SeeLOCAL_POSITION_PROBE completion/currentstatus.
 Freshbindings/bank/traces audited; telemetry1315samples. No runningprobe/retry.
