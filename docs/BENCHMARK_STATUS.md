@@ -1,5 +1,16 @@
 # Franka benchmark: start here
 
+## Local position screen completed — 2026-09-19
+
+68/68trials complete exit0/noOOM00:24:37Z (~1h51m);4controltracesbyteexact.
+Shiftedscenes only:SmolVLA19/32(10placement+3grasp failures),X-VLA31/32(1placement).
+5mm:9/16vs16/16;10mm:10/16vs15/16. Two development-selectedseeds/condition,
+oneknownSmolfailingseed: descriptive sensitivity, not90%→59%populationclaim or
+clean distanceboundary. Fullsource/bank/result/traceauditPASS;1315telemetrysamples,
+0queryerrors, sharedGPUmetrics notperrunattribution. See
+[complete results and proposed local-data next step](LOCAL_POSITION_PROBE_20260919.md).
+No newcollection/training authorized by completion. Older runningnotes historical.
+
 ## Bounded position probe launched — 2026-09-19
 
 User approved exact68trial frozenmodel evaluation.35CPUtests+real17resetnonstep

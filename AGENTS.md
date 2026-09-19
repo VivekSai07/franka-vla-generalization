@@ -1,5 +1,11 @@
 # Agent handoff
 
+Latest VERIFIED2026-09-19: localposition68trials COMPLETEexit0,4controlsbyteexact,
+Smol19/32shiftedvsXVLA31/32. SeeLOCAL_POSITION_PROBE completion/currentstatus.
+Freshbindings/bank/traces audited; telemetry1315samples. No runningprobe/retry.
+Recommendboundedlocalvarieddata afterexactdesign/expertgates; no newcollection
+ortraininglaunched. Oldoffsetconditions nowdevelopmentprobes, notfutureholdout.
+
 Latest2026-09-19: approved68triallocalpositionprobe RUNNING, container
 franka-local-position-probe-68-20260919 ID996f301e2e04. Readcurrentstatus and
 LOCAL_POSITION_PROBE launchreport. Frozenmodelsevalonly, controlsfirstpermodel;
