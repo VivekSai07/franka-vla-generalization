@@ -1,5 +1,15 @@
 # Franka benchmark: start here
 
+## Local varied-data direction approved — 2026-09-19
+
+User approved proceeding toward local varied data, not broad workspace randomization.
+Exact [data-stage design](superpowers/specs/2026-09-19-local-varied-data-design.md)
+proposed for review:48train(40varied+8center),12validation,24fresh reserved evaluation
+scenes, independent cubeXY offsets within10mm/axis; first12preparation counted
+within60expert attempts,120controlreplaysmax, firstfailurestop. No newcode/jobs/data
+for this stage yet. Approximately59GiBfree. No automatictraining/collectionlaunch
+before exactbudget review. Portablemodeldownloadfolders reverified; no Gitbinaries.
+
 ## Local position screen completed — 2026-09-19
 
 68/68trials complete exit0/noOOM00:24:37Z (~1h51m);4controltracesbyteexact.
