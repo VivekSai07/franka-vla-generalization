@@ -5,8 +5,8 @@ Date: 2026-09-19
 ## Status, purpose and alternatives
 
 The user approved moving toward local varied data after the 68-trial sensitivity
-screen. This document proposes the exact data budget and gates for written review.
-No new data, scenes, code or policy jobs have been generated for this stage.
+screen. The user approved this exact budget and collection on2026-09-19.
+Implementation/tests and independent review precede launch; no automatic training.
 
 Goal: produce a verified dataset covering a small neighborhood of the successful
 fixed layout, then separately test whether learning from it improves local robustness.
@@ -190,6 +190,6 @@ filtered; failures must remain in the denominator.
 - [x] Fix counts, splits, layout method, preparation order, reset and stop semantics.
 - [x] Self-review: distinguish diagonal range, same-domain validation, data-volume
   confounding, no automatic training and truthful telemetry. No visual UI needed.
-- [ ] User review of exact60-demo/24-scene/six-hour data-stage specification.
+- [x] User approved exact60-demo/24-scene/six-hour data-stage specification and collection.
 - [ ] Implementation plan, tests, independent review and actual resource admission.
 - [ ] First12preparation, full60collection and120replays.
