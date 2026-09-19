@@ -143,13 +143,31 @@ def varied_entry(layout_id, snapshots, bank):
                 scene_hash=entry['scene_hash'], offsets_m=entry['layout']['offsets_m'])
 
 
-def fixed_parity_entry(binding):
-    """Source-reset entry: same bytes and scene hash as the fixed-layout baseline."""
+def fixed_parity_entry(binding, reset_sha256=None):
+    """Source-reset entry: same initial state and scene hash as the fixed-layout baseline."""
     if c.sha256(c.PARENT/'source.npz') != binding['source_reset_sha256']:
         raise ValueError('Local-varied source reset changed')
     return dict(episode_index=7, source_episode_index=7, pick='red', place='green',
-                colors=['red', 'green'], file='source.npz', sha256=binding['source_reset_sha256'],
+                colors=['red', 'green'], file='reset.npz',
+                sha256=reset_sha256 if reset_sha256 is not None else binding['source_reset_sha256'],
                 scene_hash=SOURCE_SCENE_SHA256)
+
+
+def _materialize_fixed_parity_reset(mode_dir, binding):
+    """Persist single-timestep reset extracted from source.npz for restore_scene consumption."""
+    if c.sha256(c.PARENT/'source.npz') != binding['source_reset_sha256']:
+        raise ValueError('Local-varied source reset changed')
+    reset_path = mode_dir/'reset.npz'
+    if reset_path.exists(): raise FileExistsError('Fixed-parity reset already materialized')
+    with np.load(c.PARENT/'source.npz', allow_pickle=False) as source:
+        initial_state = source['initial_state'].copy()
+        qpos_full = source['qpos']
+        if qpos_full.ndim != 2 or qpos_full.shape[1] != 37:
+            raise ValueError('Unexpected source.npz qpos layout')
+        qpos0 = qpos_full[0].copy()
+    with reset_path.open('xb') as stream:
+        np.savez(stream, initial_state=initial_state, qpos=qpos0)
+    return c.sha256(reset_path)
 
 
 def stage_metrics(trace):
@@ -422,8 +440,9 @@ def _run_fixed_parity(evaluation_dir, output, policy, pre, post, model, manifest
     mode_dir = evaluation_dir/'fixed_parity'
     mode_dir.mkdir(exist_ok=False)
     from experiments.smolvla_local_varied.runner import require_disk
-    entry = fixed_parity_entry(binding)
-    restore_scene(model, c.PARENT, entry)  # Full state restore only, never resettle.
+    reset_sha256 = _materialize_fixed_parity_reset(mode_dir, binding)
+    entry = fixed_parity_entry(binding, reset_sha256=reset_sha256)
+    restore_scene(model, mode_dir, entry)  # Full state restore only, never resettle.
     trials = evaluation_plan_fixed_parity()
     rows = []
     progress = dict(mode='fixed_parity', trials=trials, **summarize_fixed_parity([]))
@@ -432,7 +451,7 @@ def _run_fixed_parity(evaluation_dir, output, policy, pre, post, model, manifest
         require_disk(output, 2)
         folder = mode_dir/f"trial_{trial['ordinal']:02d}_seed_{trial['seed']}"
         folder.mkdir(exist_ok=False)
-        row = run_fixed_parity_trial(policy, pre, post, model, manifest, entry, c.PARENT, folder,
+        row = run_fixed_parity_trial(policy, pre, post, model, manifest, entry, mode_dir, folder,
                                      trial['ordinal'], trial['seed'])
         if row['seed'] != trial['seed'] or row['outcome'] == 'nonfinite_action':
             raise ValueError('Seed/nonfinite action failure; no retry')
@@ -448,9 +467,17 @@ def run(output, mode='both'):
     from experiments.smolvla_local_varied.runner import failure
     if mode not in MODES: raise ValueError(f'Unapproved evaluation mode; expected one of {MODES}')
     directory = output/'evaluation'
-    directory.mkdir(exist_ok=False)  # No overwrite / resume / retry.
+    resume_fixed_parity_only = (
+        mode == 'fixed_parity' and directory.is_dir()
+        and (directory/'varied_holdout'/'result.json').exists()
+        and (directory/'offline_probes.json').exists()
+        and not (directory/'fixed_parity').exists()
+    )
+    if not resume_fixed_parity_only:
+        directory.mkdir(exist_ok=False)  # No overwrite / resume / retry.
     report = dict(status='preparing', stage='evaluation_admission', mode=mode, max_control_ticks=1200,
-                  max_sim_seconds=40, strict_score_ticks=30, final_only=True, retries=False, resume=False)
+                  max_sim_seconds=40, strict_score_ticks=30, final_only=True, retries=False,
+                  resume=resume_fixed_parity_only)
     before = training_bytes(output)
     try:
         ds, starts, stats, binding = c.prepare_data()
@@ -467,7 +494,11 @@ def run(output, mode='both'):
         report.update(status='running', stage='offline_probes', binding=binding, training_files=before,
                       privileged_policy_inputs=False)
         write_json(directory/'result.json', report)
-        report['offline_probes'] = offline_probes(policy, pre, post, ds, output=directory)
+        if resume_fixed_parity_only:
+            report['offline_probes'] = json.loads((directory/'offline_probes.json').read_text())
+            report['varied_holdout'] = json.loads((directory/'varied_holdout'/'result.json').read_text())
+        else:
+            report['offline_probes'] = offline_probes(policy, pre, post, ds, output=directory)
         if c.admission() != binding: raise ValueError('Probe phase binding changed')
         verify_final(output, binding)
         if mode in ('varied_holdout', 'both'):
