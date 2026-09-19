@@ -1,5 +1,11 @@
 # Agent handoff
 
+Latest VERIFIED2026-09-19: localvaried60collection COMPLETEexit0/noOOM,
+60/60demos120/120replaysPASS,48train12val,24reserved evalscenes UNEXECUTED.
+Freshseal/provenance/all77bankstates/60slotinitialstateschecked. Readcurrentstatus
+andLOCAL_VARIED_COLLECTION completion. No automatictraining/eval/newcollection;
+oldrunningnotes historical. Preserve boundsource/spec/plan/data.
+
 Latest2026-09-19: localvaried60collection APPROVED and RUNNING CPUcontainer
 franka-local-varied-60-20260919 ID3eca3bf4aedc. Read currentstatus and
 LOCAL_VARIED_COLLECTION launch.48train12val,24evalinitializations frozenunrun,

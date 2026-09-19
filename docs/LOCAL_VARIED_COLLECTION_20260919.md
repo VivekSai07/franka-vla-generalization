@@ -1,5 +1,47 @@
 # Local varied collection — 2026-09-19
 
+## Completed: 60/60 demonstrations and 120/120 replays passed
+
+Container exited0/noOOM at2026-09-19T12:03:39Z, about2h56m28s afterlaunch.
+Exactly60started/60admitted episodes and onefirst12preparation-pass event. No
+replacement or retry. Final validator reports training_ready=true.
+
+-48training episodes (40varied+8center),12validation;31,680total rows at30Hz.
+-63,360camera frames fully decoded by the final collector validator.
+-120/120saved-control replays passed: maximumreferencefull-qposerror0;
+ maximum persistedfloat32policy-stateerror0.000014249901249645258 (<0.001).
+-Minimum accepted episode:240closed ticks,217bilateral-contact ticks,
+ 0.2010556754m contact-associated lift and180finalstable-stack ticks.
+-No exact duplicate action/state trajectories.77frozen scene geometries preserved.
+-24reserved evaluation scenes were not executed by an expert or policy. Future
+ policy seeds remain2912411705,944268569,2782447885; no evaluation budget executed.
+-LeRobot dataset341,017,635bytes; complete evidence root4,948,039,087bytes.
+ Approximately54GiB free aftercollection; futuretraining must check its own budget.
+
+Freshread-only completion audit recomputed fullfilefingerprint/currentprovenance,
+regenerated all77initializations withoutphysicssteps, checked exactfrozenbank,
+all60first-rowqpos/slot/report identities, orderedjournal/preparation,120unique
+successfulreplayrecords and exclusionof24evaluation IDs fromeveryattempt.
+It did not rerun experts, physicsreplays or video decoding. An initial audit
+command used the wrong helperimport and failed beforechecks; correctedimport
+completed unchanged-source audit successfully.
+
+Seal: `f8b10a498798217a63564416ab6561e25bd7e9c87e4fdddcf42f288cdb9e9a28`.
+[Final validation](../outputs/local_varied_data/local_varied_20260919/validation.json),
+[dataset](../outputs/local_varied_data/local_varied_20260919/dataset/),
+[journal](../outputs/local_varied_data/local_varied_20260919/journal.jsonl).
+
+No training or policy evaluation started. Recommended next protocol: first
+test whether a fresh SmolVLA trained on48local training demos improves over
+the frozen fixed-layoutSmolVLA on the same24reserved scenes/3frozenpolicyseeds,
+with original-center regression checks. Freeze recipe/budget and finalcheckpoint
+selection before bankexecution, never use results to select/tune checkpoints.
+This is a proposed comparison, not authorization or evidence of policy improvement.
+LaterX-VLA comparison remains useful; no broadworkspace expansion yet.
+W&Bcollection-summary export remains pending; local reports are authoritative.
+
+Earlier launch text below is historical; collector is no longer running.
+
 ## Approved and launched
 
 User approved the exact [60-demo design](superpowers/specs/2026-09-19-local-varied-data-design.md).

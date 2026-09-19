@@ -1,5 +1,14 @@
 # Franka benchmark: start here
 
+## Local varied dataset complete — 2026-09-19
+
+60/60expert demonstrations admitted,120/120saved-control replaysPASS; collector
+exit0/noOOM12:03:39Z (~2h56m).48train/12validation,31,680rows,63,360decoded
+camera frames,noexactduplicates. All77frozenstates verified and24reserved eval
+scenes unexecuted;3policyseeds preserved. Freshfullseal/source/bank/journal/slot
+auditPASS. See [completion report](LOCAL_VARIED_COLLECTION_20260919.md).
+No training/evaluation automaticallystarted;54GiBfree. Older runningnotes historical.
+
 ## Local varied60 collection launched — 2026-09-19
 
 Exactspecapproved;85workerCPUtests andmain22newtests+77nonstepinitializationsPASS.
