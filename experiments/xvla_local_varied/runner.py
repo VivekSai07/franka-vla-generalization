@@ -158,11 +158,12 @@ def _reload_and_verify(checkpoint, expected):
     config.device = 'cpu'
     if config.dtype != 'float32' or config.chunk_size != 30 or tuple(config.action_feature.shape) != (8,):
         raise ValueError('Saved dtype/chunk/action feature changed')
-    reloaded = c.p.load_weights(XVLAPolicy(config), checkpoint/'model.safetensors')
+    reloaded = c.p.load_weights(XVLAPolicy(config), checkpoint/'model.safetensors').to('cuda')
+    reloaded.config.device = 'cuda'
     reloaded.eval()
     rpre, rpost = make_pre_post_processors(reloaded.config, pretrained_path=str(checkpoint))
     torch.manual_seed(c.SEED)
-    with torch.inference_mode():
+    with torch.inference_mode(), torch.autocast('cuda', dtype=torch.bfloat16):
         actual = rpost(reloaded.predict_action_chunk(rpre(expected['observation']))).cpu()
     if actual.shape != (1, 30, 8) or not torch.isfinite(actual).all():
         raise ValueError('Invalid reload prediction shape/values')
