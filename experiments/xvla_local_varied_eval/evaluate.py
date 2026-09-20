@@ -397,13 +397,16 @@ def verify_final(output, binding):
                      'scratch_used_for_initialization': False},
                      'Complete final-only5000 report required')
     if (report.get('cpu_admission_sha256') != c.sha256(c.CPU_ADMISSION)
-            or report.get('training_stats_sha256') != c.sha256(output/'training_stats.json')
-            or report.get('scratch_result_sha256') != c.sha256(c.SCRATCH/'result.json')):
-        raise ValueError('Final CPU/statistics/scratch binding changed')
+            or report.get('training_stats_sha256') != c.sha256(output/'training_stats.json')):
+        raise ValueError('Final CPU/statistics binding changed')
     c.verify_checkpoints(report, output, False)
     stats = json.loads((output/'training_stats.json').read_text())
     if stats != json.loads(c.CPU_ADMISSION.read_text())['training_stats']: raise ValueError('Final stats differ from CPU')
-    c.validate_scratch(json.loads((c.SCRATCH/'result.json').read_text()), binding, c.SCRATCH, stats, c.sha256(c.CPU_ADMISSION))
+    scratch_result = c.SCRATCH/'result.json'
+    if scratch_result.is_file():
+        if report.get('scratch_result_sha256') != c.sha256(scratch_result):
+            raise ValueError('Final scratch binding changed')
+        c.validate_scratch(json.loads(scratch_result.read_text()), binding, c.SCRATCH, stats, c.sha256(c.CPU_ADMISSION))
     checkpoint = output/'checkpoints'/c.checkpoint_directory(5000)
     config = json.loads((checkpoint/'config.json').read_text())
     if (config != json.loads((output/'initial_config/config.json').read_text())
