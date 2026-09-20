@@ -92,7 +92,12 @@ def _matches_plan_slot(episode):
 def validate_episode(root, episode, expert, reset, check):
     if not _matches_plan_slot(episode):
         raise ValueError('Unplanned demonstration slot; evaluation execution forbidden')
-    i = episode['episode_index']; info, entries = metadata(root, i+1)
+    i = episode['episode_index']
+    # slot['episode_index'] tracks attempts (including rejected slots), not admits, so we
+    # read LeRobot's post-save total_episodes and let the surviving _metadata invariants
+    # (feature schema, task, fps, per-episode frame count) do the checking.
+    count = json.loads((Path(root)/'dataset/meta/info.json').read_text())['total_episodes']
+    info, entries = metadata(root, count)
     actions, states, trace, gates, media = generic._episode_inputs(root, episode, expert, reset, check, info, entries)
     path = Path(root) / 'attempts' / f'{i:06d}'; (path / 'replays').mkdir(exist_ok=False)
     results = [generic.replay_controls(path / 'replays', expert, reset, trace, actions, mode, check)
