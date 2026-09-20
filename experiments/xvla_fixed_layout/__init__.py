@@ -1,0 +1,1 @@
+"""Isolated fixed-layout X-VLA adaptation; importing never launches work."""

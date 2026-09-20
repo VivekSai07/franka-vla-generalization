@@ -19,6 +19,7 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 from src.controllers.grasp_controller import GraspController
+from data_collection.benchmark import configure_timing, synchronize_observation, step_control, stack_metrics
 from src.robots.franka_panda.robot import FrankaPanda
 from src.robots.franka_panda.config import (
     SCENE_PATH,
@@ -104,6 +105,7 @@ def main():
     print("⚙️ Initializing MuJoCo Physics Engine in Headless Mode...")
     robot = FrankaPanda()
     m = mujoco.MjModel.from_xml_path(SCENE_PATH)
+    timing = configure_timing(m, SIM_FPS)
     d = mujoco.MjData(m)
     
     # We will dynamically update the target in the loop, default to red
@@ -138,9 +140,9 @@ def main():
         d.qvel[:] = 0.0
         
         # Settle physics
-        for _ in range(100):
+        for _ in range(round(timing["settling_seconds"] / m.opt.timestep)):
             mujoco.mj_step(m, d)
-        mujoco.mj_forward(m, d)
+        synchronize_observation(m, d)
         
         # Sample uniformly from all 12 colour-pair combinations — matches training distribution.
         # Instruction format must match training exactly (no "perfectly").
@@ -153,7 +155,7 @@ def main():
         print(f"📝 Instruction: {current_instruction}")
         
         # Update the grasp controller with the correct target for this episode
-        grasp_sys.target_name = target_cube
+        grasp_sys = GraspController(m, d, target=target_cube)
 
         step_count = 0
         episode_video_frames = []
@@ -161,6 +163,7 @@ def main():
         success_timer = 0
 
         while step_count < MAX_STEPS:
+            synchronize_observation(m, d)
             # --- A. RENDER CAMERAS (ONLY TWO NOW!) ---
             # Assuming 'front_cam' is your primary agentview for the LIBERO model
             renderer.update_scene(d, camera="front_cam")
@@ -211,10 +214,7 @@ def main():
             grasp_sys.command(255.0 if predicted_gripper > 127.0 else 0.0)
 
             # --- E. STEP PHYSICS ---
-            target_sim_time = d.time + dt_control
-            while d.time < target_sim_time:
-                d.qfrc_applied[:ARM_DOF] = d.qfrc_bias[:ARM_DOF]
-                mujoco.mj_step(m, d)
+            step_control(m, d, dt_control, ARM_DOF)
 
             if viewer is not None and viewer.is_running():
                 viewer.sync()
@@ -228,7 +228,7 @@ def main():
             xy_dist = np.linalg.norm(pos_pick[:2] - pos_base[:2])
             z_diff = pos_pick[2] - pos_base[2]
             
-            if xy_dist < 0.03 and 0.035 < z_diff < 0.045:
+            if stack_metrics(m, d, pick_color, base_color)["released_stack"]:
                 success_timer += 1
                 if success_timer >= 30: # Sustain for 1 second to confirm
                     succ_msg = f"✅ AI Successfully completed the stacking task in {step_count} steps!"

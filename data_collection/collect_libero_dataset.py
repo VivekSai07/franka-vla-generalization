@@ -4,6 +4,7 @@ import time
 import random
 import argparse
 import collections
+import json
 
 import numpy as np
 import pinocchio as pin
@@ -23,6 +24,7 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 from src.controllers.ik_controller_m2 import IKController
+from src.controllers.joint_target_limits import bounded_joint_target
 from src.controllers.grasp_controller import GraspController
 from src.planners.trajectory_planner import TaskSpaceTrajectory
 from src.robots.franka_panda.robot import FrankaPanda
@@ -32,6 +34,12 @@ from src.robots.franka_panda.config import (
     ARM_DOF,
     ACTIVE_JOINTS
 )
+from data_collection.benchmark import (
+    BenchmarkRecorder, capture_state, runtime_versions, source_provenance,
+    stack_metrics, step_control, validation_condition, configure_timing, synchronize_observation,
+)
+from data_collection.pilot_plan import validate_plan, plan_digest, slot_seed
+from data_collection.pilot_integrity import scene_digest, validate_expert_commands, validate_scene_geometry
 
 # ---------------------------------------------------------------------------
 # All 12 valid pick-place colour combinations.
@@ -110,6 +118,9 @@ def randomize_cubes(model, data, colors_present: list[str]):
                 data.qvel[qvel_idx:qvel_idx + 6] = 0.0
                 break
 
+        else:
+            raise ValueError("Unable to place cubes within required clearance")
+
 
 def sample_distractor_colors(pick_color: str, place_color: str) -> list[str]:
     """
@@ -145,7 +156,24 @@ def main():
     parser.add_argument("--robot_speed",    type=float, default=1.0,  help="Physical robot speed multiplier")
     parser.add_argument("--playback_speed", type=float, default=1.0,  help="Sim playback speed (0 = max)")
     parser.add_argument("--headless",       action="store_true",      help="No viewer window")
+    parser.add_argument("--root", type=Path, help="New output directory; never overwrite an existing root")
+    parser.add_argument("--seed", type=int, default=20260915)
+    parser.add_argument("--benchmark", action="store_true", help="Six-episode seeded replayable validation batch")
+    parser.add_argument("--max-attempts", type=int, default=30, help="Attempt bound for benchmark mode")
+    parser.add_argument("--plan", type=Path, help="Immutable pilot/preparation slot manifest; overrides episode count")
     args = parser.parse_args()
+    plan = None
+    if args.plan:
+        if args.benchmark or args.root is None or args.fps != 30 or args.robot_speed != 1.0:
+            parser.error("--plan requires fresh --root, 30 fps, robot_speed 1 and no --benchmark")
+        plan = json.loads(args.plan.read_text())
+        validate_plan(plan)
+        args.seed = plan["seed"]
+        args.episodes = len(plan["slots"])
+    if args.episodes <= 0 or args.fps <= 0 or args.robot_speed <= 0:
+        parser.error("episodes, fps and robot_speed must be positive")
+    if args.benchmark and (args.episodes != 6 or args.root is None or args.max_attempts < 6):
+        parser.error("benchmark mode requires --episodes 6, --root, and max-attempts >=6")
 
     FPS = args.fps
     dt_control = 1.0 / FPS
@@ -158,6 +186,11 @@ def main():
         version += 1
     DATASET_REPO_ID = f"franka_libero_stacking_v{version}"
     DATASET_DIR = os.path.join(BASE_DATASETS_DIR, DATASET_REPO_ID)
+    if args.root is not None:
+        DATASET_DIR = str(args.root.resolve())
+        DATASET_REPO_ID = args.root.name
+        if Path(DATASET_DIR).exists():
+            raise FileExistsError(f"Refusing to overwrite {DATASET_DIR}")
 
     print(f"Initializing dataset: {DATASET_DIR}")
     print(f"Target: {args.episodes} episodes across {len(ALL_INSTRUCTIONS)} instruction variants")
@@ -188,7 +221,33 @@ def main():
     ik = IKController(robot, active_joint_indices=ACTIVE_JOINTS, kp_pos=10.0, kp_rot=5.0)
 
     m = mujoco.MjModel.from_xml_path(SCENE_PATH)
+    timing = configure_timing(m, FPS)
+    joint_bounds = np.column_stack((
+        np.maximum(m.actuator_ctrlrange[ACTIVE_JOINTS, 0], robot.model.lowerPositionLimit[ACTIVE_JOINTS]),
+        np.minimum(m.actuator_ctrlrange[ACTIVE_JOINTS, 1], robot.model.upperPositionLimit[ACTIVE_JOINTS])))
     d = mujoco.MjData(m)
+    recorder = None
+    if args.benchmark or plan:
+        recorder = BenchmarkRecorder(DATASET_DIR, {
+            "requested_episodes": args.episodes, "seed": args.seed,
+            "fps": FPS, "control_dt_requested": dt_control, "physics_dt": m.opt.timestep,
+            "timing": timing,
+            "expert_command_contract": {"version": "bounded_joint_integration_v1",
+                                        "joint_bounds": joint_bounds.tolist(), "max_velocity": 2.,
+                                        "position_margin_rad": 1e-6, "saturation_recorded": True,
+                                        "initial_target": np.asarray(Q_HOME[:7]).tolist(),
+                                        "initialization_exception": "reset_controls_during_settling_then_home_target_baseline"},
+            "versions": runtime_versions(), "source_hashes": source_provenance(PROJECT_ROOT),
+            "scene_path": str(Path(SCENE_PATH).relative_to(PROJECT_ROOT)),
+            "camera_names": ["front_cam", "gripper_cam"], "camera_size": [512, 512],
+            "camera_fovy": m.cam_fovy.tolist(), "camera_pos": m.cam_pos.tolist(),
+            "camera_quat": m.cam_quat.tolist(), "state_units": ["rad"] * 7 + ["m"] * 2,
+            "action_units": ["rad"] * 7 + ["0_closed_255_open"],
+            "role": "integration_only_not_benchmark_score",
+            **({"plan": plan, "plan_digest": plan_digest(plan),
+                "role": "pilot" if plan["mode"] == "pilot" else "preparation_only",
+                "validation_required": True} if plan else {}),
+        })
 
     # Collect at 512×512 — matches SmolVLM2's max_image_size.longest_edge=512.
     # The VLM upscales anything below 512, so 256×256 would be blurred.
@@ -216,11 +275,33 @@ def main():
     # ETA tracking — rolling average over the last 10 successful episodes.
     collection_start = time.time()
     episode_times: collections.deque = collections.deque(maxlen=10)
+    attempts = 0
+    slot_failures = 0
+    accepted_scene_hashes = set()
 
     while episodes_collected < args.episodes:
         # --- Sample this episode's task ---
-        pick_color, place_color, instruction = sample_episode_task()
-        colors_present = sample_distractor_colors(pick_color, place_color)
+        slot = None
+        if plan:
+            if slot_failures >= plan["max_attempts_per_slot"]:
+                raise RuntimeError("Slot failed ten attempts; dataset remains incomplete, do not resume automatically")
+            slot = plan["slots"][episodes_collected]
+            attempt_seed = slot_seed(slot, slot_failures)
+            random.seed(attempt_seed); np.random.seed(attempt_seed)
+            pick_color, place_color, colors_present = slot["pick"], slot["place"], slot["colors"]
+            instruction = f"pick up the {pick_color} cube and place it on top of the {place_color} cube"
+        elif recorder:
+            if attempts >= args.max_attempts:
+                raise RuntimeError("Benchmark attempt limit exceeded; dataset remains incomplete")
+            attempt_seed = args.seed + attempts
+            random.seed(attempt_seed)
+            np.random.seed(attempt_seed)
+            pick_color, place_color, colors_present = validation_condition(episodes_collected)
+            instruction = f"pick up the {pick_color} cube and place it on top of the {place_color} cube"
+        else:
+            pick_color, place_color, instruction = sample_episode_task()
+            colors_present = sample_distractor_colors(pick_color, place_color)
+        attempts += 1
         episode_wall_start = time.time()
 
         print(f"\n[{episodes_collected + 1}/{args.episodes}] "
@@ -235,9 +316,22 @@ def main():
         q_target = np.zeros(m.nq)
         q_target[:n_joints] = Q_HOME[:n_joints]
 
-        for _ in range(100):
+        # Keep the previous 0.2 seconds of settling, not its old substep count.
+        for _ in range(round(timing["settling_seconds"] / m.opt.timestep)):
             mujoco.mj_step(m, d)
-        mujoco.mj_forward(m, d)
+        synchronize_observation(m, d)
+        geometry_hash = scene_digest(d.qpos)
+        if plan:
+            validate_scene_geometry(m, d, colors_present)
+            if geometry_hash in accepted_scene_hashes:
+                raise ValueError("Duplicate initialized scene; collection halted")
+        initial_state = capture_state(m, d) if recorder else None
+        initial_objects = {c: d.xpos[m.body(get_cube_body_name(c)).id].tolist() for c in colors_present}
+        trace_qpos, trace_ctrl, trace_time, trace_steps, trace_success = [], [], [], [], []
+        trace_body_pos, trace_camera_pos = [], []
+        trace_requested_dq, trace_applied_dq, trace_saturation = [], [], []
+        stable_ticks = 0
+        failure_reason = "placement"
 
         grasp_sys = GraspController(m, d, target=get_cube_body_name(pick_color))
         states = generate_task_states(GRIPPER_Z_OFFSET, robot_speed=args.robot_speed)
@@ -253,12 +347,18 @@ def main():
             step_start = time.time()
 
             # --- Observations ---
+            synchronize_observation(m, d)
             renderer.update_scene(d, camera="front_cam")
-            img_agent = renderer.render()
+            img_agent = renderer.render().copy()
             renderer.update_scene(d, camera="gripper_cam")
-            img_gripper = renderer.render()
+            img_gripper = renderer.render().copy()
 
             q_current = d.qpos[:robot.model.nq].copy()
+            if recorder:
+                trace_qpos.append(d.qpos.copy())
+                trace_time.append(float(d.time))
+                trace_body_pos.append(d.xpos.copy())
+                trace_camera_pos.append(d.cam_xpos.copy())
             obs_state = np.zeros(9, dtype=np.float32)
             obs_state[:7] = q_current[:7]
             obs_state[7] = q_current[7]
@@ -297,15 +397,27 @@ def main():
             target_se3 = current_trajectory.get_pose(t_state)
 
             dq, err, done = ik.compute_velocity(q_current, target_se3, q_posture=q_home_pin)
-            dq = np.clip(dq, -2.0, 2.0)
-            for idx in ACTIVE_JOINTS:
-                q_target[idx] += dq[idx] * dt_control
-                d.ctrl[idx] = q_target[idx]
+            target, applied_dq, saturated = bounded_joint_target(
+                q_target[ACTIVE_JOINTS], dq[ACTIVE_JOINTS], dt_control, joint_bounds)
+            q_target[ACTIVE_JOINTS] = target
+            d.ctrl[ACTIVE_JOINTS] = target
+            if recorder:
+                trace_requested_dq.append(dq[ACTIVE_JOINTS].copy())
+                trace_applied_dq.append(applied_dq.copy())
+                trace_saturation.append(saturated.copy())
 
             # --- Record the action that was just computed and sent above ---
             act_state = np.zeros(8, dtype=np.float32)
             act_state[:7] = q_target[:7]
             act_state[7] = float(state["gripper"])
+            grasp_sys.command(state["gripper"])
+            if plan:
+                try:
+                    validate_expert_commands(act_state[None], m.actuator_ctrlrange[ACTIVE_JOINTS])
+                except ValueError:
+                    recorder.attempt({"attempt": attempts, "slot_id": slot["slot_id"], "seed": attempt_seed,
+                                      "accepted": False, "reason": "invalid_expert_command", "fatal": True})
+                    raise
 
             episode_buffer.append({
                 "observation.images.image":  img_agent,
@@ -315,7 +427,6 @@ def main():
                 "task": instruction,
             })
 
-            grasp_sys.command(state["gripper"])
             is_holding = grasp_sys.is_grasped()
 
             # --- State transitions ---
@@ -323,6 +434,7 @@ def main():
                 if state["name"] == "Verify Lift":
                     if not is_holding:
                         print(f"\r\033[K  [{d.time:.2f}s] Grasp failed — discarding episode.")
+                        failure_reason = "grasp"
                         break
                     print(f"\r\033[K  [{d.time:.2f}s] Grasp verified.")
 
@@ -330,27 +442,22 @@ def main():
                 state_start_time = d.time
                 current_trajectory = None
 
-                if current_state_idx >= len(states):
-                    # Verify the instructed pair, not hardcoded red/blue.
-                    pick_id  = m.body(get_cube_body_name(pick_color)).id
-                    place_id = m.body(get_cube_body_name(place_color)).id
-                    pos_pick  = d.xpos[pick_id]
-                    pos_place = d.xpos[place_id]
-
-                    xy_dist = np.linalg.norm(pos_pick[:2] - pos_place[:2])
-                    z_diff  = pos_pick[2] - pos_place[2]
-
-                    if xy_dist < SUCCESS_XY_THRESHOLD and SUCCESS_Z_MIN < z_diff < SUCCESS_Z_MAX:
-                        print(f"\r\033[K  [{d.time:.2f}s] SUCCESS (xy={xy_dist*100:.1f}cm, z={z_diff*100:.1f}cm)")
-                        episode_success = True
-                    else:
-                        print(f"\r\033[K  [{d.time:.2f}s] FAILURE (xy={xy_dist*100:.1f}cm, z={z_diff*100:.1f}cm) — discarding.")
-
             # --- Physics step ---
-            target_sim_time = d.time + dt_control
-            while d.time < target_sim_time:
-                d.qfrc_applied[:ARM_DOF] = d.qfrc_bias[:ARM_DOF]
-                mujoco.mj_step(m, d)
+            if recorder:
+                trace_ctrl.append(d.ctrl.copy())
+            substeps = step_control(m, d, dt_control, ARM_DOF)
+            metrics = stack_metrics(m, d, pick_color, place_color)
+            stable_ticks = stable_ticks + 1 if metrics["released_stack"] else 0
+            if recorder:
+                trace_steps.append(substeps)
+                trace_success.append(metrics["released_stack"])
+            if current_state_idx >= len(states):
+                episode_success = stable_ticks >= FPS
+                failure_reason = "not_released_and_stable_one_second"
+                outcome = "SUCCESS" if episode_success else "FAILURE"
+                print(f"\r\033[K  [{d.time:.2f}s] {outcome} "
+                      f"(xy={metrics['xy_m']*100:.1f}cm, z={metrics['z_m']*100:.1f}cm, "
+                      f"stable_ticks={stable_ticks})")
 
             _now = time.time()
             if _now - _live_print_t >= 0.4:
@@ -381,13 +488,49 @@ def main():
                     time.sleep(sleep_time)
 
         # --- Save or discard ---
+        if recorder:
+            if episode_success and stable_ticks < FPS:
+                episode_success = False
+                failure_reason = "not_released_and_stable_30_ticks"
+            recorder.attempt({"attempt": attempts, "seed": attempt_seed,
+                              "condition_index": episodes_collected,
+                              "instruction": instruction, "colors": colors_present,
+                              "accepted": episode_success,
+                              "saturated_ticks": int(np.any(trace_saturation, axis=1).sum()) if trace_saturation else 0,
+                              "reason": "success" if episode_success else failure_reason})
+            if plan:
+                # The slot ledger is separate so historical diagnostic records remain readable.
+                with (Path(DATASET_DIR) / "replay/slots.jsonl").open("a") as stream:
+                    stream.write(json.dumps({"slot_id": slot["slot_id"], "split": slot["split"],
+                                             "seed": attempt_seed, "retry": slot_failures,
+                                             "accepted": episode_success, "reason": "success" if episode_success else failure_reason,
+                                             "scene_hash": geometry_hash, "initial_objects": initial_objects}) + "\n")
         if episode_success:
             print(f"  Saving {len(episode_buffer)} frames...")
             for frame in episode_buffer:
                 dataset.add_frame(frame)
             dataset.save_episode()
+            if recorder:
+                recorder.save_episode(episodes_collected, {
+                    "attempt": attempts, "seed": attempt_seed, "instruction": instruction,
+                    "pick": pick_color, "place": place_color, "colors": colors_present,
+                    "initial_objects": initial_objects, "frames": len(episode_buffer),
+                    "stable_ticks": stable_ticks, "final_metrics": metrics,
+                    "saturated_ticks": int(np.any(trace_saturation, axis=1).sum()),
+                    "saturated_ticks_per_joint": np.sum(trace_saturation, axis=0).tolist(),
+                    **({"slot_id": slot["slot_id"], "split": slot["split"], "scene_hash": geometry_hash} if plan else {}),
+                }, {"initial_state": initial_state, "qpos": np.asarray(trace_qpos),
+                    "ctrl": np.asarray(trace_ctrl), "sim_time": np.asarray(trace_time),
+                    "body_xpos": np.asarray(trace_body_pos), "camera_xpos": np.asarray(trace_camera_pos),
+                    "substeps": np.asarray(trace_steps), "released_stack": np.asarray(trace_success),
+                    "requested_joint_velocity": np.asarray(trace_requested_dq),
+                    "applied_joint_velocity": np.asarray(trace_applied_dq),
+                    "command_saturation": np.asarray(trace_saturation),
+                    "final_qpos": d.qpos.copy()})
             instruction_counts[instruction] += 1
             episodes_collected += 1
+            slot_failures = 0
+            accepted_scene_hashes.add(geometry_hash)
 
             episode_times.append(time.time() - episode_wall_start)
             avg_time = sum(episode_times) / len(episode_times)
@@ -407,6 +550,7 @@ def main():
                 for instr, count in sorted(instruction_counts.items(), key=lambda x: x[1]):
                     print(f"  {count:3d}  {instr}")
         else:
+            slot_failures += 1
             print("  Discarding — will retry.")
 
     print(f"\nData collection complete: {episodes_collected} episodes saved.")
@@ -415,6 +559,10 @@ def main():
         print(f"  {count:3d}  {instr}")
 
     dataset.finalize()
+    if recorder:
+        splits = ({key: [i for i, s in enumerate(plan["slots"]) if s["split"] == key]
+                   for key in plan["splits"]} if plan else {"train": [0, 1, 2, 3], "validation": [4, 5]})
+        recorder.finalize(episodes_collected, splits)
     print(f"Dataset saved at: {DATASET_DIR}")
 
     if viewer is not None:

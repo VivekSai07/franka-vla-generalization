@@ -4,6 +4,66 @@ Fine-tuning [SmolVLA](https://huggingface.co/HuggingFaceVLA/smolvla_libero) on a
 
 ---
 
+## Current status (2026-09-20)
+
+Two policies fine-tuned on the same 60-episode local-varied dataset, evaluated on the same 92-trial protocol.
+
+**Head-to-head** — 24 held-out layouts × 3 policy seeds + 20 fixed-parity seeds:
+
+| Metric | SmolVLA (baseline) | X-VLA (this run) | Δ |
+|---|---|---|---|
+| varied_holdout success rate | 88.9% (64/72) | **98.6% (71/72)** | **+9.7 pp** |
+| fixed_parity success rate | 100% (20/20) | 100% (20/20) | tied |
+| offline train arm MAE (rad) | 0.01062 | 0.00861 | −19% |
+| offline val arm MAE (rad) | 0.01133 | 0.00996 | −12% |
+| offline train gripper acc | 96.9% | 95.3% | −1.6 pp |
+| offline val gripper acc | 96.1% | 94.4% | −1.7 pp |
+
+Both capability gates passed cleanly. X-VLA is stronger on the spatial-generalisation task; only failing trial was `evaluation_000` seed 944268569 (timeout).
+
+Currently collecting **`broad_workspace_data_v1`** (200 admits, envelope F7, ±1° home-pose jitter, ±3 cm hover-Z jitter) as the next training substrate — run `franka-broad-workspace-200-20260920-retry3`, ~6h ETA.
+
+---
+
+## Datasets & training runs
+
+| Package | Purpose | Episodes | Status |
+|---|---|---|---|
+| `experiments/fixed_layout/` | Single-geometry pilot (source reset ep 7) | 24 | sealed |
+| `experiments/local_varied_data/` | 60 layouts, ±1° pose jitter | 60 (48 train / 12 val) | sealed |
+| `experiments/broad_workspace_data/` | F7 envelope, retries permitted | 200 target | **collecting** |
+| `experiments/smolvla_local_varied/` | SmolVLA finetune | — | trained + evaluated |
+| `experiments/xvla_local_varied/` | X-VLA finetune | — | trained + evaluated |
+
+Training reports: `outputs/train/{smolvla,xvla}_franka_stacking_localvaried_v1_20260919/result.json`.
+Evaluation reports: `.../evaluation/{varied_holdout,fixed_parity}/result.json`, per-trial `episode.json`, `trace.npz`, `cameras.mp4`.
+
+---
+
+## Variations tried
+
+- **Datasets**: fixed pilot → local-varied (60 layouts × ±1° jitter) → broad-workspace (F7 envelope × ±1° × ±3 cm).
+- **Policies**: SmolVLA (`chunk_size=50, n_action_steps=10`) vs X-VLA (`chunk_size=30, n_action_steps=10`).
+- **Failure handling**: no-retry (fixed_layout) → retry-with-rejection-budget (broad_workspace, 100 rejections allowed per 200 admits).
+- **Rollout precision**: SmolVLA uses FP32; X-VLA uses FP32 params + BF16 autocast (matches training loss path exactly).
+
+---
+
+## Failures we hit (and what we learned)
+
+1. **Expert failure counted as stop** — first broad_workspace run halted at 52/200 because a failed expert bubbled up as a hard error. Fix: wrap in `ExpertRejection`, bill to rejection budget (`57975c5`).
+2. **Deleted the pilot manifest** during cleanup, breaking every downstream `provenance()` check. Fix: make manifest optional in `fixed_layout/source.py` (`57f558d`), then re-seal `local_varied_data` with post-surgery provenance and update `SEAL` constants (`f3f3244`).
+3. **X-VLA reload verify used CPU + no autocast** — checkpoint verification hit `Input cuda / weight cpu` because obs came from the CUDA training path but the reloaded policy stayed on CPU. Fix: `.to('cuda')` + `torch.autocast('cuda', bfloat16)` in `_reload_and_verify` (`391049c`).
+4. **LeRobot per-episode PNG staging accumulated across rejections** — rejected ep 52's 528 PNGs stayed under `episode-000052/`, so ep 53's writes gave 1056 files → encoder coverage check tripped. Fix: purge staging PNG dir + reset `episode_buffer` after every `ExpertRejection` (`4561995`).
+5. **Attempts dir naming diverged from LeRobot's episode_index after rejections** — encoder read ticks from `attempts/000052/` (rejected) while PNGs came from ep 53. Fix: expose `dataset._active_attempt_path` set in `record_attempt`, use it in the encoder wrapper (`2435dca`).
+6. **Validator hard-coded `slot['episode_index']+1` as expected admit count**, which no longer matched LeRobot's `total_episodes` post-rejection. Fix: read `info.json['total_episodes']` as the count and let the remaining `_metadata` invariants (schema, task, fps, frame count) do the checking (`3d733d2`).
+7. **Preflight scratch dir deleted** to free disk before eval → `verify_final` couldn't hash `SCRATCH/result.json`. Fix: make scratch check conditional in the eval package (`c8a6904`). The preflight `result.json` had non-deterministic timing fields so it wasn't reproducible.
+8. **Editing source files while eval was still running** → final `c.admission()` re-check saw drift and marked the run "failed" even though all 92 rollouts had already completed cleanly. Lesson: freeze the code path for the duration of the eval.
+
+Broader lessons — every "just increment a counter" or "just leave state alone on retry" assumption in the fixed-layout pipeline broke under broad_workspace retries. Rejections need explicit cleanup for every piece of shared state (LeRobot buffer + PNG dir + attempts dir semantics + admit-count invariant).
+
+---
+
 ## Repository Structure
 
 ```

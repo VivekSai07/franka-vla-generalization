@@ -1,0 +1,1 @@
+"""Isolated, immutable fixed-layout SmolVLA comparison; no import-time jobs."""

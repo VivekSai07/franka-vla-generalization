@@ -1,0 +1,1 @@
+"""Isolated local-varied data adapter; imports never launch collection."""
