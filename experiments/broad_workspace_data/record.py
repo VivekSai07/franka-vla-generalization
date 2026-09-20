@@ -178,8 +178,14 @@ def feasible(expert, base_source, layout, jitter) -> bool:
     return True
 
 
-def run_schedule(plan, base_source, model, execute, validate, journal, feasible_fn=None, before=lambda: None):
-    """One call per admitted episode; rejections consume budget; first-failure-stop only within an admit."""
+def run_schedule(plan, base_source, model, execute, validate, journal, feasible_fn=None, before=lambda: None,
+                 discard=None):
+    """Every plan slot must be admitted; a failed draw retries the SAME slot.
+
+    Skipping a slot would make the admitted episode index drift away from the plan slot index,
+    and the whole downstream contract (metadata[i], attempts/{i:06d}, resets/episode_{i:03d},
+    train/validation split boundaries) is defined on that identity. Retrying instead keeps it.
+    """
     p.validate_plan(plan)
     frozen = copy.deepcopy(plan)
     layouts = {x['layout_id']: x for x in frozen['layouts']}
@@ -187,52 +193,55 @@ def run_schedule(plan, base_source, model, execute, validate, journal, feasible_
     admitted, rejected, attempts = [], [], 0
     if feasible_fn is None:
         feasible_fn = lambda layout, jitter: True
+    if discard is None:
+        discard = lambda index, k: None
     for slot in frozen['episodes']:
         i = slot['episode_index']
         try:
             before()
             layout = layouts[slot['layout_id']]
-            final_jitter = None
             draws = [dict(k=0, source='plan', home_pose_jitter_deg=list(slot['home_pose_jitter_deg']))]
             for k in range(1, FEASIBILITY_REDRAWS + 1):
                 draws.append(dict(k=k, source=f'redraw:{k-1}',
                                   home_pose_jitter_deg=redraw_home_pose_jitter(i, k-1)))
+            seated = False
             for candidate in draws:
                 attempts += 1
                 if attempts > p.ATTEMPT_LIMIT:
                     raise RuntimeError('Attempt budget exhausted before admission target')
                 jitter = dict(home_pose_jitter_deg=candidate['home_pose_jitter_deg'])
-                if feasible_fn(layout, jitter):
-                    final_jitter = candidate
-                    break
-            if final_jitter is None:
-                rejected.append(i)
-                if len(rejected) > p.REJECTION_BUDGET:
-                    raise RuntimeError('Rejection budget exhausted; no more attempts')
-                journal(dict(event='rejected', episode_index=i, layout_id=slot['layout_id'],
-                             tried=len(draws), training_ready=False))
-                continue
-            slot = dict(slot, home_pose_jitter_deg=final_jitter['home_pose_jitter_deg'],
-                        feasibility_k=final_jitter['k'], feasibility_source=final_jitter['source'])
-            arrays = derive_scene(model, base_source, layout, dict(home_pose_jitter_deg=final_jitter['home_pose_jitter_deg']))
-            journal(dict(event='started', **slot, training_ready=False))
-            outcome = execute(copy.deepcopy(slot), arrays)
-            if outcome.get('success') is not True or type(outcome.get('frames')) is not int or outcome['frames'] != p.EXPECTED_FRAMES:
-                raise ExpertRejection(_EXPERT_REJECT_MARKERS[1])
-            validate(copy.deepcopy(slot), outcome)
-            before()
-            journal(dict(event='admitted', episode_index=i, training_ready=False))
-            admitted.append(i)
-        except ExpertRejection as exc:
-            rejected.append(i)
-            if len(rejected) > p.REJECTION_BUDGET:
-                raise RuntimeError('Rejection budget exhausted; no more attempts') from exc
-            try:
-                journal(dict(event='rejected', episode_index=i, layout_id=slot['layout_id'],
-                             tried=1, reason='expert_execution', training_ready=False, error=repr(exc)))
-            except BaseException as secondary:
-                print(f'Journal failure: {secondary!r}', file=sys.stderr)
-            continue
+                if not feasible_fn(layout, jitter):
+                    continue
+                attempt = dict(slot, home_pose_jitter_deg=candidate['home_pose_jitter_deg'],
+                               feasibility_k=candidate['k'], feasibility_source=candidate['source'])
+                arrays = derive_scene(model, base_source, layout,
+                                      dict(home_pose_jitter_deg=candidate['home_pose_jitter_deg']))
+                journal(dict(event='started', **attempt, training_ready=False))
+                try:
+                    outcome = execute(copy.deepcopy(attempt), arrays)
+                    if (outcome.get('success') is not True or type(outcome.get('frames')) is not int
+                            or outcome['frames'] != p.EXPECTED_FRAMES):
+                        raise ExpertRejection(_EXPERT_REJECT_MARKERS[1])
+                except ExpertRejection as exc:
+                    rejected.append(i)
+                    if len(rejected) > p.REJECTION_BUDGET:
+                        raise RuntimeError('Rejection budget exhausted; no more attempts') from exc
+                    try:
+                        journal(dict(event='rejected', episode_index=i, layout_id=slot['layout_id'],
+                                     tried=candidate['k']+1, reason='expert_execution',
+                                     training_ready=False, error=repr(exc)))
+                    except BaseException as secondary:
+                        print(f'Journal failure: {secondary!r}', file=sys.stderr)
+                    discard(i, candidate['k'])
+                    continue
+                validate(copy.deepcopy(attempt), outcome)
+                before()
+                journal(dict(event='admitted', episode_index=i, training_ready=False))
+                admitted.append(i)
+                seated = True
+                break
+            if not seated:
+                raise RuntimeError(f'Slot {i} exhausted every feasible draw without an admitted demonstration')
         except BaseException as exc:
             try:
                 journal(dict(event='failed', episode_index=i, training_ready=False, error=repr(exc)))
@@ -308,6 +317,9 @@ def collect():
             def feasible_fn(layout, jitter):
                 return feasible(expert, base_src, layout, jitter)
 
+            layouts_by_id = {x['layout_id']: x for x in plan['layouts']}
+            layouts_by_id['base'] = plan['base_layout']
+
             def execute(slot, arrays):
                 i = slot['episode_index']; path = output / 'attempts' / f'{i:06d}'
                 path.mkdir(exist_ok=False); write_json(path / 'slot.json', slot)
@@ -328,8 +340,12 @@ def collect():
             def validate(slot, outcome):
                 before()
                 i = slot['episode_index']
-                key = f'episode_{i:03d}'
-                validate_episode(output, slot, expert, bank[key], budget.check)
+                # A feasibility redraw or a retry changes the home pose, so the episode must be
+                # checked against the reset it actually ran, not the plan-derived bank entry.
+                layout = layouts_by_id[slot['layout_id']]
+                reset = derive_scene(model, base_src, layout,
+                                     dict(home_pose_jitter_deg=slot['home_pose_jitter_deg']))
+                validate_episode(output, slot, expert, reset, budget.check)
                 wall, cpu = started[i]
                 usage = resource.getrusage(resource.RUSAGE_SELF)
                 write_json(output / 'attempts' / f'{i:06d}' / 'resources.json', dict(
@@ -340,7 +356,20 @@ def collect():
                     scope='CPU process cumulative high-water; no GPU attribution'))
                 before()
 
-            run_schedule(plan, base_src, model, execute, validate, journal, feasible_fn, before)
+            def discard(index, k):
+                """Retire a rejected attempt so the same slot can be retried on the next draw."""
+                _reset_lerobot_pending_episode(dataset)
+                (output / 'rejected').mkdir(exist_ok=True)
+                path = output / 'attempts' / f'{index:06d}'
+                if path.is_dir():
+                    path.rename(output / 'rejected' / f'{index:06d}_k{k}')
+                reset_path = output / 'resets' / f'episode_{index:03d}.npz'
+                if reset_path.exists():
+                    reset_path.unlink()
+                episode_resets.pop(index, None)
+                started.pop(index, None)
+
+            run_schedule(plan, base_src, model, execute, validate, journal, feasible_fn, before, discard)
             dataset.finalize(); dataset = None; before()
             info_path = output / 'dataset/meta/info.json'; info = json.loads(info_path.read_text())
             info['splits'] = {'train': f'0:{p.TRAIN_LHS_COUNT + p.TRAIN_BASE_COUNT}',

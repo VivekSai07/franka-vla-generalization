@@ -9,7 +9,7 @@ import numpy as np
 from experiments.fixed_layout import validate as generic
 from experiments.fixed_layout.record import write_json, file_hash
 from . import plan as p
-from .scenes import make_bank, bank_manifest, provenance, exact
+from .scenes import make_bank, bank_manifest, provenance, exact, derive_scene
 
 
 def metadata(root, count, final=False):
@@ -34,9 +34,13 @@ def check_replay_coverage(results):
 
 def validate_journal(events, plan):
     p.validate_plan(plan)
-    started = [(e['event'], e.get('episode_index')) for e in events if e['event'] == 'started']
+    started = [e for e in events if e['event'] == 'started']
     admitted = [(e['event'], e.get('episode_index')) for e in events if e['event'] == 'admitted']
-    if [e[1] for e in started] != list(range(p.ADMIT_COUNT)) or [e[1] for e in admitted] != list(range(p.ADMIT_COUNT)):
+    # A retried slot journals several 'started' events, so require non-decreasing slot order
+    # covering every slot rather than a strict one-to-one sequence.
+    order = [e.get('episode_index') for e in started]
+    if (order != sorted(order) or sorted(set(order)) != list(range(p.ADMIT_COUNT))
+            or [e[1] for e in admitted] != list(range(p.ADMIT_COUNT))):
         raise ValueError('Journal must record ordered started/admitted for all admits')
     if sum(e['event'] == 'rejected' for e in events) > p.REJECTION_BUDGET:
         raise ValueError('Rejection budget exceeded in journal')
@@ -46,11 +50,20 @@ def validate_journal(events, plan):
         raise ValueError('Invalid twelve-hour elapsed evidence')
     if any(e.get('training_ready') is not False for e in events):
         raise ValueError('Premature training admission in journal')
-    for event, slot in zip((e for e in events if e['event'] == 'started'), plan['episodes']):
-        for key in ('episode_index', 'seed', 'layout_id', 'split', 'pick', 'place',
-                    'colors', 'instruction', 'task_index'):
-            if event.get(key) != slot[key]:
-                raise ValueError(f'Journal slot immutable field changed: {key}')
+    # Only the attempt that actually produced the admit carries the slot's immutable identity.
+    pending = {}
+    for event in events:
+        if event['event'] == 'started':
+            pending[event.get('episode_index')] = event
+        elif event['event'] == 'admitted':
+            index = event.get('episode_index')
+            source = pending.get(index)
+            if source is None:
+                raise ValueError('Admitted demonstration without a matching started event')
+            for key in ('episode_index', 'seed', 'layout_id', 'split', 'pick', 'place',
+                        'colors', 'instruction', 'task_index'):
+                if source.get(key) != plan['episodes'][index][key]:
+                    raise ValueError(f'Journal slot immutable field changed: {key}')
 
 
 def diagnostics(expert, trace, terminal, actions, reset, check):
@@ -89,15 +102,28 @@ def _matches_plan_slot(episode):
     return True
 
 
+def require_approved_draw(slot, executed):
+    """An executed slot may differ from its plan slot only by an approved feasibility redraw."""
+    from .record import redraw_home_pose_jitter, FEASIBILITY_REDRAWS
+    for key in ('episode_index', 'seed', 'layout_id', 'split', 'pick', 'place',
+                'colors', 'instruction', 'task_index', 'hover_z_jitter_m', 'hover_z_offset'):
+        if executed.get(key) != slot[key]:
+            raise ValueError(f'Executed slot changed immutable field: {key}')
+    index, k = slot['episode_index'], executed.get('feasibility_k')
+    if type(k) is not int or not 0 <= k <= FEASIBILITY_REDRAWS:
+        raise ValueError('Executed slot carries an out-of-range feasibility draw')
+    approved = list(slot['home_pose_jitter_deg']) if k == 0 else redraw_home_pose_jitter(index, k-1)
+    source = 'plan' if k == 0 else f'redraw:{k-1}'
+    if list(executed.get('home_pose_jitter_deg', [])) != list(approved):
+        raise ValueError('Executed home pose is not the approved draw for this slot')
+    if executed.get('feasibility_source') != source:
+        raise ValueError('Executed feasibility source does not match its draw index')
+
+
 def validate_episode(root, episode, expert, reset, check):
     if not _matches_plan_slot(episode):
         raise ValueError('Unplanned demonstration slot; evaluation execution forbidden')
-    i = episode['episode_index']
-    # slot['episode_index'] tracks attempts (including rejected slots), not admits, so we
-    # read LeRobot's post-save total_episodes and let the surviving _metadata invariants
-    # (feature schema, task, fps, per-episode frame count) do the checking.
-    count = json.loads((Path(root)/'dataset/meta/info.json').read_text())['total_episodes']
-    info, entries = metadata(root, count)
+    i = episode['episode_index']; info, entries = metadata(root, i+1)
     actions, states, trace, gates, media = generic._episode_inputs(root, episode, expert, reset, check, info, entries)
     path = Path(root) / 'attempts' / f'{i:06d}'; (path / 'replays').mkdir(exist_ok=False)
     results = [generic.replay_controls(path / 'replays', expert, reset, trace, actions, mode, check)
@@ -152,7 +178,7 @@ def validate_inventory(root):
     required = {'claim.json', 'plan.json', 'provenance.json', 'configuration.json', 'source.npz',
                 'bank.json', 'snapshots.json', 'journal.jsonl', 'resets', 'attempts', 'dataset'}
     actual = {x.name for x in root.iterdir()}
-    if not required <= actual or not actual <= required | {'validation.json', 'seal.json'}:
+    if not required <= actual or not actual <= required | {'validation.json', 'seal.json', 'rejected'}:
         raise ValueError('Missing/extra/failed final root evidence')
     claim = dict(version=p.VERSION, output=str(p.OUTPUT.relative_to(p.ROOT)), resume=False)
     if not p._same(generic._json(root / 'claim.json'), claim):
@@ -179,9 +205,15 @@ def validate_dataset(root, expert, base_source, bank, check):
     if executed_layouts & set(plan['evaluation_layout_ids']):
         raise ValueError('Evaluation layout executed during data stage')
     reports, results, sequences, rows, videos = [], [], [], set(), set()
+    layouts_by_id = {x['layout_id']: x for x in plan['layouts']}
+    layouts_by_id['base'] = plan['base_layout']
     for slot in plan['episodes']:
-        check(); i = slot['episode_index']; key = f'episode_{i:03d}'; reset = bank[key]
-        actions, states, trace, gates, media = generic._episode_inputs(root, slot, expert, reset, check, info, entries)
+        check(); i = slot['episode_index']
+        executed = generic._json(root / 'attempts' / f'{i:06d}' / 'slot.json')
+        require_approved_draw(slot, executed)
+        reset = derive_scene(expert.model, base_source, layouts_by_id[executed['layout_id']],
+                             dict(home_pose_jitter_deg=executed['home_pose_jitter_deg']))
+        actions, states, trace, gates, media = generic._episode_inputs(root, executed, expert, reset, check, info, entries)
         path = root / 'attempts' / f'{i:06d}'
         wanted_files = {'slot.json', 'outcome.json', 'terminal.npz', 'ticks', 'media', 'replays',
                         'validation.json', 'duplicates.json', 'resources.json'}
