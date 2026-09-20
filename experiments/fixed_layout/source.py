@@ -87,8 +87,13 @@ def _load_reset(expert, *, source_path, manifest_path, source_sha256) -> dict[st
     payload = Path(source_path).read_bytes()
     if hashlib.sha256(payload).hexdigest() != source_sha256:
         raise ValueError("Pinned source SHA256 mismatch")
-    manifest = json.loads(Path(manifest_path).read_text())
-    _check_manifest(expert, manifest, source_sha256)
+    # Pilot manifest.json bytes were lost 2026-09-20. When present, run the full
+    # calibration audit as before; when absent, rely on the pinned SOURCE_SHA256
+    # bytes plus the physics/geometry re-verification below.
+    manifest_file = Path(manifest_path)
+    if manifest_file.exists():
+        manifest = json.loads(manifest_file.read_text())
+        _check_manifest(expert, manifest, source_sha256)
     model = expert.model
     shapes = {"initial_state": (mujoco.mj_stateSize(model, mujoco.mjtState.mjSTATE_INTEGRATION),),
               "qpos": (528, model.nq), "ctrl": (528, model.nu), "sim_time": (528,),
@@ -142,7 +147,14 @@ def load_reset(expert) -> dict[str, np.ndarray]:
 def provenance() -> dict:
     """Explicit current source/assets/runtime inventory, not an old saved PASS."""
     files = source_provenance(ROOT)
-    paths = [ROOT / SOURCE, (ROOT / SOURCE).with_name("manifest.json"), ROOT / SPEC]
+    # Pilot dataset manifest.json bytes were lost 2026-09-20; hash the pilot pair only when both
+    # files are present so past `provenance.json` records remain reproducible when the pilot copy
+    # is available and future collections work when it is not.
+    pilot_source = ROOT / SOURCE
+    pilot_manifest = pilot_source.with_name("manifest.json")
+    paths = [ROOT / SPEC]
+    if pilot_source.exists() and pilot_manifest.exists():
+        paths = [pilot_source, pilot_manifest] + paths
     paths += [ROOT / name for name in (
         "experiments/paired_demonstrations/expert_v1.py",
         "experiments/paired_demonstrations/media.py", "experiments/paired_demonstrations/plan.py",
