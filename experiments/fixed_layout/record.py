@@ -163,6 +163,7 @@ def record_attempt(root, expert, dataset, episode, initial, check):
     root = Path(root)
     sink = TickSink(root, dataset, check)
     primary = None
+    dataset._active_attempt_path = root
     try:
         check()
         outcome = expert.run(initial.copy(), copy.deepcopy(episode), sink)
@@ -189,6 +190,7 @@ def record_attempt(root, expert, dataset, episode, initial, check):
             raise primary from exc
         raise
     finally:
+        dataset._active_attempt_path = None
         try:
             dataset.finalize()  # Only close writers; never save a partial imitation episode.
         except BaseException as secondary:

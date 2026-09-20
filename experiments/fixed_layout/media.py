@@ -18,7 +18,12 @@ class BoundPairedDataset(PairedDataset):
     def _encode_temporary_episode_video(self, video_key, episode_index):
         from experiments.fixed_layout.record import file_hash
         check = getattr(self, "fixed_layout_check", lambda: None)
-        attempt = self.root.parent / "attempts" / f"{episode_index:06d}"
+        # For fixed_layout runs our attempts index always equals LeRobot's episode_index;
+        # broad_workspace retries make them diverge, so the active-attempt path (set by
+        # record_attempt) is authoritative when present.
+        attempt = getattr(self, "_active_attempt_path", None)
+        if attempt is None:
+            attempt = self.root.parent / "attempts" / f"{episode_index:06d}"
         raw_paths = sorted((attempt / "ticks").glob("*.npz"))
         images = self._get_image_file_dir(episode_index, video_key)
         expected_names = [f"frame-{i:06d}.png" for i in range(len(raw_paths))]
