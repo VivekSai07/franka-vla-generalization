@@ -19,7 +19,7 @@ OUTPUT = ROOT/'outputs/train/smolvla_franka_stacking_localvaried_v1_20260919'
 SCRATCH = OUTPUT.with_name(OUTPUT.name+'_preflight')
 ADMISSION = OUTPUT.with_name(OUTPUT.name+'_admission')
 CPU_ADMISSION = ADMISSION/'result.json'
-SEAL = 'f8b10a498798217a63564416ab6561e25bd7e9c87e4fdddcf42f288cdb9e9a28'
+SEAL = 'ae8828eab71c6709222c6fdcc1af4e026f07bcac2aa33b105da4830c25dcf52c'
 REVISION = 'c83c3163b8ca9b7e67c509fffd9121e66cb96205'
 VLM_REVISION = '7b375e1b73b11138ff12fe22c8f2822d8fe03467'
 # Same offline SmolVLA cache as fixed_layout baseline; recheck full byte inventory.

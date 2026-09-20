@@ -36,7 +36,7 @@ OUTPUT = ROOT/'outputs/train/xvla_franka_stacking_localvaried_v1_20260919'
 SCRATCH = OUTPUT.with_name(OUTPUT.name+'_preflight')
 ADMISSION = OUTPUT.with_name(OUTPUT.name+'_admission')
 CPU_ADMISSION = ADMISSION/'result.json'
-SEAL = 'f8b10a498798217a63564416ab6561e25bd7e9c87e4fdddcf42f288cdb9e9a28'
+SEAL = 'ae8828eab71c6709222c6fdcc1af4e026f07bcac2aa33b105da4830c25dcf52c'
 TRAIN, VAL, SEED = tuple(range(48)), tuple(range(48, 60)), 20260917
 TRAINING_ROWS = 48*528  # 25344
 COMPLETE_STARTS = 48*499  # 23952, X-VLA chunk_size=30 → 528-30+1=499 complete starts per episode
