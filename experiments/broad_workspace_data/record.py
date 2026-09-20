@@ -6,7 +6,7 @@ import json
 import os
 from pathlib import Path
 import resource
-from shutil import disk_usage
+from shutil import disk_usage, rmtree
 import signal
 import sys
 from time import monotonic, process_time
@@ -38,6 +38,28 @@ _EXPERT_REJECT_MARKERS = (
 
 class ExpertRejection(RuntimeError):
     """Post-feasibility expert-execution failure; billed to the rejection budget, not a stop."""
+
+
+def _reset_lerobot_pending_episode(dataset):
+    """Discard the LeRobot pending-episode buffer + staging PNGs after a rejected attempt.
+
+    LeRobot's ``add_frame`` appends to ``dataset.episode_buffer`` and writes PNG frames to
+    ``dataset/images/<video_key>/episode-{N:06d}/`` keyed by the pending
+    ``episode_index`` (== ``meta.total_episodes`` at buffer creation). ``save_episode``
+    is what rotates that index; on rejection we never call it, so without this cleanup
+    the next admitted attempt reuses the same episode_index and accumulates PNGs on
+    top of the rejected ones, breaking the encoder's PNG/raw coverage check.
+    """
+    buffer = getattr(dataset, 'episode_buffer', None)
+    if buffer is not None:
+        pending = int(buffer.get('episode_index', getattr(dataset.meta, 'total_episodes', 0)))
+    else:
+        pending = int(getattr(dataset.meta, 'total_episodes', 0))
+    for video_key in getattr(dataset.meta, 'video_keys', ()):
+        stage = dataset.root / 'images' / video_key / f'episode-{pending:06d}'
+        if stage.is_dir():
+            rmtree(stage)
+    dataset.episode_buffer = None
 
 
 class Budget:
@@ -297,6 +319,7 @@ def collect():
                     result = record_attempt(path, expert, dataset, slot, arrays['initial_state'].copy(), budget.check)
                 except RuntimeError as exc:
                     if str(exc) in _EXPERT_REJECT_MARKERS:
+                        _reset_lerobot_pending_episode(dataset)
                         raise ExpertRejection(str(exc)) from exc
                     raise
                 dataset._writer_closed_for_reading = True
