@@ -145,6 +145,65 @@ class FeasibilityGateTests(unittest.TestCase):
         rejected_ids = [e['episode_index'] for e in events if e['event'] == 'rejected']
         self.assertLessEqual(len(rejected_ids), self.p.REJECTION_BUDGET)
 
+    def test_expert_execution_failure_billed_to_rejection_budget_not_stop(self):
+        """Post-feasibility expert failures continue collection, up to the shared 100-rejection budget."""
+        plan = self.p.make_plan()
+        # First two episodes: expert rejects. Third onward: succeed.
+        state = {'calls': 0}
+        def execute(slot, arrays):
+            state['calls'] += 1
+            if state['calls'] <= 2:
+                raise self.r.ExpertRejection('Failed expert or noncanonical duration; raw attempt preserved')
+            return {'success': True, 'frames': 528}
+        events = []
+        with patch('experiments.broad_workspace_data.record.derive_scene',
+                   return_value={'initial_state': np.zeros(242), 'qpos': np.zeros(37)}):
+            admitted, rejected = self.r.run_schedule(
+                plan, base_source=None, model=None, execute=execute,
+                validate=lambda s, o: None, journal=events.append, feasible_fn=lambda l, j: True)
+        # First 2 episodes rejected as expert_execution, remaining 198 admitted.
+        expert_rejects = [e for e in events if e.get('event') == 'rejected' and e.get('reason') == 'expert_execution']
+        self.assertEqual(len(expert_rejects), 2)
+        self.assertEqual([e['episode_index'] for e in expert_rejects], [0, 1])
+        for e in expert_rejects:
+            self.assertEqual(e['tried'], 1)
+            self.assertIn('Failed expert', e['error'])
+        self.assertEqual(len(admitted), 198)
+        self.assertEqual(len(rejected), 2)
+
+    def test_expert_execution_failures_exhaust_rejection_budget_and_stop(self):
+        """When expert-execution rejections exceed the 100 budget, collection STOPS with RuntimeError."""
+        plan = self.p.make_plan()
+        def execute(slot, arrays):
+            raise self.r.ExpertRejection('Failed expert or noncanonical duration; raw attempt preserved')
+        events = []
+        with patch('experiments.broad_workspace_data.record.derive_scene',
+                   return_value={'initial_state': np.zeros(242), 'qpos': np.zeros(37)}):
+            with self.assertRaises(RuntimeError) as caught:
+                self.r.run_schedule(plan, base_source=None, model=None, execute=execute,
+                                    validate=lambda s, o: None, journal=events.append,
+                                    feasible_fn=lambda l, j: True)
+        self.assertIn('Rejection budget exhausted', str(caught.exception))
+        expert_rejects = [e for e in events if e.get('event') == 'rejected' and e.get('reason') == 'expert_execution']
+        self.assertEqual(len(expert_rejects), self.p.REJECTION_BUDGET)
+
+    def test_non_expert_runtime_errors_still_stop(self):
+        """Infrastructure RuntimeErrors (physics NaN, disk full, etc.) MUST still stop the collection."""
+        plan = self.p.make_plan()
+        def execute(slot, arrays):
+            raise RuntimeError('Physics simulation produced NaN state')
+        events = []
+        with patch('experiments.broad_workspace_data.record.derive_scene',
+                   return_value={'initial_state': np.zeros(242), 'qpos': np.zeros(37)}):
+            with self.assertRaises(RuntimeError) as caught:
+                self.r.run_schedule(plan, base_source=None, model=None, execute=execute,
+                                    validate=lambda s, o: None, journal=events.append,
+                                    feasible_fn=lambda l, j: True)
+        self.assertIn('Physics simulation produced NaN', str(caught.exception))
+        failed_events = [e for e in events if e.get('event') == 'failed']
+        self.assertEqual(len(failed_events), 1)
+        self.assertEqual(failed_events[0]['episode_index'], 0)
+
 
 class GraspControllerRegressionTests(unittest.TestCase):
     """Ensure broad_workspace_data does NOT modify GraspController."""

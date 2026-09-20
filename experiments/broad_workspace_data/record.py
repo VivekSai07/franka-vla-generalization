@@ -30,6 +30,14 @@ OUTPUT = p.OUTPUT
 FEASIBILITY_REDRAWS = 8
 _IK_MAX_ITERS = 200
 _IK_TOL_POS = 5e-3
+_EXPERT_REJECT_MARKERS = (
+    'Failed expert or noncanonical duration; raw attempt preserved',
+    'First failed/wrong-duration expert; no retry within admit',
+)
+
+
+class ExpertRejection(RuntimeError):
+    """Post-feasibility expert-execution failure; billed to the rejection budget, not a stop."""
 
 
 class Budget:
@@ -188,11 +196,21 @@ def run_schedule(plan, base_source, model, execute, validate, journal, feasible_
             journal(dict(event='started', **slot, training_ready=False))
             outcome = execute(copy.deepcopy(slot), arrays)
             if outcome.get('success') is not True or type(outcome.get('frames')) is not int or outcome['frames'] != p.EXPECTED_FRAMES:
-                raise RuntimeError('First failed/wrong-duration expert; no retry within admit')
+                raise ExpertRejection(_EXPERT_REJECT_MARKERS[1])
             validate(copy.deepcopy(slot), outcome)
             before()
             journal(dict(event='admitted', episode_index=i, training_ready=False))
             admitted.append(i)
+        except ExpertRejection as exc:
+            rejected.append(i)
+            if len(rejected) > p.REJECTION_BUDGET:
+                raise RuntimeError('Rejection budget exhausted; no more attempts') from exc
+            try:
+                journal(dict(event='rejected', episode_index=i, layout_id=slot['layout_id'],
+                             tried=1, reason='expert_execution', training_ready=False, error=repr(exc)))
+            except BaseException as secondary:
+                print(f'Journal failure: {secondary!r}', file=sys.stderr)
+            continue
         except BaseException as exc:
             try:
                 journal(dict(event='failed', episode_index=i, training_ready=False, error=repr(exc)))
@@ -275,7 +293,12 @@ def collect():
                 write_npz(reset_path, dict(initial_state=arrays['initial_state'], qpos=arrays['qpos']))
                 episode_resets[i] = file_hash(reset_path, budget.check)
                 started[i] = (monotonic(), process_time())
-                result = record_attempt(path, expert, dataset, slot, arrays['initial_state'].copy(), budget.check)
+                try:
+                    result = record_attempt(path, expert, dataset, slot, arrays['initial_state'].copy(), budget.check)
+                except RuntimeError as exc:
+                    if str(exc) in _EXPERT_REJECT_MARKERS:
+                        raise ExpertRejection(str(exc)) from exc
+                    raise
                 dataset._writer_closed_for_reading = True
                 return result
 

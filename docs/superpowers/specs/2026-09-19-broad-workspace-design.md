@@ -160,12 +160,38 @@ episode start.
 
 ## Failure-stop policy
 
-Same first-failure-stop policy as `local_varied` *within* an admitted
-attempt: any physics NaN, replay mismatch, or admission-gate failure aborts
-the collection. **Different from `local_varied`:** rejected attempts
-(IK-infeasible home pose or planner failure) do not stop the collection;
-they consume from the 100-rejection budget. If the budget is exhausted
-before 200 admissions, the collection halts.
+Amended 2026-09-20 after the initial overnight run aborted at 52 admits
+because a single boundary-corner layout produced a misaligned stack
+(released_stack=False despite the expert completing the 528-frame
+trajectory). Rationale: an IK gate that lets an intractable geometry
+through is semantically indistinguishable from an in-simulation execution
+failure caused by the same intractable geometry; both should count against
+the same rejection budget.
+
+Rejection (billed to the 100-rejection budget, do NOT stop collection):
+- IK-infeasible home pose after up to 8 SHA-seeded redraws.
+- Post-feasibility expert-execution failure. Concretely, the expert
+  completes the 528-frame trajectory but the final admission gate
+  (`success=True and frames==528` per `record_attempt`) is not met — e.g.
+  Verify Lift fails or the release gate never fires. The raw attempt is
+  preserved in `attempts/{i:06d}/` with the `interrupted.json` marker.
+  Journal event: `{"event": "rejected", "reason": "expert_execution",
+  "tried": 1, ...}`.
+
+Stop (write `failure.json`, abort collection):
+- Any infrastructure failure inside `record_attempt` other than the two
+  expert-rejection markers above: physics NaN, replay checksum mismatch,
+  sink integrity error, disk-floor violation, wall-clock cap hit, seal
+  drift, monkey-patched frozen source detection, mounted-repo modification.
+- 100-rejection budget exhausted (feasibility + expert rejections combined)
+  before 200 admissions.
+- 300-attempt total budget exhausted before 200 admissions.
+- Any exception raised outside the two named `RuntimeError` messages
+  (`"Failed expert or noncanonical duration; raw attempt preserved"`,
+  `"First failed/wrong-duration expert; no retry within admit"`).
+
+`failure.json` is written to the dataset root; no partial dataset
+publishable.
 
 Byte budgets: start 60 GiB free, floor 40 GiB, cap 12 h.
 
