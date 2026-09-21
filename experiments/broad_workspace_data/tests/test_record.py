@@ -197,7 +197,7 @@ class FeasibilityGateTests(unittest.TestCase):
             admitted, rejected = self.r.run_schedule(
                 plan, base_source=None, model=None, execute=execute,
                 validate=lambda s, o: None, journal=events.append, feasible_fn=lambda l, j: True,
-                discard=lambda index, k: discarded.append((index, k)))
+                discard=lambda index, k, committed=False: discarded.append((index, k)))
         expert_rejects = [e for e in events if e.get('event') == 'rejected' and e.get('reason') == 'expert_execution']
         self.assertEqual([e['episode_index'] for e in expert_rejects], [0, 0])
         self.assertEqual([e['tried'] for e in expert_rejects], [1, 2])

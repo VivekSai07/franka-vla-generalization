@@ -20,7 +20,7 @@ from experiments.fixed_layout.media import BoundPairedDataset
 from experiments.fixed_layout.source import (
     Expert as BaseExpert, load_reset, storage_path,
 )
-from experiments.paired_demonstrations.media import FEATURES, ENCODING
+from experiments.paired_demonstrations.media import FEATURES, ENCODING, CAMERAS
 from src.robots.franka_panda.config import Q_HOME, ACTIVE_JOINTS
 from . import plan as p
 from .expert import Expert as BroadExpert
@@ -194,7 +194,7 @@ def run_schedule(plan, base_source, model, execute, validate, journal, feasible_
     if feasible_fn is None:
         feasible_fn = lambda layout, jitter: True
     if discard is None:
-        discard = lambda index, k: None
+        discard = lambda index, k, committed: None
     for slot in frozen['episodes']:
         i = slot['episode_index']
         if i in completed:  # already admitted by an earlier run of the same output
@@ -220,11 +220,14 @@ def run_schedule(plan, base_source, model, execute, validate, journal, feasible_
                 arrays = derive_scene(model, base_source, layout,
                                       dict(home_pose_jitter_deg=candidate['home_pose_jitter_deg']))
                 journal(dict(event='started', **attempt, training_ready=False))
+                committed = False
                 try:
                     outcome = execute(copy.deepcopy(attempt), arrays)
                     if (outcome.get('success') is not True or type(outcome.get('frames')) is not int
                             or outcome['frames'] != p.EXPECTED_FRAMES):
                         raise ExpertRejection(_EXPERT_REJECT_MARKERS[1])
+                    committed = True  # execute() has saved the episode into the dataset
+                    validate(copy.deepcopy(attempt), outcome)
                 except ExpertRejection as exc:
                     rejected.append(i)
                     if len(rejected) > p.REJECTION_BUDGET:
@@ -235,9 +238,8 @@ def run_schedule(plan, base_source, model, execute, validate, journal, feasible_
                                      training_ready=False, error=repr(exc)))
                     except BaseException as secondary:
                         print(f'Journal failure: {secondary!r}', file=sys.stderr)
-                    discard(i, candidate['k'])
+                    discard(i, candidate['k'], committed)
                     continue
-                validate(copy.deepcopy(attempt), outcome)
                 before()
                 journal(dict(event='admitted', episode_index=i, training_ready=False))
                 admitted.append(i)
@@ -277,6 +279,72 @@ def open_dataset(output, check):
     dataset.fixed_layout_check = check
     dataset._active_attempt_path = None
     return dataset
+
+
+def rollback_episode(output):
+    """Drop the last committed dataset episode after validation rejected it.
+
+    execute() commits to LeRobot before validate_episode runs, so a rejected replay leaves the
+    dataset one episode ahead of the journal. Each episode owns its own data/video/metadata
+    files here (both *_files_size_in_mb are 0), so removing the tail is self-contained.
+    """
+    import pyarrow.parquet as pq
+    root = Path(output)/'dataset'
+    info = json.loads((root/'meta/info.json').read_text())
+    index = info['total_episodes']-1
+    if index < 0:
+        raise ValueError('No committed episode to roll back')
+    metadata = root/'meta/episodes'/f'chunk-{index//1000:03d}'/f'file-{index%1000:03d}.parquet'
+    rows = pq.read_table(metadata).to_pylist()
+    if len(rows) != 1 or rows[0]['episode_index'] != index:
+        raise ValueError('Tail episode metadata is not self-contained; refusing rollback')
+    row = rows[0]
+    targets = [root/'data'/f"chunk-{row['data/chunk_index']:03d}"/f"file-{row['data/file_index']:03d}.parquet"]
+    for key in CAMERAS:
+        targets.append(root/'videos'/key/f"chunk-{row[f'videos/{key}/chunk_index']:03d}"
+                       / f"file-{row[f'videos/{key}/file_index']:03d}.mp4")
+    for path in targets:
+        if not path.is_file():
+            raise ValueError(f'Expected dataset file missing; refusing rollback: {path}')
+    for path in targets:
+        path.unlink()
+    metadata.unlink()
+    info['total_episodes'] = index
+    info['total_frames'] = info['total_frames']-row['length']
+    _replace_json(root/'meta/info.json', info)
+    _reaggregate_stats(root)
+    return index
+
+
+def _reaggregate_stats(root):
+    """Recompute meta/stats.json from the per-episode stats that survive the rollback."""
+    from lerobot.datasets.compute_stats import aggregate_stats
+    from lerobot.datasets.utils import write_stats
+    from lerobot.datasets.lerobot_dataset import LeRobotDatasetMetadata
+    from lerobot.datasets.dataset_tools import _load_episode_with_stats
+    from types import SimpleNamespace
+    meta = LeRobotDatasetMetadata(repo_id='broad_workspace_data', root=root)
+    holder = SimpleNamespace(meta=meta, root=Path(root))
+    collected = []
+    for index in range(meta.total_episodes):
+        row, episode = _load_episode_with_stats(holder, index), {}
+        for key, value in row.items():
+            if not key.startswith('stats/') or len(key.split('/')) != 3:
+                continue
+            _, feature, name = key.split('/')
+            # pyarrow returns (3,1,1) image stats as nested object arrays; rebuild the shape.
+            if (meta.features.get(feature, {}).get('dtype') in ('image', 'video') and name != 'count'
+                    and isinstance(value, np.ndarray) and value.dtype == object):
+                flat = []
+                for item in value:
+                    while isinstance(item, np.ndarray):
+                        item = item.flatten()[0]
+                    flat.append(item)
+                value = np.array(flat, dtype=np.float64).reshape(3, 1, 1)
+            episode.setdefault(feature, {})[name] = value
+        collected.append(episode)
+    if collected:
+        write_stats({k: v for k, v in aggregate_stats(collected).items() if k in meta.features}, root)
 
 
 def _replace_json(path, value):
@@ -443,7 +511,14 @@ def collect(resume=False):
                 layout = layouts_by_id[slot['layout_id']]
                 reset = derive_scene(model, base_src, layout,
                                      dict(home_pose_jitter_deg=slot['home_pose_jitter_deg']))
-                validate_episode(output, slot, expert, reset, budget.check)
+                try:
+                    validate_episode(output, slot, expert, reset, budget.check)
+                except ValueError as exc:
+                    # float32 action rounding can amplify through a chaotic contact; that episode
+                    # is simply not reproducible, so redraw it. Reference drift stays fatal.
+                    if 'persisted_float32 drift:' in str(exc):
+                        raise ExpertRejection(f'Replay reproducibility rejected: {exc}') from exc
+                    raise
                 wall, cpu = started[i]
                 usage = resource.getrusage(resource.RUSAGE_SELF)
                 write_json(output / 'attempts' / f'{i:06d}' / 'resources.json', dict(
@@ -454,9 +529,14 @@ def collect(resume=False):
                     scope='CPU process cumulative high-water; no GPU attribution'))
                 before()
 
-            def discard(index, k):
+            def discard(index, k, committed=False):
                 """Retire a rejected attempt so the same slot can be retried on the next draw."""
+                nonlocal dataset
                 _reset_lerobot_pending_episode(dataset)
+                if committed:  # validation rejected an episode execute() had already saved
+                    dataset.finalize()
+                    rollback_episode(output)
+                    dataset = open_dataset(output, budget.check)
                 (output / 'rejected').mkdir(exist_ok=True)
                 path = output / 'attempts' / f'{index:06d}'
                 if path.is_dir():
