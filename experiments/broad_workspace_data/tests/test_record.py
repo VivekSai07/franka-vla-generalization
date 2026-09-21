@@ -112,7 +112,42 @@ class FeasibilityGateTests(unittest.TestCase):
         # Feasible on first try, so exactly 200 feasibility calls.
         self.assertEqual(len(calls), 200)
 
-    def test_infeasible_triggers_8_redraws_then_reject(self):
+    def test_completed_slots_are_skipped_and_still_counted_as_admitted(self):
+        """Resume must not re-execute admitted slots, and must keep admits contiguous."""
+        plan = self.p.make_plan()
+        ran = []
+        def execute(slot, arrays):
+            ran.append(slot['episode_index'])
+            return {'success': True, 'frames': 528}
+        events = []
+        with patch('experiments.broad_workspace_data.record.derive_scene',
+                   return_value={'initial_state': np.zeros(242), 'qpos': np.zeros(37)}):
+            admitted, rejected = self.r.run_schedule(
+                plan, base_source=None, model=None, execute=execute,
+                validate=lambda s, o: None, journal=events.append,
+                feasible_fn=lambda l, j: True, completed=frozenset(range(180)))
+        self.assertEqual(ran, list(range(180, self.p.ADMIT_COUNT)))
+        self.assertEqual(admitted, list(range(self.p.ADMIT_COUNT)))
+        self.assertEqual([e['episode_index'] for e in events if e['event'] == 'started'],
+                         list(range(180, self.p.ADMIT_COUNT)))
+
+    def test_infeasible_layout_resample_only_moves_recorded_layouts(self):
+        """The substitution must be deterministic and must not disturb any episode slot."""
+        plan = self.p.make_plan()
+        self.assertEqual(self.p.INFEASIBLE_LAYOUT_RESAMPLES, {'validation_020': 2, 'validation_032': 0})
+        layouts = {x['layout_id']: x for x in plan['layouts']}
+        expected = self.p.resample_layout_xy('validation_020', 2)
+        self.assertEqual(layouts['validation_020']['cube_xy_m'], expected)
+        self.assertEqual(self.p.resample_layout_xy('validation_020', 2), expected)  # deterministic
+        self.assertNotEqual(self.p.resample_layout_xy('validation_020', 1), expected)
+        for axis, value in enumerate(expected):  # stays inside envelope F7
+            self.assertGreaterEqual(value, self.p.AXIS_LOW[axis])
+            self.assertLessEqual(value, self.p.AXIS_HIGH[axis])
+        self.assertEqual(plan['infeasible_layout_resamples'], {'validation_020': 2, 'validation_032': 0})
+        self.p.validate_plan(plan)
+
+    def test_infeasible_slot_exhausting_every_redraw_stops(self):
+        """A slot with no feasible draw cannot be skipped; admit index must track the plan slot."""
         plan = self.p.make_plan()
         counter = {'checks': 0}
         def feasible(layout, jitter):
@@ -122,14 +157,15 @@ class FeasibilityGateTests(unittest.TestCase):
         events = []
         with patch('experiments.broad_workspace_data.record.derive_scene',
                    return_value={'initial_state': np.zeros(242), 'qpos': np.zeros(37)}):
-            self.r.run_schedule(plan, base_source=None, model=None,
-                                execute=lambda s, a: {'success': True, 'frames': 528},
-                                validate=lambda s, o: None, journal=events.append,
-                                feasible_fn=feasible)
-        rejected = [e for e in events if e['event'] == 'rejected']
-        self.assertEqual(len(rejected), 1)
-        self.assertEqual(rejected[0]['episode_index'], 0)
-        self.assertEqual(rejected[0]['tried'], 9)
+            with self.assertRaises(RuntimeError) as caught:
+                self.r.run_schedule(plan, base_source=None, model=None,
+                                    execute=lambda s, a: {'success': True, 'frames': 528},
+                                    validate=lambda s, o: None, journal=events.append,
+                                    feasible_fn=feasible)
+        self.assertIn('exhausted every feasible draw', str(caught.exception))
+        self.assertEqual(counter['checks'], 9)
+        failed = [e for e in events if e['event'] == 'failed']
+        self.assertEqual([e['episode_index'] for e in failed], [0])
 
     def test_rejection_budget_stops_beyond_101(self):
         plan = self.p.make_plan()
@@ -145,14 +181,50 @@ class FeasibilityGateTests(unittest.TestCase):
         rejected_ids = [e['episode_index'] for e in events if e['event'] == 'rejected']
         self.assertLessEqual(len(rejected_ids), self.p.REJECTION_BUDGET)
 
-    def test_expert_execution_failure_billed_to_rejection_budget_not_stop(self):
-        """Post-feasibility expert failures continue collection, up to the shared 100-rejection budget."""
+    def test_expert_execution_failure_retries_same_slot_until_admitted(self):
+        """Post-feasibility expert failures retry the SAME slot; every slot still yields one admit."""
         plan = self.p.make_plan()
-        # First two episodes: expert rejects. Third onward: succeed.
+        # Slot 0 rejects on its first two draws, then succeeds on the third.
         state = {'calls': 0}
         def execute(slot, arrays):
             state['calls'] += 1
             if state['calls'] <= 2:
+                raise self.r.ExpertRejection('Failed expert or noncanonical duration; raw attempt preserved')
+            return {'success': True, 'frames': 528}
+        events, discarded = [], []
+        with patch('experiments.broad_workspace_data.record.derive_scene',
+                   return_value={'initial_state': np.zeros(242), 'qpos': np.zeros(37)}):
+            admitted, rejected = self.r.run_schedule(
+                plan, base_source=None, model=None, execute=execute,
+                validate=lambda s, o: None, journal=events.append, feasible_fn=lambda l, j: True,
+                discard=lambda index, k, committed=False: discarded.append((index, k)))
+        expert_rejects = [e for e in events if e.get('event') == 'rejected' and e.get('reason') == 'expert_execution']
+        self.assertEqual([e['episode_index'] for e in expert_rejects], [0, 0])
+        self.assertEqual([e['tried'] for e in expert_rejects], [1, 2])
+        # The rejected attempt directories are retired so the retry can reuse the slot path.
+        self.assertEqual(discarded, [(0, 0), (0, 1)])
+        # Crucially: no slot is skipped, so admit index stays equal to plan slot index.
+        self.assertEqual(admitted, list(range(self.p.ADMIT_COUNT)))
+        self.assertEqual(rejected, [0, 0])
+        # The admitted attempt used the third draw, and its journal entry carries that draw.
+        started = [e for e in events if e['event'] == 'started' and e['episode_index'] == 0]
+        self.assertEqual([e['feasibility_k'] for e in started], [0, 1, 2])
+
+    def test_rejections_keep_admitted_indices_contiguous_and_journal_valid(self):
+        """Regression: the seam that broke production three times at slot 52.
+
+        A rejection must not shift later episodes. Admitted ids must stay 0..N-1 so that
+        metadata[i], attempts/{i:06d} and resets/episode_{i:03d} keep pointing at one episode,
+        and the resulting journal must satisfy the final collection validator.
+        """
+        from experiments.broad_workspace_data import validate as v
+        plan = self.p.make_plan()
+        failing = {52, 53, 140}
+        seen = set()
+        def execute(slot, arrays):
+            index = slot['episode_index']
+            if index in failing and index not in seen:
+                seen.add(index)
                 raise self.r.ExpertRejection('Failed expert or noncanonical duration; raw attempt preserved')
             return {'success': True, 'frames': 528}
         events = []
@@ -161,18 +233,43 @@ class FeasibilityGateTests(unittest.TestCase):
             admitted, rejected = self.r.run_schedule(
                 plan, base_source=None, model=None, execute=execute,
                 validate=lambda s, o: None, journal=events.append, feasible_fn=lambda l, j: True)
-        # First 2 episodes rejected as expert_execution, remaining 198 admitted.
-        expert_rejects = [e for e in events if e.get('event') == 'rejected' and e.get('reason') == 'expert_execution']
-        self.assertEqual(len(expert_rejects), 2)
-        self.assertEqual([e['episode_index'] for e in expert_rejects], [0, 1])
-        for e in expert_rejects:
-            self.assertEqual(e['tried'], 1)
-            self.assertIn('Failed expert', e['error'])
-        self.assertEqual(len(admitted), 198)
-        self.assertEqual(len(rejected), 2)
+        self.assertEqual(admitted, list(range(self.p.ADMIT_COUNT)))
+        self.assertEqual(sorted(rejected), sorted(failing))
+        # Every slot is admitted exactly once, in plan order.
+        admits = [e['episode_index'] for e in events if e['event'] == 'admitted']
+        self.assertEqual(admits, list(range(self.p.ADMIT_COUNT)))
+        # The retried slots journal more than one start but only one admit.
+        for index in failing:
+            starts = [e for e in events if e['event'] == 'started' and e['episode_index'] == index]
+            self.assertEqual(len(starts), 2)
+            self.assertEqual(admits.count(index), 1)
+        enriched = [{**e, 'elapsed_seconds': float(i)} for i, e in enumerate(events)]
+        v.validate_journal(enriched, plan)
 
     def test_expert_execution_failures_exhaust_rejection_budget_and_stop(self):
-        """When expert-execution rejections exceed the 100 budget, collection STOPS with RuntimeError."""
+        """One rejection on each of many slots eventually exhausts the shared 100-rejection budget."""
+        plan = self.p.make_plan()
+        seen = set()
+        def execute(slot, arrays):
+            index = slot['episode_index']
+            if index not in seen:  # every slot rejects once, then succeeds on its redraw
+                seen.add(index)
+                raise self.r.ExpertRejection('Failed expert or noncanonical duration; raw attempt preserved')
+            return {'success': True, 'frames': 528}
+        events = []
+        with patch('experiments.broad_workspace_data.record.derive_scene',
+                   return_value={'initial_state': np.zeros(242), 'qpos': np.zeros(37)}):
+            with self.assertRaises(RuntimeError) as caught:
+                self.r.run_schedule(plan, base_source=None, model=None, execute=execute,
+                                    validate=lambda s, o: None, journal=events.append,
+                                    feasible_fn=lambda l, j: True)
+        self.assertIn('Rejection budget exhausted', str(caught.exception))
+        expert_rejects = [e for e in events if e.get('event') == 'rejected' and e.get('reason') == 'expert_execution']
+        # The over-budget rejection raises before it is journalled, so the budget count is recorded.
+        self.assertEqual(len(expert_rejects), self.p.REJECTION_BUDGET)
+
+    def test_slot_rejected_on_every_draw_stops_instead_of_skipping(self):
+        """A slot that never succeeds must stop collection rather than leave a gap in the admits."""
         plan = self.p.make_plan()
         def execute(slot, arrays):
             raise self.r.ExpertRejection('Failed expert or noncanonical duration; raw attempt preserved')
@@ -183,9 +280,10 @@ class FeasibilityGateTests(unittest.TestCase):
                 self.r.run_schedule(plan, base_source=None, model=None, execute=execute,
                                     validate=lambda s, o: None, journal=events.append,
                                     feasible_fn=lambda l, j: True)
-        self.assertIn('Rejection budget exhausted', str(caught.exception))
-        expert_rejects = [e for e in events if e.get('event') == 'rejected' and e.get('reason') == 'expert_execution']
-        self.assertEqual(len(expert_rejects), self.p.REJECTION_BUDGET)
+        self.assertIn('exhausted every feasible draw', str(caught.exception))
+        rejects = [e for e in events if e.get('event') == 'rejected']
+        self.assertEqual(len(rejects), self.r.FEASIBILITY_REDRAWS + 1)
+        self.assertEqual({e['episode_index'] for e in rejects}, {0})
 
     def test_non_expert_runtime_errors_still_stop(self):
         """Infrastructure RuntimeErrors (physics NaN, disk full, etc.) MUST still stop the collection."""

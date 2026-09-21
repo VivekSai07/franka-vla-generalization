@@ -20,7 +20,7 @@ from experiments.fixed_layout.media import BoundPairedDataset
 from experiments.fixed_layout.source import (
     Expert as BaseExpert, load_reset, storage_path,
 )
-from experiments.paired_demonstrations.media import FEATURES, ENCODING
+from experiments.paired_demonstrations.media import FEATURES, ENCODING, CAMERAS
 from src.robots.franka_panda.config import Q_HOME, ACTIVE_JOINTS
 from . import plan as p
 from .expert import Expert as BroadExpert
@@ -178,8 +178,14 @@ def feasible(expert, base_source, layout, jitter) -> bool:
     return True
 
 
-def run_schedule(plan, base_source, model, execute, validate, journal, feasible_fn=None, before=lambda: None):
-    """One call per admitted episode; rejections consume budget; first-failure-stop only within an admit."""
+def run_schedule(plan, base_source, model, execute, validate, journal, feasible_fn=None, before=lambda: None,
+                 discard=None, completed=()):
+    """Every plan slot must be admitted; a failed draw retries the SAME slot.
+
+    Skipping a slot would make the admitted episode index drift away from the plan slot index,
+    and the whole downstream contract (metadata[i], attempts/{i:06d}, resets/episode_{i:03d},
+    train/validation split boundaries) is defined on that identity. Retrying instead keeps it.
+    """
     p.validate_plan(plan)
     frozen = copy.deepcopy(plan)
     layouts = {x['layout_id']: x for x in frozen['layouts']}
@@ -187,52 +193,60 @@ def run_schedule(plan, base_source, model, execute, validate, journal, feasible_
     admitted, rejected, attempts = [], [], 0
     if feasible_fn is None:
         feasible_fn = lambda layout, jitter: True
+    if discard is None:
+        discard = lambda index, k, committed: None
     for slot in frozen['episodes']:
         i = slot['episode_index']
+        if i in completed:  # already admitted by an earlier run of the same output
+            admitted.append(i)
+            continue
         try:
             before()
             layout = layouts[slot['layout_id']]
-            final_jitter = None
             draws = [dict(k=0, source='plan', home_pose_jitter_deg=list(slot['home_pose_jitter_deg']))]
             for k in range(1, FEASIBILITY_REDRAWS + 1):
                 draws.append(dict(k=k, source=f'redraw:{k-1}',
                                   home_pose_jitter_deg=redraw_home_pose_jitter(i, k-1)))
+            seated = False
             for candidate in draws:
                 attempts += 1
                 if attempts > p.ATTEMPT_LIMIT:
                     raise RuntimeError('Attempt budget exhausted before admission target')
                 jitter = dict(home_pose_jitter_deg=candidate['home_pose_jitter_deg'])
-                if feasible_fn(layout, jitter):
-                    final_jitter = candidate
-                    break
-            if final_jitter is None:
-                rejected.append(i)
-                if len(rejected) > p.REJECTION_BUDGET:
-                    raise RuntimeError('Rejection budget exhausted; no more attempts')
-                journal(dict(event='rejected', episode_index=i, layout_id=slot['layout_id'],
-                             tried=len(draws), training_ready=False))
-                continue
-            slot = dict(slot, home_pose_jitter_deg=final_jitter['home_pose_jitter_deg'],
-                        feasibility_k=final_jitter['k'], feasibility_source=final_jitter['source'])
-            arrays = derive_scene(model, base_source, layout, dict(home_pose_jitter_deg=final_jitter['home_pose_jitter_deg']))
-            journal(dict(event='started', **slot, training_ready=False))
-            outcome = execute(copy.deepcopy(slot), arrays)
-            if outcome.get('success') is not True or type(outcome.get('frames')) is not int or outcome['frames'] != p.EXPECTED_FRAMES:
-                raise ExpertRejection(_EXPERT_REJECT_MARKERS[1])
-            validate(copy.deepcopy(slot), outcome)
-            before()
-            journal(dict(event='admitted', episode_index=i, training_ready=False))
-            admitted.append(i)
-        except ExpertRejection as exc:
-            rejected.append(i)
-            if len(rejected) > p.REJECTION_BUDGET:
-                raise RuntimeError('Rejection budget exhausted; no more attempts') from exc
-            try:
-                journal(dict(event='rejected', episode_index=i, layout_id=slot['layout_id'],
-                             tried=1, reason='expert_execution', training_ready=False, error=repr(exc)))
-            except BaseException as secondary:
-                print(f'Journal failure: {secondary!r}', file=sys.stderr)
-            continue
+                if not feasible_fn(layout, jitter):
+                    continue
+                attempt = dict(slot, home_pose_jitter_deg=candidate['home_pose_jitter_deg'],
+                               feasibility_k=candidate['k'], feasibility_source=candidate['source'])
+                arrays = derive_scene(model, base_source, layout,
+                                      dict(home_pose_jitter_deg=candidate['home_pose_jitter_deg']))
+                journal(dict(event='started', **attempt, training_ready=False))
+                committed = False
+                try:
+                    outcome = execute(copy.deepcopy(attempt), arrays)
+                    if (outcome.get('success') is not True or type(outcome.get('frames')) is not int
+                            or outcome['frames'] != p.EXPECTED_FRAMES):
+                        raise ExpertRejection(_EXPERT_REJECT_MARKERS[1])
+                    committed = True  # execute() has saved the episode into the dataset
+                    validate(copy.deepcopy(attempt), outcome)
+                except ExpertRejection as exc:
+                    rejected.append(i)
+                    if len(rejected) > p.REJECTION_BUDGET:
+                        raise RuntimeError('Rejection budget exhausted; no more attempts') from exc
+                    try:
+                        journal(dict(event='rejected', episode_index=i, layout_id=slot['layout_id'],
+                                     tried=candidate['k']+1, reason='expert_execution',
+                                     training_ready=False, error=repr(exc)))
+                    except BaseException as secondary:
+                        print(f'Journal failure: {secondary!r}', file=sys.stderr)
+                    discard(i, candidate['k'], committed)
+                    continue
+                before()
+                journal(dict(event='admitted', episode_index=i, training_ready=False))
+                admitted.append(i)
+                seated = True
+                break
+            if not seated:
+                raise RuntimeError(f'Slot {i} exhausted every feasible draw without an admitted demonstration')
         except BaseException as exc:
             try:
                 journal(dict(event='failed', episode_index=i, training_ready=False, error=repr(exc)))
@@ -252,16 +266,169 @@ def create_dataset(output, check):
     return dataset
 
 
-def collect():
+def open_dataset(output, check):
+    """Reopen a finalized dataset for appending; __init__ drops the pinned encoder settings."""
+    dataset = BoundPairedDataset(repo_id='broad_workspace_data', root=Path(output)/'dataset',
+                                 video_backend='pyav')
+    dataset.vcodec = ENCODING['vcodec']
+    dataset._encoder_threads = ENCODING['encoder_threads']
+    dataset.batch_encoding_size = 1
+    dataset._streaming_encoder = None
+    dataset.meta.info['data_files_size_in_mb'] = 0
+    dataset.meta.info['video_files_size_in_mb'] = 0
+    dataset.fixed_layout_check = check
+    dataset._active_attempt_path = None
+    return dataset
+
+
+def rollback_episode(output):
+    """Drop the last committed dataset episode after validation rejected it.
+
+    execute() commits to LeRobot before validate_episode runs, so a rejected replay leaves the
+    dataset one episode ahead of the journal. Each episode owns its own data/video/metadata
+    files here (both *_files_size_in_mb are 0), so removing the tail is self-contained.
+    """
+    import pyarrow.parquet as pq
+    root = Path(output)/'dataset'
+    info = json.loads((root/'meta/info.json').read_text())
+    index = info['total_episodes']-1
+    if index < 0:
+        raise ValueError('No committed episode to roll back')
+    metadata = root/'meta/episodes'/f'chunk-{index//1000:03d}'/f'file-{index%1000:03d}.parquet'
+    rows = pq.read_table(metadata).to_pylist()
+    if len(rows) != 1 or rows[0]['episode_index'] != index:
+        raise ValueError('Tail episode metadata is not self-contained; refusing rollback')
+    row = rows[0]
+    targets = [root/'data'/f"chunk-{row['data/chunk_index']:03d}"/f"file-{row['data/file_index']:03d}.parquet"]
+    for key in CAMERAS:
+        targets.append(root/'videos'/key/f"chunk-{row[f'videos/{key}/chunk_index']:03d}"
+                       / f"file-{row[f'videos/{key}/file_index']:03d}.mp4")
+    for path in targets:
+        if not path.is_file():
+            raise ValueError(f'Expected dataset file missing; refusing rollback: {path}')
+    for path in targets:
+        path.unlink()
+    metadata.unlink()
+    info['total_episodes'] = index
+    info['total_frames'] = info['total_frames']-row['length']
+    _replace_json(root/'meta/info.json', info)
+    _reaggregate_stats(root)
+    return index
+
+
+def _reaggregate_stats(root):
+    """Recompute meta/stats.json from the per-episode stats that survive the rollback."""
+    from lerobot.datasets.compute_stats import aggregate_stats
+    from lerobot.datasets.utils import write_stats
+    from lerobot.datasets.lerobot_dataset import LeRobotDatasetMetadata
+    from lerobot.datasets.dataset_tools import _load_episode_with_stats
+    from types import SimpleNamespace
+    meta = LeRobotDatasetMetadata(repo_id='broad_workspace_data', root=root)
+    holder = SimpleNamespace(meta=meta, root=Path(root))
+    collected = []
+    for index in range(meta.total_episodes):
+        row, episode = _load_episode_with_stats(holder, index), {}
+        for key, value in row.items():
+            if not key.startswith('stats/') or len(key.split('/')) != 3:
+                continue
+            _, feature, name = key.split('/')
+            # pyarrow returns (3,1,1) image stats as nested object arrays; rebuild the shape.
+            if (meta.features.get(feature, {}).get('dtype') in ('image', 'video') and name != 'count'
+                    and isinstance(value, np.ndarray) and value.dtype == object):
+                flat = []
+                for item in value:
+                    while isinstance(item, np.ndarray):
+                        item = item.flatten()[0]
+                    flat.append(item)
+                value = np.array(flat, dtype=np.float64).reshape(3, 1, 1)
+            episode.setdefault(feature, {})[name] = value
+        collected.append(episode)
+    if collected:
+        write_stats({k: v for k, v in aggregate_stats(collected).items() if k in meta.features}, root)
+
+
+def _replace_json(path, value):
+    """Amendment writer; every other evidence file stays write-once."""
+    path = Path(path)
+    temporary = path.with_name(path.name + '.amend')
+    if temporary.exists():
+        temporary.unlink()
+    write_json(temporary, value)
+    temporary.replace(path)
+
+
+def resume_state(output):
+    """Contiguous admitted prefix and journal clock left by the previous run."""
+    output = Path(output)
+    events = [json.loads(line) for line in (output/'journal.jsonl').read_text().splitlines()]
+    admitted = [e['episode_index'] for e in events if e['event'] == 'admitted']
+    if admitted != list(range(len(admitted))):
+        raise ValueError('Previous journal did not admit a contiguous slot prefix')
+    directories = sorted(x.name for x in (output/'attempts').iterdir())
+    if directories != [f'{i:06d}' for i in admitted]:
+        raise ValueError('Attempt directories do not match the admitted prefix')
+    rejected = [e['episode_index'] for e in events if e['event'] == 'rejected']
+    return admitted, rejected, max((e['elapsed_seconds'] for e in events), default=0.)
+
+
+def amend_frozen_plan(output, plan, bank, bound, expert, check):
+    """Rewrite the frozen plan/bank/provenance/snapshot set after a recorded layout substitution.
+
+    Only layouts listed in INFEASIBLE_LAYOUT_RESAMPLES may move, no episode slot may change, and
+    no already-collected slot may depend on a moved layout, so demonstrations recorded under the
+    previous plan stay valid. The superseded provenance is preserved in amendment.json because
+    substituting a layout necessarily edits the collector source.
+    """
+    output = Path(output)
+    previous = json.loads((output/'plan.json').read_text())
+    previous_bound = json.loads((output/'provenance.json').read_text())
+    if previous == plan and previous_bound == bound:
+        return json.loads((output/'snapshots.json').read_text())
+    if previous['episodes'] != plan['episodes'] or previous['base_layout'] != plan['base_layout']:
+        raise ValueError('Amendment may not change any episode slot')
+    if json.loads((output/'configuration.json').read_text()) != expert.config:
+        raise ValueError('Amendment may not change the expert configuration')
+    old = {x['layout_id']: x for x in previous['layouts']}
+    new = {x['layout_id']: x for x in plan['layouts']}
+    moved = {k for k in old if old[k] != new.get(k)}
+    if moved - set(p.INFEASIBLE_LAYOUT_RESAMPLES):
+        raise ValueError(f'Unrecorded layout substitution: {sorted(moved - set(p.INFEASIBLE_LAYOUT_RESAMPLES))}')
+    for directory in sorted((output/'attempts').iterdir()):
+        if json.loads((directory/'slot.json').read_text())['layout_id'] in moved:
+            raise ValueError(f'Attempt {directory.name} was collected under a substituted layout')
+    history = json.loads((output/'amendment.json').read_text()) if (output/'amendment.json').exists() else []
+    history.append(dict(substituted_layouts=sorted(moved),
+                        resample_indices={k: p.INFEASIBLE_LAYOUT_RESAMPLES[k] for k in sorted(moved)},
+                        previous_cube_xy_m={k: old[k]['cube_xy_m'] for k in sorted(moved)},
+                        superseded_provenance=previous_bound,
+                        admitted_before_amendment=len(list((output/'attempts').iterdir()))))
+    _replace_json(output/'amendment.json', history)
+    _replace_json(output/'plan.json', plan)
+    _replace_json(output/'bank.json', bank_manifest(plan, bank))
+    _replace_json(output/'provenance.json', bound)
+    hashes = {name: file_hash(output/name, check) for name in sorted(frozen_names(plan))}
+    _replace_json(output/'snapshots.json', hashes)
+    return hashes
+
+
+def collect(resume=False):
     """Main-only real collection after independent review; no arbitrary overrides."""
     from .validate import validate_episode, validate_dataset
     from experiments.fixed_layout.validate import fingerprint
     output = OUTPUT; budget = Budget(output)
-    budget.check_start()
     if any(x.is_symlink() for x in (output, *output.parents)):
         raise ValueError('Output symlinks forbidden')
-    if output.exists() and (not output.is_dir() or any(output.iterdir())):
-        raise FileExistsError('No retry/resume')
+    if resume:
+        # The start reserve sizes a full 200-slot run; a resume only writes its remaining slots.
+        budget.check()
+        completed, previous_rejections, journal_offset = resume_state(output)
+        if not completed:
+            raise ValueError('Nothing to resume')
+    else:
+        budget.check_start()
+        completed, previous_rejections, journal_offset = [], [], 0.
+        if output.exists() and (not output.is_dir() or any(output.iterdir())):
+            raise FileExistsError('No retry/resume')
     with budget:
         plan = p.make_plan(); bound = provenance(budget.check)
         base_expert = BaseExpert(); base_src = load_reset(base_expert)
@@ -270,20 +437,28 @@ def collect():
         if provenance(budget.check) != bound:
             raise ValueError('Source changed during scene freeze')
         expert = BroadExpert()
-        budget.check_start(); claim_output(output)
-        dataset = None; active = None; started = {}; accepted = []; rejections = []; episode_resets = {}
+        if not resume:
+            budget.check_start(); claim_output(output)
+        dataset = None; active = None; started = {}; accepted = []; episode_resets = {}
+        rejections = list(previous_rejections)
         try:
-            budget.check_start()
-            write_json(output / 'plan.json', plan)
-            write_json(output / 'provenance.json', bound)
-            write_json(output / 'configuration.json', expert.config)
-            write_json(output / 'bank.json', bank_manifest(plan, bank))
-            with (output / 'source.npz').open('xb') as stream:
-                stream.write((p.ROOT / p.SOURCE).read_bytes()); stream.flush(); os.fsync(stream.fileno())
-            (output / 'resets').mkdir()
-            hashes = {name: file_hash(output / name, budget.check) for name in sorted(frozen_names(plan))}
-            write_json(output / 'snapshots.json', hashes)
-            (output / 'attempts').mkdir()
+            if resume:
+                (output/'failure.json').unlink(missing_ok=True)
+                hashes = amend_frozen_plan(output, plan, bank, bound, expert, budget.check)
+                for index in completed:
+                    episode_resets[index] = file_hash(output/'resets'/f'episode_{index:03d}.npz', budget.check)
+            else:
+                budget.check_start()
+                write_json(output / 'plan.json', plan)
+                write_json(output / 'provenance.json', bound)
+                write_json(output / 'configuration.json', expert.config)
+                write_json(output / 'bank.json', bank_manifest(plan, bank))
+                with (output / 'source.npz').open('xb') as stream:
+                    stream.write((p.ROOT / p.SOURCE).read_bytes()); stream.flush(); os.fsync(stream.fileno())
+                (output / 'resets').mkdir()
+                hashes = {name: file_hash(output / name, budget.check) for name in sorted(frozen_names(plan))}
+                write_json(output / 'snapshots.json', hashes)
+                (output / 'attempts').mkdir()
 
             def before():
                 budget.check(); check_snapshots(output, hashes, budget.check)
@@ -294,7 +469,7 @@ def collect():
                 budget.check()
 
             before()
-            dataset = create_dataset(output, budget.check)
+            dataset = open_dataset(output, budget.check) if resume else create_dataset(output, budget.check)
 
             def journal(event):
                 nonlocal active
@@ -302,11 +477,14 @@ def collect():
                 if event['event'] == 'admitted': accepted.append(event['episode_index'])
                 if event['event'] == 'rejected': rejections.append(event['episode_index'])
                 with (output / 'journal.jsonl').open('a') as stream:
-                    stream.write(json.dumps({**event, 'elapsed_seconds': monotonic()-budget.started}, allow_nan=False)+'\n')
+                    stream.write(json.dumps({**event, 'elapsed_seconds': journal_offset + monotonic()-budget.started}, allow_nan=False)+'\n')
                     stream.flush(); os.fsync(stream.fileno())
 
             def feasible_fn(layout, jitter):
                 return feasible(expert, base_src, layout, jitter)
+
+            layouts_by_id = {x['layout_id']: x for x in plan['layouts']}
+            layouts_by_id['base'] = plan['base_layout']
 
             def execute(slot, arrays):
                 i = slot['episode_index']; path = output / 'attempts' / f'{i:06d}'
@@ -328,8 +506,19 @@ def collect():
             def validate(slot, outcome):
                 before()
                 i = slot['episode_index']
-                key = f'episode_{i:03d}'
-                validate_episode(output, slot, expert, bank[key], budget.check)
+                # A feasibility redraw or a retry changes the home pose, so the episode must be
+                # checked against the reset it actually ran, not the plan-derived bank entry.
+                layout = layouts_by_id[slot['layout_id']]
+                reset = derive_scene(model, base_src, layout,
+                                     dict(home_pose_jitter_deg=slot['home_pose_jitter_deg']))
+                try:
+                    validate_episode(output, slot, expert, reset, budget.check)
+                except ValueError as exc:
+                    # float32 action rounding can amplify through a chaotic contact; that episode
+                    # is simply not reproducible, so redraw it. Reference drift stays fatal.
+                    if 'persisted_float32 drift:' in str(exc):
+                        raise ExpertRejection(f'Replay reproducibility rejected: {exc}') from exc
+                    raise
                 wall, cpu = started[i]
                 usage = resource.getrusage(resource.RUSAGE_SELF)
                 write_json(output / 'attempts' / f'{i:06d}' / 'resources.json', dict(
@@ -340,14 +529,42 @@ def collect():
                     scope='CPU process cumulative high-water; no GPU attribution'))
                 before()
 
-            run_schedule(plan, base_src, model, execute, validate, journal, feasible_fn, before)
+            def discard(index, k, committed=False):
+                """Retire a rejected attempt so the same slot can be retried on the next draw."""
+                nonlocal dataset
+                _reset_lerobot_pending_episode(dataset)
+                if committed:  # validation rejected an episode execute() had already saved
+                    dataset.finalize()
+                    rollback_episode(output)
+                    dataset = open_dataset(output, budget.check)
+                (output / 'rejected').mkdir(exist_ok=True)
+                path = output / 'attempts' / f'{index:06d}'
+                if path.is_dir():
+                    # Draw indices restart per run, so a slot retried across runs can collide.
+                    destination = output / 'rejected' / f'{index:06d}_k{k}'
+                    attempt = 0
+                    while destination.exists():
+                        attempt += 1
+                        destination = output / 'rejected' / f'{index:06d}_k{k}_r{attempt}'
+                    path.rename(destination)
+                reset_path = output / 'resets' / f'episode_{index:03d}.npz'
+                if reset_path.exists():
+                    reset_path.unlink()
+                episode_resets.pop(index, None)
+                started.pop(index, None)
+
+            run_schedule(plan, base_src, model, execute, validate, journal, feasible_fn, before, discard,
+                         completed=frozenset(completed))
             dataset.finalize(); dataset = None; before()
             info_path = output / 'dataset/meta/info.json'; info = json.loads(info_path.read_text())
             info['splits'] = {'train': f'0:{p.TRAIN_LHS_COUNT + p.TRAIN_BASE_COUNT}',
                               'validation': f'{p.TRAIN_LHS_COUNT + p.TRAIN_BASE_COUNT}:{p.ADMIT_COUNT}'}
             info['episode_resets'] = {str(i): episode_resets[i] for i in sorted(episode_resets)}
-            info['home_pose_jitter_deg'] = {str(i): plan['episodes'][i]['home_pose_jitter_deg'] for i in sorted(episode_resets)}
-            info['hover_z_jitter_m'] = {str(i): plan['episodes'][i]['hover_z_jitter_m'] for i in sorted(episode_resets)}
+            # Retried slots run an approved redraw, so record what each episode actually used.
+            executed = {i: json.loads((output / 'attempts' / f'{i:06d}' / 'slot.json').read_text())
+                        for i in sorted(episode_resets)}
+            info['home_pose_jitter_deg'] = {str(i): executed[i]['home_pose_jitter_deg'] for i in sorted(episode_resets)}
+            info['hover_z_jitter_m'] = {str(i): executed[i]['hover_z_jitter_m'] for i in sorted(episode_resets)}
             temporary = info_path.with_suffix('.broad-workspace.json'); write_json(temporary, info); temporary.replace(info_path)
             report = validate_dataset(output, expert, base_src, bank, budget.check)
             before(); write_json(output / 'validation.json', report)
@@ -380,8 +597,9 @@ def main():
     choice = parser.add_mutually_exclusive_group(required=True)
     choice.add_argument('--preflight', action='store_true')
     choice.add_argument('--collect', action='store_true')
+    choice.add_argument('--resume', action='store_true')
     args = parser.parse_args()
-    result = preflight() if args.preflight else collect()
+    result = preflight() if args.preflight else collect(resume=args.resume)
     print(json.dumps(result, indent=2, allow_nan=False))
     return 0
 
