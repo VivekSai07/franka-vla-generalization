@@ -112,6 +112,40 @@ class FeasibilityGateTests(unittest.TestCase):
         # Feasible on first try, so exactly 200 feasibility calls.
         self.assertEqual(len(calls), 200)
 
+    def test_completed_slots_are_skipped_and_still_counted_as_admitted(self):
+        """Resume must not re-execute admitted slots, and must keep admits contiguous."""
+        plan = self.p.make_plan()
+        ran = []
+        def execute(slot, arrays):
+            ran.append(slot['episode_index'])
+            return {'success': True, 'frames': 528}
+        events = []
+        with patch('experiments.broad_workspace_data.record.derive_scene',
+                   return_value={'initial_state': np.zeros(242), 'qpos': np.zeros(37)}):
+            admitted, rejected = self.r.run_schedule(
+                plan, base_source=None, model=None, execute=execute,
+                validate=lambda s, o: None, journal=events.append,
+                feasible_fn=lambda l, j: True, completed=frozenset(range(180)))
+        self.assertEqual(ran, list(range(180, self.p.ADMIT_COUNT)))
+        self.assertEqual(admitted, list(range(self.p.ADMIT_COUNT)))
+        self.assertEqual([e['episode_index'] for e in events if e['event'] == 'started'],
+                         list(range(180, self.p.ADMIT_COUNT)))
+
+    def test_infeasible_layout_resample_only_moves_recorded_layouts(self):
+        """The substitution must be deterministic and must not disturb any episode slot."""
+        plan = self.p.make_plan()
+        self.assertEqual(self.p.INFEASIBLE_LAYOUT_RESAMPLES, {'validation_020': 2})
+        layouts = {x['layout_id']: x for x in plan['layouts']}
+        expected = self.p.resample_layout_xy('validation_020', 2)
+        self.assertEqual(layouts['validation_020']['cube_xy_m'], expected)
+        self.assertEqual(self.p.resample_layout_xy('validation_020', 2), expected)  # deterministic
+        self.assertNotEqual(self.p.resample_layout_xy('validation_020', 1), expected)
+        for axis, value in enumerate(expected):  # stays inside envelope F7
+            self.assertGreaterEqual(value, self.p.AXIS_LOW[axis])
+            self.assertLessEqual(value, self.p.AXIS_HIGH[axis])
+        self.assertEqual(plan['infeasible_layout_resamples'], {'validation_020': 2})
+        self.p.validate_plan(plan)
+
     def test_infeasible_slot_exhausting_every_redraw_stops(self):
         """A slot with no feasible draw cannot be skipped; admit index must track the plan slot."""
         plan = self.p.make_plan()

@@ -178,7 +178,7 @@ def validate_inventory(root):
     required = {'claim.json', 'plan.json', 'provenance.json', 'configuration.json', 'source.npz',
                 'bank.json', 'snapshots.json', 'journal.jsonl', 'resets', 'attempts', 'dataset'}
     actual = {x.name for x in root.iterdir()}
-    if not required <= actual or not actual <= required | {'validation.json', 'seal.json', 'rejected'}:
+    if not required <= actual or not actual <= required | {'validation.json', 'seal.json', 'rejected', 'amendment.json'}:
         raise ValueError('Missing/extra/failed final root evidence')
     claim = dict(version=p.VERSION, output=str(p.OUTPUT.relative_to(p.ROOT)), resume=False)
     if not p._same(generic._json(root / 'claim.json'), claim):
