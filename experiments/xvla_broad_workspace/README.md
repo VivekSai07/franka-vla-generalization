@@ -1,18 +1,21 @@
-# Local-varied X-VLA fine-tune (Task 1 implementation only)
+# Broad-workspace X-VLA fine-tune
 
-Approved recipe: same X-VLA hyperparameters as the fixed-layout baseline
-(`experiments/xvla_fixed_layout/`), retargeted at the newly sealed 60-episode
+Approved recipe: the same X-VLA hyperparameters as the local-varied run
+(`experiments/xvla_local_varied/`), retargeted at the sealed 200-episode
 broad-workspace dataset. No GPU, full semantic admission, physics, training or
-rollouts are executed by the implementation tests. Independent review and
-main-agent phase gates remain.
+rollouts are executed by the implementation tests.
 
 ## Dataset & splits
 
-- Sealed parent `outputs/broad_workspace_data/broad_workspace_20260921` with
-  fingerprint `f8b10a498798217a63564416ab6561e25bd7e9c87e4fdddcf42f288cdb9e9a28`.
-- 60 episodes, train `0:48`, validation `48:60`. Training rows 25344 across
-  23952 complete 30-action starts (per-episode last complete start 498).
-  Validation 6336 rows are never sampled for optimization or statistics.
+- Sealed parent `outputs/broad_workspace_data/broad_workspace_20260920` with
+  fingerprint `0351d3da36294e2124554267bc17738badee26498b1cb82fa7a58d4f4a601a85`.
+- 200 episodes, train `0:160`, validation `160:200`. Training rows 84480 across
+  79840 complete 30-action starts (per-episode last complete start 498).
+  Validation 21120 rows are never sampled for optimization or statistics.
+- Envelope F7, ±1° home-pose jitter, ±3 cm hover-Z jitter. Two layouts
+  (`validation_020`, `validation_032`) were deterministically resampled inside
+  the same envelope; both fall in the validation split, so the 160 training
+  episodes use their originally planned layouts.
 - Fresh original X-VLA base bundle at `.cache/xvla_trial/bundle` (model and
   BART-large tokenizer), byte-verified via `xvla_trial.assets.require_assets`.
 - Fresh train-only mean/std/min/max statistics; STATE IDENTITY, ACTION MEAN_STD,
@@ -21,7 +24,7 @@ main-agent phase gates remain.
 ## Training recipe
 
 - Microbatch 4 × accumulation 2, effective batch 8, seed 20260917 (shared with
-  `smolvla_broad_workspace` for cross-model reproducibility), 5000 AdamW updates.
+  the local-varied runs for cross-model reproducibility), 5000 AdamW updates.
   Full-model fine-tune (all 901 named FP32 parameters, ~879M).
 - FP32 parameters/gradients/Adam moments; BF16 autocast only during forward.
 - 500-update linear warmup to 1e-4 peak, cosine decay to 1e-5 floor at update
@@ -30,31 +33,30 @@ main-agent phase gates remain.
 - Stock X-VLA loss; complete unpadded chunks only. Optimizer state persisted
   only on the FINAL checkpoint (`optimizer_storage='final_only'`).
 
-## Semantic shift vs. `smolvla_broad_workspace.contract` (2026-09-20 surgery)
+Only the dataset changes relative to `experiments/xvla_local_varied/`; every
+hyperparameter is identical so the two runs are directly comparable.
 
-The sealed parent's `validation.json` recorded a `provenance` snapshot at seal
-time that included a pilot-manifest hash reference. That referenced manifest is
-no longer present, so today `experiments.broad_workspace_data.scenes.provenance()`
-returns a snapshot that no longer matches the recorded one byte-for-byte, and
-`smolvla_broad_workspace.contract.current_binding()` fails with `"Local-varied
-provenance/semantic proof changed"`.
+## Stricter provenance than the local-varied contract
 
-`xvla_broad_workspace.contract.current_binding()` deliberately does NOT compare
-`semantic.get('provenance')` against a fresh `provenance()`. It still verifies:
+`experiments/xvla_local_varied/contract.py` had to waive the recorded-versus-fresh
+`provenance()` comparison: commit `2435dca` edited two shared collector helpers
+(`experiments/fixed_layout/media.py`, `record.py`) after that dataset was sealed,
+so its seal-time snapshot no longer reproduces.
 
-- SEAL fingerprint of the parent (the seal covers data files, not the recorded
-  snapshot dict, so it still matches);
+This dataset was sealed after those edits and its recorded snapshot still matches
+a fresh `experiments.broad_workspace_data.scenes.provenance()` byte-for-byte, so
+`current_binding()` here enforces the comparison instead of skipping it, on top of:
+
+- SEAL fingerprint of the parent;
 - `plan.json` via `broad_workspace_data.plan.validate_plan`;
 - `semantic.status == 'passed'`, `semantic.training_ready is True`,
   `semantic.automatic_training is False`;
-- `semantic.train_ids == list(range(48))`,
-  `semantic.validation_ids == list(range(48, 60))`,
-  `semantic.statistics_episode_ids == list(range(48))`.
+- `semantic.train_ids == list(range(160))`,
+  `semantic.validation_ids == list(range(160, 200))`,
+  `semantic.statistics_episode_ids == list(range(160))`.
 
-It then records the FRESH `provenance()` snapshot as `broad_workspace_provenance`
-in the returned binding, so future audits (e.g. `admission()` re-comparison)
-compare against this new binding rather than the stale seal-time snapshot. This
-is the ONLY semantic difference from `smolvla_broad_workspace.contract`.
+Consequence: `experiments/broad_workspace_data/**/*.py` is frozen for the
+lifetime of this run. Editing any of it invalidates the binding mid-run.
 
 ## Ordered entry points (main agent only for GPU)
 
