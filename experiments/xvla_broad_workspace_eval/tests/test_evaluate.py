@@ -283,6 +283,26 @@ class VariedEntryTests(unittest.TestCase):
     def setUp(self):
         self.e = _module()
 
+    def test_reserved_layouts_exceed_the_pilot_workspace_bound(self):
+        """The pilot geometry gate caps |y| at 0.40; F7 reaches 0.45.
+
+        Regression for the first eval run, which died on evaluation_000 because
+        restore_scene applied pilot_integrity bounds to F7 scenes.
+        """
+        bank = self._real_bank()
+        ys = []
+        for lid in self.e.broad_layout_ids():
+            xy = bank[lid]['layout']['cube_xy_m']
+            ys.append(max(abs(xy[1]), abs(xy[3])))
+        self.assertGreater(max(ys), 0.40, 'holdout must actually exercise the wide envelope')
+        self.assertGreater(sum(1 for y in ys if y > 0.40), 0)
+        source = (Path(__file__).resolve().parents[1]/'evaluate.py').read_text()
+        self.assertNotIn('from validation.evaluate_pilot import restore_scene', source)
+        self.assertIn('_validate_broad_geometry', source)
+
+    def _real_bank(self):
+        return self.e._load_bank_manifest()
+
     def test_broad_entry_binds_materialized_hash_and_scene_hash(self):
         approved = list(self.e.broad_layout_ids())
         bank = {lid: {'scene_hash': 'bb'*32, 'layout': {'cube_xy_m': [.30, -.30, .30, .30]}} for lid in approved}

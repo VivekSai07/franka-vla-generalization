@@ -23,9 +23,10 @@ import numpy as np
 import torch
 from lerobot.policies.xvla.modeling_xvla import XVLAPolicy
 
-from data_collection.benchmark import (apply_action, capture_state, restore_timing,
+from data_collection.benchmark import (apply_action, capture_state, restore_state, restore_timing,
                                        step_control, synchronize_observation, write_json)
-from validation.evaluate_pilot import restore_scene, advance_streak
+from data_collection.pilot_integrity import scene_digest
+from validation.evaluate_pilot import advance_streak
 from validation.gates import fresh_stack_metrics
 from validation.rollout_diagnostics import bound_action, target_diagnostics
 from src.controllers.grasp_controller import GraspController
@@ -33,7 +34,7 @@ from src.robots.franka_panda.config import ACTIVE_JOINTS, ARM_DOF, SCENE_PATH
 from experiments.fixed_layout.contract import SOURCE_SCENE_SHA256
 from experiments.fixed_layout.source import Expert as BaseExpert, load_reset
 from experiments.broad_workspace_data import plan as broad_plan
-from experiments.broad_workspace_data.scenes import derive_scene, scene_hash
+from experiments.broad_workspace_data.scenes import derive_scene, scene_hash, _validate_broad_geometry
 from experiments.xvla_broad_workspace import contract as c
 
 
@@ -155,8 +156,7 @@ def _materialize_broad_scene(mode_dir, layout_id, plan, bank):
     scene_path = mode_dir/f'{layout_id}.npz'
     if scene_path.exists(): raise FileExistsError('Evaluation scene already materialized')
 
-    expert = BaseExpert()
-    base_source = load_reset(expert)
+    expert, base_source = _base()
     layout = {x['layout_id']: x for x in plan['layouts']}[layout_id]
     holdout = plan['evaluation_holdout'][layout_id]
     arrays = derive_scene(expert.model, base_source, layout,
@@ -211,6 +211,40 @@ def _materialize_fixed_parity_reset(mode_dir, binding):
     with reset_path.open('xb') as stream:
         np.savez(stream, initial_state=initial_state, qpos=qpos0)
     return c.sha256(reset_path)
+
+
+_BASE = None
+
+
+def _base():
+    """Pilot base expert/reset, loaded once and shared by derivation and restore."""
+    global _BASE
+    if _BASE is None:
+        expert = BaseExpert()
+        _BASE = (expert, load_reset(expert))
+    return _BASE
+
+
+def restore_broad_scene(model, bank, entry, base_source):
+    """`evaluate_pilot.restore_scene` with the envelope-F7 geometry gate.
+
+    That helper validates against `pilot_integrity.validate_scene_geometry`, whose
+    workspace predates F7 and caps |y| at 0.40 m; reserved evaluation layouts reach
+    0.45 m. Every path, byte, state and scene-hash proof is preserved here — only the
+    geometry gate is swapped for the one the collector itself used.
+    """
+    path = (bank/entry['file']).resolve()
+    if path.parent != bank.resolve() or c.sha256(path) != entry['sha256']:
+        raise ValueError('Scene artifact path/hash mismatch')
+    data = mujoco.MjData(model)
+    with np.load(path, allow_pickle=False) as state:
+        restore_state(model, data, state['initial_state'])
+        np.testing.assert_array_equal(capture_state(model, data), state['initial_state'])
+        np.testing.assert_array_equal(data.qpos, state['qpos'])
+    if scene_digest(data.qpos) != entry['scene_hash']:
+        raise ValueError('Scene qpos hash mismatch')
+    _validate_broad_geometry(model, data, base_source)
+    return data
 
 
 def stage_metrics(trace):
@@ -315,7 +349,7 @@ def _rollout(policy, pre, post, model, manifest, entry, bank, output, ordinal, s
     """Physics rollout body; caller enforces identity and seed policy."""
     if (policy.config.chunk_size, policy.config.n_action_steps) != (30, 10):
         raise ValueError('Expected chunk30/actionsteps10')
-    data, scratch = restore_scene(model, bank, entry), mujoco.MjData(model)
+    data, scratch = restore_broad_scene(model, bank, entry, _base()[1]), mujoco.MjData(model)
     policy.reset()
     apply_seed(seed)
     grasp = GraspController(model, data, target=f"target_cube_{entry['pick']}")
@@ -499,7 +533,7 @@ def _run_fixed_parity(evaluation_dir, output, policy, pre, post, model, manifest
     from experiments.xvla_broad_workspace.runner import require_disk
     reset_sha256 = _materialize_fixed_parity_reset(mode_dir, binding)
     entry = fixed_parity_entry(binding, reset_sha256=reset_sha256)
-    restore_scene(model, mode_dir, entry)  # Full state restore only, never resettle.
+    restore_broad_scene(model, mode_dir, entry, _base()[1])  # Full state restore only, never resettle.
     trials = evaluation_plan_fixed_parity()
     rows = []
     progress = dict(mode='fixed_parity', trials=trials, **summarize_fixed_parity([]))
