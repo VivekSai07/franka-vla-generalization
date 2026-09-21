@@ -134,7 +134,7 @@ class FeasibilityGateTests(unittest.TestCase):
     def test_infeasible_layout_resample_only_moves_recorded_layouts(self):
         """The substitution must be deterministic and must not disturb any episode slot."""
         plan = self.p.make_plan()
-        self.assertEqual(self.p.INFEASIBLE_LAYOUT_RESAMPLES, {'validation_020': 2})
+        self.assertEqual(self.p.INFEASIBLE_LAYOUT_RESAMPLES, {'validation_020': 2, 'validation_032': 0})
         layouts = {x['layout_id']: x for x in plan['layouts']}
         expected = self.p.resample_layout_xy('validation_020', 2)
         self.assertEqual(layouts['validation_020']['cube_xy_m'], expected)
@@ -143,7 +143,7 @@ class FeasibilityGateTests(unittest.TestCase):
         for axis, value in enumerate(expected):  # stays inside envelope F7
             self.assertGreaterEqual(value, self.p.AXIS_LOW[axis])
             self.assertLessEqual(value, self.p.AXIS_HIGH[axis])
-        self.assertEqual(plan['infeasible_layout_resamples'], {'validation_020': 2})
+        self.assertEqual(plan['infeasible_layout_resamples'], {'validation_020': 2, 'validation_032': 0})
         self.p.validate_plan(plan)
 
     def test_infeasible_slot_exhausting_every_redraw_stops(self):
