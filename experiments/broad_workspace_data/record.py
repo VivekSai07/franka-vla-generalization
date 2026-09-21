@@ -540,7 +540,13 @@ def collect(resume=False):
                 (output / 'rejected').mkdir(exist_ok=True)
                 path = output / 'attempts' / f'{index:06d}'
                 if path.is_dir():
-                    path.rename(output / 'rejected' / f'{index:06d}_k{k}')
+                    # Draw indices restart per run, so a slot retried across runs can collide.
+                    destination = output / 'rejected' / f'{index:06d}_k{k}'
+                    attempt = 0
+                    while destination.exists():
+                        attempt += 1
+                        destination = output / 'rejected' / f'{index:06d}_k{k}_r{attempt}'
+                    path.rename(destination)
                 reset_path = output / 'resets' / f'episode_{index:03d}.npz'
                 if reset_path.exists():
                     reset_path.unlink()
