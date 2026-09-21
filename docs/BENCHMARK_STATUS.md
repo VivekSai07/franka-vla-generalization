@@ -1,5 +1,17 @@
 # Franka benchmark: start here
 
+## Local-varied Hugging Face publication blocked — 2026-09-21
+
+User requested dataset publication. Authenticated `VivekSai07` with a write
+token; proposed private dataset `franka-panda-cube-stacking-local-varied-60`
+does not exist. No remote mutations/upload. Storage-origin probe still fails
+HTTP 407 through the configured proxy. Current full-file seal verifies, but
+strict provenance fails on two shared collector files changed September 20;
+matching historical versions are recoverable from Git. Current seal also
+differs from the September 19 completion report and requires reconciliation.
+See [publication blockers and recovery](LOCAL_VARIED_DATASET_PUBLICATION_20260921.md).
+Dataset/source/secrets preserved; no new experiment or validation replay.
+
 ## Local varied dataset complete — 2026-09-19
 
 60/60expert demonstrations admitted,120/120saved-control replaysPASS; collector
