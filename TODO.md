@@ -1,10 +1,100 @@
-# SmolVLA Project TODO
+# SmolVLA / X-VLA Franka TODO
 
-> **Superseded — historical record (last accurate ~2026-09-14).**
-> This tracks the original `docker-compose` pipeline and the `franka_libero_stacking_v1/v2`
-> HF datasets. Current work lives in `experiments/` with sealed, hash-bound datasets and
-> per-package runners; see [README](README.md) and [docs/BENCHMARK_STATUS.md](docs/BENCHMARK_STATUS.md)
-> for live status. Kept for provenance of the v1 0% / v2 language-grounding findings.
+Live plan is below. The original `docker-compose` + `franka_libero_stacking_v1/v2` work is
+preserved as an archive at the bottom; see [README](README.md) and
+[docs/BENCHMARK_STATUS.md](docs/BENCHMARK_STATUS.md) for current status.
+
+---
+
+## Phase A — maximise the current single-task stacking problem
+
+Goal: establish the ceiling on one axis of variation (cube position in envelope F7) before
+adding any new axis. Ordering matters — a failure with two new axes is not attributable.
+
+### A0. Finish what is running
+- [ ] Cross-evals complete (local-varied checkpoints on `broad_holdout`, 72 trials each)
+- [ ] Record the full 2×2 + confidence intervals in README
+- [ ] Note the `metadata_binding_reproducible: False` caveat beside the SmolVLA cross-eval figure
+
+### A1. Measure the checkpoint curve BEFORE training longer
+Rationale: X-VLA broad saw **0.50 epochs** (40,000 chunks / 79,840 starts) versus 1.67 epochs on
+local-varied — we tripled the data and held updates at 5000. Train/val arm MAE 0.01655/0.01748
+(5.6% gap) shows underfitting, not overfitting. But confirm the trend before spending GPU.
+
+- [ ] Add a `--checkpoint` option to the broad eval packages. Currently 5000 is hard-pinned in
+      four places: `offline_probes` `checkpoint_update=`, `verify_final`'s `completed_updates`
+      and `selected_checkpoint_update` requirements, and `checkpoint_directory(5000)`.
+      `verify_final` must still pin the chosen checkpoint's `model_sha256` to its training marker.
+- [ ] Evaluate X-VLA broad checkpoints **3000** and **4000** on the identical 72-trial holdout
+- [ ] Plot success vs updates (1000/2000/3000/4000/5000 as available)
+
+**Decision gate:** still climbing at 5000 → proceed to A2. Flat or peaked earlier → stop; the
+bottleneck is not exposure, and A2 would waste ~5h GPU.
+
+### A2. Train to matched exposure (only if A1 says climbing)
+- [ ] New package (e.g. `xvla_broad_workspace_long`) — do NOT edit the existing one. `recipe()`
+      hardcodes `max_optimizer_updates=5000` and `schedule.total=5000`; changing them alters
+      `SOURCE_FILES` hashes and would invalidate the sealed 5000-update run.
+- [ ] ~**16,700 updates** to match local-varied epoch exposure (79,840 starts × 1.67 / 8)
+- [ ] This is a fresh run from base, not a resume — no resume path exists and the cosine schedule
+      is defined over the full horizon
+- [ ] Checkpoint schedule extended so the curve stays measurable
+- [ ] Re-evaluate on the same holdout; compare against the 5000-update 68.1%
+- [ ] Repeat for SmolVLA (2.09 epochs currently) only if X-VLA shows a gain
+
+### A3. Close out
+- [ ] Update README with the exposure finding and the curve
+- [ ] Decide whether the 65/72 gate is right for this protocol — argue it on its own terms,
+      not by fitting it to whatever number we got
+
+---
+
+## Phase B — generalisation axes (deferred until Phase A closes)
+
+One axis at a time, each with its own dataset and its own holdout.
+
+### B1. Language grounding (first axis — cheapest, currently unmeasured)
+All 200 episodes share one instruction, so the language pathway is currently unverified; the
+model may be ignoring text entirely.
+- [ ] Collect reversed-instruction episodes (green onto red) over the **same** layouts
+- [ ] Test: does behaviour change with the instruction in an identical scene?
+- [ ] This is the minimal grounding test — prefer it over 12-colour randomisation
+
+### B2. Distractors (second axis)
+- [ ] Add 1–2 non-target cubes, target pair unchanged
+- [ ] Measures distractor rejection independently of language
+
+### B3. Full colour randomisation (third axis)
+- [ ] Only after B1 and B2 each have a measured result
+- [ ] This is closest to the original v1/v2 design; note v2's evaluation was never completed, so
+      there is no clean verdict on it — do not treat it as a known failure
+
+### Not planned
+- **Bounding-box / segmentation-mask injection.** Would likely raise numbers but hands the model
+  the spatial answer, defeating the goal of the vision encoder learning spatial grounding.
+  Also incompatible: our models are not autoregressive token decoders (SmolVLA uses flow
+  matching, X-VLA a soft-prompt/action-hub head), so coordinate-text injection does not transfer
+  from RT-2/OpenVLA. A 4th mask channel would change the observation schema and force
+  recollection of every sealed dataset.
+
+---
+
+## Known debt
+
+- [ ] `experiments/{xvla,smolvla}_local_varied/README.md` state seal `f8b10a49…`; actual is
+      `ae8828ea…`. Hash-bound — cannot be corrected without invalidating those runs' bindings.
+- [ ] `experiments/broad_workspace_data/README.md` still reads as pre-collection. Same constraint
+      (`scenes.provenance()` appends it).
+- [ ] SmolVLA local-varied metadata binding is unreproducible (pre-re-seal). Cross-eval uses a
+      data-level binding instead; documented in the result JSON.
+
+---
+---
+
+# ARCHIVE — original docker-compose pipeline (last accurate ~2026-09-14)
+
+Historical record of the `franka_libero_stacking_v1/v2` HF datasets and the v1 0% /
+language-grounding findings. Superseded by the `experiments/` packages above.
 
 ## Environment Setup
 - [x] Identify RTX 5090 + CUDA 13.0 (driver 580.142) on new lab machine
