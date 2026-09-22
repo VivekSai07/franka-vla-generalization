@@ -26,6 +26,33 @@ the easier local-varied protocol and has deliberately not been lowered to match 
 The 8 layouts X-VLA fails on both seeds were screened with the scripted expert: **all 8 are solvable**. The
 holdout is sound, so 68.1% is a real policy limit rather than an artefact of unverified layouts.
 
+**Did the 200-episode collection actually buy generalisation? Yes — decisively.** The same two protocols run
+against the *local-varied* checkpoints on the identical 72-trial roster:
+
+| Checkpoint trained on | X-VLA | SmolVLA |
+|---|---|---|
+| local-varied (48 eps, ±1 cm) | 2.8% (2/72) — 95% CI [0.8, 9.6] | 2.8% (2/72) — [0.8, 9.6] |
+| broad-workspace (160 eps, F7) | **68.1%** (49/72) — [56.6, 77.7] | **31.9%** (23/72) — [22.3, 43.4] |
+| gain | **+65.3 pp** | **+29.2 pp** |
+
+Confidence intervals do not overlap. Both local-varied models succeeded on exactly one layout —
+`evaluation_031`, on both seeds — which is the **closest of all 80** holdout layouts to their training base
+(distance 0.0297 vs 0.2209 max). So the 2.8% is not noise: it is the single holdout layout that happens to
+fall inside the ±1 cm neighbourhood they were trained in. Outside it, they have no competence at all, despite
+scoring 100% on `fixed_parity`.
+
+Two caveats on that claim:
+- The comparison confounds **breadth with volume** (48 vs 160 episodes). The defensible statement is that the
+  broad-workspace *collection* produced the capability, not that envelope breadth specifically did.
+- The SmolVLA cross-eval runs under a data-level binding (`metadata_binding_reproducible: False`): that run
+  predates the `local_varied_data` re-seal, so its metadata binding is unreproducible. Training data identity
+  is instead proven by recomputed statistics, and checkpoint identity by weight hash.
+
+**Open: 68.1% is likely undertrained, not a ceiling.** X-VLA saw only **0.50 epochs** on the broad dataset
+(40,000 chunks over 79,840 starts) versus 1.67 epochs on local-varied — updates were held at 5000 while the
+data tripled. Train/val arm MAE 0.01655/0.01748 shows no meaningful overfitting. Next step is to measure the
+checkpoint curve (3000/4000/5000) before committing to a longer run; see [TODO](TODO.md) Phase A.
+
 **Earlier local-varied results** (narrow ±1 cm protocol, not comparable to the above — different task difficulty):
 
 | Metric | SmolVLA | X-VLA |

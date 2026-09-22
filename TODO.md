@@ -12,9 +12,9 @@ Goal: establish the ceiling on one axis of variation (cube position in envelope 
 adding any new axis. Ordering matters — a failure with two new axes is not attributable.
 
 ### A0. Finish what is running
-- [ ] Cross-evals complete (local-varied checkpoints on `broad_holdout`, 72 trials each)
-- [ ] Record the full 2×2 + confidence intervals in README
-- [ ] Note the `metadata_binding_reproducible: False` caveat beside the SmolVLA cross-eval figure
+- [x] Cross-evals complete (local-varied checkpoints on `broad_holdout`, 72 trials each)
+- [x] Record the full 2×2 + confidence intervals in README
+- [x] Note the `metadata_binding_reproducible: False` caveat beside the SmolVLA cross-eval figure
 
 ### A1. Measure the checkpoint curve BEFORE training longer
 Rationale: X-VLA broad saw **0.50 epochs** (40,000 chunks / 79,840 starts) versus 1.67 epochs on

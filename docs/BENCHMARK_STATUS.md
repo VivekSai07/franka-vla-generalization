@@ -22,6 +22,20 @@ cross-evaluation of the local-varied X-VLA on the identical holdout is built (`e
 xvla_localvaried_broad_eval`) and queued. Note it conflates breadth with episode count (48 vs 160),
 so it gives the direction and rough magnitude, not a controlled ablation.
 
+**Cross-evaluation answered (2026-09-22).** The local-varied checkpoints were run on the identical
+72-trial holdout: X-VLA **2/72 = 2.8%** [0.8, 9.6], SmolVLA **2/72 = 2.8%** [0.8, 9.6]. Against
+68.1% [56.6, 77.7] and 31.9% [22.3, 43.4] for the broad-trained models, the intervals do not
+overlap — the 200-episode collection is what creates wide-workspace capability (+65.3 pp X-VLA,
++29.2 pp SmolVLA). Both local-varied models solved exactly one layout, `evaluation_031`, on both
+seeds; it is the closest of all 80 holdout layouts to their training base (0.0297 vs 0.2209 max),
+so the 2.8% is the one holdout that falls inside their ±1 cm training neighbourhood rather than
+noise. Caveats: breadth is confounded with volume (48 vs 160 episodes), and the SmolVLA cross-eval
+uses a data-level binding because its metadata binding predates the re-seal.
+
+**68.1% is probably not a ceiling.** X-VLA saw 0.50 epochs on the broad dataset versus 1.67 on
+local-varied — updates stayed at 5000 while the data tripled. Next step is measuring the checkpoint
+curve before training longer; see TODO Phase A.
+
 ## Local-varied Hugging Face publication blocked — 2026-09-21
 
 User requested dataset publication. Authenticated `VivekSai07` with a write
