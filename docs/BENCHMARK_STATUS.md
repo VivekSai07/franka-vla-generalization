@@ -1,5 +1,27 @@
 # Franka benchmark: start here
 
+## Broad-workspace trained and evaluated — 2026-09-22
+
+`broad_workspace_data` sealed at 200/200 episodes (105,600 frames, 160 train / 40 validation,
+400 replays audited, 0 duplicates, seal `0351d3da…`). Both policies retrained on it at identical
+hyperparameters and evaluated on the 36 reserved F7 holdout layouts (×2 frozen policy seeds).
+
+X-VLA **49/72 = 68.1%** broad_holdout, 20/20 fixed_parity. SmolVLA **23/72 = 31.9%** broad_holdout.
+Both fail the 65/72 gate; the gate was set for the easier local-varied protocol and was NOT lowered
+to match. All failures are timeouts. X-VLA leads by 36.2 pp — a much wider margin than the 9.7 pp
+seen on the narrow local-varied protocol.
+
+The 8 layouts X-VLA fails on both seeds were screened with the scripted expert and all 8 are
+solvable, so the holdout is sound and 68.1% is a genuine policy limit. Likely cause is coverage
+density, not volume: 160 episodes spread across a wide 4-D envelope is sparser than 48 episodes
+inside a ±1 cm neighbourhood. fixed_parity staying at 100% supports this — the policy is perfect on
+geometry it knows and degrades as layouts leave training density.
+
+**Not yet answerable:** whether the 200-episode collection improved generalisation at all. A
+cross-evaluation of the local-varied X-VLA on the identical holdout is built (`experiments/
+xvla_localvaried_broad_eval`) and queued. Note it conflates breadth with episode count (48 vs 160),
+so it gives the direction and rough magnitude, not a controlled ablation.
+
 ## Local-varied Hugging Face publication blocked — 2026-09-21
 
 User requested dataset publication. Authenticated `VivekSai07` with a write

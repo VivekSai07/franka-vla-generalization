@@ -1,5 +1,11 @@
 # SmolVLA Project TODO
 
+> **Superseded — historical record (last accurate ~2026-09-14).**
+> This tracks the original `docker-compose` pipeline and the `franka_libero_stacking_v1/v2`
+> HF datasets. Current work lives in `experiments/` with sealed, hash-bound datasets and
+> per-package runners; see [README](README.md) and [docs/BENCHMARK_STATUS.md](docs/BENCHMARK_STATUS.md)
+> for live status. Kept for provenance of the v1 0% / v2 language-grounding findings.
+
 ## Environment Setup
 - [x] Identify RTX 5090 + CUDA 13.0 (driver 580.142) on new lab machine
 - [x] Confirm Docker 29.4.2 + NVIDIA runtime already configured

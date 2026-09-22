@@ -4,24 +4,38 @@ Fine-tuning [SmolVLA](https://huggingface.co/HuggingFaceVLA/smolvla_libero) on a
 
 ---
 
-## Current status (2026-09-20)
+## Current status (2026-09-22)
 
-Two policies fine-tuned on the same 60-episode local-varied dataset, evaluated on the same 92-trial protocol.
+`broad_workspace_data_v1` is **collected and sealed**: 200 episodes, 105,600 frames, 160 train / 40 validation,
+seal `0351d3da36294e2124554267bc17738badee26498b1cb82fa7a58d4f4a601a85`. Both policies were retrained on it
+and evaluated on the 36 reserved holdout layouts that collection never executed.
 
-**Head-to-head** — 24 held-out layouts × 3 policy seeds + 20 fixed-parity seeds:
+**Broad-workspace results** — 36 reserved F7 layouts × 2 policy seeds, plus 20 fixed-parity seeds:
 
-| Metric | SmolVLA (baseline) | X-VLA (this run) | Δ |
+| Metric | SmolVLA | X-VLA | Δ |
 |---|---|---|---|
-| varied_holdout success rate | 88.9% (64/72) | **98.6% (71/72)** | **+9.7 pp** |
-| fixed_parity success rate | 100% (20/20) | 100% (20/20) | tied |
-| offline train arm MAE (rad) | 0.01062 | 0.00861 | −19% |
-| offline val arm MAE (rad) | 0.01133 | 0.00996 | −12% |
-| offline train gripper acc | 96.9% | 95.3% | −1.6 pp |
-| offline val gripper acc | 96.1% | 94.4% | −1.7 pp |
+| broad_holdout success rate | 31.9% (23/72) | **68.1% (49/72)** | **+36.2 pp** |
+| fixed_parity success rate | (pending) | 100% (20/20) | — |
+| offline train arm MAE (rad) | 0.01904 | 0.01655 | −13% |
+| offline val arm MAE (rad) | 0.02157 | 0.01748 | −19% |
+| layouts failing both seeds | 19 / 36 | 8 / 36 | — |
 
-Both capability gates passed cleanly. X-VLA is stronger on the spatial-generalisation task; only failing trial was `evaluation_000` seed 944268569 (timeout).
+**Both policies fail the 65/72 holdout gate.** All failures are timeouts, none nonfinite. The gate was set for
+the easier local-varied protocol and has deliberately not been lowered to match the outcome.
 
-Currently collecting **`broad_workspace_data_v1`** (200 admits, envelope F7, ±1° home-pose jitter, ±3 cm hover-Z jitter) as the next training substrate — run `franka-broad-workspace-200-20260920-retry3`, ~6h ETA.
+The 8 layouts X-VLA fails on both seeds were screened with the scripted expert: **all 8 are solvable**. The
+holdout is sound, so 68.1% is a real policy limit rather than an artefact of unverified layouts.
+
+**Earlier local-varied results** (narrow ±1 cm protocol, not comparable to the above — different task difficulty):
+
+| Metric | SmolVLA | X-VLA |
+|---|---|---|
+| varied_holdout success rate | 88.9% (64/72) | **98.6% (71/72)** |
+| fixed_parity success rate | 100% (20/20) | 100% (20/20) |
+| offline val arm MAE (rad) | 0.01133 | 0.00996 |
+
+Open question: whether the 200-episode collection actually improved generalisation. A cross-evaluation of the
+**local-varied** X-VLA on the identical broad holdout is built and queued; without it 68.1% has no reference point.
 
 ---
 
@@ -31,12 +45,13 @@ Currently collecting **`broad_workspace_data_v1`** (200 admits, envelope F7, ±1
 |---|---|---|---|
 | `experiments/fixed_layout/` | Single-geometry pilot (source reset ep 7) | 24 | sealed |
 | `experiments/local_varied_data/` | 60 layouts, ±1° pose jitter | 60 (48 train / 12 val) | sealed |
-| `experiments/broad_workspace_data/` | F7 envelope, retries permitted | 200 target | **collecting** |
-| `experiments/smolvla_local_varied/` | SmolVLA finetune | — | trained + evaluated |
-| `experiments/xvla_local_varied/` | X-VLA finetune | — | trained + evaluated |
+| `experiments/broad_workspace_data/` | F7 envelope, retries permitted | 200 (160 train / 40 val) | **sealed** |
+| `experiments/{smolvla,xvla}_local_varied/` | Local-varied finetunes | — | trained + evaluated |
+| `experiments/{smolvla,xvla}_broad_workspace/` | Broad-workspace finetunes | — | trained + evaluated |
+| `experiments/xvla_localvaried_broad_eval/` | Cross-eval: old checkpoint, new holdout | — | built, queued |
 
-Training reports: `outputs/train/{smolvla,xvla}_franka_stacking_localvaried_v1_20260919/result.json`.
-Evaluation reports: `.../evaluation/{varied_holdout,fixed_parity}/result.json`, per-trial `episode.json`, `trace.npz`, `cameras.mp4`.
+Training reports: `outputs/train/{smolvla,xvla}_franka_stacking_{localvaried_v1_20260919,broadworkspace_v1_20260921}/result.json`.
+Evaluation reports: `.../evaluation/{varied_holdout,broad_holdout,fixed_parity}/result.json`, per-trial `episode.json`, `trace.npz`, `cameras.mp4`.
 
 ---
 
@@ -59,8 +74,14 @@ Evaluation reports: `.../evaluation/{varied_holdout,fixed_parity}/result.json`, 
 6. **Validator hard-coded `slot['episode_index']+1` as expected admit count**, which no longer matched LeRobot's `total_episodes` post-rejection. Fix: read `info.json['total_episodes']` as the count and let the remaining `_metadata` invariants (schema, task, fps, frame count) do the checking (`3d733d2`).
 7. **Preflight scratch dir deleted** to free disk before eval → `verify_final` couldn't hash `SCRATCH/result.json`. Fix: make scratch check conditional in the eval package (`c8a6904`). The preflight `result.json` had non-deterministic timing fields so it wasn't reproducible.
 8. **Editing source files while eval was still running** → final `c.admission()` re-check saw drift and marked the run "failed" even though all 92 rollouts had already completed cleanly. Lesson: freeze the code path for the duration of the eval.
+9. **Rejections skipped the slot instead of retrying it** — this was the root cause behind three separate 35-hour collection failures at the same point. Slot index doubled as the admitted-episode index, and `metadata[i]`, `attempts/{i:06d}`, `resets/episode_{i:03d}` and the train/val split boundaries all depend on `slot == admit`. Skipping broke every one. Fix: retry the same slot until admitted (`3926614`).
+10. **The tests asserted the buggy behaviour.** 35/35 passed while production died three times identically, because `test_expert_execution_failure_billed_to_rejection_budget_not_stop` demanded `len(admitted) == 198` — i.e. it *required* slots to be skipped. Rewrote the tests to assert correct behaviour and added a regression test that runs `validate_journal` over scheduler output. Green tests are not evidence when they encode the defect.
+11. **Two layouts were physically uncompletable / irreproducible.** `validation_020` failed all 16 expert attempts (cube 2.0–2.1 cm off, admitted episodes ≤1.74 cm). `validation_032` stacked fine but its grasp geometry made the float32 replay drift 1.51e-3 (tolerance 1e-3) *identically on every redraw* — variance <1e-8 across independent ±1° jitters, proving it systematic rather than chaotic, so no amount of redrawing could fix it. Fix: deterministic layout resampling inside the same envelope (`76d8e91`, `c429b1d`). Both fall in the validation split, so the 160 training episodes are untouched.
+12. **Resume, rollback and unique rejected paths** — a crash at 179/200 would have discarded everything. Added `resume_state` + `amend_frozen_plan`, episode rollback with stats re-aggregation for drift rejections (`91cc4cf`), and unique `rejected/{i}_k{k}_r{n}` paths after a rename collision killed a run (`7807c7c`).
+13. **The evaluation inherited pilot-era workspace bounds.** `restore_scene` gates on `pilot_integrity.validate_scene_geometry`, which caps |y| at 0.40 m — but envelope F7 reaches 0.45 m. Scene derivation was provably correct (every per-array SHA256 matched the sealed bank) yet 12 of 36 holdout layouts were rejected, precisely the widest and most discriminative ones. Relaxing the shared validator would have invalidated the sealed provenance of every dataset, so the eval packages restore with the collector's own F7 geometry gate instead (`e11c784`).
+14. **A holdout failure is not automatically a policy failure.** The 80 reserved layouts were never expert-verified, and 8 of them failed X-VLA on both seeds — indistinguishable from an unsolvable layout. Screening all 8 with the scripted expert showed every one is solvable, which is what makes 68.1% reportable. Do this screening before reporting any systematic failure cluster.
 
-Broader lessons — every "just increment a counter" or "just leave state alone on retry" assumption in the fixed-layout pipeline broke under broad_workspace retries. Rejections need explicit cleanup for every piece of shared state (LeRobot buffer + PNG dir + attempts dir semantics + admit-count invariant).
+Broader lessons — every "just increment a counter" or "just leave state alone on retry" assumption in the fixed-layout pipeline broke under broad_workspace retries. Rejections need explicit cleanup for every piece of shared state (LeRobot buffer + PNG dir + attempts dir semantics + admit-count invariant). And a result is only interpretable once you know what the *absence* of the treatment scores on the same protocol.
 
 ---
 
