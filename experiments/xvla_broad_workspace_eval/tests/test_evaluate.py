@@ -377,12 +377,26 @@ class CLITests(unittest.TestCase):
                 patch.object(e.c, 'OUTPUT', Path(tmp)/'main'), \
                 patch('experiments.xvla_broad_workspace_eval.evaluate.run') as run:
             e.main(['--mode=fixed_parity'])
-            run.assert_called_once_with(Path(tmp)/'main', 'fixed_parity')
+            run.assert_called_once_with(Path(tmp)/'main', 'fixed_parity', 5000)
         with tempfile.TemporaryDirectory() as tmp, \
                 patch.object(e.c, 'OUTPUT', Path(tmp)/'main'), \
                 patch('experiments.xvla_broad_workspace_eval.evaluate.run') as run:
             e.main([])
-            run.assert_called_once_with(Path(tmp)/'main', 'both')
+            run.assert_called_once_with(Path(tmp)/'main', 'both', 5000)
+
+    def test_checkpoint_flag_selects_an_earlier_recorded_checkpoint(self):
+        e = self.e
+        self.assertEqual(e.parse_args(['--checkpoint', '3000']).checkpoint, 3000)
+        for argv in (['--checkpoint', '2500'], ['--checkpoint', '7777'], ['--checkpoint', 'final']):
+            with self.subTest(argv=argv), self.assertRaises(SystemExit): e.parse_args(argv)
+        # Curves must not collide with the sealed final-checkpoint evaluation.
+        self.assertEqual(e.evaluation_dirname(5000), 'evaluation')
+        self.assertEqual(e.evaluation_dirname(3000), 'evaluation_step_003000')
+        with tempfile.TemporaryDirectory() as tmp, \
+                patch.object(e.c, 'OUTPUT', Path(tmp)/'main'), \
+                patch('experiments.xvla_broad_workspace_eval.evaluate.run') as run:
+            e.main(['--mode=broad_holdout', '--checkpoint=3000'])
+            run.assert_called_once_with(Path(tmp)/'main', 'broad_holdout', 3000)
 
 
 if __name__ == '__main__': unittest.main()

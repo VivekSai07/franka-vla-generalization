@@ -277,7 +277,7 @@ def stage_metrics(trace):
                 maximum_lift_m=float(lift.max()) if len(lift) else 0., bilateral_contact_ticks=int(contact.sum()), tick_origin=0)
 
 
-def offline_probes(policy, pre, post, ds, device='cuda', output=None):
+def offline_probes(policy, pre, post, ds, device='cuda', output=None, update=5000):
     python_rng, numpy_rng = random.getstate(), np.random.get_state()
     training = policy.training
     devices = [torch.cuda.current_device()] if device == 'cuda' else []
@@ -309,7 +309,7 @@ def offline_probes(policy, pre, post, ds, device='cuda', output=None):
                     predictions.append(prediction[0].numpy()); targets.append(target.numpy())
     finally:
         random.setstate(python_rng); np.random.set_state(numpy_rng); policy.train(training)
-    result = dict(checkpoint_update=5000, observation_only=True, validation_used_for_training=False,
+    result = dict(checkpoint_update=update, observation_only=True, validation_used_for_training=False,
                   validation_is_spatial_holdout=False, rows=rows)
     for split in ('train', 'validation'):
         selected = [r for r in rows if r['split'] == split]
@@ -463,7 +463,17 @@ def run_broad_trial(policy, pre, post, model, manifest, entry, bank, output, ord
                     seed_trial_broad)
 
 
-def verify_final(output, binding):
+def evaluation_dirname(update):
+    """Final checkpoint keeps the original path; earlier ones get their own, so curves never collide."""
+    return 'evaluation' if update == 5000 else f'evaluation_step_{update:06d}'
+
+
+def verify_final(output, binding, update=5000):
+    """`update` selects which recorded checkpoint is rolled out; the training run itself is still
+    required to be the complete 5000-update run, and `verify_checkpoints` pins every checkpoint's
+    `model.safetensors` to its training marker, so the selected weights remain hash-proven."""
+    if update not in c.checkpoint_updates(False):
+        raise ValueError(f'Unapproved checkpoint; expected one of {c.checkpoint_updates(False)}')
     report = json.loads((output/'result.json').read_text())
     c.require_fields(report, {**c.recipe(False), 'status': 'complete', 'completed_updates': 5000,
                      'selected_checkpoint_update': 5000, 'final_data_binding_passed': True, 'binding': binding,
@@ -481,7 +491,7 @@ def verify_final(output, binding):
         if report.get('scratch_result_sha256') != c.sha256(scratch_result):
             raise ValueError('Final scratch binding changed')
         c.validate_scratch(json.loads(scratch_result.read_text()), binding, c.SCRATCH, stats, c.sha256(c.CPU_ADMISSION))
-    checkpoint = output/'checkpoints'/c.checkpoint_directory(5000)
+    checkpoint = output/'checkpoints'/c.checkpoint_directory(update)
     config = json.loads((checkpoint/'config.json').read_text())
     if (config != json.loads((output/'initial_config/config.json').read_text())
             or (config['type'], config['chunk_size'], config['n_action_steps'], config['n_obs_steps'], config['dtype']) != ('xvla', 30, 10, 1, 'float32')
@@ -493,7 +503,7 @@ def verify_final(output, binding):
 
 def training_bytes(output):
     return {str(path.relative_to(output)): c.sha256(path) for path in sorted(output.rglob('*'))
-            if path.is_file() and path.relative_to(output).parts[0] != 'evaluation'}
+            if path.is_file() and not path.relative_to(output).parts[0].startswith('evaluation')}
 
 
 def _run_broad_holdout(evaluation_dir, output, policy, pre, post, model, manifest,
@@ -553,11 +563,11 @@ def _run_fixed_parity(evaluation_dir, output, policy, pre, post, model, manifest
     return dict(trials=trials, episodes=rows, **summarize_fixed_parity(rows))
 
 
-def run(output, mode='both'):
+def run(output, mode='both', update=5000):
     from lerobot.policies.factory import make_pre_post_processors
     from experiments.xvla_broad_workspace.runner import failure
     if mode not in MODES: raise ValueError(f'Unapproved evaluation mode; expected one of {MODES}')
-    directory = output/'evaluation'
+    directory = output/evaluation_dirname(update)
     resume_fixed_parity_only = (
         mode == 'fixed_parity' and directory.is_dir()
         and (directory/'broad_holdout'/'result.json').exists()
@@ -572,7 +582,7 @@ def run(output, mode='both'):
     before = training_bytes(output)
     try:
         ds, starts, stats, binding = c.prepare_data()
-        checkpoint = verify_final(output, binding)
+        checkpoint = verify_final(output, binding, update)
         manifest = json.loads((c.PARENT/'configuration.json').read_text())
         model = mujoco.MjModel.from_xml_path(SCENE_PATH)
         if restore_timing(model, manifest)['substeps_per_control'] != 20: raise ValueError('Physics timing changed')
@@ -588,9 +598,9 @@ def run(output, mode='both'):
             report['offline_probes'] = json.loads((directory/'offline_probes.json').read_text())
             report['broad_holdout'] = json.loads((directory/'broad_holdout'/'result.json').read_text())
         else:
-            report['offline_probes'] = offline_probes(policy, pre, post, ds, output=directory)
+            report['offline_probes'] = offline_probes(policy, pre, post, ds, output=directory, update=update)
         if c.admission() != binding: raise ValueError('Probe phase binding changed')
-        verify_final(output, binding)
+        verify_final(output, binding, update)
         if mode in ('broad_holdout', 'both'):
             report['stage'] = 'rollouts_broad_holdout'; write_json(directory/'result.json', report)
             report['broad_holdout'] = _run_broad_holdout(directory, output, policy, pre, post, model,
@@ -599,7 +609,7 @@ def run(output, mode='both'):
             report['stage'] = 'rollouts_fixed_parity'; write_json(directory/'result.json', report)
             report['fixed_parity'] = _run_fixed_parity(directory, output, policy, pre, post, model,
                                                        manifest, binding)
-        after = c.admission(); verify_final(output, after)
+        after = c.admission(); verify_final(output, after, update)
         if after != binding: raise ValueError('Final evaluation binding changed')
         report.update(status='complete', stage='complete', training_bytes_unchanged=True,
                       final_data_binding_passed=True, no_extension=True)
@@ -616,12 +626,14 @@ def parse_args(argv=None):
     import argparse
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     parser.add_argument('--mode', choices=list(MODES), default='both')
+    parser.add_argument('--checkpoint', type=int, choices=c.checkpoint_updates(False), default=5000,
+                        help='which recorded checkpoint to roll out; default is the final one')
     return parser.parse_args(argv)
 
 
 def main(argv=None):
     args = parse_args(argv)
-    run(c.OUTPUT, args.mode)
+    run(c.OUTPUT, args.mode, args.checkpoint)
 
 
 if __name__ == '__main__':
