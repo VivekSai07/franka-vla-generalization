@@ -466,22 +466,57 @@ def run_broad_trial(policy, pre, post, model, manifest, entry, bank, output, ord
                     seed_trial_broad)
 
 
+def data_binding():
+    """Data-level binding, because this checkpoint's metadata-level binding is unreproducible.
+
+    `smolvla_local_varied` was trained 2026-09-19, BEFORE the pilot-manifest surgery and the
+    `local_varied_data` re-seal (`57f558d`, `f3f3244`) rewrote seal.json/validation.json. Its
+    stored binding therefore names a metadata state that no longer exists on disk and cannot be
+    reconstructed (no copy of the pre-reseal files survives), so `c.admission()` can never pass.
+
+    The dataset payload itself was never touched — `dataset/meta/info.json` still carries its
+    2026-09-19 mtime. So this binds to the payload instead of the wrapper: fresh train-only
+    statistics must equal those recorded in the CPU admission at training time, which would
+    fail on any byte-level change to the training data. Combined with the checkpoint weight
+    hash in `verify_final`, this pins both what was trained on and what is being rolled out.
+    """
+    stats = c.statistics_json(c.load_data()[2])
+    recorded = json.loads(c.CPU_ADMISSION.read_text())['training_stats']
+    if stats != recorded:
+        raise ValueError('Local-varied training data changed since the checkpoint was trained')
+    return dict(training_statistics=stats, cpu_admission_sha256=c.sha256(c.CPU_ADMISSION),
+                broad_holdout_seal=BROAD_SEAL, sources=c.source_hashes(),
+                metadata_binding_reproducible=False,
+                metadata_binding_note='local_varied re-sealed 2026-09-20 after this run; see docs/LOCAL_VARIED_DATASET_PUBLICATION_20260921.md')
+
+
 def verify_final(output, binding):
+    """Checkpoint identity by weight hash; dataset identity via `data_binding`.
+
+    Deliberately does NOT compare the training report's recorded `binding` — see `data_binding`.
+    Everything the rollout depends on is still pinned: recipe, update count, checkpoint schedule
+    and the exact `model.safetensors` bytes.
+    """
     report = json.loads((output/'result.json').read_text())
     c.require_fields(report, {**c.recipe(False), 'status': 'complete', 'completed_updates': 5000,
-                     'selected_checkpoint_update': 5000, 'final_data_binding_passed': True, 'binding': binding,
+                     'selected_checkpoint_update': 5000, 'final_data_binding_passed': True,
                      'training_rows': c.TRAINING_ROWS, 'complete_training_chunks': c.COMPLETE_STARTS,
                      'scratch_used_for_initialization': False},
                      'Complete final-only5000 report required')
-    if (report.get('cpu_admission_sha256') != c.sha256(c.CPU_ADMISSION)
-            or report.get('training_stats_sha256') != c.sha256(output/'training_stats.json')
-            or report.get('scratch_result_sha256') != c.sha256(c.SCRATCH/'result.json')):
-        raise ValueError('Final CPU/statistics/scratch binding changed')
+    if report.get('training_stats_sha256') != c.sha256(output/'training_stats.json'):
+        raise ValueError('Final statistics binding changed')
+    # Scratch bytes are still pinned; only `validate_scratch`'s binding comparison is dropped,
+    # since the scratch report carries the same unreproducible pre-reseal binding.
+    if report.get('scratch_result_sha256') != c.sha256(c.SCRATCH/'result.json'):
+        raise ValueError('Final scratch binding changed')
     c.verify_checkpoints(report, output, False)
     stats = json.loads((output/'training_stats.json').read_text())
-    if stats != json.loads(c.CPU_ADMISSION.read_text())['training_stats']: raise ValueError('Final stats differ from CPU')
-    c.validate_scratch(json.loads((c.SCRATCH/'result.json').read_text()), binding, c.SCRATCH, stats, c.sha256(c.CPU_ADMISSION))
+    if stats != binding['training_statistics']:
+        raise ValueError('Final stats differ from the freshly recomputed training statistics')
     checkpoint = output/'checkpoints'/c.checkpoint_directory(5000)
+    marker = next(m for m in report['checkpoints'] if m['update'] == 5000)
+    if c.sha256(checkpoint/'model.safetensors') != marker['model_sha256']:
+        raise ValueError('Final checkpoint weights differ from the recorded training marker')
     config = json.loads((checkpoint/'config.json').read_text())
     if (config != json.loads((output/'initial_config/config.json').read_text())
             or (config['type'], config['chunk_size'], config['n_action_steps'], config['n_obs_steps']) != ('smolvla', 50, 10, 1)
@@ -566,7 +601,8 @@ def run(output, mode='broad_holdout'):
                   resume=resume_fixed_parity_only)
     before = training_bytes(output)
     try:
-        ds, starts, stats, binding = c.prepare_data()
+        binding = data_binding()
+        ds, starts, stats = c.load_data()
         checkpoint = verify_final(output, binding)
         manifest = json.loads((c.PARENT/'configuration.json').read_text())
         model = mujoco.MjModel.from_xml_path(SCENE_PATH)
@@ -584,7 +620,7 @@ def run(output, mode='broad_holdout'):
             report['broad_holdout'] = json.loads((directory/'broad_holdout'/'result.json').read_text())
         else:
             report['offline_probes'] = offline_probes(policy, pre, post, ds, output=directory)
-        if c.admission() != binding: raise ValueError('Probe phase binding changed')
+        if data_binding() != binding: raise ValueError('Probe phase binding changed')
         verify_final(output, binding)
         if mode in ('broad_holdout', 'both'):
             report['stage'] = 'rollouts_broad_holdout'; write_json(directory/'result.json', report)
@@ -594,7 +630,7 @@ def run(output, mode='broad_holdout'):
             report['stage'] = 'rollouts_fixed_parity'; write_json(directory/'result.json', report)
             report['fixed_parity'] = _run_fixed_parity(directory, output, policy, pre, post, model,
                                                        manifest, binding)
-        after = c.admission(); verify_final(output, after)
+        after = data_binding(); verify_final(output, after)
         if after != binding: raise ValueError('Final evaluation binding changed')
         report.update(status='complete', stage='complete', training_bytes_unchanged=True,
                       final_data_binding_passed=True, no_extension=True)

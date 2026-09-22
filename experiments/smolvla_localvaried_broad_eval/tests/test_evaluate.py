@@ -164,12 +164,16 @@ class VerifyFinalTests(unittest.TestCase):
         (output/'checkpoints').mkdir()
         (output/'checkpoints'/self.c.checkpoint_directory(5000)).mkdir()
         (output/'checkpoints'/self.c.checkpoint_directory(5000)/'config.json').write_text(json.dumps(config))
-        binding = {'dataset_fingerprint': 'x'*64}
+        weights = output/'checkpoints'/self.c.checkpoint_directory(5000)/'model.safetensors'
+        weights.write_bytes(b'frozen-weights')
+        stats = {'action': {'mean': [0.]*8}}
+        binding = {'training_statistics': stats}
         report = {**self.c.recipe(False), 'status': 'complete', 'completed_updates': 5000,
                   'selected_checkpoint_update': 5000, 'final_data_binding_passed': True, 'binding': binding,
                   'training_rows': self.c.TRAINING_ROWS,
                   'complete_training_chunks': self.c.COMPLETE_STARTS,
                   'scratch_used_for_initialization': False,
+                  'checkpoints': [{'update': 5000, 'model_sha256': self.c.sha256(weights)}],
                   'cpu_admission_sha256': self.c.sha256(admission/'result.json'),
                   'training_stats_sha256': self.c.sha256(output/'training_stats.json'),
                   'scratch_result_sha256': self.c.sha256(scratch/'result.json')}
@@ -181,12 +185,31 @@ class VerifyFinalTests(unittest.TestCase):
         try:
             with patch.object(self.c, 'CPU_ADMISSION', admission/'result.json'), \
                     patch.object(self.c, 'SCRATCH', scratch), \
-                    patch.object(self.c, 'verify_checkpoints') as vc, \
-                    patch.object(self.c, 'validate_scratch') as vs:
+                    patch.object(self.c, 'verify_checkpoints') as vc:
                 self.assertEqual(self.e.verify_final(output, binding),
                                  output/'checkpoints'/self.c.checkpoint_directory(5000))
                 vc.assert_called_once_with(report, output, False)
-                self.assertEqual(vs.call_count, 1)
+        finally: tmp.cleanup()
+
+    def test_verify_final_rejects_tampered_checkpoint_weights(self):
+        # The weight hash is what pins checkpoint identity now that the metadata binding is gone.
+        tmp, output, scratch, admission, binding, report, config = self._fixture()
+        try:
+            (output/'checkpoints'/self.c.checkpoint_directory(5000)/'model.safetensors').write_bytes(b'tampered')
+            with patch.object(self.c, 'CPU_ADMISSION', admission/'result.json'), \
+                    patch.object(self.c, 'SCRATCH', scratch), \
+                    patch.object(self.c, 'verify_checkpoints'):
+                with self.assertRaises(ValueError): self.e.verify_final(output, binding)
+        finally: tmp.cleanup()
+
+    def test_verify_final_rejects_stats_that_differ_from_the_fresh_binding(self):
+        tmp, output, scratch, admission, binding, report, config = self._fixture()
+        try:
+            with patch.object(self.c, 'CPU_ADMISSION', admission/'result.json'), \
+                    patch.object(self.c, 'SCRATCH', scratch), \
+                    patch.object(self.c, 'verify_checkpoints'):
+                with self.assertRaises(ValueError):
+                    self.e.verify_final(output, {'training_statistics': {'action': {'mean': [9.]*8}}})
         finally: tmp.cleanup()
 
     def test_verify_final_rejects_tampered_completed_updates(self):
