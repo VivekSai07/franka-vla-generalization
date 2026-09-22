@@ -505,9 +505,11 @@ def verify_final(output, binding):
                      'Complete final-only5000 report required')
     if report.get('training_stats_sha256') != c.sha256(output/'training_stats.json'):
         raise ValueError('Final statistics binding changed')
-    # Scratch bytes are still pinned; only `validate_scratch`'s binding comparison is dropped,
-    # since the scratch report carries the same unreproducible pre-reseal binding.
-    if report.get('scratch_result_sha256') != c.sha256(c.SCRATCH/'result.json'):
+    # Scratch was deleted to free disk before the original eval (see README failure 7), so its
+    # bytes are pinned only when present; validate_scratch's binding comparison is dropped either
+    # way, since the scratch report carries the same unreproducible pre-reseal binding.
+    scratch_result = c.SCRATCH/'result.json'
+    if scratch_result.is_file() and report.get('scratch_result_sha256') != c.sha256(scratch_result):
         raise ValueError('Final scratch binding changed')
     c.verify_checkpoints(report, output, False)
     stats = json.loads((output/'training_stats.json').read_text())
