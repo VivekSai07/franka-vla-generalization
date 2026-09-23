@@ -94,6 +94,32 @@ Evaluation reports: `.../evaluation/{varied_holdout,broad_holdout,fixed_parity}/
 
 ---
 
+## Full experiment progression
+
+Every trained policy to date, oldest first. Protocols differ in difficulty and are **not**
+comparable across rows — each is noted.
+
+| # | Training data | Protocol | SmolVLA | X-VLA |
+|---|---|---|---|---|
+| 1 | `single_task` (9 episodes, IDs 0–8) | 9 seen + 4 held-out, gate 8/9 and 3/4 | seen **1/9**, held-out **0/4** — failed | seen **4/9** (44.4%), held-out **0/4** — failed |
+| 2 | `fixed_layout` (24 episodes, one geometry) | 20 seeds on the source reset | **18/20** (90%) | **20/20** (100%) |
+| 3 | `local_varied` (60 eps, ±1 cm) | `varied_holdout` 24 layouts × 3 seeds | **64/72** (88.9%) | **71/72** (98.6%) |
+| 3 | `local_varied` | `fixed_parity` 20 seeds | 20/20 (100%) | 20/20 (100%) |
+| 4 | `broad_workspace` (200 eps, F7) | `broad_holdout` 36 layouts × 2 seeds | **23/72** (31.9%) | **49/72** (68.1%) |
+| 4 | `broad_workspace` | `fixed_parity` 20 seeds | 20/20 (100%) | 20/20 (100%) |
+| — | `local_varied` checkpoints | `broad_holdout` (cross-eval) | 2/72 (2.8%) | 2/72 (2.8%) |
+
+Reading across: both architectures failed the 9-episode single-task gate outright, reached
+ceiling on one fixed geometry at 24 episodes, and generalised within a ±1 cm neighbourhood at 60.
+Only the 200-episode F7 dataset produced any wide-workspace competence at all — the cross-eval row
+shows the local-varied policies at 2.8% on the same layouts. X-VLA leads SmolVLA at every stage,
+and the margin widens as the task gets harder (+1.4 pp fixed → +9.7 pp local-varied → +36.2 pp broad).
+
+Experiment reports: `docs/SINGLE_TASK_20260917.md`, `docs/{XVLA,SMOLVLA}_FIXED_LAYOUT_20260918.md`,
+`docs/LOCAL_VARIED_COLLECTION_20260919.md`, `docs/BENCHMARK_STATUS.md`.
+
+---
+
 ## Variations tried
 
 - **Datasets**: fixed pilot → local-varied (60 layouts × ±1° jitter) → broad-workspace (F7 envelope × ±1° × ±3 cm).
