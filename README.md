@@ -50,8 +50,20 @@ Two caveats on that claim:
 
 **Open: 68.1% is likely undertrained, not a ceiling.** X-VLA saw only **0.50 epochs** on the broad dataset
 (40,000 chunks over 79,840 starts) versus 1.67 epochs on local-varied — updates were held at 5000 while the
-data tripled. Train/val arm MAE 0.01655/0.01748 shows no meaningful overfitting. Next step is to measure the
-checkpoint curve (3000/4000/5000) before committing to a longer run; see [TODO](TODO.md) Phase A.
+data tripled. The checkpoint curve on the identical holdout confirms training was still improving when it
+stopped:
+
+| update | broad_holdout | train / val arm MAE | val/train |
+|---|---|---|---|
+| 3000 | 0.0% (0/72) | 0.05826 / 0.06060 | 1.040 |
+| 4000 | 20.8% (15/72) | 0.02100 / 0.02122 | 1.010 |
+| 5000 | **68.1%** (49/72) | 0.01655 / 0.01748 | 1.056 |
+
+Success accelerates while MAE improvement decelerates — stacking is a threshold task, so late precision
+gains convert into large success jumps. No overfitting at any checkpoint (val/train 1.01–1.06). Caveat: part
+of the 4000→5000 jump is the cosine anneal to its 1e-5 floor, so this curve cannot separate "needs more
+exposure" from "needed the anneal", and 68% should not be linearly extrapolated. Next step is a matched-exposure
+run at ~16,700 updates; see [TODO](TODO.md) Phase A.
 
 **Earlier local-varied results** (narrow ±1 cm protocol, not comparable to the above — different task difficulty):
 

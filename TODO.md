@@ -21,15 +21,16 @@ Rationale: X-VLA broad saw **0.50 epochs** (40,000 chunks / 79,840 starts) versu
 local-varied — we tripled the data and held updates at 5000. Train/val arm MAE 0.01655/0.01748
 (5.6% gap) shows underfitting, not overfitting. But confirm the trend before spending GPU.
 
-- [ ] Add a `--checkpoint` option to the broad eval packages. Currently 5000 is hard-pinned in
+- [x] Add a `--checkpoint` option to the broad eval packages. Currently 5000 is hard-pinned in
       four places: `offline_probes` `checkpoint_update=`, `verify_final`'s `completed_updates`
       and `selected_checkpoint_update` requirements, and `checkpoint_directory(5000)`.
       `verify_final` must still pin the chosen checkpoint's `model_sha256` to its training marker.
-- [ ] Evaluate X-VLA broad checkpoints **3000** and **4000** on the identical 72-trial holdout
-- [ ] Plot success vs updates (1000/2000/3000/4000/5000 as available)
+- [x] Evaluate X-VLA broad checkpoints **3000** and **4000** on the identical 72-trial holdout
+- [x] Plot success vs updates (1000/2000/3000/4000/5000 as available)
 
-**Decision gate:** still climbing at 5000 → proceed to A2. Flat or peaked earlier → stop; the
-bottleneck is not exposure, and A2 would waste ~5h GPU.
+**Decision gate: PASSED (2026-09-23).** 0.0% @3000 -> 20.8% @4000 -> 68.1% @5000, still
+accelerating at the final checkpoint, val/train 1.01-1.06 (no overfitting). Proceed to A2.
+Caveat recorded: part of the final jump is the cosine anneal, so do not extrapolate linearly.
 
 ### A2. Train to matched exposure (only if A1 says climbing)
 - [ ] New package (e.g. `xvla_broad_workspace_long`) — do NOT edit the existing one. `recipe()`
