@@ -1,4 +1,4 @@
-"""CPU admission, exact two-update scratch, or fresh 5000 X-VLA fine-tune. No automatic resume."""
+"""CPU admission, exact two-update scratch, or fresh matched-exposure X-VLA fine-tune. No automatic resume."""
 import argparse
 import gc
 import json
@@ -272,7 +272,8 @@ def train(output, preflight, report):
     samples = c.sample_batches(starts)
     began = time.monotonic()
     policy.train()
-    maximum = 2 if preflight else 5000
+    # Horizon comes from the contract; hardcoding it here silently truncated a 16700-update run at 5000.
+    maximum = 2 if preflight else c.recipe(False)['max_optimizer_updates']
     with (output/'metrics.jsonl').open('x') as log:
         for update in range(1, maximum+1):
             tick = time.monotonic()
@@ -324,13 +325,13 @@ def train(output, preflight, report):
         raise ValueError('Scratch proof changed during main')
     c.verify_checkpoints(report, output, preflight)
     if not preflight:
-        final_config = json.loads((output/'checkpoints'/c.checkpoint_directory(5000)/'config.json').read_text())
+        final_config = json.loads((output/'checkpoints'/c.checkpoint_directory(maximum)/'config.json').read_text())
         initial_config = json.loads((output/'initial_config/config.json').read_text())
         if final_config != initial_config:
             raise ValueError('Final X-VLA config differs from initial saved config')
     progress(status='complete', stage='training_complete', completed_updates=maximum,
              final_data_binding_passed=True,
-             selected_checkpoint_update=None if preflight else 5000,
+             selected_checkpoint_update=None if preflight else maximum,
              adam_reload_fp32_exact=preflight, rollouts=0,
              final_memory=c.p.memory())
 

@@ -18,6 +18,23 @@ class RunnerTests(unittest.TestCase):
         self.r = importlib.import_module('experiments.xvla_broad_workspace_long.runner')
         self.c = self.r.c
 
+    def test_runner_horizon_is_taken_from_the_contract_not_hardcoded(self):
+        """Regression: the runner hardcoded 5000 and silently truncated the 16700-update run.
+
+        The contract's recipe said 16700 and every contract test passed, because nothing tied the
+        runner's loop bound to it. The run trained 5000 updates and only failed afterwards, on
+        `verify_checkpoints`, after ~70 minutes of GPU.
+        """
+        source = (Path(__file__).parents[1]/'runner.py').read_text()
+        self.assertNotIn('else 5000', source, 'runner must not hardcode the training horizon')
+        self.assertIn("c.recipe(False)['max_optimizer_updates']", source)
+        self.assertEqual(self.r.c.recipe(False)['max_optimizer_updates'],
+                         self.r.c.checkpoint_updates(False)[-1],
+                         'final checkpoint must coincide with the training horizon')
+        self.assertEqual(self.r.c.recipe(False)['schedule']['total'],
+                         self.r.c.recipe(False)['max_optimizer_updates'],
+                         'LR schedule horizon must match the training horizon')
+
     def test_cli_no_default_gpu_resume_override_or_abbreviation(self):
         for argv in ([], ['--resume'], ['--train', '--preflight'], ['--batch-size', '4'],
                      ['--tr'], ['--check', '--preflight'], ['--evaluate'], ['--train', '--steps', '1']):
