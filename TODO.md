@@ -90,6 +90,30 @@ model may be ignoring text entirely.
       data-level binding instead; documented in the result JSON.
 
 ---
+
+## Before launching any long run — checklist
+
+Derived from the failures in [README](README.md#failures-we-hit-and-what-we-learned). Each item
+cost real GPU time at least once.
+
+- [ ] **Package README updated.** It is in `SOURCE_FILES`; a copied one describing the old recipe
+      gets hashed into the run's provenance (#17, and the earlier `sed`-mangled X-VLA README).
+- [ ] **No constant duplicated between contract and runner.** Grep the runner for the horizon,
+      checkpoint schedule and any literal that also lives in `recipe()` (#15).
+- [ ] **Regression tests fail against the unfixed code.** Confirm with `git stash`, not by
+      assumption (#10, #15).
+- [ ] **Nothing hash-bound is edited while a job runs.** Check `SOURCE_FILES` and
+      `provenance()` membership first; remember `provenance()` includes READMEs (#8, #17).
+- [ ] **Worktrees are at the intended commit.** `git log -1` inside the worktree (#18).
+- [ ] **Shared helpers are not edited to accommodate one package.** `xvla_single_task/contract.py`
+      is bound by four contracts; override locally instead.
+- [ ] **All gitignored dirs the container needs are mounted** — `outputs`, `datasets`, `.cache`.
+- [ ] **Run `--check` and `--preflight` first.** Editing any `SOURCE_FILES` member after `--check`
+      invalidates it and forces a full ~1h re-run (#16).
+- [ ] **Poll actively.** `docker wait` has silently failed to notify here; do not assume
+      completion will be reported (#19).
+
+---
 ---
 
 # ARCHIVE — original docker-compose pipeline (last accurate ~2026-09-14)
