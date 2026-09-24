@@ -116,6 +116,35 @@ or exactly 4.5 cm, with nothing between.
 The obvious explanation — unreachable far layouts — is **refuted and inverted**: failing layouts
 average 0.424 m reach, fully-solved ones 0.472 m. The far layouts are solved. This is not kinematics.
 
+Decomposed about the robot base, the systematic component is **tangential** — a bearing error, not a
+reach error:
+
+| | n | tangential | radial |
+|---|---|---|---|
+| successes | 62 | +0.06 cm (sd 0.68) | −0.17 cm (sd 0.57) |
+| failures | 10 | **+3.73 cm (sd 0.41)** | −1.81 cm (sd 1.73) |
+
++3.73 cm at ~0.4 m radius is a ~5° azimuth error, consistently counter-clockwise. The radial
+component is noise. The two populations are separated by a **1.11 cm gap containing zero trials**,
+so this is a discrete mode, not a precision gradient.
+
+**Cause: action-sampling multimodality.** 6 of the 8 failing layouts are *split decisions* — same
+scene, same weights, different sampling seed, opposite outcome — and failures divide 6/4 across the
+two seeds, so there is no bad seed. `modeling_xvla.py:252` draws a fresh `torch.randn` per chunk and
+integrates over `num_denoising_steps = 10`; the action distribution at placement has two modes and
+the rollout draws one of them.
+
+Coverage density was tested as an alternative and **refuted**: 4-D nearest-neighbour distance to the
+training layouts is identical for both groups (0.0348 m), with rank correlation τ = 0.000 between
+sparsity and failure. The two sparsest holdout layouts are both 2/2 solved.
+
+**Therefore this gap is not closable by data collection.** Remedies are inference-time; see the
+design spec at
+[docs/superpowers/specs/2026-09-24-placement-offset-design.md](superpowers/specs/2026-09-24-placement-offset-design.md).
+
+One consequence for the gate: at the observed p = 0.861, the *same policy* passes 65/72 by sampling
+luck **20%** of the time. With 2 seeds per layout the gate is partly measuring dice.
+
 Longer training fixed 17 of the 23 prior failures and eliminated every gross transport error
 (`evaluation_004` and `_005`, previously missing by 0.72–0.88 m, are now 2/2). It broke 4; 6 persist
 in both runs.

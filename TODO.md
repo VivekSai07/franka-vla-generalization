@@ -60,25 +60,49 @@ changed the plan and are recorded in [docs/RESULTS.md](docs/RESULTS.md) and
       miss is the same 4.5 cm offset, so the gate question is now entangled with A4.
 
 ### A4. The 4.5 cm placement offset (new — highest-value open question)
-All 10 failures at 86.1% land the cube exactly one cube-width beside the target, sd 2 mm, 9 of 10
-toward the robot base. Successes average 0.80 cm, matching expert precision (0.68 cm). The
-distribution is bimodal with nothing between, so this is a discrete targeting mode.
 
-Ruled out already:
-- **imitating a sloppy expert** — refuted, all 200 demos clean
-- **unreachable far layouts** — refuted and inverted (failing 0.424 m mean reach vs solved 0.472 m)
+**Design spec: [docs/superpowers/specs/2026-09-24-placement-offset-design.md](docs/superpowers/specs/2026-09-24-placement-offset-design.md)**
+Approved ordering: **Tier 2 → Tier 1 → B1 collection design.**
 
-Still to test, cheapest first:
-- [ ] Is the offset in the *action chunk* or the *execution*? Compare predicted vs achieved
-      end-effector target over the final approach on a failing trial — pure replay, no GPU
-- [ ] Does it correlate with approach direction / which side the gripper comes from?
-- [ ] Is `n_action_steps=10` against `chunk_size=30` truncating the terminal descent?
-- [ ] Does the failure persist across both policy seeds on the same layout (6 of 10 do) — i.e.
-      layout-determined rather than stochastic
+All 10 failures at 86.1% land the cube one cube-width beside the target. Decomposed about the robot
+base, the systematic component is **tangential +3.73 cm (sd 0.41)** — a ~5° bearing error — while
+the radial component is noise. Successes sit at +0.06 cm (sd 0.68). The two populations are
+separated by a 1.11 cm gap containing **zero** trials.
 
-Only after this: decide whether more data, different data, or a control-level fix is warranted.
-Do **not** launch a data-budget sweep until the offset is understood — it may be orthogonal to
-data volume entirely.
+**Cause: action-sampling multimodality.** 6 of 8 failing layouts are split decisions — same scene,
+same weights, different sampling seed, opposite outcome. `modeling_xvla.py:252` draws fresh
+`torch.randn` per chunk over `num_denoising_steps=10`; `predict_action_chunk` accepts injected
+`noise`, which is the hook for every Tier 1 fix.
+
+Ruled out by test, not assumption:
+- **imitating a sloppy expert** — refuted; all 200 demos clean (max 1.98 cm, 0 above 2 cm)
+- **unreachable far layouts** — refuted and inverted (failing 0.424 m vs solved 0.472 m reach)
+- **sparse training coverage** — refuted; identical 4-D NN distance, τ = 0.000
+- ⇒ **more data will not close this gap**; this is the primary input to B1 planning
+
+#### Tier 2 — measurement (first)
+- [ ] **T2a** mode-probability run: 8 failing + 8 solved-control layouts × 8 seeds = 128 trials
+      (~4 GPU-h) at checkpoint 16700. Record success, tangential/radial offset, stage timings.
+      Control group is required — without it we only measure the tail.
+- [ ] **T2b** raise evaluation seeds per layout. At p = 0.861 the *same* policy passes 65/72 by luck
+      **20%** of the time; 2→4 seeds cuts estimate sd from 4.08 pp to 2.88 pp. Decide before B1,
+      since retrofitting invalidates cross-phase comparisons.
+
+#### Tier 1 — inference-time (after T2a)
+- [ ] **T1a** `num_denoising_steps` 10 → 30; 16-trial probe first (~40 min)
+- [ ] **T1b** best-of-N via the `noise` argument; cluster-then-pick-largest, **not** mean — averaging
+      two modes can land in the empty 1.11 cm gap
+- [ ] **T1c** temporal ensembling over the ~3× existing chunk overlap; zero extra inference cost
+- Each is a separate protocol in its own package; never compare to the sealed 86.1% unless the
+  layout roster and seeds are identical
+
+#### Tier 3 — data design for B1 (low expected value here)
+- [ ] Audit expert approach-direction consistency against the sealed dataset (CPU-only, cheap) —
+      the only data-side lever with a plausible mechanism
+- [ ] Terminal-phase supervision density — hypothesis only
+- [ ] **Not planned:** more episodes, denser layout coverage
+
+Only after Tier 2 + Tier 1: decide whether the 65/72 gate is right, and finalise B1 collection.
 
 ---
 
