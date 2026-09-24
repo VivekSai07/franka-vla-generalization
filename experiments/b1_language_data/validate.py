@@ -13,41 +13,72 @@ from .scenes import make_bank, bank_manifest, provenance, exact, derive_scene
 
 
 def metadata(root, count, final=False):
+    """Local replacement for `generic._metadata`, which hardcodes a single task.
+
+    The shared validator is bound by four contracts, so it is overridden here rather than edited:
+    it asserts `total_tasks == 1`, `tasks.index == [TASK]` and `ep['tasks'] == [TASK]`. B1 has two
+    instructions. Every other check is reproduced unchanged.
+    """
+    import pandas as pd
+    import pyarrow.parquet as pq
     if type(count) is not int or not 1 <= count <= p.ADMIT_COUNT:
         raise ValueError('Invalid admitted-demonstration count')
-    info, entries = generic._metadata(root, count, final=False)
-    if final:
-        wanted = {'train': f'0:{p.TRAIN_LHS_COUNT + p.TRAIN_BASE_COUNT}',
-                  'validation': f'{p.TRAIN_LHS_COUNT + p.TRAIN_BASE_COUNT}:{p.ADMIT_COUNT}'}
-        if count != p.ADMIT_COUNT or info.get('splits') != wanted:
-            raise ValueError('Expected 160 training and 40 validation demonstrations')
-        require_task_table(root)
-    return info, entries
+    ds = Path(root)/'dataset'
+    info = generic._json(ds/'meta/info.json')
+    if (info['total_episodes'] != count or info['total_frames'] != p.EXPECTED_FRAMES*count
+            or info['total_tasks'] != len(p.INSTRUCTIONS) or info['fps'] != 30):
+        raise ValueError('Dataset counts/task/fps mismatch')
+    expected = set(generic.FEATURES) | {'timestamp', 'frame_index', 'episode_index', 'index', 'task_index'}
+    if set(info['features']) != expected:
+        raise ValueError('Privileged/missing policy feature')
+    for key, feature in generic.FEATURES.items():
+        for field in ('dtype', 'shape', 'names'):
+            wanted = list(feature[field]) if isinstance(feature[field], tuple) else feature[field]
+            if info['features'][key][field] != wanted:
+                raise ValueError('Dataset feature contract mismatch')
 
-
-def require_task_table(root):
-    """LeRobot allocates task indices by first appearance, so a rejection could silently shift
-    them. Pin its table to the plan's sorted-instruction mapping instead of trusting the order."""
-    import json
-    from pathlib import Path
-    path = Path(root)/'meta'/'tasks.jsonl'
-    if not path.is_file():
-        raise ValueError('meta/tasks.jsonl missing; cannot verify the instruction mapping')
-    rows = [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
-    table = {row['task']: row['task_index'] for row in rows}
+    # LeRobot assigns task indices by first appearance; pin them to the planned sorted mapping so a
+    # rejected episode cannot silently permute them.
+    tasks = pd.read_parquet(ds/'meta/tasks.parquet')
+    table = dict(zip(list(tasks.index), list(tasks['task_index'])))
     if set(table) != set(p.INSTRUCTIONS):
         raise ValueError(f'Dataset tasks {sorted(table)} != planned {sorted(p.INSTRUCTIONS)}')
     for instruction, index in table.items():
         if index != p.task_index_for(instruction):
-            raise ValueError(f'Task index drift for {instruction!r}: dataset {index} '
-                             f'!= planned {p.task_index_for(instruction)}')
+            raise ValueError(f'Task index drift for {instruction!r}: {index} '
+                             f'!= {p.task_index_for(instruction)}')
+
+    episodes = []
+    for path in sorted((ds/'meta/episodes').rglob('*.parquet')):
+        episodes.extend(pq.read_table(path).to_pylist())
+    if len(episodes) != count:
+        raise ValueError('Episode metadata coverage differs')
+    planned = p.make_plan()['episodes']
+    for i, ep in enumerate(episodes):
+        if (ep['episode_index'] != i or ep['length'] != p.EXPECTED_FRAMES
+                or ep['dataset_from_index'] != p.EXPECTED_FRAMES*i
+                or ep['dataset_to_index'] != p.EXPECTED_FRAMES*(i+1)):
+            raise ValueError('Episode metadata order/boundary mismatch')
+        if list(ep['tasks']) != [planned[i]['instruction']]:
+            raise ValueError(f'Episode {i} instruction differs from the plan')
+
+    if final:
+        require_final_split(info, count)
+        require_cell_balance(planned)
+    return info, episodes
+
+
+def require_final_split(info, count):
+    wanted = {'train': f'0:{p.TRAIN_LHS_COUNT + p.TRAIN_BASE_COUNT}',
+              'validation': f'{p.TRAIN_LHS_COUNT + p.TRAIN_BASE_COUNT}:{p.ADMIT_COUNT}'}
+    if count != p.ADMIT_COUNT or info.get('splits') != wanted:
+        raise ValueError('Expected 160 training and 40 validation demonstrations')
 
 
 def require_cell_balance(episodes):
     """Balance is the property that removes the position shortcut; assert it survived collection."""
-    from collections import Counter as _Counter
     for split, n in (('train', p.TRAIN_LHS_COUNT + p.TRAIN_BASE_COUNT), ('validation', p.VALIDATION_COUNT)):
-        counts = _Counter(e['cell'] for e in episodes if e['split'] == split)
+        counts = Counter(e['cell'] for e in episodes if e['split'] == split)
         if set(counts) != set(p.CELL_IDS) or set(counts.values()) != {n // len(p.CELL_IDS)}:
             raise ValueError(f'{split} cells unbalanced: {dict(sorted(counts.items()))}')
 

@@ -65,13 +65,25 @@ class ValidateTests(unittest.TestCase):
         self.assertFalse(self.v._episode_reset_sha_matches(root, 0, genuine))
 
     def test_metadata_final_requires_160_40_split(self):
-        # Synthetic minimal metadata for the accept path is heavy; here we only
-        # cover the split-string assertion via patching _metadata.
+        # The split assertion is unit-tested directly; exercising it through metadata() would
+        # require a full synthetic LeRobot dataset on disk.
         info_wrong = dict(splits={'train': '0:120', 'validation': '120:200'})
-        entries = []
-        with patch.object(self.v.generic, '_metadata', return_value=(info_wrong, entries)), \
-                self.assertRaises(ValueError):
-            self.v.metadata(Path('/tmp'), 200, final=True)
+        with self.assertRaises(ValueError):
+            self.v.require_final_split(info_wrong, 200)
+        with self.assertRaises(ValueError):  # right splits, wrong count
+            self.v.require_final_split(dict(splits={'train': '0:160', 'validation': '160:200'}), 199)
+        # correct pair passes
+        self.v.require_final_split(dict(splits={'train': '0:160', 'validation': '160:200'}), 200)
+
+    def test_cell_balance_is_enforced_at_admission(self):
+        plan = self.v.p.make_plan()
+        self.v.require_cell_balance(plan['episodes'])
+        skewed = [dict(e) for e in plan['episodes']]
+        for e in skewed:
+            if e['split'] == 'train' and e['cell'] == 'C2':
+                e['cell'] = 'C1'
+        with self.assertRaises(ValueError):
+            self.v.require_cell_balance(skewed)
 
 
 class SyntheticPersistenceSmokeTests(unittest.TestCase):
