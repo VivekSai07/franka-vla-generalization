@@ -33,20 +33,52 @@ accelerating at the final checkpoint, val/train 1.01-1.06 (no overfitting). Proc
 Caveat recorded: part of the final jump is the cosine anneal, so do not extrapolate linearly.
 
 ### A2. Train to matched exposure (only if A1 says climbing)
-- [ ] New package (e.g. `xvla_broad_workspace_long`) — do NOT edit the existing one. `recipe()`
+- [x] New package (`xvla_broad_workspace_long`) — did NOT edit the existing one. `recipe()`
       hardcodes `max_optimizer_updates=5000` and `schedule.total=5000`; changing them alters
       `SOURCE_FILES` hashes and would invalidate the sealed 5000-update run.
-- [ ] ~**16,700 updates** to match local-varied epoch exposure (79,840 starts × 1.67 / 8)
-- [ ] This is a fresh run from base, not a resume — no resume path exists and the cosine schedule
-      is defined over the full horizon
-- [ ] Checkpoint schedule extended so the curve stays measurable
-- [ ] Re-evaluate on the same holdout; compare against the 5000-update 68.1%
-- [ ] Repeat for SmolVLA (2.09 epochs currently) only if X-VLA shows a gain
+- [x] **16,700 updates** to match local-varied epoch exposure (79,840 starts × 1.67 / 8)
+- [x] Fresh run from base, not a resume
+- [x] Checkpoint schedule extended so the curve stays measurable
+- [x] Re-evaluated on the same holdout: **62/72 = 86.1%** vs 49/72 = 68.1% (Fisher p = 0.0165)
+- [ ] Repeat for SmolVLA (2.09 epochs currently) — **hold**; see A4, the remaining failure is not
+      obviously exposure-limited and a SmolVLA run would cost ~4 h to answer a different question
+
+**Outcome (2026-09-24): exposure was the deficit, and it is now largely paid off.** Two findings
+changed the plan and are recorded in [docs/RESULTS.md](docs/RESULTS.md) and
+[docs/FAILURES.md](docs/FAILURES.md) #21–#23:
+- the checkpoint curve is **non-monotonic** (25.0% → 0.0% → 86.1%) while offline MAE improves
+  monotonically — offline metrics are invalid as capability proxies
+- all 10 remaining failures are a single systematic **4.51 cm ± 0.20 cm** placement offset, and the
+  expert demonstrations are clean (max 1.98 cm, 0 episodes > 2 cm), so it is policy-side
 
 ### A3. Close out
-- [ ] Update README with the exposure finding and the curve
+- [x] Update docs with the exposure finding and the curve
+- [ ] Evaluate checkpoint **12,000** — the LR-matched comparison against the short run's 4,000
+      (2.74e-5 vs 2.05e-5). This, not the 4,000 pair, separates exposure from annealing. *(running)*
 - [ ] Decide whether the 65/72 gate is right for this protocol — argue it on its own terms,
-      not by fitting it to whatever number we got
+      not by fitting it to whatever number we got. Note 62/72 misses by three trials and every
+      miss is the same 4.5 cm offset, so the gate question is now entangled with A4.
+
+### A4. The 4.5 cm placement offset (new — highest-value open question)
+All 10 failures at 86.1% land the cube exactly one cube-width beside the target, sd 2 mm, 9 of 10
+toward the robot base. Successes average 0.80 cm, matching expert precision (0.68 cm). The
+distribution is bimodal with nothing between, so this is a discrete targeting mode.
+
+Ruled out already:
+- **imitating a sloppy expert** — refuted, all 200 demos clean
+- **unreachable far layouts** — refuted and inverted (failing 0.424 m mean reach vs solved 0.472 m)
+
+Still to test, cheapest first:
+- [ ] Is the offset in the *action chunk* or the *execution*? Compare predicted vs achieved
+      end-effector target over the final approach on a failing trial — pure replay, no GPU
+- [ ] Does it correlate with approach direction / which side the gripper comes from?
+- [ ] Is `n_action_steps=10` against `chunk_size=30` truncating the terminal descent?
+- [ ] Does the failure persist across both policy seeds on the same layout (6 of 10 do) — i.e.
+      layout-determined rather than stochastic
+
+Only after this: decide whether more data, different data, or a control-level fix is warranted.
+Do **not** launch a data-budget sweep until the offset is understood — it may be orthogonal to
+data volume entirely.
 
 ---
 
@@ -93,7 +125,7 @@ model may be ignoring text entirely.
 
 ## Before launching any long run — checklist
 
-Derived from the failures in [README](README.md#failures-we-hit-and-what-we-learned). Each item
+Derived from the failures in [docs/FAILURES.md](docs/FAILURES.md). Each item
 cost real GPU time at least once.
 
 - [ ] **Package README updated.** It is in `SOURCE_FILES`; a copied one describing the old recipe
@@ -112,6 +144,14 @@ cost real GPU time at least once.
       invalidates it and forces a full ~1h re-run (#16).
 - [ ] **Poll actively.** `docker wait` has silently failed to notify here; do not assume
       completion will be reported (#19).
+- [ ] **Forked a package? Repoint its tests.** Copied tests keep importing the source module and
+      will pass while testing the wrong code; re-derive constants from the contract rather than
+      copying the literal (#20).
+- [ ] **Checkpoint schedule chosen from the LR curve, not round numbers.** To compare two runs
+      mid-training you must match *schedule phase*, not step count — update 4,000 meant 80%
+      annealed in one run and 24% in the other, making the comparison worthless (#22).
+- [ ] **Plan for rollout evaluation, not proxies.** Loss and MAE improved monotonically through a
+      run that collapsed to 0/72; budget the GPU hours for real rollouts (#21).
 
 ---
 ---

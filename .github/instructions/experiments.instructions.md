@@ -46,7 +46,10 @@ maximum = 2 if preflight else c.recipe(False)['max_optimizer_updates']
 
 When adding a package by copying another, grep the copy for every literal that also lives in
 `recipe()` — horizon, checkpoint schedule, output paths, purpose strings — and for the old
-package name in module imports and test paths.
+package name in module imports and test paths. **The copied tests are the trap**: they keep
+importing the source module and patching its symbols, so they pass while testing the wrong code.
+Derive constants from the contract (`recipe(False)['max_optimizer_updates']`) rather than copying
+the number, and assert agreement with `checkpoint_updates(False)[-1]`.
 
 ## Tests
 

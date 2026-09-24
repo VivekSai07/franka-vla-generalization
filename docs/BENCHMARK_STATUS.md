@@ -1,5 +1,39 @@
 # Franka benchmark: start here
 
+## Matched exposure: 68.1% → 86.1%, and the failure mode identified — 2026-09-24
+
+Retrained X-VLA on the identical sealed `broad_workspace` data at **1.67 epochs** (16,700 updates)
+instead of 0.50 (5,000), with everything else held constant. On the same 36-layout × 2-seed
+holdout: **62/72 = 86.1%** [76.3, 92.3], versus 49/72 = 68.1% [56.6, 77.7]. Fisher exact
+**p = 0.0165**. `fixed_parity` unchanged at 20/20. The 65/72 gate still fails, by three trials, and
+was again not lowered.
+
+So the earlier 68.1% was undertraining, not a ceiling. Across the whole programme updates were
+pinned at 5,000 while datasets grew, making exposure fall as data rose — 8.91 epochs at 9 episodes
+down to 0.50 at 160. Data volume and exposure had been perfectly anti-correlated, and no run had
+ever isolated either.
+
+**The checkpoint curve is non-monotonic and offline metrics are actively misleading.** Success went
+25.0% (4,000) → **0.0%** (8,000) → 86.1% (16,700) while train/val arm MAE improved *monotonically*
+throughout (0.03390 → 0.02621 → 0.01022). At 8,000 the policy still grasped 72/72 but lifted only
+17/72, leaving the cube a median 63 cm from target. Loss, MAE and gripper accuracy all showed
+steady improvement through a total capability collapse. Rollouts are the only valid measure.
+
+**All 10 remaining failures are one failure.** The cube is grasped, lifted ~29 cm, carried up to
+0.80 m across the workspace, and then set down **4.51 cm ± 0.20 cm** from the target — one cube
+width, beside it rather than on it, in 9 of 10 cases toward the robot base. Successes average
+0.80 cm error. The distribution is bimodal with nothing in between, so this is a discrete targeting
+mode, not degraded precision. The "unreachable far layouts" explanation is refuted and inverted:
+failing layouts average 0.424 m reach, fully-solved ones 0.472 m.
+
+**The expert is not the cause.** All 200 sealed demonstrations were checked: mean final placement
+error 0.679 cm, max 1.981 cm, zero episodes above 2 cm, mean signed offset 0.1 mm, correct stack
+height in 200/200. The offset is introduced by the policy, so collecting more of the same data
+should not be expected to fix it.
+
+Pending: the update-12,000 checkpoint, which is the genuinely LR-matched comparison against the
+short run's update-4,000 (2.74e-5 vs 2.05e-5) and will separate exposure from annealing.
+
 ## Broad-workspace trained and evaluated — 2026-09-22
 
 `broad_workspace_data` sealed at 200/200 episodes (105,600 frames, 160 train / 40 validation,

@@ -8,19 +8,25 @@ The central question: **how much and what kind of data does a VLA need to genera
 
 ---
 
-## Current headline (2026-09-23)
+## Current headline (2026-09-24)
 
 On the widest protocol to date — 36 reserved envelope-F7 layouts × 2 policy seeds:
 
 | trained on | SmolVLA | X-VLA |
 |---|---|---|
 | `local_varied` (60 eps, ±1 cm) | 2.8% (2/72) | 2.8% (2/72) |
-| `broad_workspace` (200 eps, F7) | **31.9%** (23/72) | **68.1%** (49/72) |
+| `broad_workspace` (200 eps, F7), 0.50 epochs | 31.9% (23/72) | 68.1% (49/72) |
+| `broad_workspace`, **matched exposure** (1.67 epochs) | not run | **86.1%** (62/72) |
 
-The 200-episode collection is what creates wide-workspace capability at all — the narrowly-trained
-policies score 2.8%, and their only successes are on the single holdout layout nearest their
-training distribution. Both still fail the 65/72 gate, and the X-VLA number is likely
-**undertrained**: it saw just 0.50 epochs. A matched-exposure run is in progress.
+Two things are now established. The 200-episode collection is what creates wide-workspace
+capability at all — narrowly-trained policies score 2.8%, and their only successes are on the single
+holdout layout nearest their training distribution. And the earlier 68.1% was **undertraining, not a
+ceiling**: the same data at 1.67 epochs instead of 0.50 reaches 86.1% (Fisher p = 0.0165).
+
+It still fails the 65/72 gate, by three trials. All ten remaining failures are the same failure —
+the cube is carried across the workspace correctly, then set down **4.51 cm ± 0.20 cm** beside the
+target instead of on top of it. The expert demonstrations contain no such offset (max 1.98 cm, zero
+episodes above 2 cm), so this is policy-side, not a data defect.
 
 Full numbers, protocols and confidence intervals: **[docs/RESULTS.md](docs/RESULTS.md)**.
 

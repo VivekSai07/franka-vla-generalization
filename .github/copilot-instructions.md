@@ -25,9 +25,13 @@ violating them destroyed hours of compute. See [docs/FAILURES.md](../docs/FAILUR
 
 - Never say something passed without running it and reading the output.
 - When a test is added for a bug, **confirm it fails against the unfixed code** (`git stash`).
-  A green suite has four times coexisted with broken production code here, because the tests
-  exercised a fixture or a constant rather than the path that actually runs.
-- Report the number you measured, not the number you expected. Negative results are results.
+  A green suite has five times coexisted with broken production code here, because the tests
+  exercised a fixture, a constant, or the wrong module rather than the path that actually runs.
+- **Offline metrics are not capability.** Loss, action MAE and gripper accuracy improved
+  monotonically through a checkpoint that scored 0/72 on rollouts. Never select a checkpoint,
+  stop early, or claim progress from them.
+- Report the number you measured, not the number you expected. Negative results are results, and
+  a refuted hypothesis is worth recording with the evidence that killed it.
 - State caveats next to figures, not only in commit messages: confounds, weakened bindings,
   protocols that are not comparable.
 
@@ -52,6 +56,8 @@ Each item cost real GPU time at least once. Highlights:
 - Change **one variable at a time**. A failure with two new axes is not attributable.
 - Hold **exposure (epochs) constant**, not update count. Holding updates fixed while the dataset
   grew silently changed exposure by 3.3× and nearly produced a false conclusion.
+- To compare two runs mid-training, match **schedule phase**, not step count — the same update
+  number meant 80% annealed in one run and 24% in another.
 - A result is uninterpretable without knowing what the *absence* of the treatment scores on the
   same protocol. Run the cross-evaluation.
 - Do not move a gate after seeing the result.

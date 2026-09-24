@@ -4,7 +4,19 @@ All benchmark numbers. Protocols differ in difficulty and are **not** comparable
 rows unless stated. Chronological narrative lives in [BENCHMARK_STATUS.md](BENCHMARK_STATUS.md);
 failures and lessons in [FAILURES.md](FAILURES.md).
 
-## Current status (2026-09-22)
+## Current status (2026-09-24)
+
+**Headline — matched exposure took X-VLA from 68.1% to 86.1% on the broad holdout.** The 0.50-epoch
+run was undertrained, as suspected. Retraining on the identical sealed data at 1.67 epochs
+(16,700 updates) scored **62/72**, a significant gain (Fisher exact p = 0.0165). It still fails the
+65/72 gate, by three trials.
+
+| X-VLA on `broad_workspace` | updates | epochs | broad_holdout | 95% CI |
+|---|---|---|---|---|
+| short run | 5,000 | 0.50 | 49/72 = 68.1% | [56.6, 77.7] |
+| **matched-exposure run** | **16,700** | **1.67** | **62/72 = 86.1%** | **[76.3, 92.3]** |
+
+`fixed_parity` stayed at 20/20. The gate has **not** been lowered to match the outcome.
 
 `broad_workspace_data_v1` is **collected and sealed**: 200 episodes, 105,600 frames, 160 train / 40 validation,
 seal `0351d3da36294e2124554267bc17738badee26498b1cb82fa7a58d4f4a601a85`. Both policies were retrained on it
@@ -48,22 +60,84 @@ Two caveats on that claim:
   predates the `local_varied_data` re-seal, so its metadata binding is unreproducible. Training data identity
   is instead proven by recomputed statistics, and checkpoint identity by weight hash.
 
-**Open: 68.1% is likely undertrained, not a ceiling.** X-VLA saw only **0.50 epochs** on the broad dataset
-(40,000 chunks over 79,840 starts) versus 1.67 epochs on local-varied — updates were held at 5000 while the
-data tripled. The checkpoint curve on the identical holdout confirms training was still improving when it
-stopped:
+**Resolved: 68.1% was undertraining, not a ceiling.** X-VLA saw only **0.50 epochs** on the broad
+dataset (40,000 chunks over 79,840 starts) versus 1.67 on local-varied — updates were held at 5000
+while the data tripled. Across the whole programme, exposure fell as data grew, so data volume and
+exposure were perfectly anti-correlated:
 
-| update | broad_holdout | train / val arm MAE | val/train |
+| dataset | episodes | X-VLA epochs | SmolVLA epochs |
 |---|---|---|---|
-| 3000 | 0.0% (0/72) | 0.05826 / 0.06060 | 1.040 |
-| 4000 | 20.8% (15/72) | 0.02100 / 0.02122 | 1.010 |
-| 5000 | **68.1%** (49/72) | 0.01655 / 0.01748 | 1.056 |
+| `single_task` | 9 | **8.91** | — |
+| `fixed_layout` | 20 | 4.01 | 16.70 |
+| `local_varied` | 48 | 1.67 | 6.96 |
+| `broad_workspace` | 160 | 0.50 | 2.09 |
 
-Success accelerates while MAE improvement decelerates — stacking is a threshold task, so late precision
-gains convert into large success jumps. No overfitting at any checkpoint (val/train 1.01–1.06). Caveat: part
-of the 4000→5000 jump is the cosine anneal to its 1e-5 floor, so this curve cannot separate "needs more
-exposure" from "needed the anneal", and 68% should not be linearly extrapolated. Next step is a matched-exposure
-run at ~16,700 updates; see [TODO](TODO.md) Phase A.
+Rerunning at matched exposure (16,700 updates = 1.67 epochs) resolved it: **68.1% → 86.1%**.
+
+### The checkpoint curve is non-monotonic — and offline metrics do not track capability
+
+Same policy, same holdout, four checkpoints of the matched-exposure run:
+
+| update | lr | broad_holdout | grasped | lifted >5 cm | median final xy | train MAE | val MAE |
+|---|---|---|---|---|---|---|---|
+| 4,000 | 9.00e-5 | 18/72 = 25.0% | 72 | 56 | 5.53 cm | 0.03390 | 0.03475 |
+| 8,000 | 6.02e-5 | **0/72 = 0.0%** | 72 | **17** | **62.72 cm** | 0.02621 | 0.02637 |
+| 12,000 | 2.74e-5 | *(pending)* | | | | | |
+| 16,700 | 1.00e-5 | **62/72 = 86.1%** | 72 | 72 | 0.85 cm | 0.01022 | 0.01258 |
+
+Success goes 25% → **0%** → 86%. At update 8,000 the policy still grasps on every trial but cannot
+lift or transport — the cube ends a median 63 cm from target. Meanwhile **offline action MAE improves
+monotonically throughout**, falling 23% across the very interval where success collapses to zero.
+
+Consequence: **arm MAE, validation loss and gripper accuracy are not valid proxies for task success.**
+Never select a checkpoint, trigger early stopping, or claim progress from them. Only rollouts count.
+This also means the val/train ratio should not be read as an overfitting signal on its own.
+
+The curve cannot cleanly separate "needs exposure" from "needed the anneal": at update 4,000 the
+short run sat at lr 2.05e-5 (80% annealed) while the long run was at 9.00e-5 (24% annealed), so that
+pair compares different schedule phases and is statistically indistinguishable (15/72 vs 18/72,
+p = 0.69). The LR-matched comparison is short@4000 (2.05e-5) against **long@12000** (2.74e-5), pending.
+
+### Anatomy of the 10 remaining failures — a systematic 4.5 cm placement offset
+
+All ten failures at 16,700 are the same failure, and it is not a spatial-understanding failure. A
+representative trial grasps at tick 102, lifts **29 cm**, carries the cube **58 cm** across the
+workspace, releases — and never forms a stable stack.
+
+| | successes (n=62) | failures (n=10) |
+|---|---|---|
+| final xy error | mean 0.80 cm, max 1.96 cm | mean **4.51 cm**, sd **0.20 cm** |
+
+That standard deviation is 2 mm across ten independent trials, and 4.5 cm is one cube width. The cube
+is set down *beside* the target, touching it, instead of on top. In 9 of 10 it lands at lower x —
+toward the robot base, i.e. stopping one cube-width short. The distribution is bimodal: under 2 cm,
+or exactly 4.5 cm, with nothing between.
+
+The obvious explanation — unreachable far layouts — is **refuted and inverted**: failing layouts
+average 0.424 m reach, fully-solved ones 0.472 m. The far layouts are solved. This is not kinematics.
+
+Longer training fixed 17 of the 23 prior failures and eliminated every gross transport error
+(`evaluation_004` and `_005`, previously missing by 0.72–0.88 m, are now 2/2). It broke 4; 6 persist
+in both runs.
+
+### The expert demonstrations are clean — the offset is introduced by the policy
+
+Hypothesis tested: the policy is faithfully imitating a teacher that itself places imprecisely.
+**Refuted.** Across all 200 sealed expert episodes (`validation.json` → `diagnostics.final_delta_xyz`):
+
+| expert final placement | value |
+|---|---|
+| mean xy error | 0.679 cm |
+| median / sd | 0.635 cm / 0.377 cm |
+| max | 1.981 cm |
+| episodes > 2 cm | **0** |
+| mean signed offset | dx +0.1 mm, dy −0.3 mm |
+| dz within [3.8, 4.6] cm | **200 / 200** |
+
+Every demonstration ends in a clean stack with no directional bias. So the 4.5 cm offset is a
+policy-side artefact, not a data-quality defect — and **more episodes of the same kind should not be
+expected to fix it**. Note the policy's *successes* (0.80 cm) essentially match expert precision
+(0.68 cm); the failure is a discrete targeting mode, not degraded precision.
 
 **Earlier local-varied results** (narrow ±1 cm protocol, not comparable to the above — different task difficulty):
 
@@ -73,8 +147,8 @@ run at ~16,700 updates; see [TODO](TODO.md) Phase A.
 | fixed_parity success rate | 100% (20/20) | 100% (20/20) |
 | offline val arm MAE (rad) | 0.01133 | 0.00996 |
 
-Open question: whether the 200-episode collection actually improved generalisation. A cross-evaluation of the
-**local-varied** X-VLA on the identical broad holdout is built and queued; without it 68.1% has no reference point.
+The cross-evaluation that gives 68.1% its reference point is complete and reported above: the
+local-varied checkpoints score 2.8% on the identical broad holdout.
 
 ---
 
@@ -87,7 +161,9 @@ Open question: whether the 200-episode collection actually improved generalisati
 | `experiments/broad_workspace_data/` | F7 envelope, retries permitted | 200 (160 train / 40 val) | **sealed** |
 | `experiments/{smolvla,xvla}_local_varied/` | Local-varied finetunes | — | trained + evaluated |
 | `experiments/{smolvla,xvla}_broad_workspace/` | Broad-workspace finetunes | — | trained + evaluated |
-| `experiments/xvla_localvaried_broad_eval/` | Cross-eval: old checkpoint, new holdout | — | built, queued |
+| `experiments/xvla_broad_workspace_long/` | Matched-exposure X-VLA (16,700 updates) | — | trained + evaluated |
+| `experiments/xvla_broad_workspace_long_eval/` | Eval bound to the matched-exposure run | — | complete |
+| `experiments/xvla_localvaried_broad_eval/` | Cross-eval: old checkpoint, new holdout | — | complete |
 
 Training reports: `outputs/train/{smolvla,xvla}_franka_stacking_{localvaried_v1_20260919,broadworkspace_v1_20260921}/result.json`.
 Evaluation reports: `.../evaluation/{varied_holdout,broad_holdout,fixed_parity}/result.json`, per-trial `episode.json`, `trace.npz`, `cameras.mp4`.
@@ -107,6 +183,8 @@ comparable across rows — each is noted.
 | 3 | `local_varied` | `fixed_parity` 20 seeds | 20/20 (100%) | 20/20 (100%) |
 | 4 | `broad_workspace` (200 eps, F7) | `broad_holdout` 36 layouts × 2 seeds | **23/72** (31.9%) | **49/72** (68.1%) |
 | 4 | `broad_workspace` | `fixed_parity` 20 seeds | 20/20 (100%) | 20/20 (100%) |
+| 5 | `broad_workspace`, **matched exposure** (1.67 ep) | `broad_holdout` 36 layouts × 2 seeds | not run | **62/72** (86.1%) |
+| 5 | `broad_workspace`, matched exposure | `fixed_parity` 20 seeds | not run | 20/20 (100%) |
 | — | `local_varied` checkpoints | `broad_holdout` (cross-eval) | 2/72 (2.8%) | 2/72 (2.8%) |
 
 Reading across: both architectures failed the 9-episode single-task gate outright, reached
