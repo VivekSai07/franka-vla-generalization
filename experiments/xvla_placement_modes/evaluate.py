@@ -499,11 +499,9 @@ def run_fixed_parity_trial(policy, pre, post, model, manifest, entry, bank, outp
 
 
 def run_broad_trial(policy, pre, post, model, manifest, entry, bank, output, ordinal, seed):
-    approved_layouts = broad_layout_ids()
-    approved_seeds = broad_policy_seeds()
-    if (not 1 <= ordinal <= 72 or seed not in approved_seeds
-            or entry.get('layout_id') not in approved_layouts):
-        raise ValueError('Explicit approved broad layout/seed/ordinal identity required')
+    if (not 1 <= ordinal <= MODE_TRIALS or seed not in MODE_SEEDS
+            or entry.get('layout_id') not in MODE_LAYOUTS):
+        raise ValueError('Explicit approved placement-mode layout/seed/ordinal identity required')
     return _rollout(policy, pre, post, model, manifest, entry, bank, output, ordinal, seed,
                     seed_trial_broad)
 

@@ -426,6 +426,47 @@ class OfflineProbeTests(unittest.TestCase):
         self.assertTrue(model.training)  # restored
 
 
+class RosterAcceptanceTests(unittest.TestCase):
+    """Every trial the roster produces must survive every per-trial guard.
+
+    `run_broad_trial` inherited `1 <= ordinal <= 72` and `seed in broad_policy_seeds()` from the
+    parent protocol. The run died on trial 3 — the first derived seed — after 8 minutes of GPU,
+    because no test pushed a roster trial through the guard.
+    """
+
+    def setUp(self):
+        self.e = _module()
+
+    def test_every_roster_trial_is_accepted_by_run_broad_trial(self):
+        e = self.e
+        seen = []
+        with patch.object(e, '_rollout', side_effect=lambda *a, **k: seen.append((a[8], a[9]))):
+            for t in e.evaluation_plan_broad():
+                entry = {'layout_id': t['layout_id'], 'episode_index': 7}
+                e.run_broad_trial(None, None, None, None, None, entry, None, None,
+                                  t['ordinal'], t['seed'])
+        self.assertEqual(len(seen), e.MODE_TRIALS)
+        self.assertEqual({s for _, s in seen}, set(e.MODE_SEEDS))
+        self.assertEqual(max(o for o, _ in seen), e.MODE_TRIALS)
+
+    def test_run_broad_trial_still_rejects_identities_outside_the_roster(self):
+        e = self.e
+        good = e.evaluation_plan_broad()[0]
+        entry = {'layout_id': good['layout_id'], 'episode_index': 7}
+        with patch.object(e, '_rollout'):
+            for ordinal, seed, lid in ((0, good['seed'], good['layout_id']),
+                                       (e.MODE_TRIALS+1, good['seed'], good['layout_id']),
+                                       (good['ordinal'], 999, good['layout_id']),
+                                       (good['ordinal'], good['seed'], 'evaluation_000')):
+                with self.subTest(ordinal=ordinal, seed=seed, layout=lid), self.assertRaises(ValueError):
+                    e.run_broad_trial(None, None, None, None, None,
+                                      {'layout_id': lid, 'episode_index': 7}, None, None, ordinal, seed)
+
+    def test_every_roster_seed_is_accepted_by_seed_trial(self):
+        for seed in self.e.MODE_SEEDS:
+            self.e.seed_trial_broad(seed)
+
+
 class UndefinedNameTests(unittest.TestCase):
     """Forking deletes machinery; a surviving reference to it only fails at runtime.
 
