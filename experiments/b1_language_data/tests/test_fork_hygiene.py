@@ -38,9 +38,13 @@ class UndefinedNameTests(unittest.TestCase):
         self.assertEqual(offenders, [], '; '.join(offenders))
 
     def test_no_module_still_references_the_source_package(self):
+        """Imports, not prose — the fork source is legitimately named in comments about provenance."""
         for name in MODULES:
             source = (PACKAGE / name).read_text()
-            self.assertNotIn('broad_workspace_data', source, f'{name} still references the fork source')
+            for banned in ('from experiments.broad_workspace_data',
+                           'import experiments.broad_workspace_data',
+                           'experiments.broad_workspace_data.'):
+                self.assertNotIn(banned, source, f'{name} still imports the fork source')
 
     def test_no_colour_keyed_envelope_constants_survive(self):
         """Colour-keyed envelopes were the confound; regions replaced them everywhere."""

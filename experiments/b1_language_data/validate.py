@@ -1,5 +1,6 @@
 """Broad-workspace dataset admission; per-episode reset SHAs and 400 replay coverage."""
 from collections import Counter
+from contextlib import contextmanager
 import copy
 import json
 from pathlib import Path
@@ -188,11 +189,79 @@ def require_approved_draw(slot, executed):
         raise ValueError('Executed feasibility source does not match its draw index')
 
 
+def read_rows_for_task(path, index, task_index):
+    """`generic.read_rows` with the frame task index supplied by the caller.
+
+    Byte-for-byte the shared implementation except that `task_index` is compared against
+    `task_index` instead of zeros, because B1 has two instructions. The shared module is inside
+    the sealed provenance of `broad_workspace_data` and must not be edited (FAILURES #28);
+    `test_read_rows_matches_shared_on_single_task` pins this copy to the original.
+    """
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    table = pq.read_table(path)
+    expected = {'action', 'observation.state', 'timestamp', 'frame_index', 'episode_index', 'index', 'task_index'}
+    n = p.EXPECTED_FRAMES
+    if set(table.column_names) != expected or len(table) != n:
+        raise ValueError('Canonical persisted rows require 528 frames and no privileged fields')
+    for key, size in (('action', 8), ('observation.state', 9)):
+        dtype = table.schema.field(key).type
+        if not pa.types.is_fixed_size_list(dtype) or dtype.list_size != size or dtype.value_type != pa.float32():
+            raise ValueError('Persisted action/state must be unpadded float32')
+    for key in expected:
+        column = table[key]
+        if column.null_count or (pa.types.is_fixed_size_list(column.type) and column.combine_chunks().values.null_count):
+            raise ValueError('Null persisted row value')
+    for key, wanted in (('frame_index', np.arange(n)), ('index', np.arange(n) + index*n),
+                        ('episode_index', np.full(n, index)),
+                        ('task_index', np.full(n, task_index, np.int64))):
+        if table.schema.field(key).type != pa.int64():
+            raise ValueError('Row indices must be int64')
+        generic._equal(table[key].to_numpy(), wanted, 'Persisted row/task indices differ')
+    if table.schema.field('timestamp').type != pa.float32():
+        raise ValueError('Persisted timestamps must be float32')
+    actions = np.asarray(table['action'].to_pylist(), np.float32)
+    states = np.asarray(table['observation.state'].to_pylist(), np.float32)
+    times = table['timestamp'].to_numpy()
+    if not all(np.isfinite(a).all() for a in (actions, states, times)):
+        raise ValueError('Nonfinite persisted rows')
+    generic._equal(times, np.arange(n)/30, 'Persisted timestamp discontinuity', 2e-6)
+    return actions, states, times
+
+
+@contextmanager
+def task_aware(instruction, task_index):
+    """Widen the shared validator for exactly one episode's instruction, then restore it.
+
+    Two sites in `fixed_layout.validate` assume a single task: `read_rows` expects every frame's
+    index to be 0, and the raw-frame check compares against the module-level `TASK`.
+    """
+    original_rows, original_task = generic.read_rows, generic.TASK
+    generic.read_rows = lambda path, index: read_rows_for_task(path, index, task_index)
+    generic.TASK = instruction
+    try:
+        yield
+    finally:
+        generic.read_rows, generic.TASK = original_rows, original_task
+
+
+def lerobot_task_index(root, instruction):
+    """LeRobot numbers tasks by first appearance, so read the index it actually assigned."""
+    import pandas as pd
+    tasks = pd.read_parquet(Path(root)/'dataset'/'meta'/'tasks.parquet')
+    table = dict(zip(list(tasks.index), list(tasks['task_index'])))
+    if instruction not in table:
+        raise ValueError(f'Instruction missing from the dataset task table: {instruction!r}')
+    return int(table[instruction])
+
+
 def validate_episode(root, episode, expert, reset, check):
     if not _matches_plan_slot(episode):
         raise ValueError('Unplanned demonstration slot; evaluation execution forbidden')
     i = episode['episode_index']; info, entries = metadata(root, i+1)
-    actions, states, trace, gates, media = generic._episode_inputs(root, episode, expert, reset, check, info, entries)
+    instruction = episode['instruction']
+    with task_aware(instruction, lerobot_task_index(root, instruction)):
+        actions, states, trace, gates, media = generic._episode_inputs(root, episode, expert, reset, check, info, entries)
     path = Path(root) / 'attempts' / f'{i:06d}'; (path / 'replays').mkdir(exist_ok=False)
     results = [generic.replay_controls(path / 'replays', expert, reset, trace, actions, mode, check)
                for mode in generic.MODES]
