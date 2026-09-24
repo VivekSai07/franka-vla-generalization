@@ -225,7 +225,7 @@ def preflight() -> dict:
                 evaluation_layouts=p.EVAL_HOLDOUT_COUNT, policy_seeds=plan['policy_seeds'],
                 output=str(p.OUTPUT), output_exists=p.OUTPUT.exists(), storage_path=str(destination),
                 free_bytes=free, storage_eligible=free >= p.START_BYTES, collection_ready=False,
-                scope='281_bank_only_no_steps_no_render_no_expert_execution',
+                scope='361_bank_only_no_steps_no_render_no_expert_execution',
                 plan=plan, bank=bank_manifest(plan, bank), provenance=before,
                 pending=['independent review and main fresh preflight',
                          'actual 200 expert admits with feasibility gate and replay budget'])
