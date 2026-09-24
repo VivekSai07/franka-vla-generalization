@@ -134,6 +134,30 @@ all four = grounding; C1+C3 = instruction→side; C1+C2 = ignores instruction; C
 No expert changes needed — it is already colour-parameterised and generates the instruction from
 `pick`/`place`. Only `plan.py`'s hardcoded `pick='red', place='green'` changes.
 
+#### BLOCKED — the shared validation stack is single-task and hash-bound
+Collection cannot run until this is resolved. See [docs/FAILURES.md](docs/FAILURES.md) #28.
+
+`experiments/fixed_layout/validate.py` assumes one task in five places. A local `metadata()`
+override in the B1 package handles three; `read_rows` (per-frame `task_index == 0`) and the
+`raw["task"] == TASK` frame check remain, both reached through `generic._episode_inputs`.
+
+**The file must not be edited** — it is inside the sealed provenance of `broad_workspace_data`
+(confirmed in `provenance.json`), so changing it invalidates the sealed dataset and the 86.1%
+result.
+
+Two viable options, needing a decision:
+- [ ] **(A) Duplicate locally.** Fork `read_rows` and `_episode_inputs` into the B1 package with
+      task-aware checks. ~90 lines of deep validation logic copied. Risk: a transcription slip
+      yields a validator *weaker* than intended, which still passes — the worst failure mode here.
+      Mitigate by diffing the copy against the original and asserting equivalence on a single-task
+      fixture before trusting it.
+- [ ] **(B) Parameterise the shared module** with a `tasks=(TASK,)` default that preserves current
+      behaviour byte-for-byte, then re-seal the affected datasets. Cleaner long-term, but re-sealing
+      `broad_workspace_data` invalidates every binding built on it.
+
+Recommendation: **(A)**, with the equivalence check. (B) is the better design but its cost lands on
+already-sealed results.
+
 #### Budgets (measured rates: 1.97 min/episode, 0.83 s/update, 2.2 min/trial)
 B1 is a **fully self-contained dataset** — own plan, own layout bank, own reserved holdout, own
 seal. It does not read, import, extend or re-seal `broad_workspace_data`.
