@@ -18,6 +18,14 @@ run was undertrained, as suspected. Retraining on the identical sealed data at 1
 
 `fixed_parity` stayed at 20/20. The gate has **not** been lowered to match the outcome.
 
+> **What this result does not cover.** `plan.py` draws the cubes from disjoint regions — red always
+> at y<0, green always at y>0, verified across 200/200 training episodes and 80/80 reserved layouts,
+> separated by a 40 cm gap. "Pick the cube at −y and place it on the cube at +y" therefore solves
+> 100% of the data, and every result above is consistent with a policy that never perceives colour
+> and never reads the instruction. **These numbers measure spatial capability only; the language
+> pathway is untested.** See [FAILURES.md](FAILURES.md) #27 and the B1 design at
+> [superpowers/specs/2026-09-24-b1-language-grounding-design.md](superpowers/specs/2026-09-24-b1-language-grounding-design.md).
+
 `broad_workspace_data_v1` is **collected and sealed**: 200 episodes, 105,600 frames, 160 train / 40 validation,
 seal `0351d3da36294e2124554267bc17738badee26498b1cb82fa7a58d4f4a601a85`. Both policies were retrained on it
 and evaluated on the 36 reserved holdout layouts that collection never executed.

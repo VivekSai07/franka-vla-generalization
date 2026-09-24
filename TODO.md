@@ -113,12 +113,45 @@ Only after Tier 2 + Tier 1: decide whether the 65/72 gate is right, and finalise
 
 One axis at a time, each with its own dataset and its own holdout.
 
-### B1. Language grounding (first axis — cheapest, currently unmeasured)
-All 200 episodes share one instruction, so the language pathway is currently unverified; the
-model may be ignoring text entirely.
-- [ ] Collect reversed-instruction episodes (green onto red) over the **same** layouts
-- [ ] Test: does behaviour change with the instruction in an identical scene?
-- [ ] This is the minimal grounding test — prefer it over 12-colour randomisation
+### B1. Language grounding (first axis — currently unmeasured)
+
+**Design spec: [docs/superpowers/specs/2026-09-24-b1-language-grounding-design.md](docs/superpowers/specs/2026-09-24-b1-language-grounding-design.md)**
+
+**The language pathway has never been load-bearing.** `plan.py` draws the cubes from disjoint
+regions — red always at y<0, green always at y>0, verified 200/200 episodes and 80/80 reserved
+layouts, separated by 40 cm. "Pick the cube at −y" solves 100% of the data, so the 86.1% spatial
+result says nothing about language.
+
+**The original plan here would have produced a false positive.** Reversing the instruction over the
+same layouts makes "red→green" ≡ "pick −y" and "green→red" ≡ "pick +y"; a colour-blind model scores
+100% by learning instruction→side.
+
+**Design: 2×2 factorial** — instruction (red→green / green→red) × arrangement (familiar / swapped
+colours). Each region is correct in 2 of 4 cells and each instruction maps to each region once, so
+neither position nor instruction alone suffices. The *pattern* of passed cells names the strategy:
+all four = grounding; C1+C3 = instruction→side; C1+C2 = ignores instruction; C1+C4 = ignores both.
+
+No expert changes needed — it is already colour-parameterised and generates the instruction from
+`pick`/`place`. Only `plan.py`'s hardcoded `pick='red', place='green'` changes.
+
+#### Budgets (measured rates: 1.97 min/episode, 0.83 s/update, 2.2 min/trial)
+- [ ] **Collect** 200 episodes, 50/cell, 200 distinct geometries, fresh (not mixed with the
+      existing all-C1 200). Plan must reserve the same 80 evaluation layouts. — **6.6 h**
+- [ ] **Admission + preflight** — ~1 h CPU + 5 min GPU
+- [ ] **Train** X-VLA from base, 16,700 updates = 1.67 epochs — **identical budget to the
+      matched-exposure run**, so C1 is directly comparable to 86.1% — **3.9 h**
+- [ ] **Evaluate** 16 geometries × 4 cells × 4 seeds = 256 trials, drawn from the 36
+      `broad_holdout` layouts so C1 is protocol-identical — **9.4 h**
+- [ ] Report **geometry-clustered** intervals, not naive binomial (per-geometry p ranges
+      12.5%–87.5%, so trials cluster hard within geometry)
+- Total ≈ **21 h**
+
+#### Controls
+- Data starvation: 80 episodes per instruction vs 160 for the single-instruction model. The C1-vs-C2
+  contrast is within-model so attribution is safe; only the absolute level is exposed. Escalate to
+  400 episodes only if the absolute result is ambiguous.
+- Do **not** evaluate existing checkpoints on the swapped cells as a grounding test — they have
+  never seen a red cube at +y, so that measures distribution shift, not grounding.
 
 ### B2. Distractors (second axis)
 - [ ] Add 1–2 non-target cubes, target pair unchanged
