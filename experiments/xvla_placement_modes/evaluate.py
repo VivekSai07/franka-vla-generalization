@@ -632,11 +632,7 @@ def run(output, mode='placement_modes', update=FINAL_UPDATE):
         report.update(status='running', stage='offline_probes', binding=binding, training_files=before,
                       privileged_policy_inputs=False)
         write_json(directory/'result.json', report)
-        if resume_fixed_parity_only:
-            report['offline_probes'] = json.loads((directory/'offline_probes.json').read_text())
-            report['broad_holdout'] = json.loads((directory/'broad_holdout'/'result.json').read_text())
-        else:
-            report['offline_probes'] = offline_probes(policy, pre, post, ds, output=directory, update=update)
+        report['offline_probes'] = offline_probes(policy, pre, post, ds, output=directory, update=update)
         if c.admission() != binding: raise ValueError('Probe phase binding changed')
         verify_final(output, binding, update)
         report['stage'] = 'rollouts_placement_modes'; write_json(directory/'result.json', report)

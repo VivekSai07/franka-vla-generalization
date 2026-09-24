@@ -426,6 +426,42 @@ class OfflineProbeTests(unittest.TestCase):
         self.assertTrue(model.training)  # restored
 
 
+class UndefinedNameTests(unittest.TestCase):
+    """Forking deletes machinery; a surviving reference to it only fails at runtime.
+
+    `resume_fixed_parity_only` was left behind in `run()` after the fixed-parity path was removed,
+    and every other test still passed because none of them drive `run()` past its overwrite guard.
+    """
+
+    def test_module_has_no_reads_of_names_that_are_never_bound(self):
+        import builtins, symtable
+        source = (Path(__file__).resolve().parents[1]/'evaluate.py').read_text()
+        top = symtable.symtable(source, 'evaluate.py', 'exec')
+        module_names = set(top.get_identifiers())
+        offenders = []
+
+        def walk(table):
+            for child in table.get_children():
+                if child.get_type() == 'function':
+                    for sym in child.get_symbols():
+                        name = sym.get_name()
+                        if (sym.is_global() and not sym.is_assigned()
+                                and name not in module_names and not hasattr(builtins, name)):
+                            offenders.append(f'{child.get_name()}() reads undefined {name!r}')
+                walk(child)
+
+        walk(top)
+        self.assertEqual(offenders, [], 'names read but never bound: ' + '; '.join(offenders))
+
+    def test_no_fixed_parity_machinery_survives_in_the_run_driver(self):
+        source = (Path(__file__).resolve().parents[1]/'evaluate.py').read_text()
+        run_src = source.split('\ndef run(', 1)[1].split('\ndef ', 1)[0]
+        # `_run_broad_holdout` is deliberately reused as the rollout driver, so 'broad_holdout'
+        # legitimately appears here; only the fixed-parity path was removed.
+        for banned in ('resume_fixed_parity_only', 'fixed_parity'):
+            self.assertNotIn(banned, run_src, f'{banned} should not survive in run()')
+
+
 class CLITests(unittest.TestCase):
     def setUp(self):
         self.e = _module()
