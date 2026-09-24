@@ -133,7 +133,7 @@ def validate_journal(events, plan):
                     raise ValueError(f'Journal slot immutable field changed: {key}')
 
 
-def diagnostics(expert, trace, terminal, actions, reset, check):
+def diagnostics(expert, trace, terminal, actions, reset, check, pick, place):
     post = generic._original_post(expert, trace, terminal, check)
     delta = post['pick_xyz']-post['place_xyz']
     phases = []
@@ -148,8 +148,8 @@ def diagnostics(expert, trace, terminal, actions, reset, check):
     return dict(phases=phases, releases=releases, final_delta_xyz=delta[-1].tolist(),
                 final_xy_m=float(np.linalg.norm(delta[-1, :2])),
                 saturation_per_joint=trace['command_saturation'].sum(axis=0).astype(int).tolist(),
-                initial_pick_xyz=reset['body_xpos'][expert.model.body('target_cube_red').id].tolist(),
-                initial_place_xyz=reset['body_xpos'][expert.model.body('target_cube_green').id].tolist())
+                initial_pick_xyz=reset['body_xpos'][expert.model.body(f'target_cube_{pick}').id].tolist(),
+                initial_place_xyz=reset['body_xpos'][expert.model.body(f'target_cube_{place}').id].tolist())
 
 
 def episode_report(i, gates, media, replays, detail):
@@ -229,20 +229,84 @@ def read_rows_for_task(path, index, task_index):
     return actions, states, times
 
 
-@contextmanager
-def task_aware(instruction, task_index):
-    """Widen the shared validator for exactly one episode's instruction, then restore it.
+def observation_for_pair(model, data, pick, place):
+    """`generic._observation` with the picked/placed cubes named by the episode.
 
-    Two sites in `fixed_layout.validate` assume a single task: `read_rows` expects every frame's
-    index to be 0, and the raw-frame check compares against the module-level `TASK`.
+    The shared version binds `pick_xyz` to `target_cube_red` and `place_xyz` to `target_cube_green`,
+    so on a green-on-red episode every downstream gate measures the cube the expert never touched.
+    Identical to the original when (pick, place) == ('red', 'green').
     """
-    original_rows, original_task = generic.read_rows, generic.TASK
+    pick_id = model.body(f'target_cube_{pick}').id
+    place_id = model.body(f'target_cube_{place}').id
+    left, right = model.body('left_finger').id, model.body('right_finger').id
+    pairs = [{int(model.geom_bodyid[c.geom1]), int(model.geom_bodyid[c.geom2])}
+             for c in data.contact[:data.ncon]]
+    return {'qpos': data.qpos.copy(), 'sim_time': np.asarray(data.time),
+            'body_xpos': data.xpos.copy(), 'camera_xpos': data.cam_xpos.copy(), 'camera_xmat': data.cam_xmat.copy(),
+            'pick_xyz': data.xpos[pick_id].copy(), 'place_xyz': data.xpos[place_id].copy(),
+            'hand_xyz': data.xpos[model.body('hand').id].copy(),
+            'left_contact': np.asarray({left, pick_id} in pairs),
+            'right_contact': np.asarray({right, pick_id} in pairs)}
+
+
+def gates_for_pair(actions, post, initial_z):
+    """`generic.contact_gates` without its `(pick, place) == ('red', 'green')` guard.
+
+    The shared implementation uses the colour arguments for nothing but that guard; every
+    measurement reads the precomputed `post` geometry, which `observation_for_pair` has already
+    bound to the correct cubes.
+    """
+    n = len(actions)
+    if actions.shape != (n, 8) or not np.isfinite(actions).all() or not np.isfinite(initial_z):
+        raise ValueError('Invalid contact-gate commands/reset')
+    for key in ('pick_xyz', 'place_xyz', 'hand_xyz'):
+        if post[key].shape != (n, 3) or not np.isfinite(post[key]).all():
+            raise ValueError('Nonfinite or malformed actual post-step geometry')
+    for key in ('left_contact', 'right_contact'):
+        if post[key].shape != (n,) or post[key].dtype != np.bool_:
+            raise ValueError('Actual target finger contacts must be booleans')
+    closed = actions[:, 7] <= 127
+    bilateral = post['left_contact'] & post['right_contact']
+    delta = post['pick_xyz'] - post['place_xyz']
+    released = ((np.linalg.norm(delta[:, :2], axis=1) < .02) & (delta[:, 2] > .035)
+                & (delta[:, 2] < .045) & (actions[:, 7] > 127)
+                & ~post['left_contact'] & ~post['right_contact'])
+    stable = 0
+    for value in released:
+        stable = stable + 1 if value else 0
+    lift = float(np.max(post['pick_xyz'][bilateral, 2] - initial_z)) if bilateral.any() else 0.
+    result = {'closed_ticks': generic._longest(closed), 'bilateral_ticks': generic._longest(bilateral),
+              'contact_lift_m': lift, 'stable_ticks': stable,
+              'minimum_hand_distance_m': float(np.min(np.linalg.norm(post['hand_xyz'] - post['pick_xyz'], axis=1))),
+              'hand_distance_scope': 'descriptive_only_hand_body_origin'}
+    if result['closed_ticks'] < 30 or result['bilateral_ticks'] < 5 or lift <= .05 or stable < 30:
+        raise ValueError('Closed/contact/lift/final released-stack admission failed: ' + str(result))
+    return result
+
+
+@contextmanager
+def task_aware(instruction, task_index, pick, place, expert, reset):
+    """Rebind the shared validator to one episode's instruction and cube pair, then restore it.
+
+    `fixed_layout.validate` is single-task and red-on-green throughout: `read_rows` expects task
+    index 0, the raw-frame check compares against module-level `TASK`, `_observation` binds the
+    cubes by colour name, `contact_gates` guards the pair, and `stack_metrics` is called with
+    literals. All five are module globals resolved at call time, so they are swapped here rather
+    than edited (the module is inside sealed provenance, FAILURES #28).
+    """
+    names = ('read_rows', 'TASK', '_observation', 'contact_gates', 'stack_metrics')
+    saved = {name: getattr(generic, name) for name in names}
+    lift_reference_z = reset['body_xpos'][expert.model.body(f'target_cube_{pick}').id, 2]
     generic.read_rows = lambda path, index: read_rows_for_task(path, index, task_index)
     generic.TASK = instruction
+    generic._observation = lambda model, data: observation_for_pair(model, data, pick, place)
+    generic.contact_gates = lambda actions, post, _z, _pick, _place: gates_for_pair(actions, post, lift_reference_z)
+    generic.stack_metrics = lambda model, data, _pick, _place: saved['stack_metrics'](model, data, pick, place)
     try:
         yield
     finally:
-        generic.read_rows, generic.TASK = original_rows, original_task
+        for name, value in saved.items():
+            setattr(generic, name, value)
 
 
 def lerobot_task_index(root, instruction):
@@ -260,18 +324,22 @@ def validate_episode(root, episode, expert, reset, check):
         raise ValueError('Unplanned demonstration slot; evaluation execution forbidden')
     i = episode['episode_index']; info, entries = metadata(root, i+1)
     instruction = episode['instruction']
-    with task_aware(instruction, lerobot_task_index(root, instruction)):
+    pick, place = episode['pick'], episode['place']
+    path = Path(root) / 'attempts' / f'{i:06d}'
+    with task_aware(instruction, lerobot_task_index(root, instruction), pick, place, expert, reset):
         actions, states, trace, gates, media = generic._episode_inputs(root, episode, expert, reset, check, info, entries)
-    path = Path(root) / 'attempts' / f'{i:06d}'; (path / 'replays').mkdir(exist_ok=False)
-    results = [generic.replay_controls(path / 'replays', expert, reset, trace, actions, mode, check)
-               for mode in generic.MODES]
-    detail = diagnostics(expert, trace, generic._npz(path / 'terminal.npz'), actions, reset, check)
+        (path / 'replays').mkdir(exist_ok=False)
+        results = [generic.replay_controls(path / 'replays', expert, reset, trace, actions, mode, check)
+                   for mode in generic.MODES]
+        detail = diagnostics(expert, trace, generic._npz(path / 'terminal.npz'), actions, reset, check, pick, place)
     report = episode_report(i, gates, media, results, detail); write_json(path / 'validation.json', report)
     sequences = []
     for ep in entries:
         row = generic._child(Path(root)/'dataset',
                              info['data_path'].format(chunk_index=ep['data/chunk_index'], file_index=ep['data/file_index']))
-        a, s, _ = generic.read_rows(row, ep['episode_index']); sequences.append((a, s))
+        # Each earlier episode carries its own instruction, so its rows have their own task index.
+        a, s, _ = read_rows_for_task(row, ep['episode_index'], lerobot_task_index(root, ep['tasks'][0]))
+        sequences.append((a, s))
     dup = generic.duplicate_report(sequences); write_json(path / 'duplicates.json', dup); generic.require_no_duplicates(dup)
     check()
     return report
@@ -350,26 +418,29 @@ def validate_dataset(root, expert, base_source, bank, check):
         require_approved_draw(slot, executed)
         reset = derive_scene(expert.model, base_source, layouts_by_id[executed['layout_id']],
                              dict(home_pose_jitter_deg=executed['home_pose_jitter_deg']))
-        actions, states, trace, gates, media = generic._episode_inputs(root, executed, expert, reset, check, info, entries)
+        pick, place = executed['pick'], executed['place']
         path = root / 'attempts' / f'{i:06d}'
-        wanted_files = {'slot.json', 'outcome.json', 'terminal.npz', 'ticks', 'media', 'replays',
-                        'validation.json', 'duplicates.json', 'resources.json'}
-        if {x.name for x in path.iterdir()} != wanted_files:
-            raise ValueError('Missing/extra/failed attempt evidence')
-        if {x.name for x in (path / 'media').iterdir()} != {f'{k}.json' for k in generic.CAMERAS}:
-            raise ValueError('Missing/extra camera media bindings')
-        if sorted(x.name for x in (path / 'replays').iterdir()) != sorted(generic.MODES):
-            raise ValueError('Replay mode inventory differs')
-        replays = []
-        for mode in generic.MODES:
-            directory = path / 'replays' / mode
-            if {x.name for x in directory.iterdir()} != {'result.json'} | {f'{j:06d}.npz' for j in range(p.EXPECTED_FRAMES)}:
-                raise ValueError('Missing/extra replay evidence')
-            result = generic.audit_replay(directory, expert, reset, trace, actions, mode, check)
-            if generic._json(directory / 'result.json') != result:
-                raise ValueError('Replay report changed')
-            replays.append(result); results.append(dict(episode=i, **result))
-        detail = diagnostics(expert, trace, generic._npz(path / 'terminal.npz'), actions, reset, check)
+        with task_aware(executed['instruction'], lerobot_task_index(root, executed['instruction']),
+                        pick, place, expert, reset):
+            actions, states, trace, gates, media = generic._episode_inputs(root, executed, expert, reset, check, info, entries)
+            wanted_files = {'slot.json', 'outcome.json', 'terminal.npz', 'ticks', 'media', 'replays',
+                            'validation.json', 'duplicates.json', 'resources.json'}
+            if {x.name for x in path.iterdir()} != wanted_files:
+                raise ValueError('Missing/extra/failed attempt evidence')
+            if {x.name for x in (path / 'media').iterdir()} != {f'{k}.json' for k in generic.CAMERAS}:
+                raise ValueError('Missing/extra camera media bindings')
+            if sorted(x.name for x in (path / 'replays').iterdir()) != sorted(generic.MODES):
+                raise ValueError('Replay mode inventory differs')
+            replays = []
+            for mode in generic.MODES:
+                directory = path / 'replays' / mode
+                if {x.name for x in directory.iterdir()} != {'result.json'} | {f'{j:06d}.npz' for j in range(p.EXPECTED_FRAMES)}:
+                    raise ValueError('Missing/extra replay evidence')
+                result = generic.audit_replay(directory, expert, reset, trace, actions, mode, check)
+                if generic._json(directory / 'result.json') != result:
+                    raise ValueError('Replay report changed')
+                replays.append(result); results.append(dict(episode=i, **result))
+            detail = diagnostics(expert, trace, generic._npz(path / 'terminal.npz'), actions, reset, check, pick, place)
         report = episode_report(i, gates, media, replays, detail)
         if generic._json(path / 'validation.json') != report:
             raise ValueError('Episode report changed')

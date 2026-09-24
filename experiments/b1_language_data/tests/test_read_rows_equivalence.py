@@ -97,10 +97,34 @@ class ReadRowsEquivalenceTests(unittest.TestCase):
             v.read_rows_for_task(path, 0, 0)
 
 
+class _FakeModel:
+    def body(self, name):
+        return type('Body', (), {'id': 0})()
+
+
+class _FakeExpert:
+    model = _FakeModel()
+
+
 class TaskAwareContextTests(unittest.TestCase):
+    RESET = {'body_xpos': np.zeros((1, 3))}
+
+    def setUp(self):
+        import tempfile
+        from pathlib import Path
+        self.tmp = tempfile.TemporaryDirectory()
+        self.path = Path(self.tmp.name)/'rows.parquet'
+        pq.write_table(_table(task_index=1), self.path)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _enter(self, instruction, task_index):
+        return v.task_aware(instruction, task_index, 'red', 'green', _FakeExpert(), self.RESET)
+
     def test_context_restores_the_shared_module(self):
         before_rows, before_task = generic.read_rows, generic.TASK
-        with v.task_aware('pick up the green cube and place it on top of the red cube', 1):
+        with self._enter('pick up the green cube and place it on top of the red cube', 1):
             self.assertIsNot(generic.read_rows, before_rows)
             self.assertNotEqual(generic.TASK, before_task)
         self.assertIs(generic.read_rows, before_rows)
@@ -109,10 +133,17 @@ class TaskAwareContextTests(unittest.TestCase):
     def test_context_restores_even_when_the_body_raises(self):
         before_rows, before_task = generic.read_rows, generic.TASK
         with self.assertRaises(RuntimeError):
-            with v.task_aware('anything', 0):
+            with self._enter('anything', 0):
                 raise RuntimeError('boom')
         self.assertIs(generic.read_rows, before_rows)
         self.assertEqual(generic.TASK, before_task)
+
+    def test_patched_read_rows_expects_the_contexts_task_index(self):
+        with self._enter('anything', 1):
+            generic.read_rows(self.path, 0)
+        with self._enter('anything', 0):
+            with self.assertRaises(ValueError):
+                generic.read_rows(self.path, 0)
 
 
 if __name__ == '__main__':
