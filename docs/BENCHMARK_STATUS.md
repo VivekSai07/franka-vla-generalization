@@ -34,6 +34,17 @@ should not be expected to fix it.
 Pending: the update-12,000 checkpoint, which is the genuinely LR-matched comparison against the
 short run's update-4,000 (2.74e-5 vs 2.05e-5) and will separate exposure from annealing.
 
+**Resolved same day — it is exposure, not annealing.** Checkpoint 12,000 scored **51/72 = 70.8%**.
+Against the short run's update-4,000 at a comparable learning rate (2.74e-5 vs 2.05e-5, 72% vs 80%
+annealed) but a third of the exposure, that is 70.8% vs 20.8%, **p = 2.2e-9**. Conversely, at
+matched *epochs* (0.40) a 4.4× difference in learning rate changes nothing (25.0% vs 20.8%,
+p = 0.69). Exposure drives capability; the anneal does not.
+
+The full curve is 25.0% → 0.0% → 70.8% → 86.1%. The mid-training collapse is **reproducible**: the
+short run also passed through 0/72 at update 3,000, 60% of its schedule. Two independent runs both
+hit exactly zero near mid-schedule and both recovered, so mid-training checkpoints cannot be used
+as a proxy for the endpoint in either direction.
+
 ## Broad-workspace trained and evaluated — 2026-09-22
 
 `broad_workspace_data` sealed at 200/200 episodes (105,600 frames, 160 train / 40 validation,

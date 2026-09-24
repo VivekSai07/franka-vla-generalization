@@ -53,8 +53,9 @@ changed the plan and are recorded in [docs/RESULTS.md](docs/RESULTS.md) and
 
 ### A3. Close out
 - [x] Update docs with the exposure finding and the curve
-- [ ] Evaluate checkpoint **12,000** — the LR-matched comparison against the short run's 4,000
-      (2.74e-5 vs 2.05e-5). This, not the 4,000 pair, separates exposure from annealing. *(running)*
+- [x] Evaluate checkpoint **12,000** — the LR-matched comparison against the short run's 4,000.
+      **Result: 51/72 = 70.8% vs 20.8%, p = 2.2e-9.** Exposure drives capability, not the anneal;
+      at matched epochs a 4.4× LR difference changes nothing (p = 0.69).
 - [ ] Decide whether the 65/72 gate is right for this protocol — argue it on its own terms,
       not by fitting it to whatever number we got. Note 62/72 misses by three trials and every
       miss is the same 4.5 cm offset, so the gate question is now entangled with A4.

@@ -78,25 +78,45 @@ Rerunning at matched exposure (16,700 updates = 1.67 epochs) resolved it: **68.1
 
 Same policy, same holdout, four checkpoints of the matched-exposure run:
 
-| update | lr | broad_holdout | grasped | lifted >5 cm | median final xy | train MAE | val MAE |
-|---|---|---|---|---|---|---|---|
-| 4,000 | 9.00e-5 | 18/72 = 25.0% | 72 | 56 | 5.53 cm | 0.03390 | 0.03475 |
-| 8,000 | 6.02e-5 | **0/72 = 0.0%** | 72 | **17** | **62.72 cm** | 0.02621 | 0.02637 |
-| 12,000 | 2.74e-5 | *(pending)* | | | | | |
-| 16,700 | 1.00e-5 | **62/72 = 86.1%** | 72 | 72 | 0.85 cm | 0.01022 | 0.01258 |
+| update | lr | epochs | broad_holdout | grasped | lifted >5 cm | median final xy | train MAE | val MAE |
+|---|---|---|---|---|---|---|---|---|
+| 4,000 | 9.00e-5 | 0.40 | 18/72 = 25.0% | 72 | 56 | 5.53 cm | 0.03390 | 0.03475 |
+| 8,000 | 6.02e-5 | 0.80 | **0/72 = 0.0%** | 72 | **17** | **62.72 cm** | 0.02621 | 0.02637 |
+| 12,000 | 2.74e-5 | 1.20 | 51/72 = 70.8% | 72 | 69 | 1.24 cm | 0.01406 | 0.01509 |
+| 16,700 | 1.00e-5 | 1.67 | **62/72 = 86.1%** | 72 | 72 | 0.85 cm | 0.01022 | 0.01258 |
 
-Success goes 25% → **0%** → 86%. At update 8,000 the policy still grasps on every trial but cannot
-lift or transport — the cube ends a median 63 cm from target. Meanwhile **offline action MAE improves
-monotonically throughout**, falling 23% across the very interval where success collapses to zero.
+Success goes 25% → **0%** → 71% → 86%. At update 8,000 the policy still grasps on every trial but
+cannot lift or transport — the cube ends a median 63 cm from target. Meanwhile **offline action MAE
+improves monotonically throughout**, falling 23% across the very interval where success collapses to
+zero.
+
+**The mid-training collapse is reproducible, not a fluke.** The short run also passed through
+**0/72** at update 3,000 (60% of its schedule) before reaching 68.1% at its endpoint. Two
+independent runs both collapse to exactly zero near mid-schedule and both recover. Mid-training
+checkpoints are therefore not a cheap proxy for the endpoint, in either direction.
 
 Consequence: **arm MAE, validation loss and gripper accuracy are not valid proxies for task success.**
 Never select a checkpoint, trigger early stopping, or claim progress from them. Only rollouts count.
 This also means the val/train ratio should not be read as an overfitting signal on its own.
 
-The curve cannot cleanly separate "needs exposure" from "needed the anneal": at update 4,000 the
-short run sat at lr 2.05e-5 (80% annealed) while the long run was at 9.00e-5 (24% annealed), so that
-pair compares different schedule phases and is statistically indistinguishable (15/72 vs 18/72,
-p = 0.69). The LR-matched comparison is short@4000 (2.05e-5) against **long@12000** (2.74e-5), pending.
+### Exposure, not annealing — resolved
+
+The two effects can be separated by comparing checkpoints at matched **schedule phase** rather than
+matched step count:
+
+| comparison | lr | epochs | broad_holdout | |
+|---|---|---|---|---|
+| short @ 4,000 | 2.05e-5 (80% annealed) | 0.40 | 15/72 = 20.8% | |
+| long @ 4,000 | 9.00e-5 (24% annealed) | 0.40 | 18/72 = 25.0% | **p = 0.69** |
+| short @ 4,000 | 2.05e-5 (80% annealed) | 0.40 | 15/72 = 20.8% | |
+| long @ 12,000 | 2.74e-5 (72% annealed) | 1.20 | 51/72 = 70.8% | **p = 2.2e-9** |
+
+At matched **epochs**, a 4.4× difference in learning rate changes nothing (p = 0.69). At matched
+**learning rate**, 3× the exposure is worth +50 points (p = 2.2e-9). Exposure is the driver; the
+anneal is not. The earlier caveat that the curve could not separate the two is now resolved.
+
+One qualification: capability is not a monotone function of epochs either — 0.80 epochs scores 0%
+while 0.40 scores 25%. The mid-schedule collapse sits on top of the exposure trend.
 
 ### Anatomy of the 10 remaining failures — a systematic 4.5 cm placement offset
 
