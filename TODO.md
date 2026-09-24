@@ -135,16 +135,20 @@ No expert changes needed — it is already colour-parameterised and generates th
 `pick`/`place`. Only `plan.py`'s hardcoded `pick='red', place='green'` changes.
 
 #### Budgets (measured rates: 1.97 min/episode, 0.83 s/update, 2.2 min/trial)
-- [ ] **Collect** 200 episodes, 50/cell, 200 distinct geometries, fresh (not mixed with the
-      existing all-C1 200). Plan must reserve the same 80 evaluation layouts. — **6.6 h**
+B1 is a **fully self-contained dataset** — own plan, own layout bank, own reserved holdout, own
+seal. It does not read, import, extend or re-seal `broad_workspace_data`.
+- [ ] **Collect** 200 episodes, 50/cell, 200 distinct geometries, balanced across C1–C4. Reserve
+      B1's own evaluation layouts from envelope F7. — **6.6 h**
 - [ ] **Admission + preflight** — ~1 h CPU + 5 min GPU
-- [ ] **Train** X-VLA from base, 16,700 updates = 1.67 epochs — **identical budget to the
-      matched-exposure run**, so C1 is directly comparable to 86.1% — **3.9 h**
-- [ ] **Evaluate** 16 geometries × 4 cells × 4 seeds = 256 trials, drawn from the 36
-      `broad_holdout` layouts so C1 is protocol-identical — **9.4 h**
+- [ ] **Train** X-VLA from base, 16,700 updates = 1.67 epochs — **3.9 h**
+- [ ] **Evaluate** 16 held-out geometries × 4 cells × 4 seeds = 256 trials — **9.4 h**
 - [ ] Report **geometry-clustered** intervals, not naive binomial (per-geometry p ranges
       12.5%–87.5%, so trials cluster hard within geometry)
 - Total ≈ **21 h**
+
+Comparing B1's C1 cell to the sealed 86.1% is a same-envelope, **different-layouts** comparison — a
+rough sanity check only, never a precise delta. Sharing the holdout was considered and rejected:
+it would drag cross-dataset binding into a package with no other reason to touch it.
 
 #### Controls
 - Data starvation: 80 episodes per instruction vs 160 for the single-instruction model. The C1-vs-C2

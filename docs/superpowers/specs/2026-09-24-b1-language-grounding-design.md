@@ -73,17 +73,39 @@ The only change is in the collection plan, which currently hardcodes
 
 ## Collection
 
+**B1 is a fully self-contained dataset.** Its own plan, its own layout bank, its own reserved
+evaluation layouts, its own seal. It does not read, import, extend or re-seal `broad_workspace_data`,
+and nothing in it is bound to that dataset.
+
 - **200 episodes, 50 per cell**, 160 train (40/cell) / 40 validation (10/cell).
 - **200 distinct layout geometries, one episode each**, with the cell assigned per geometry and
   balanced across the four. Training needs no within-geometry pairing, so spending geometries on
-  repetition would waste the spatial diversity that is already established.
+  repetition would waste spatial diversity.
 - **Fresh collection, not mixed with the existing 200.** Those are all cell C1; combining would
-  leave training 5:1 imbalanced toward the familiar arrangement, which is the exact shortcut the
-  design exists to remove.
-- **The plan must reserve the same 80 evaluation layouts** as `broad_workspace_data`, so the
-  holdout is shared and the C1 cell is directly comparable to the sealed 86.1% result.
+  leave training 5:1 imbalanced toward the familiar arrangement — the exact shortcut this design
+  exists to remove.
+- **B1 reserves its own evaluation layouts**, drawn from the same envelope F7 and never executed
+  during collection. The only disjointness requirement is B1-internal: training layouts must not
+  appear in B1's own holdout.
 - `task_index` must vary with the instruction, and the instruction string must be derived from
   `pick`/`place` rather than hardcoded.
+
+### Why not share the holdout with `broad_workspace_data`
+
+Reusing those 36 layouts would make C1 protocol-identical to the sealed 86.1% and give a *paired*
+comparison, which matters more than usual because T2a showed per-layout success ranges from 12.5%
+to 87.5% — layout identity is a large variance component.
+
+Rejected anyway. It would require B1's plan to import or replicate another dataset's layout bank,
+introducing cross-dataset binding into a package with no other reason to touch it; this repository
+has repeatedly been damaged by exactly that kind of reach (FAILURES #8, #17, and the shared contract
+bound by four packages). The benefit is a sanity check rather than the research question, and it is
+not a clean control regardless, since B1's model trains on different data with half the
+per-instruction budget and its spatial score is expected to differ.
+
+**Consequence, stated plainly:** comparing B1's C1 cell to 86.1% is a *same-envelope,
+different-layouts* comparison, not a paired one. It carries more variance and should be read as a
+rough sanity check — "spatial capability is in the same region" — never as a precise delta.
 
 ## Training
 
@@ -91,8 +113,9 @@ X-VLA only. SmolVLA is deferred: it is the weaker learner at every previous stag
 doubles the bill to answer a second question.
 
 160 training episodes × 499 complete starts = 79,840 starts. At the established 1.67 epochs and
-effective batch 8 this is **16,700 updates — identical to the matched-exposure run**, which makes
-B1's spatial performance directly comparable to 86.1% rather than confounded by a different budget.
+effective batch 8 this is **16,700 updates**. That happens to equal the matched-exposure run's
+budget, which is convenient for context but is not a dependency — it falls out of keeping the
+episode count at 200 and the epoch target at 1.67.
 
 Train from the **base bundle**, not from the broad-workspace checkpoint: that checkpoint has a baked-in
 position shortcut, and fine-tuning from it would confound "can this architecture ground language"
@@ -100,8 +123,12 @@ with "can it unlearn a shortcut".
 
 ## Evaluation
 
-**16 held-out geometries × 4 cells × 4 seeds = 256 trials**, drawn from the 36 layouts already used
-for `broad_holdout` so that C1 is protocol-identical to the sealed result.
+**16 held-out geometries × 4 cells × 4 seeds = 256 trials**, drawn from B1's own reserved evaluation
+layouts.
+
+Each geometry is evaluated in all four cells, so the instruction contrast is within-geometry:
+C1/C3 share a scene (familiar arrangement) and C2/C4 share a scene (swapped). "Same scene, different
+instruction" therefore holds within an arrangement, which is where the diagnostic lives.
 
 Seeds: T2a established that ≥8 seeds are needed for **per-layout** claims. B1's claims are
 **per-cell aggregates pooled over geometries**, so n per cell = 16 × 4 = 64 without needing 8 seeds
@@ -151,7 +178,8 @@ distribution shift, not grounding.
 
 - A determinate signature in the 4-cell table, with geometry-clustered intervals that separate at
   least the C1/C2 contrast.
-- C1 comparable to the sealed 86.1%, confirming spatial capability was not lost.
+- C1 broadly in line with the sealed 86.1%, as a rough sanity check that spatial capability was not
+  lost — same envelope, different layouts, so not a precise comparison.
 - A defensible answer to "does this architecture ground colour from language, or does it follow
   position" — including "it follows position", which is a result, not a failure.
 
