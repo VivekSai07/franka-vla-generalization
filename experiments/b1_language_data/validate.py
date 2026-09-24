@@ -25,9 +25,14 @@ def metadata(root, count, final=False):
         raise ValueError('Invalid admitted-demonstration count')
     ds = Path(root)/'dataset'
     info = generic._json(ds/'meta/info.json')
+    # `total_tasks` grows as instructions first appear, so it is bounded during collection and
+    # pinned exactly only at the end.
+    seen_tasks = info['total_tasks']
     if (info['total_episodes'] != count or info['total_frames'] != p.EXPECTED_FRAMES*count
-            or info['total_tasks'] != len(p.INSTRUCTIONS) or info['fps'] != 30):
+            or not 1 <= seen_tasks <= len(p.INSTRUCTIONS) or info['fps'] != 30):
         raise ValueError('Dataset counts/task/fps mismatch')
+    if final and seen_tasks != len(p.INSTRUCTIONS):
+        raise ValueError(f'Final dataset must contain {len(p.INSTRUCTIONS)} instructions, saw {seen_tasks}')
     expected = set(generic.FEATURES) | {'timestamp', 'frame_index', 'episode_index', 'index', 'task_index'}
     if set(info['features']) != expected:
         raise ValueError('Privileged/missing policy feature')
@@ -37,16 +42,18 @@ def metadata(root, count, final=False):
             if info['features'][key][field] != wanted:
                 raise ValueError('Dataset feature contract mismatch')
 
-    # LeRobot assigns task indices by first appearance; pin them to the planned sorted mapping so a
-    # rejected episode cannot silently permute them.
+    # LeRobot numbers tasks by first appearance, which need not match the plan's sorted mapping.
+    # The instruction *text* is what the policy consumes, so that is what is pinned: every task in
+    # the table must be an approved instruction, the numbering must be a bijection, and each
+    # episode must carry exactly the instruction its plan slot specifies.
     tasks = pd.read_parquet(ds/'meta/tasks.parquet')
     table = dict(zip(list(tasks.index), list(tasks['task_index'])))
-    if set(table) != set(p.INSTRUCTIONS):
-        raise ValueError(f'Dataset tasks {sorted(table)} != planned {sorted(p.INSTRUCTIONS)}')
-    for instruction, index in table.items():
-        if index != p.task_index_for(instruction):
-            raise ValueError(f'Task index drift for {instruction!r}: {index} '
-                             f'!= {p.task_index_for(instruction)}')
+    if not set(table) <= set(p.INSTRUCTIONS):
+        raise ValueError(f'Unapproved instruction in dataset: {sorted(set(table) - set(p.INSTRUCTIONS))}')
+    if len(set(table.values())) != len(table) or sorted(table.values()) != list(range(len(table))):
+        raise ValueError(f'Task indices are not a contiguous bijection: {table}')
+    if final and set(table) != set(p.INSTRUCTIONS):
+        raise ValueError(f'Final dataset tasks {sorted(table)} != planned {sorted(p.INSTRUCTIONS)}')
 
     episodes = []
     for path in sorted((ds/'meta/episodes').rglob('*.parquet')):
