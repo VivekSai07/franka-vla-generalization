@@ -43,32 +43,50 @@ exists to measure it.
 
 ## Tier 2 — measurement (do first)
 
-### T2a. Mode-probability measurement
-Re-run selected layouts at many sampling seeds to convert "sometimes fails" into a per-layout
-probability, and to measure the tangential offset distribution directly.
+### T2a. Mode-probability measurement — **COMPLETE 2026-09-24**
 
-- Roster: the **8 layouts with ≥1 failure** plus **8 fully-solved control layouts**, matched on
-  reach. The control is essential — without it we only measure the tail and cannot tell whether the
-  bad mode exists everywhere at low probability.
-- **8 sampling seeds per layout** → 128 trials, ~4 GPU-hours.
-- Record per trial: success, tangential and radial offset, stage timings.
-- Fixed checkpoint 16700; protocol otherwise identical to `xvla_broad_workspace_long_eval`.
+128 trials, rc=0, 223 min. Frozen seeds reproduced the original results bit-exactly.
 
-Decides:
-- Is p(bad mode) > 0 on layouts that currently score 2/2? → does best-of-N help globally or only locally
-- What N does best-of-N need? If p(bad) ≈ 0.3, N = 3 median-of-3 removes most of it
-- Is the offset always +3.73 cm tangential, or a continuum sampled coarsely
+| group | result |
+|---|---|
+| control (8 layouts) | **64/64 = 100%** |
+| failing (8 layouts) | 32/64 = 50% — three layouts at 1/8, four at 5–7/8, one at 4/8 |
 
-### T2b. Evaluation seed budget
-At the observed p = 0.861, the **same policy passes the 65/72 gate by luck 20% of the time**.
-Going 2 → 4 seeds per layout cuts the estimate's sd from 4.08 pp to 2.88 pp; 8 seeds gives 2.04 pp.
+**Answers to the questions this was built to decide:**
+- *Is p(bad mode) > 0 on layouts that currently score 2/2?* **No — zero in 64 control trials.** The
+  bad mode is absent from reliable layouts, not lurking at low probability.
+- *What N does best-of-N need?* **Best-of-N does not solve this.** Majority selection drives each
+  layout to its dominant mode: it fixes the four good-dominant layouts and pins the three
+  bad-dominant ones at ~0%. Net ≈ 62 → 65 of 72, for N× inference cost forever.
+- *Is the offset a continuum or discrete?* **Discrete in outcome** — successes +0.150 (sd 0.715),
+  failures +3.893 (sd 0.723), empty band between. But see the intent caveat below.
 
-The gate is currently decided partly by dice. Fold the seed increase into the protocol **before**
-B1, because retrofitting it afterwards invalidates cross-phase comparisons.
+**Unplanned findings:**
+- There is **no global bias** — successes sit at +0.15 cm once controls are included.
+- Failure is **layout-specific and itself bimodal**; no middle group.
+- **Two seeds per layout are worthless for per-layout attribution** (024 and 029 both read 1/2;
+  actual 87.5% and 12.5%). Aggregate capability from 2 seeds was fine.
+- **No geometric feature explains the three hard layouts** (dx, dy, distance, Δradius, Δbearing,
+  target radius; max separation 0.51 pooled sd).
+
+**Caveat:** the measurement is the cube's final resting position, not the aim point. A marginal
+placement tips and slides, so part of the empty band may be physics. Bimodality of *intent* is
+untested and needs predicted action chunks rather than rollout outcomes.
+
+### T2b. Evaluation seed budget — **now established, not proposed**
+At the observed p, the same policy passes the 65/72 gate by luck 20% of the time, and T2a showed
+2 seeds cannot distinguish 12.5% from 87.5% per layout. **≥8 seeds per layout is required for any
+per-layout claim.** Aggregate rates survive at 2 seeds; per-layout ones do not.
+
+Fold this into the protocol **before** B1 — retrofitting it invalidates cross-phase comparisons.
 
 ---
 
 ## Tier 1 — inference-time interventions (no retraining, no new data)
+
+**Downgraded by T2a.** Best-of-N is now projected to move the 72-trial protocol from 62 to ~65 —
+marginal, and it cannot help the three layouts where the wrong mode is dominant. Worth doing only
+if the gate matters more than the inference cost. Not a blocker for B1.
 
 Run after T2a says which are worth it. Each changes inference only, so each needs its own package
 and must be reported as a **separate protocol** — never compared directly to the sealed 86.1%

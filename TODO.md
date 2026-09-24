@@ -82,18 +82,20 @@ Ruled out by test, not assumption:
 - ⇒ **more data will not close this gap**; this is the primary input to B1 planning
 
 #### Tier 2 — measurement (first)
-- [ ] **T2a** mode-probability run: 8 failing + 8 solved-control layouts × 8 seeds = 128 trials
-      (~4 GPU-h) at checkpoint 16700. Record success, tangential/radial offset, stage timings.
-      Control group is required — without it we only measure the tail.
-- [ ] **T2b** raise evaluation seeds per layout. At p = 0.861 the *same* policy passes 65/72 by luck
-      **20%** of the time; 2→4 seeds cuts estimate sd from 4.08 pp to 2.88 pp. Decide before B1,
-      since retrofitting invalidates cross-phase comparisons.
+- [x] **T2a** mode-probability run: 128 trials complete (rc=0, 223 min). **Control 64/64 = 100%**,
+      failing group 32/64. Three layouts (008, 017, 029) draw the wrong mode 7 times in 8; the bad
+      mode is **absent** from control layouts. No global bias (successes +0.15 cm). No geometric
+      feature separates the hard layouts.
+- [x] **T2b** seed budget **established**: 2 seeds cannot distinguish 12.5% from 87.5% per layout
+      (024 and 029 both read 1/2). **≥8 seeds per layout is required for any per-layout claim.**
+      Aggregate rates survive at 2 seeds. Lock this into the B1 protocol before collecting.
 
-#### Tier 1 — inference-time (after T2a)
-- [ ] **T1a** `num_denoising_steps` 10 → 30; 16-trial probe first (~40 min)
-- [ ] **T1b** best-of-N via the `noise` argument; cluster-then-pick-largest, **not** mean — averaging
-      two modes can land in the empty 1.11 cm gap
-- [ ] **T1c** temporal ensembling over the ~3× existing chunk overlap; zero extra inference cost
+#### Tier 1 — inference-time (downgraded by T2a)
+- [ ] **T1b** best-of-N — projected 62 → ~65 of 72, and cannot help the three bad-dominant layouts.
+      Marginal; **not a blocker for B1**. Do only if the gate matters more than N× inference cost.
+- [ ] **T1a** `num_denoising_steps` 10 → 30; 16-trial probe (~40 min) — cheapest remaining probe
+- [ ] **T1c** temporal ensembling — **averaging is unsafe**: the mean of the two modes lands inside
+      the empty band and fails everywhere. Cluster-then-pick-largest only.
 - Each is a separate protocol in its own package; never compare to the sealed 86.1% unless the
   layout roster and seeds are identical
 

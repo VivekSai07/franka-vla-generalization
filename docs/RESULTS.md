@@ -162,6 +162,58 @@ sparsity and failure. The two sparsest holdout layouts are both 2/2 solved.
 design spec at
 [docs/superpowers/specs/2026-09-24-placement-offset-design.md](superpowers/specs/2026-09-24-placement-offset-design.md).
 
+### T2a mode-probability measurement (128 trials, complete)
+
+16 layouts × 8 sampling seeds at checkpoint 16,700 — 8 layouts that had produced ≥1 failure, plus
+8 reach-matched controls that had scored 2/2. The two frozen seeds reproduced the original results
+bit-exactly, validating the protocol.
+
+| group | result |
+|---|---|
+| **control** (8 layouts) | **64/64 = 100%** — every layout 8/8 |
+| failing (8 layouts) | 32/64 = 50% |
+
+| layout | p(good mode) | what 2 seeds had said |
+|---|---|---|
+| evaluation_024 | 7/8 | 1/2 |
+| evaluation_030 | 7/8 | 1/2 |
+| evaluation_019 | 6/8 | 1/2 |
+| evaluation_022 | 5/8 | 1/2 |
+| evaluation_010 | 4/8 | 1/2 |
+| evaluation_008 | **1/8** | 0/2 |
+| evaluation_017 | **1/8** | 0/2 |
+| evaluation_029 | **1/8** | 1/2 |
+
+Findings:
+
+- **The outcome distribution is bimodal.** Successes cluster at +0.150 cm (sd 0.715, n=96),
+  failures at +3.893 cm (sd 0.723, n=32), with an empty band between — and the cluster boundary is
+  exactly the success boundary.
+- **There is no global bias.** With controls included, successful placements sit at +0.15 cm. The
+  +0.579 cm seen in the failing group alone is layout-specific, not a systematic model offset.
+- **The bad mode is absent from control layouts entirely** — 0 occurrences in 64 trials.
+- **Failure is layout-specific and itself bimodal**: three layouts draw the wrong mode 7 times in 8;
+  the rest draw it rarely or never. There is no middle group.
+- **Two seeds per layout cannot distinguish 12.5% from 87.5%.** `evaluation_024` and
+  `evaluation_029` both looked like 1/2 and are actually 87.5% and 12.5%. Aggregate capability from
+  2 seeds was roughly right; **per-layout attribution from 2 seeds was worthless**.
+- **No geometric feature separates the three hard layouts.** Inter-cube dx, dy, distance, radius
+  difference, bearing difference and target radius all fail (max separation 0.51 pooled sd); control
+  `evaluation_031` has a smaller dx than any hard layout and scores 8/8.
+
+Projected true capability at 8 seeds × 36 layouts ≈ **88.9%** (assuming solved layouts behave like
+the controls), against 86.1% measured at 2 seeds. The 65/72 gate (90.3%) still fails.
+
+Consequence for the remedies: best-of-N with majority selection drives each layout to its *dominant*
+mode, which fixes the four good-dominant layouts and pins the three bad-dominant ones at ~0%. Net
+movement on the 72-trial protocol is roughly 62 → 65, i.e. marginal, in exchange for N× inference
+cost on every trial. For `evaluation_008`, `_017` and `_029` the model's *dominant belief* about
+where the cube goes is wrong — a model error, not sampling noise, and no resampling scheme fixes it.
+
+Caveat: the measured quantity is the cube's final resting position, not the policy's aim point. A
+marginal placement tips and slides, so part of the empty band may be physics rather than intent.
+Testing bimodality of *intent* requires the predicted action chunks, not rollout outcomes.
+
 One consequence for the gate: at the observed p = 0.861, the *same policy* passes 65/72 by sampling
 luck **20%** of the time. With 2 seeds per layout the gate is partly measuring dice.
 
