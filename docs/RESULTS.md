@@ -25,6 +25,12 @@ run was undertrained, as suspected. Retraining on the identical sealed data at 1
 > and never reads the instruction. **These numbers measure spatial capability only; the language
 > pathway is untested.** See [FAILURES.md](FAILURES.md) #27 and the B1 design at
 > [superpowers/specs/2026-09-24-b1-language-grounding-design.md](superpowers/specs/2026-09-24-b1-language-grounding-design.md).
+>
+> **Vertical capability is untested for the same reason.** Initial pick and place cube heights each
+> take exactly one value across all 200 episodes (spread 0.00e+00) and the stack height spreads
+> 1.5e-05 m, because the table is flat and the cubes identical. Approach altitude *is* varied
+> (±3 cm hover jitter, 200 distinct values), but the terminal target is not, so an absolute-Z policy
+> satisfies every episode. The spatial result is a **horizontal** result. See TODO B1b.
 
 `broad_workspace_data_v1` is **collected and sealed**: 200 episodes, 105,600 frames, 160 train / 40 validation,
 seal `0351d3da36294e2124554267bc17738badee26498b1cb82fa7a58d4f4a601a85`. Both policies were retrained on it

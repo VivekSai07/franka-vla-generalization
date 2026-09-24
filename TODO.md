@@ -157,6 +157,24 @@ it would drag cross-dataset binding into a package with no other reason to touch
 - Do **not** evaluate existing checkpoints on the swapped cells as a grounding test — they have
   never seen a red cube at +y, so that measures distribution shift, not grounding.
 
+### B1b. Vertical variation (new axis — currently a constant, therefore untestable)
+
+Measured across the sealed 200 episodes: initial pick cube Z and place cube Z each take **exactly
+one value** (spread 0.00e+00), and the final stack height spreads 1.5e-05 m. Approach altitude *is*
+varied (±3 cm hover jitter, 200 distinct values) and home pose is varied (±1°, 1400 values), but the
+terminal heights are constant — a flat table with identical rigid cubes fixes them.
+
+Consequence: the policy can satisfy every episode with an **absolute-Z target** and has never needed
+to perceive height. The hover jitter does not rescue this — it varies the descent *distance*, not the
+target. Same class of problem as the colour confound (#27): a variable held constant makes the
+capability untestable and the success metric cannot see it.
+
+Deliberately **not** folded into B1 — that would be two new axes at once and a failure would not be
+attributable. Options when it gets its own phase, each with different expert implications:
+- [ ] cube-size variation — changes grasp aperture the controller assumes, and the stack height
+- [ ] table-height variation — uniform shift of both cubes; touches the scene
+- [ ] variable-height place target (platform/riser) — changes place Z but not pick Z
+
 ### B2. Distractors (second axis)
 - [ ] Add 1–2 non-target cubes, target pair unchanged
 - [ ] Measures distractor rejection independently of language
