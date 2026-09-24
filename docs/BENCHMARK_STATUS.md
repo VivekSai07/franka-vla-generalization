@@ -1,5 +1,102 @@
 # Franka benchmark: start here
 
+## Matched exposure: 68.1% → 86.1%, and the failure mode identified — 2026-09-24
+
+Retrained X-VLA on the identical sealed `broad_workspace` data at **1.67 epochs** (16,700 updates)
+instead of 0.50 (5,000), with everything else held constant. On the same 36-layout × 2-seed
+holdout: **62/72 = 86.1%** [76.3, 92.3], versus 49/72 = 68.1% [56.6, 77.7]. Fisher exact
+**p = 0.0165**. `fixed_parity` unchanged at 20/20. The 65/72 gate still fails, by three trials, and
+was again not lowered.
+
+So the earlier 68.1% was undertraining, not a ceiling. Across the whole programme updates were
+pinned at 5,000 while datasets grew, making exposure fall as data rose — 8.91 epochs at 9 episodes
+down to 0.50 at 160. Data volume and exposure had been perfectly anti-correlated, and no run had
+ever isolated either.
+
+**The checkpoint curve is non-monotonic and offline metrics are actively misleading.** Success went
+25.0% (4,000) → **0.0%** (8,000) → 86.1% (16,700) while train/val arm MAE improved *monotonically*
+throughout (0.03390 → 0.02621 → 0.01022). At 8,000 the policy still grasped 72/72 but lifted only
+17/72, leaving the cube a median 63 cm from target. Loss, MAE and gripper accuracy all showed
+steady improvement through a total capability collapse. Rollouts are the only valid measure.
+
+**All 10 remaining failures are one failure.** The cube is grasped, lifted ~29 cm, carried up to
+0.80 m across the workspace, and then set down roughly one cube width from the target — beside it
+rather than on it. Decomposed about the robot base the offset is **tangential** (a ~5° bearing
+error), not a reach error. The "unreachable far layouts" explanation is refuted and inverted:
+failing layouts average 0.424 m reach, fully-solved ones 0.472 m.
+
+Authoritative magnitudes come from the 128-trial T2a measurement, not from these 10 trials:
+successes +0.150 cm (sd 0.715, n=96), failures +3.893 cm (sd 0.723, n=32). The originally reported
+"4.51 cm ± 0.20 cm" mixed a between-layout spread with a within-layout one, and the claim that
+failures land toward the robot base did not survive the larger sample.
+
+**The expert is not the cause.** All 200 sealed demonstrations were checked: mean final placement
+error 0.679 cm, max 1.981 cm, zero episodes above 2 cm, mean signed offset 0.1 mm, correct stack
+height in 200/200. The offset is introduced by the policy, so collecting more of the same data
+should not be expected to fix it.
+
+Pending: the update-12,000 checkpoint, which is the genuinely LR-matched comparison against the
+short run's update-4,000 (2.74e-5 vs 2.05e-5) and will separate exposure from annealing.
+
+**Resolved same day — it is exposure, not annealing.** Checkpoint 12,000 scored **51/72 = 70.8%**.
+Against the short run's update-4,000 at a comparable learning rate (2.74e-5 vs 2.05e-5, 72% vs 80%
+annealed) but a third of the exposure, that is 70.8% vs 20.8%, **p = 2.2e-9**. Conversely, at
+matched *epochs* (0.40) a 4.4× difference in learning rate changes nothing (25.0% vs 20.8%,
+p = 0.69). Exposure drives capability; the anneal does not.
+
+The full curve is 25.0% → 0.0% → 70.8% → 86.1%. The mid-training collapse is **reproducible**: the
+short run also passed through 0/72 at update 3,000, 60% of its schedule. Two independent runs both
+hit exactly zero near mid-schedule and both recovered, so mid-training checkpoints cannot be used
+as a proxy for the endpoint in either direction.
+
+## Broad-workspace trained and evaluated — 2026-09-22
+
+`broad_workspace_data` sealed at 200/200 episodes (105,600 frames, 160 train / 40 validation,
+400 replays audited, 0 duplicates, seal `0351d3da…`). Both policies retrained on it at identical
+hyperparameters and evaluated on the 36 reserved F7 holdout layouts (×2 frozen policy seeds).
+
+X-VLA **49/72 = 68.1%** broad_holdout, 20/20 fixed_parity. SmolVLA **23/72 = 31.9%** broad_holdout.
+Both fail the 65/72 gate; the gate was set for the easier local-varied protocol and was NOT lowered
+to match. All failures are timeouts. X-VLA leads by 36.2 pp — a much wider margin than the 9.7 pp
+seen on the narrow local-varied protocol.
+
+The 8 layouts X-VLA fails on both seeds were screened with the scripted expert and all 8 are
+solvable, so the holdout is sound and 68.1% is a genuine policy limit. Likely cause is coverage
+density, not volume: 160 episodes spread across a wide 4-D envelope is sparser than 48 episodes
+inside a ±1 cm neighbourhood. fixed_parity staying at 100% supports this — the policy is perfect on
+geometry it knows and degrades as layouts leave training density.
+
+**Not yet answerable:** whether the 200-episode collection improved generalisation at all. A
+cross-evaluation of the local-varied X-VLA on the identical holdout is built (`experiments/
+xvla_localvaried_broad_eval`) and queued. Note it conflates breadth with episode count (48 vs 160),
+so it gives the direction and rough magnitude, not a controlled ablation.
+
+**Cross-evaluation answered (2026-09-22).** The local-varied checkpoints were run on the identical
+72-trial holdout: X-VLA **2/72 = 2.8%** [0.8, 9.6], SmolVLA **2/72 = 2.8%** [0.8, 9.6]. Against
+68.1% [56.6, 77.7] and 31.9% [22.3, 43.4] for the broad-trained models, the intervals do not
+overlap — the 200-episode collection is what creates wide-workspace capability (+65.3 pp X-VLA,
++29.2 pp SmolVLA). Both local-varied models solved exactly one layout, `evaluation_031`, on both
+seeds; it is the closest of all 80 holdout layouts to their training base (0.0297 vs 0.2209 max),
+so the 2.8% is the one holdout that falls inside their ±1 cm training neighbourhood rather than
+noise. Caveats: breadth is confounded with volume (48 vs 160 episodes), and the SmolVLA cross-eval
+uses a data-level binding because its metadata binding predates the re-seal.
+
+**68.1% is probably not a ceiling.** X-VLA saw 0.50 epochs on the broad dataset versus 1.67 on
+local-varied — updates stayed at 5000 while the data tripled. Next step is measuring the checkpoint
+curve before training longer; see TODO Phase A.
+
+## Local-varied Hugging Face publication blocked — 2026-09-21
+
+User requested dataset publication. Authenticated `VivekSai07` with a write
+token; proposed private dataset `franka-panda-cube-stacking-local-varied-60`
+does not exist. No remote mutations/upload. Storage-origin probe still fails
+HTTP 407 through the configured proxy. Current full-file seal verifies, but
+strict provenance fails on two shared collector files changed September 20;
+matching historical versions are recoverable from Git. Current seal also
+differs from the September 19 completion report and requires reconciliation.
+See [publication blockers and recovery](LOCAL_VARIED_DATASET_PUBLICATION_20260921.md).
+Dataset/source/secrets preserved; no new experiment or validation replay.
+
 ## Local varied dataset complete — 2026-09-19
 
 60/60expert demonstrations admitted,120/120saved-control replaysPASS; collector
