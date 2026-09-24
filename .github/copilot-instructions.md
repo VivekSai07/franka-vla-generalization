@@ -32,6 +32,9 @@ violating them destroyed hours of compute. See [docs/FAILURES.md](../docs/FAILUR
   stop early, or claim progress from them.
 - Report the number you measured, not the number you expected. Negative results are results, and
   a refuted hypothesis is worth recording with the evidence that killed it.
+- **Check how many independent units a statistic was computed over before calling it tight.** A
+  spread pooled across groups describes the groups, not the units inside them — a "2 mm consistent"
+  offset turned out to be a between-layout number masquerading as within-layout precision.
 - State caveats next to figures, not only in commit messages: confounds, weakened bindings,
   protocols that are not comparable.
 
@@ -64,9 +67,25 @@ Each item cost real GPU time at least once. Highlights:
 
 ## Documentation
 
+**Every finding triggers a documentation pass.** Whenever you produce a result, learn something,
+refute a hypothesis, or make a mistake, immediately ask which documents now contain stale claims —
+and fix them in the same turn, not later. Findings and docs ship together.
+
+The pass, every time:
+1. Grep the live docs for the **specific numbers and claims** your finding changes
+   (`grep -rn "<old figure>" README.md docs/*.md TODO.md .github/`).
+2. Update every hit. A number corrected in one document and left standing in three others is worse
+   than not correcting it, because the stale copies still read as current.
+3. When a claim is **superseded rather than simply wrong**, say so explicitly and keep the history:
+   state what was believed, what replaced it, and why the first reading was mistaken.
+4. Add the mistake to [FAILURES.md](../docs/FAILURES.md) if it could recur — including your own
+   analysis errors, not just pipeline failures.
+5. Re-check links after moving or renaming anything.
+
+Also:
 - Update docs at each phase boundary, not in a batch at the end.
 - Live documents are `ALL_CAPS.md`; dated reports are immutable records — never rewrite them to
-  reflect later findings.
+  reflect later findings. Correct the live documents instead.
 - Conventions and file map: [docs/INDEX.md](../docs/INDEX.md).
 
 ## Operations

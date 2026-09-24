@@ -20,11 +20,15 @@ throughout (0.03390 → 0.02621 → 0.01022). At 8,000 the policy still grasped 
 steady improvement through a total capability collapse. Rollouts are the only valid measure.
 
 **All 10 remaining failures are one failure.** The cube is grasped, lifted ~29 cm, carried up to
-0.80 m across the workspace, and then set down **4.51 cm ± 0.20 cm** from the target — one cube
-width, beside it rather than on it, in 9 of 10 cases toward the robot base. Successes average
-0.80 cm error. The distribution is bimodal with nothing in between, so this is a discrete targeting
-mode, not degraded precision. The "unreachable far layouts" explanation is refuted and inverted:
+0.80 m across the workspace, and then set down roughly one cube width from the target — beside it
+rather than on it. Decomposed about the robot base the offset is **tangential** (a ~5° bearing
+error), not a reach error. The "unreachable far layouts" explanation is refuted and inverted:
 failing layouts average 0.424 m reach, fully-solved ones 0.472 m.
+
+Authoritative magnitudes come from the 128-trial T2a measurement, not from these 10 trials:
+successes +0.150 cm (sd 0.715, n=96), failures +3.893 cm (sd 0.723, n=32). The originally reported
+"4.51 cm ± 0.20 cm" mixed a between-layout spread with a within-layout one, and the claim that
+failures land toward the robot base did not survive the larger sample.
 
 **The expert is not the cause.** All 200 sealed demonstrations were checked: mean final placement
 error 0.679 cm, max 1.981 cm, zero episodes above 2 cm, mean signed offset 0.1 mm, correct stack

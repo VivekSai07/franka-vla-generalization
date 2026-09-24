@@ -126,33 +126,36 @@ workspace, releases — and never forms a stable stack.
 
 | | successes (n=62) | failures (n=10) |
 |---|---|---|
-| final xy error | mean 0.80 cm, max 1.96 cm | mean **4.51 cm**, sd **0.20 cm** |
+| final xy error | mean 0.80 cm | mean 4.51 cm |
 
-That standard deviation is 2 mm across ten independent trials, and 4.5 cm is one cube width. The cube
-is set down *beside* the target, touching it, instead of on top. In 9 of 10 it lands at lower x —
-toward the robot base, i.e. stopping one cube-width short. The distribution is bimodal: under 2 cm,
-or exactly 4.5 cm, with nothing between.
+The cube is set down *beside* the target, touching it, instead of on top — roughly one cube width.
+
+> **Superseded in part.** The spread of those 10 failures was originally reported as sd 0.20 cm
+> ("2 mm across ten trials"). That was a **between-layout** statistic — the 10 failures came from 8
+> different layouts, one or two trials each — presented as if it described within-layout sampling
+> variability. The 128-trial T2a measurement below gives the correct figure: failures sit at
+> +3.893 cm with sd **0.723**. The directional claim that failures land "toward the robot base" was
+> also wrong; the offset is tangential, and there is no global radial bias.
 
 The obvious explanation — unreachable far layouts — is **refuted and inverted**: failing layouts
 average 0.424 m reach, fully-solved ones 0.472 m. The far layouts are solved. This is not kinematics.
 
 Decomposed about the robot base, the systematic component is **tangential** — a bearing error, not a
-reach error:
+reach error. Authoritative values are from T2a (128 trials, 16 layouts × 8 seeds):
 
-| | n | tangential | radial |
-|---|---|---|---|
-| successes | 62 | +0.06 cm (sd 0.68) | −0.17 cm (sd 0.57) |
-| failures | 10 | **+3.73 cm (sd 0.41)** | −1.81 cm (sd 1.73) |
+| | n | tangential |
+|---|---|---|
+| successes | 96 | +0.150 cm (sd 0.715) |
+| failures | 32 | **+3.893 cm (sd 0.723)** |
 
-+3.73 cm at ~0.4 m radius is a ~5° azimuth error, consistently counter-clockwise. The radial
-component is noise. The two populations are separated by a **1.11 cm gap containing zero trials**,
-so this is a discrete mode, not a precision gradient.
++3.9 cm at ~0.4 m radius is a ~5° azimuth error. The two populations are separated by an empty band,
+so this is a discrete mode in **outcome** rather than a precision gradient — though see the
+intent caveat in the T2a section below.
 
-**Cause: action-sampling multimodality.** 6 of the 8 failing layouts are *split decisions* — same
-scene, same weights, different sampling seed, opposite outcome — and failures divide 6/4 across the
-two seeds, so there is no bad seed. `modeling_xvla.py:252` draws a fresh `torch.randn` per chunk and
-integrates over `num_denoising_steps = 10`; the action distribution at placement has two modes and
-the rollout draws one of them.
+**Cause: action-sampling multimodality, layout-specific.** `modeling_xvla.py:252` draws a fresh
+`torch.randn` per chunk and integrates over `num_denoising_steps = 10`; the action distribution at
+placement has two modes and the rollout draws one. T2a showed which mode dominates is a property of
+the *layout*: three layouts draw the wrong one 7 times in 8, control layouts never draw it at all.
 
 Coverage density was tested as an alternative and **refuted**: 4-D nearest-neighbour distance to the
 training layouts is identical for both groups (0.0348 m), with rank correlation τ = 0.000 between

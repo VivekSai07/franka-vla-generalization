@@ -48,7 +48,7 @@ changed the plan and are recorded in [docs/RESULTS.md](docs/RESULTS.md) and
 [docs/FAILURES.md](docs/FAILURES.md) #21–#23:
 - the checkpoint curve is **non-monotonic** (25.0% → 0.0% → 86.1%) while offline MAE improves
   monotonically — offline metrics are invalid as capability proxies
-- all 10 remaining failures are a single systematic **4.51 cm ± 0.20 cm** placement offset, and the
+- all 10 remaining failures are a single placement offset of roughly one cube width, and the
   expert demonstrations are clean (max 1.98 cm, 0 episodes > 2 cm), so it is policy-side
 
 ### A3. Close out
@@ -66,9 +66,9 @@ changed the plan and are recorded in [docs/RESULTS.md](docs/RESULTS.md) and
 Approved ordering: **Tier 2 → Tier 1 → B1 collection design.**
 
 All 10 failures at 86.1% land the cube one cube-width beside the target. Decomposed about the robot
-base, the systematic component is **tangential +3.73 cm (sd 0.41)** — a ~5° bearing error — while
-the radial component is noise. Successes sit at +0.06 cm (sd 0.68). The two populations are
-separated by a 1.11 cm gap containing **zero** trials.
+base, the systematic component is **tangential** (a ~5° bearing error) rather than a reach error.
+Authoritative magnitudes from the 128-trial T2a run: successes +0.150 cm (sd 0.715, n=96), failures
++3.893 cm (sd 0.723, n=32). Failure is layout-specific, not a global bias.
 
 **Cause: action-sampling multimodality.** 6 of 8 failing layouts are split decisions — same scene,
 same weights, different sampling seed, opposite outcome. `modeling_xvla.py:252` draws fresh
@@ -179,6 +179,18 @@ cost real GPU time at least once.
       annealed in one run and 24% in the other, making the comparison worthless (#22).
 - [ ] **Plan for rollout evaluation, not proxies.** Loss and MAE improved monotonically through a
       run that collapsed to 0/72; budget the GPU hours for real rollouts (#21).
+
+## After every finding — documentation pass
+
+Results, learnings and mistakes all trigger this, in the same turn they are produced:
+
+- [ ] Grep the live docs for the specific figures and claims the finding changes
+- [ ] Update **every** hit — README.md, docs/RESULTS.md, docs/FAILURES.md, docs/BENCHMARK_STATUS.md,
+      TODO.md, the relevant spec
+- [ ] Where a claim is superseded rather than wrong, keep the history: what was believed, what
+      replaced it, why the first reading was mistaken
+- [ ] Add recurrable mistakes to docs/FAILURES.md — including analysis errors, not just pipeline ones
+- [ ] Re-check relative links
 
 ---
 ---

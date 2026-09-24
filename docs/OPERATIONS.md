@@ -65,6 +65,34 @@ be the top-level dir with the repo on `PYTHONPATH`:
 
 Using `-t .` fails with `Start directory is not importable`.
 
+**Three `outputs/implementation/` directories must be mounted `:rw`** or several packages report
+false failures with `OSError: Read-only file system`:
+
+```
+-v "$PWD/outputs/implementation/broad_workspace_data_20260920:/vla/outputs/implementation/broad_workspace_data_20260920:rw"
+-v "$PWD/outputs/implementation/local_position_probe_20260919:/vla/outputs/implementation/local_position_probe_20260919:rw"
+-v "$PWD/outputs/implementation/local_varied_data_20260919:/vla/outputs/implementation/local_varied_data_20260919:rw"
+```
+
+Without them, `broad_workspace_data`, `local_varied_data` and `local_position_probe` each report
+errors that are pure harness artefacts. Verified: all three go green once mounted.
+
+### Known pre-existing failures (not merge blockers)
+
+Five packages fail on `main` as well as on every feature branch, all downstream of the deleted
+pilot manifest ([FAILURES.md](FAILURES.md) #2) and the later removal of preflight outputs:
+
+| package | typical errors | cause |
+|---|---|---|
+| `fixed_layout` | 13 | `datasets/franka_pilot_20260915/meta/info.json` missing |
+| `single_task` | 5 | same |
+| `xvla_single_task` | 4 | same, plus deleted `*_preflight/` checkpoints |
+| `smolvla_fixed_layout` | 1 | `Fixed provenance/semantic proof changed` |
+| `smolvla_local_varied` | 1 | same provenance family |
+
+Before treating any of these as a regression, run the same package in a worktree at `main` and
+compare counts — a branch that *reduces* them has not broken anything.
+
 ---
 
 ## The three training gates

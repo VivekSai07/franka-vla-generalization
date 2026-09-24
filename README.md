@@ -24,9 +24,11 @@ holdout layout nearest their training distribution. And the earlier 68.1% was **
 ceiling**: the same data at 1.67 epochs instead of 0.50 reaches 86.1% (Fisher p = 0.0165).
 
 It still fails the 65/72 gate, by three trials. All ten remaining failures are the same failure —
-the cube is carried across the workspace correctly, then set down **4.51 cm ± 0.20 cm** beside the
-target instead of on top of it. The expert demonstrations contain no such offset (max 1.98 cm, zero
-episodes above 2 cm), so this is policy-side, not a data defect.
+the cube is carried across the workspace correctly, then set down roughly one cube width
+(**+3.9 cm tangentially**, a ~5° bearing error) beside the target instead of on top of it. The
+expert demonstrations contain no such offset (max 1.98 cm, zero episodes above 2 cm), and the
+failure is **layout-specific**: a 128-trial measurement found control layouts at 64/64 while three
+layouts draw the wrong mode 7 times in 8. It is a policy-side sampling property, not a data defect.
 
 Full numbers, protocols and confidence intervals: **[docs/RESULTS.md](docs/RESULTS.md)**.
 
