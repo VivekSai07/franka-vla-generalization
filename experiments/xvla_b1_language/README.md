@@ -46,8 +46,10 @@ comparison, not an exact replication.
 
 ## Checkpoints
 
-`[1, 8000, 16700, 25000, 33400]` — disk-bound at ~3.4 GB each plus ~9.9 GB for the final one
-(which carries optimizer state), against roughly 36 GB free once collection lands.
+`[1, 8000, 16700, 25000, 33400]` — disk-bound. Measured from the 86.1% run: 3.3 GB per regular
+checkpoint and 9.9 GB for the final one (which carries optimizer state), so this schedule costs
+4x3.3 + 9.9 = 23.1 GB. `require_resources` gates training at 30 GiB free, down from the fork
+source's 60 GiB, which was sized for its 9-checkpoint / 37 GB schedule.
 
 - `16700` — matched exposure; comparability with 86.1% and a safety net.
 - `25000`, `33400` — the longer candidates.

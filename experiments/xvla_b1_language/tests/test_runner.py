@@ -49,8 +49,8 @@ class RunnerTests(unittest.TestCase):
         # Preflight: 15 GiB disk, 28 GiB GPU
         for disk, gpu, preflight, passes in ((14, 40, True, False), (15, 40, True, True),
                                              (15, 27, True, False),
-                                             (59, 40, False, False), (60, 40, False, True),
-                                             (60, 27, False, False)):
+                                             (29, 40, False, False), (30, 40, False, True),
+                                             (30, 27, False, False)):
             with patch.object(self.r.shutil, 'disk_usage',
                               return_value=SimpleNamespace(free=disk*1024**3)), \
                     patch.object(torch.cuda, 'mem_get_info',
@@ -60,6 +60,17 @@ class RunnerTests(unittest.TestCase):
                 else:
                     with self.assertRaises(RuntimeError):
                         self.r.require_resources(Path('/tmp'), preflight)
+
+    def test_training_disk_guard_covers_the_checkpoint_schedule(self):
+        """Measured on the 86.1% run: 3.3 GB per checkpoint, 9.9 GB for the final one."""
+        from types import SimpleNamespace
+        updates = self.r.c.checkpoint_updates(False)
+        needed = 3.3*(len(updates)-1) + 9.9
+        with patch.object(self.r.shutil, 'disk_usage',
+                          return_value=SimpleNamespace(free=int(needed*1024**3))), \
+                patch.object(torch.cuda, 'mem_get_info', return_value=(40*1024**3, 48*1024**3)):
+            with self.assertRaises(RuntimeError):  # the guard must sit above the bare requirement
+                self.r.require_resources(Path('/tmp'), False)
 
     def test_processor_check_uses_real_processor_no_model_construction(self):
         stats = {'action': {'mean': torch.arange(8).float(), 'std': torch.ones(8)}}

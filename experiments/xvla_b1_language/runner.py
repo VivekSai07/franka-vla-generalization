@@ -32,7 +32,9 @@ def require_disk(output, gib):
 
 
 def require_resources(output, preflight):
-    require_disk(output, 15 if preflight else 60)
+    # 60 GiB was sized for the fork source's 9-checkpoint schedule (measured: 8x3.3 + 9.9 = 37 GB).
+    # This package writes 5 (4x3.3 + 9.9 = 23.1 GB), so 30 leaves ~7 GB headroom.
+    require_disk(output, 15 if preflight else 30)
     free, total = torch.cuda.mem_get_info()
     if free < 28*1024**3:
         raise RuntimeError('Require 28 GiB GPU free; do not interfere with other workloads')
