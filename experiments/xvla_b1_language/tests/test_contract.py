@@ -92,6 +92,35 @@ class ContractTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.c.collate_rows([frame()]*3)
 
+    def test_policy_row_accepts_a_green_on_red_episode(self):
+        """Regression: admission died here. Episode 0's instruction happens to equal the shared
+        `xvla_single_task.contract.TASK`, so fixtures built only from episode 0 passed while
+        every green-on-red row was rejected by the shared observation check."""
+        green = next(i for i in self.c.TRAIN if PLANNED[i] != PLANNED[0])
+        selected = self.c.policy_row(frame(green), training=True)
+        self.assertEqual(selected['task'], PLANNED[green])
+        self.assertNotEqual(PLANNED[green], PLANNED[0])
+
+    def test_both_instructions_survive_a_single_microbatch(self):
+        green = next(i for i in self.c.TRAIN if PLANNED[i] != PLANNED[0])
+        batch = self.c.collate_rows([frame(0), frame(green), frame(0), frame(green)])
+        self.assertEqual(sorted(set(batch['task'])), sorted(set(PLANNED)))
+
+    def test_approved_instruction_restores_the_shared_task(self):
+        before = self.c.single_task.TASK
+        with self.c.approved_instruction(PLANNED[0]):
+            pass
+        self.assertEqual(self.c.single_task.TASK, before)
+        with self.assertRaises(RuntimeError):
+            with self.c.approved_instruction(PLANNED[0]):
+                raise RuntimeError('boom')
+        self.assertEqual(self.c.single_task.TASK, before)
+
+    def test_approved_instruction_rejects_an_unplanned_instruction(self):
+        with self.assertRaises(ValueError):
+            with self.c.approved_instruction('pick up the blue cube'):
+                pass
+
     def test_sampler_permutation_covers_every_training_start_once_and_only_training(self):
         _, starts = self.c.indices(metadata())
         self.assertEqual(len(starts), 160*499)

@@ -16,6 +16,7 @@ the sealed parent `outputs/b1_language_data/b1_language_20260925`. Two differenc
 import hashlib
 import json
 import math
+from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
 
@@ -26,6 +27,7 @@ from experiments.fixed_layout.contract import IMAGE, _same
 from experiments.b1_language_data.plan import INSTRUCTIONS, make_plan, validate_plan
 from experiments.xvla_trial import preflight as p
 from experiments.xvla_trial.assets import claim_directory, require_assets, sha256, write_json
+from experiments.xvla_single_task import contract as single_task
 from experiments.xvla_single_task.contract import (
     make_config as _make_config, backward_microbatch,
     observation, check_model_inputs, inventory, source_path, verify_listed,
@@ -39,7 +41,7 @@ OUTPUT = ROOT/'outputs/train/xvla_franka_stacking_b1_language_v1_20260925'
 SCRATCH = OUTPUT.with_name(OUTPUT.name+'_preflight')
 ADMISSION = OUTPUT.with_name(OUTPUT.name+'_admission')
 CPU_ADMISSION = ADMISSION/'result.json'
-SEAL = 'PENDING_B1_ADMISSION'  # injected by b1_followup.sh once admission seals the parent
+SEAL = 'b152cba2e035653d7a800d3a5e5112005e85080300e0616483d9fe74837fdf22'  # injected from the sealed parent
 TRAIN, VAL, SEED = tuple(range(160)), tuple(range(160, 200)), 20260917
 TRAINING_ROWS = 160*528  # 84480
 COMPLETE_STARTS = 160*499  # 79840, X-VLA chunk_size=30 → 528-30+1=499 complete starts per episode
@@ -100,6 +102,24 @@ def task_index_map(ds):
     if set(table) != set(INSTRUCTIONS) or sorted(table.values()) != list(range(len(INSTRUCTIONS))):
         raise ValueError(f'Dataset tasks {sorted(table)} are not a bijection over the planned instructions')
     return table
+
+
+@contextmanager
+def approved_instruction(instruction):
+    """Swap the approved instruction that `xvla_single_task.contract.observation` compares against.
+
+    That module hardcodes a single `TASK` and is bound by four contracts (fixed_layout,
+    local_varied, broad_workspace and this one), so it cannot be edited. The membership check
+    keeps the guarantee the original provides: only a planned instruction is ever accepted.
+    """
+    if instruction not in INSTRUCTIONS:
+        raise ValueError(f'Unapproved instruction: {instruction!r}')
+    original = single_task.TASK
+    single_task.TASK = instruction
+    try:
+        yield
+    finally:
+        single_task.TASK = original
 
 
 def source_hashes():
@@ -169,7 +189,8 @@ def policy_row(row, training):
             or row.get('task') != planned_instructions()[episode]
             or {key for key in row if key.startswith('observation.')} != set(OBS)):
         raise ValueError('Unapproved episode/instruction/observation')
-    observation({key: row[key] for key in (*OBS, 'task')})
+    with approved_instruction(planned_instructions()[episode]):
+        observation({key: row[key] for key in (*OBS, 'task')})
     action, pad = row.get('action'), row.get('action_is_pad')
     if (not isinstance(action, torch.Tensor) or action.shape != (30, 8)
             or action.dtype != torch.float32 or not torch.isfinite(action).all()

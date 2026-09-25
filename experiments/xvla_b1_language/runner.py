@@ -184,7 +184,8 @@ def save_checkpoint(policy, pre, post, optimizer, ds, probe, output, update, fin
     was_training = policy.training
     policy.eval()
     sample = ds[probe]
-    obs = c.observation({key: sample[key] for key in (*c.OBS, 'task')})
+    with c.approved_instruction(c.planned_instructions()[int(sample['episode_index'])]):
+        obs = c.observation({key: sample[key] for key in (*c.OBS, 'task')})
     torch.manual_seed(c.SEED)
     with torch.inference_mode(), torch.autocast('cuda', dtype=torch.bfloat16):
         expected = post(policy.predict_action_chunk(c.p.process_row(pre, obs))).cpu()
