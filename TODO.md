@@ -161,14 +161,21 @@ already-sealed results.
 #### Budgets (measured rates: 1.97 min/episode, 0.83 s/update, 2.2 min/trial)
 B1 is a **fully self-contained dataset** — own plan, own layout bank, own reserved holdout, own
 seal. It does not read, import, extend or re-seal `broad_workspace_data`.
-- [ ] **Collect** 200 episodes, 50/cell, 200 distinct geometries, balanced across C1–C4. Reserve
-      B1's own evaluation layouts from envelope F7. — **6.6 h**
-- [ ] **Admission + preflight** — ~1 h CPU + 5 min GPU
-- [ ] **Train** X-VLA from base, 16,700 updates = 1.67 epochs — **3.9 h**
-- [ ] **Evaluate** 16 held-out geometries × 4 cells × 4 seeds = 256 trials — **9.4 h**
+- [x] **Collect** 200 episodes, 50/cell, 200 distinct geometries, balanced across C1–C4. Reserve
+      B1's own evaluation layouts from envelope F7. — **6.6 h** (actual: 6.4 h + resume; slot 197
+      needed an infeasible-layout substitution, FAILURES #30)
+- [x] **Admission + preflight** — ~1 h CPU + 5 min GPU (actual: 28 min CPU + 1 min GPU)
+- [ ] **Train** X-VLA from base, **33,400 updates = 3.35 epochs — 7.8 h** at the measured
+      0.84 s/update. Doubled from the matched-exposure 16,700/1.67 epochs/3.9 h because B1 splits
+      the same 160 training episodes across two instructions and four cells, and because the
+      86.1% run was still climbing at its endpoint (70.8% at 12k → 86.1% at 16.7k).
+      Checkpoints `[1, 8000, 16700, 25000, 33400]`; 16,700 is retained for comparability.
+- [ ] **Evaluate** the three candidates (16700/25000/33400). Screen on 40 of the 80 held-out
+      layouts, then report the grounding contrast on the untouched other 40 — a disjoint
+      selection set, because offline metrics cannot pick checkpoints here (FAILURES #21).
 - [ ] Report **geometry-clustered** intervals, not naive binomial (per-geometry p ranges
       12.5%–87.5%, so trials cluster hard within geometry)
-- Total ≈ **21 h**
+- Total ≈ **25 h**
 
 Comparing B1's C1 cell to the sealed 86.1% is a same-envelope, **different-layouts** comparison — a
 rough sanity check only, never a precise delta. Sharing the holdout was considered and rejected:
