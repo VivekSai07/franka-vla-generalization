@@ -72,7 +72,10 @@ FRAME_ROWS = ADMIT_COUNT * EXPECTED_FRAMES  # 105_600
 DECODED_FRAMES = 2 * FRAME_ROWS  # 211_200
 
 # Populated only if a layout proves uncompletable during collection; see broad_workspace #11.
-INFEASIBLE_LAYOUT_RESAMPLES = {}
+# validation_037 (slot 197, C3 green-on-red) exhausted all 9 feasible home-pose draws with
+# `expert_execution` rejections after 197 clean admits; the scripted expert cannot complete that
+# geometry. Resample index 0 substitutes the layout via amend_frozen_plan on resume.
+INFEASIBLE_LAYOUT_RESAMPLES = {'validation_037': 0}
 
 
 def instruction_for(pick, place):

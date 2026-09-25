@@ -134,25 +134,37 @@ class FeasibilityGateTests(unittest.TestCase):
     def test_infeasible_layout_resample_only_moves_recorded_layouts(self):
         """The substitution must be deterministic and must not disturb any episode slot.
 
-        B1 starts with no known infeasible layouts, so this asserts the *mechanism* is sound and
-        that nothing has been resampled behind our backs — not that a particular layout moved.
+        validation_037 (slot 197) exhausted every feasible draw during collection, so it is the
+        one recorded substitution; nothing else may have moved.
         """
         plan = self.p.make_plan()
-        self.assertEqual(self.p.INFEASIBLE_LAYOUT_RESAMPLES, {})  # none known yet for B1
+        self.assertEqual(self.p.INFEASIBLE_LAYOUT_RESAMPLES, {'validation_037': 0})
         layouts = {x['layout_id']: x for x in plan['layouts']}
-        # With an empty resample map, every layout keeps its Latin-hypercube draw.
         for lid, layout in layouts.items():
             if lid == 'base':
                 continue
             self.assertIn('region_xy_m', layout)
+        # The substituted layout carries its resampled draw, not its Latin-hypercube one.
+        self.assertEqual(layouts['validation_037']['region_xy_m'],
+                         self.p.resample_layout_xy('validation_037', 0))
         first = self.p.resample_layout_xy('validation_020', 2)
         self.assertEqual(self.p.resample_layout_xy('validation_020', 2), first)  # deterministic
         self.assertNotEqual(self.p.resample_layout_xy('validation_020', 1), first)
         for axis, value in enumerate(first):  # stays inside envelope F7
             self.assertGreaterEqual(value, self.p.AXIS_LOW[axis])
             self.assertLessEqual(value, self.p.AXIS_HIGH[axis])
-        self.assertEqual(plan['infeasible_layout_resamples'], {})
+        self.assertEqual(plan['infeasible_layout_resamples'], {'validation_037': 0})
         self.p.validate_plan(plan)
+
+    def test_only_the_substituted_layout_moves(self):
+        """Every other layout must keep the draw the 197 collected episodes were recorded under."""
+        import unittest.mock as mock
+        plan = self.p.make_plan()
+        with mock.patch.object(self.p, 'INFEASIBLE_LAYOUT_RESAMPLES', {}):
+            baseline = self.p.make_plan()
+        moved = {x['layout_id'] for x, y in zip(plan['layouts'], baseline['layouts']) if x != y}
+        self.assertEqual(moved, {'validation_037'})
+        self.assertEqual(plan['episodes'], baseline['episodes'])
 
     def test_infeasible_slot_exhausting_every_redraw_stops(self):
         """A slot with no feasible draw cannot be skipped; admit index must track the plan slot."""
