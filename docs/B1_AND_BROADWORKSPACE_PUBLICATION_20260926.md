@@ -75,14 +75,14 @@ FP32-exact with zero prediction error — that proof travels with the small file
 | model | which checkpoint(s) | path | size (inference files only) |
 |---|---|---|---|
 | B1 (recommended) | `step_033400` only (the winner) | `outputs/train/xvla_franka_stacking_b1_language_v1_20260925/checkpoints/step_033400/` | ~3.3 GB |
-| B1 (optional, full ablation) | `step_000001`, `step_008000`, `step_016700`, `step_025000` too | same dir, other `step_*` folders | +~13 GB |
+| B1 full ablation | + `step_000001`, `step_008000`, `step_016700`, `step_025000` | same dir, other `step_*` folders | +~13 GB (16.3 GB total) |
 | broad-workspace (recommended) | `step_016700` only (the winner) | `outputs/train/xvla_franka_stacking_broadworkspace_long_v1_20260923/checkpoints/step_016700/` | ~3.3 GB |
-| broad-workspace (optional, full ablation) | the other 8 checkpoints (`1`…`14000`) | same dir | +~26 GB |
+| broad-workspace full ablation | + `step_000001`, `step_002000`, `step_004000`, `step_006000`, `step_008000`, `step_010000`, `step_012000`, `step_014000` | same dir | +~26 GB (29.3 GB total) |
 
 The full-ablation tiers exist because the checkpoint-selection curves are themselves findings
 (B1: 55%→85%→**100%** screening across 16700/25000/33400; broad-workspace: the **0/72 collapse at
-step 8000** mid-training, FAILURES entry on offline-metric divergence). Include them only if you
-want the model repo to demonstrate that curve, not just the final number.
+step 8000** mid-training, see [FAILURES.md](FAILURES.md) on offline-metric divergence). **Both
+are now staged** — see the updated census below.
 
 ## Exact payload — evaluation evidence (recommended, small)
 
@@ -102,16 +102,54 @@ Datasets (2×1.1 GB + provenance) + winning checkpoints (2×3.3 GB) + report/hea
 (194+121 MB) ≈ **~10 GB**. Comfortably transferable; does not require the disk cleanup this
 machine would otherwise need.
 
-## Staging directory (already built)
+## Full-ablation tier total
 
-`outputs/downloads_20260926/` mirrors the 2026-09-19 precedent: everything inside is **hardlinked**
-from the originals (`cp -al`), so it costs zero additional disk on this machine regardless of the
-13 GB free. See the `README.md` inside that directory for the exact `rsync`/`scp` command and a
-post-download integrity check (re-hash `model.safetensors` against `checkpoint_result.json`, and
-re-derive each dataset's seal fingerprint against `seal.json`).
+Minimal tier + all 4 remaining B1 checkpoints (~13 GB) + all 8 remaining broad-workspace
+checkpoints (~26 GB) + the intermediate eval evidence for both curves (~0.9 GB) ≈ **~50 GB**.
+Still zero extra disk on this machine (hardlinks), but the Windows-side transfer and eventual HF
+upload both scale with this number — choose the tier before starting a multi-hour transfer.
+
+## Staging directory (already built, both tiers)
+
+`outputs/downloads_20260926/` now contains **both** tiers, hardlinked (confirmed zero extra
+disk before/after each addition):
+
+- Minimal tier (the six items above): datasets, both winning checkpoints, both headline eval
+  directories. **Already downloaded by the user as of 2026-09-26.**
+- Full-ablation tier (added the same day): every other checkpoint for both runs, plus every
+  intermediate/screening eval directory. Directory names: `xvla_b1_language_step_{000001,
+  008000,016700,025000}/`, `xvla_broadworkspace_step_{000001,002000,004000,006000,008000,
+  010000,012000,014000}/`, `b1_evaluation_screen_step_{016700,025000,033400}/`,
+  `b1_evaluation_smoke_step_016700/`, `broadworkspace_evaluation_step_{004000,008000,012000}/`,
+  `broadworkspace_evaluation_placement_modes/`.
+
+See the `README.md` inside that directory for the exact `rsync`/`scp` command and a post-download
+integrity check (re-hash `model.safetensors` against `checkpoint_result.json`, and re-derive each
+dataset's seal fingerprint against `seal.json`).
 
 **Nothing on this machine has been deleted, moved, or modified.** The staging directory only adds
 new hardlinks; it does not touch `outputs/train/` or `outputs/*_data/`.
+
+## The 2026-09-20 bundle (older results, re-verified 2026-09-26)
+
+`outputs/downloads_20260920/` predates this document — fixed-layout SmolVLA + X-VLA portable
+baselines (100% at base pose) and the local-varied SmolVLA fine-tune (88.9% on its own narrow
+holdout, 100% fixed-parity; **not** the same protocol as the 2.8%/72 broad-holdout number for
+local-varied in RESULTS.md — different tests of different things, not a contradiction). Its own
+`README.md` has the full breakdown.
+
+Re-verified 2026-09-26: all hardlinks still resolve, sizes still match, all three original
+source directories still present. Two datasets were missing from that bundle and have now been
+added: `local_varied_dataset_60ep/` (327 MB, seal `ae8828ea...25dcf52c`) and
+`fixed_layout_dataset_24ep/` (131 MB, seal `403b8ec2...8d8fba5`, shared by both fixed-layout
+baselines).
+
+That bundle uses an older, more elaborate packaging convention (`publication/publish.py`'s
+portable-package builder — ships `LICENSE`/`NOTICE`/`load_baseline.py`, and keeps
+`training_state.pt` per checkpoint rather than stripping it). Both conventions are valid; neither
+needs to be rebuilt to match the other. These four results are lower priority than B1/broad-
+workspace (superseded Tier 2-4 baselines, not headline results) — publish them only if you
+specifically want the full baseline history alongside the two headline results.
 
 ## Licensing
 

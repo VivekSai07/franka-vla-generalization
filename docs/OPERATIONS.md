@@ -177,6 +177,7 @@ HF-Hub-ready LeRobot payload is the `dataset/` subdirectory only, ~1.1 GB; `atte
 | `broad_workspace_data` | `broad_workspace_data/broad_workspace_20260920/` | `0351d3da...a601a85` | 200 | X-VLA 86.1% (62/72), matched exposure |
 | `local_varied_data` | `local_varied_data/local_varied_20260919/` | `ae8828ea...25dcf52c` | 60 | 2.8% (2/72) on the broad holdout — superseded, generalises poorly |
 | `b1_language_data` | `b1_language_data/b1_language_20260925/` | `b152cba2...4837fdf22` | 200 | X-VLA 94.4% (151/160), no positional shortcut — see RESULTS.md |
+| `fixed_layout` | `fixed_layout/fixed_layout_20260918/` | `403b8ec2...8d8fba5` | 24 | Tier 2 baseline, 100% at base pose — superseded, single fixed layout |
 
 Trained models worth keeping (`outputs/train/`; checkpoint dirs `step_NNNNNN/N`, only the final one
 per run carries `training_state.pt`, the ~7 GB optimizer state, not needed for inference):
@@ -189,8 +190,11 @@ per run carries `training_state.pt`, the ~7 GB optimizer state, not needed for i
 Everything else under `outputs/train/` (smolvla_pilot, single_task, fixed_layout, the plain
 `broadworkspace_v1`/`localvaried_v1` runs) is superseded Tier 2-4 work — see
 [BENCHMARK_STATUS.md](BENCHMARK_STATUS.md) for the chronology. `outputs/downloads_20260920/` and
-any newer `downloads_*` directory are pre-staged, hardlinked download bundles for the user's
-Windows machine — read the README inside before touching originals.
+`outputs/downloads_20260926/` are pre-staged, hardlinked download bundles for the user's Windows
+machine — the 2026-09-26 one covers both the minimal tier and the full checkpoint-ablation tier
+for B1 and broad-workspace (~50 GB, zero extra disk here); read the `README.md` inside each
+before touching originals. Full file lists and rationale:
+[B1_AND_BROADWORKSPACE_PUBLICATION_20260926.md](B1_AND_BROADWORKSPACE_PUBLICATION_20260926.md).
 
 ---
 
