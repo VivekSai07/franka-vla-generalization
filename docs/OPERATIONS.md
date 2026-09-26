@@ -72,10 +72,11 @@ false failures with `OSError: Read-only file system`:
 -v "$PWD/outputs/implementation/broad_workspace_data_20260920:/vla/outputs/implementation/broad_workspace_data_20260920:rw"
 -v "$PWD/outputs/implementation/local_position_probe_20260919:/vla/outputs/implementation/local_position_probe_20260919:rw"
 -v "$PWD/outputs/implementation/local_varied_data_20260919:/vla/outputs/implementation/local_varied_data_20260919:rw"
+-v "$PWD/outputs/implementation/b1_language_data_20260925:/vla/outputs/implementation/b1_language_data_20260925:rw"
 ```
 
-Without them, `broad_workspace_data`, `local_varied_data` and `local_position_probe` each report
-errors that are pure harness artefacts. Verified: all three go green once mounted.
+Without them, `broad_workspace_data`, `local_varied_data`, `local_position_probe` and `b1_language_data`
+each report errors that are pure harness artefacts. Verified: all four go green once mounted.
 
 ### Known pre-existing failures (not merge blockers)
 
@@ -160,6 +161,36 @@ Checkpoints cannot be trimmed after the fact: `verify_checkpoints` requires ever
 listed in a report to exist. Control cost via the checkpoint *schedule* before launching.
 
 `outputs/downloads_*` are hardlinks to files under `outputs/train/` — deleting them frees nothing.
+
+**Disk is tight.** As of 2026-09-26: 879 GB total, ~13 GB free (99% full). Check `df -h .` before
+any new collection or training launch; the checkpoint schedule alone can need 20-30 GB. See
+Storage census below for what is safe to reclaim.
+
+## Current outputs/ census (2026-09-26)
+
+Sealed, results-worthy datasets (all under `outputs/`, each is the *collection root* — the
+HF-Hub-ready LeRobot payload is the `dataset/` subdirectory only, ~1.1 GB; `attempts/`, `rejected/`,
+`resets/` are raw per-episode audit evidence, ~15-17 GB, not needed for reuse):
+
+| dataset | root | seal (fingerprint) | episodes | headline result |
+|---|---|---|---|---|
+| `broad_workspace_data` | `broad_workspace_data/broad_workspace_20260920/` | `0351d3da...a601a85` | 200 | X-VLA 86.1% (62/72), matched exposure |
+| `local_varied_data` | `local_varied_data/local_varied_20260919/` | `ae8828ea...25dcf52c` | 60 | 2.8% (2/72) on the broad holdout — superseded, generalises poorly |
+| `b1_language_data` | `b1_language_data/b1_language_20260925/` | `b152cba2...4837fdf22` | 200 | X-VLA 94.4% (151/160), no positional shortcut — see RESULTS.md |
+
+Trained models worth keeping (`outputs/train/`; checkpoint dirs `step_NNNNNN/N`, only the final one
+per run carries `training_state.pt`, the ~7 GB optimizer state, not needed for inference):
+
+| run | winning checkpoint | result |
+|---|---|---|
+| `xvla_franka_stacking_broadworkspace_long_v1_20260923` | `step_016700` | 86.1% broad holdout |
+| `xvla_franka_stacking_b1_language_v1_20260925` | `step_033400` | 94.4% report, checkpoints [1,8000,16700,25000,33400] all kept for the ablation curve |
+
+Everything else under `outputs/train/` (smolvla_pilot, single_task, fixed_layout, the plain
+`broadworkspace_v1`/`localvaried_v1` runs) is superseded Tier 2-4 work — see
+[BENCHMARK_STATUS.md](BENCHMARK_STATUS.md) for the chronology. `outputs/downloads_20260920/` and
+any newer `downloads_*` directory are pre-staged, hardlinked download bundles for the user's
+Windows machine — read the README inside before touching originals.
 
 ---
 
