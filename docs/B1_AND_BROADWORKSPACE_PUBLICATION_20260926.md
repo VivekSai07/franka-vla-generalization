@@ -109,23 +109,18 @@ checkpoints (~26 GB) + the intermediate eval evidence for both curves (~0.9 GB) 
 Still zero extra disk on this machine (hardlinks), but the Windows-side transfer and eventual HF
 upload both scale with this number — choose the tier before starting a multi-hour transfer.
 
-## Staging directory (already built, both tiers)
+## Staging directory (already built, both tiers, grouped 2026-09-26)
 
 `outputs/downloads_20260926/` now contains **both** tiers, hardlinked (confirmed zero extra
-disk before/after each addition):
+disk before/after every change), grouped by run and by type — `b1_language/{dataset,checkpoints,
+evaluation}/` and `broadworkspace/{dataset,checkpoints,evaluation}/`, each `checkpoints/` holding
+every `step_NNNNNN/` for that run's full ablation and each `evaluation/` holding every trial
+directory. This grouping maps directly onto "one HF dataset repo + one HF model repo per run" —
+see the table in the staged `README.md`.
 
-- Minimal tier (the six items above): datasets, both winning checkpoints, both headline eval
-  directories. **Already downloaded by the user as of 2026-09-26.**
-- Full-ablation tier (added the same day): every other checkpoint for both runs, plus every
-  intermediate/screening eval directory. Directory names: `xvla_b1_language_step_{000001,
-  008000,016700,025000}/`, `xvla_broadworkspace_step_{000001,002000,004000,006000,008000,
-  010000,012000,014000}/`, `b1_evaluation_screen_step_{016700,025000,033400}/`,
-  `b1_evaluation_smoke_step_016700/`, `broadworkspace_evaluation_step_{004000,008000,012000}/`,
-  `broadworkspace_evaluation_placement_modes/`.
-
-See the `README.md` inside that directory for the exact `rsync`/`scp` command and a post-download
-integrity check (re-hash `model.safetensors` against `checkpoint_result.json`, and re-derive each
-dataset's seal fingerprint against `seal.json`).
+See the `README.md` inside that directory for the exact layout diagram, `rsync`/`scp` command,
+HF-repo mapping table, and a post-download integrity check (re-hash `model.safetensors` against
+`checkpoint_result.json`, and re-derive each dataset's seal fingerprint against `seal.json`).
 
 **Nothing on this machine has been deleted, moved, or modified.** The staging directory only adds
 new hardlinks; it does not touch `outputs/train/` or `outputs/*_data/`.
