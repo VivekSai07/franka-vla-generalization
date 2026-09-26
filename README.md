@@ -8,7 +8,27 @@ The central question: **how much and what kind of data does a VLA need to genera
 
 ---
 
-## Current headline (2026-09-24)
+## Current headline (2026-09-26)
+
+**B1 language grounding: 94.4% (151/160), and no positional shortcut.** Every prior result on
+this repo (including the 86.1% below) measured spatial capability only — the training data made
+cube colour perfectly predictable from position, so a policy that never read the instruction
+could score 100% ([FAILURES #27](docs/FAILURES.md)). B1 collected a fresh 200-episode 2×2
+factorial dataset (instruction × colour/region arrangement) to break that confound, trained
+X-VLA to 33,400 updates, and evaluated on 40 held-out layouts never used for checkpoint
+selection:
+
+| contrast | rate | Fisher p |
+|---|---|---|
+| overall | 151/160 = 94.4% | — |
+| arrangement: familiar vs. swapped | 93.8% vs. 95.0% | 1.000 |
+| pick colour: red vs. green | 96.2% vs. 92.5% | 0.495 |
+
+Swapped is not worse than familiar — the signature a positional shortcut would leave, since
+swapping relocates the correct-coloured cube to the region a shortcut would ignore. See
+[RESULTS.md](docs/RESULTS.md) for the full breakdown and checkpoint-selection numbers.
+
+## Prior headline (2026-09-24)
 
 On the widest protocol to date — 36 reserved envelope-F7 layouts × 2 policy seeds:
 

@@ -113,9 +113,15 @@ Only after Tier 2 + Tier 1: decide whether the 65/72 gate is right, and finalise
 
 One axis at a time, each with its own dataset and its own holdout.
 
-### B1. Language grounding (first axis — currently unmeasured)
+### B1. Language grounding (first axis — **measured 2026-09-26**, see RESULTS.md) [x]
 
 **Design spec: [docs/superpowers/specs/2026-09-24-b1-language-grounding-design.md](docs/superpowers/specs/2026-09-24-b1-language-grounding-design.md)**
+
+**Result: 151/160 = 94.4% on held-out layouts; familiar vs. swapped arrangement p = 1.0 (not
+significant) — no evidence of the positional shortcut.** Full numbers, checkpoint screening, and
+per-cell breakdown in [docs/RESULTS.md](docs/RESULTS.md) and
+[docs/BENCHMARK_STATUS.md](docs/BENCHMARK_STATUS.md). Text below is the original design
+rationale, kept for context.
 
 **The language pathway has never been load-bearing.** `plan.py` draws the cubes from disjoint
 regions — red always at y<0, green always at y>0, verified 200/200 episodes and 80/80 reserved
@@ -134,17 +140,53 @@ all four = grounding; C1+C3 = instruction→side; C1+C2 = ignores instruction; C
 No expert changes needed — it is already colour-parameterised and generates the instruction from
 `pick`/`place`. Only `plan.py`'s hardcoded `pick='red', place='green'` changes.
 
+#### BLOCKED — the shared validation stack is single-task and hash-bound
+Collection cannot run until this is resolved. See [docs/FAILURES.md](docs/FAILURES.md) #28.
+
+`experiments/fixed_layout/validate.py` assumes one task in five places. A local `metadata()`
+override in the B1 package handles three; `read_rows` (per-frame `task_index == 0`) and the
+`raw["task"] == TASK` frame check remain, both reached through `generic._episode_inputs`.
+
+**The file must not be edited** — it is inside the sealed provenance of `broad_workspace_data`
+(confirmed in `provenance.json`), so changing it invalidates the sealed dataset and the 86.1%
+result.
+
+Two viable options, needing a decision:
+- [ ] **(A) Duplicate locally.** Fork `read_rows` and `_episode_inputs` into the B1 package with
+      task-aware checks. ~90 lines of deep validation logic copied. Risk: a transcription slip
+      yields a validator *weaker* than intended, which still passes — the worst failure mode here.
+      Mitigate by diffing the copy against the original and asserting equivalence on a single-task
+      fixture before trusting it.
+- [ ] **(B) Parameterise the shared module** with a `tasks=(TASK,)` default that preserves current
+      behaviour byte-for-byte, then re-seal the affected datasets. Cleaner long-term, but re-sealing
+      `broad_workspace_data` invalidates every binding built on it.
+
+Recommendation: **(A)**, with the equivalence check. (B) is the better design but its cost lands on
+already-sealed results.
+
 #### Budgets (measured rates: 1.97 min/episode, 0.83 s/update, 2.2 min/trial)
 B1 is a **fully self-contained dataset** — own plan, own layout bank, own reserved holdout, own
 seal. It does not read, import, extend or re-seal `broad_workspace_data`.
-- [ ] **Collect** 200 episodes, 50/cell, 200 distinct geometries, balanced across C1–C4. Reserve
-      B1's own evaluation layouts from envelope F7. — **6.6 h**
-- [ ] **Admission + preflight** — ~1 h CPU + 5 min GPU
-- [ ] **Train** X-VLA from base, 16,700 updates = 1.67 epochs — **3.9 h**
-- [ ] **Evaluate** 16 held-out geometries × 4 cells × 4 seeds = 256 trials — **9.4 h**
-- [ ] Report **geometry-clustered** intervals, not naive binomial (per-geometry p ranges
+- [x] **Collect** 200 episodes, 50/cell, 200 distinct geometries, balanced across C1–C4. Reserve
+      B1's own evaluation layouts from envelope F7. — **6.6 h** (actual: 6.4 h + resume; slot 197
+      needed an infeasible-layout substitution, FAILURES #30)
+- [x] **Admission + preflight** — ~1 h CPU + 5 min GPU (actual: 28 min CPU + 1 min GPU)
+- [x] **Train** X-VLA from base, **33,400 updates = 3.35 epochs — 7.8 h** at the measured
+      0.84 s/update. Doubled from the matched-exposure 16,700/1.67 epochs/3.9 h because B1 splits
+      the same 160 training episodes across two instructions and four cells, and because the
+      86.1% run was still climbing at its endpoint (70.8% at 12k → 86.1% at 16.7k).
+      Checkpoints `[1, 8000, 16700, 25000, 33400]`; 16,700 is retained for comparability.
+      (actual: 472 min = 7.9 h, rc=0, zero-error FP32 reload on the final checkpoint)
+- [x] **Evaluate** the three candidates (16700/25000/33400). Screen on 40 of the 80 held-out
+      layouts, then report the grounding contrast on the untouched other 40 — a disjoint
+      selection set, because offline metrics cannot pick checkpoints here (FAILURES #21).
+      (actual: screen 22/40, 34/40, **40/40** — winner 33,400; report **151/160 = 94.4%**,
+      familiar 93.8% vs swapped 95.0% p=1.0, red 96.2% vs green 92.5% p=0.495 — see RESULTS.md)
+- [x] Report **geometry-clustered** intervals, not naive binomial (per-geometry p ranges
       12.5%–87.5%, so trials cluster hard within geometry)
-- Total ≈ **21 h**
+      (actual: much milder clustering than T2a — 34/40 report layouts at 4/4, 3 at 3/4,
+      3 at 2/4, none below 50%)
+- Total ≈ **25 h** (actual, collection start to eval finish: ≈ 33.5 h across 2026-09-25–26)
 
 Comparing B1's C1 cell to the sealed 86.1% is a same-envelope, **different-layouts** comparison — a
 rough sanity check only, never a precise delta. Sharing the holdout was considered and rejected:
@@ -154,8 +196,27 @@ it would drag cross-dataset binding into a package with no other reason to touch
 - Data starvation: 80 episodes per instruction vs 160 for the single-instruction model. The C1-vs-C2
   contrast is within-model so attribution is safe; only the absolute level is exposed. Escalate to
   400 episodes only if the absolute result is ambiguous.
+  (actual: absolute level 94.4% overall, no cell below 92.5% — not ambiguous; no escalation needed)
 - Do **not** evaluate existing checkpoints on the swapped cells as a grounding test — they have
   never seen a red cube at +y, so that measures distribution shift, not grounding.
+
+### B1b. Vertical variation (new axis — currently a constant, therefore untestable)
+
+Measured across the sealed 200 episodes: initial pick cube Z and place cube Z each take **exactly
+one value** (spread 0.00e+00), and the final stack height spreads 1.5e-05 m. Approach altitude *is*
+varied (±3 cm hover jitter, 200 distinct values) and home pose is varied (±1°, 1400 values), but the
+terminal heights are constant — a flat table with identical rigid cubes fixes them.
+
+Consequence: the policy can satisfy every episode with an **absolute-Z target** and has never needed
+to perceive height. The hover jitter does not rescue this — it varies the descent *distance*, not the
+target. Same class of problem as the colour confound (#27): a variable held constant makes the
+capability untestable and the success metric cannot see it.
+
+Deliberately **not** folded into B1 — that would be two new axes at once and a failure would not be
+attributable. Options when it gets its own phase, each with different expert implications:
+- [ ] cube-size variation — changes grasp aperture the controller assumes, and the stack height
+- [ ] table-height variation — uniform shift of both cubes; touches the scene
+- [ ] variable-height place target (platform/riser) — changes place Z but not pick Z
 
 ### B2. Distractors (second axis)
 - [ ] Add 1–2 non-target cubes, target pair unchanged

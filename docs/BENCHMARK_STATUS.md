@@ -1,5 +1,32 @@
 # Franka benchmark: start here
 
+## B1 language grounding: 94.4% report success, no positional shortcut detected — 2026-09-26
+
+Trained X-VLA from base on `b1_language_20260925` (200 episodes, 2×2 factorial: instruction ×
+colour/region arrangement, designed to break the #27 colour-position confound). Screened three
+checkpoints on cell C1 only (40 disjoint layouts each): 16,700 updates 22/40 (55.0%), 25,000
+34/40 (85.0%), 33,400 **40/40 (100%)** — monotonic and pairwise significant (Fisher p ≤ 0.026 at
+every step). Matched exposure (16,700, same budget as the 86.1% broad-workspace run) was clearly
+undertrained here, as expected: B1 splits the same 160 training episodes across two instructions.
+
+Reported the winner (33,400 updates, 3.35 epochs) on the untouched other 40 layouts, all four
+cells, 160 trials: **151/160 = 94.4%** [89.7, 97.0]. The load-bearing contrast is
+familiar-vs-swapped arrangement — 93.8% vs 95.0%, Fisher p = 1.0, not worse under swap. A policy
+still using the old positional shortcut would fail specifically on swapped layouts, since swapping
+relocates the correct-coloured cube to the region the shortcut ignores. It didn't. Pick-colour
+contrast (red 96.2% vs green 92.5%, p = 0.495) is likewise not significant. **First evidence in
+this repo that the policy conditions on the instruction rather than cube position.**
+
+Four fork issues surfaced and were fixed along the way, each with an equivalence test proving the
+fork matches the sealed original wherever the original applies (FAILURES #28–#31): the shared
+validator's five single-task assumptions, its hardcoded red-on-green cube binding, one infeasible
+evaluation layout requiring a recorded substitution, and two resource guards inherited from the
+fork source that didn't fit B1's schedule. See [RESULTS.md](RESULTS.md) for the full table.
+
+**Next:** none planned yet — B1's own follow-up (height/vertical grounding, deferred per TODO
+"B1b") is unscheduled. Read [RESULTS.md](RESULTS.md) and [FAILURES.md](FAILURES.md) before
+proposing the next experiment.
+
 ## Matched exposure: 68.1% → 86.1%, and the failure mode identified — 2026-09-24
 
 Retrained X-VLA on the identical sealed `broad_workspace` data at **1.67 epochs** (16,700 updates)

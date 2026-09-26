@@ -4,7 +4,65 @@ All benchmark numbers. Protocols differ in difficulty and are **not** comparable
 rows unless stated. Chronological narrative lives in [BENCHMARK_STATUS.md](BENCHMARK_STATUS.md);
 failures and lessons in [FAILURES.md](FAILURES.md).
 
-## Current status (2026-09-24)
+## Current status (2026-09-26)
+
+**Headline — B1 shows the trained policy reads the instruction, not the cube's position.** The
+2×2 factorial dataset (instruction × colour/region arrangement) was designed to break the exact
+shortcut discovered in #27, where colour was perfectly predictable from `sign(y)`. On the report
+protocol — 160 trials on 40 **held-out** layouts never used for checkpoint selection, all four
+cells (pick colour × arrangement) — the trained policy scored **151/160 = 94.4%**, 95% CI
+[89.7, 97.0].
+
+| contrast | rate | 95% CI | Fisher p vs. other level |
+|---|---|---|---|
+| pick = red (C1+C2) | 77/80 = 96.2% | [89.5, 98.7] | 0.495 |
+| pick = green (C3+C4) | 74/80 = 92.5% | [84.6, 96.5] | (ref) |
+| arrangement = familiar (C1+C3) | 75/80 = 93.8% | [86.2, 97.3] | 1.000 |
+| arrangement = swapped (C2+C4) | 76/80 = 95.0% | [87.8, 98.0] | (ref) |
+
+**Neither contrast is significant, and swapped is not worse than familiar.** That second point is
+the load-bearing one: a policy using the old positional shortcut (ignore colour, always reach for
+the cube in a fixed region) would succeed on *familiar* layouts by coincidence and fail on
+*swapped* ones, since swapping relocates the correct-coloured cube to the region the shortcut
+would ignore. Familiar and swapped scored within one trial of each other (p = 1.0). This is the
+first B1 evidence that the policy is actually conditioning on the instruction/colour rather than
+on a positional prior.
+
+| cell | pick → place | arrangement | success |
+|---|---|---|---|
+| C1 | red → green | familiar | 38/40 = 95.0% |
+| C2 | red → green | swapped | 39/40 = 97.5% |
+| C3 | green → red | familiar | 37/40 = 92.5% |
+| C4 | green → red | swapped | 37/40 = 92.5% |
+
+Per-layout clustering is mild: of the 40 report layouts, 34 scored 4/4, 3 scored 3/4, 3 scored
+2/4; none scored 0/4 or 1/4. No held-out layout is categorically unsolvable, unlike the T2a
+placement-mode result where per-layout rates ranged 12.5%–87.5%.
+
+**Checkpoint selection (screening, cell C1 only, 40 trials each, on a *disjoint* 40 layouts):**
+
+| checkpoint | epochs | screen success | vs. winner (Fisher p) |
+|---|---|---|---|
+| 16,700 (matched exposure) | 1.67 | 22/40 = 55.0% | 1e-6 |
+| 25,000 | 2.50 | 34/40 = 85.0% | 0.026 |
+| **33,400 (winner)** | **3.35** | **40/40 = 100%** | — |
+
+Monotonic and significant at every step — B1 needed the doubled horizon. Matched exposure
+(16,700, the same budget as the 86.1% broad-workspace run) would have been badly undertrained
+here: B1 splits the same 160 training episodes across two instructions and four cells, so each
+task saw half the exposure that run gave its single task.
+
+`unassisted_success` (zero joint/gripper-limit interventions) is 0/160, matching 0/72 on the
+86.1% broad-workspace run — expected, not a regression; every rollout across this repo clips at
+the actuator limits at some point during the grasp.
+
+`b1_language_20260925` is **collected and sealed**: 200 episodes, cells C1–C4 balanced 50/50/50/50,
+100 red-pick/100 green-pick, seal `b152cba2e035653d7a800d3a5e5112005e85080300e0616483d9fe74837fdf22`.
+Trained to 33,400 updates (3.35 epochs); see [FAILURES.md](FAILURES.md) #28–#31 for the fork
+issues resolved along the way (five single-task assumptions, the red-on-green cube binding, an
+infeasible layout, and two inherited resource guards).
+
+## Prior status (2026-09-24)
 
 **Headline — matched exposure took X-VLA from 68.1% to 86.1% on the broad holdout.** The 0.50-epoch
 run was undertrained, as suspected. Retraining on the identical sealed data at 1.67 epochs
@@ -25,6 +83,12 @@ run was undertrained, as suspected. Retraining on the identical sealed data at 1
 > and never reads the instruction. **These numbers measure spatial capability only; the language
 > pathway is untested.** See [FAILURES.md](FAILURES.md) #27 and the B1 design at
 > [superpowers/specs/2026-09-24-b1-language-grounding-design.md](superpowers/specs/2026-09-24-b1-language-grounding-design.md).
+>
+> **Vertical capability is untested for the same reason.** Initial pick and place cube heights each
+> take exactly one value across all 200 episodes (spread 0.00e+00) and the stack height spreads
+> 1.5e-05 m, because the table is flat and the cubes identical. Approach altitude *is* varied
+> (±3 cm hover jitter, 200 distinct values), but the terminal target is not, so an absolute-Z policy
+> satisfies every episode. The spatial result is a **horizontal** result. See TODO B1b.
 
 `broad_workspace_data_v1` is **collected and sealed**: 200 episodes, 105,600 frames, 160 train / 40 validation,
 seal `0351d3da36294e2124554267bc17738badee26498b1cb82fa7a58d4f4a601a85`. Both policies were retrained on it
