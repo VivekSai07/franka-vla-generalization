@@ -113,9 +113,15 @@ Only after Tier 2 + Tier 1: decide whether the 65/72 gate is right, and finalise
 
 One axis at a time, each with its own dataset and its own holdout.
 
-### B1. Language grounding (first axis — currently unmeasured)
+### B1. Language grounding (first axis — **measured 2026-09-26**, see RESULTS.md) [x]
 
 **Design spec: [docs/superpowers/specs/2026-09-24-b1-language-grounding-design.md](docs/superpowers/specs/2026-09-24-b1-language-grounding-design.md)**
+
+**Result: 151/160 = 94.4% on held-out layouts; familiar vs. swapped arrangement p = 1.0 (not
+significant) — no evidence of the positional shortcut.** Full numbers, checkpoint screening, and
+per-cell breakdown in [docs/RESULTS.md](docs/RESULTS.md) and
+[docs/BENCHMARK_STATUS.md](docs/BENCHMARK_STATUS.md). Text below is the original design
+rationale, kept for context.
 
 **The language pathway has never been load-bearing.** `plan.py` draws the cubes from disjoint
 regions — red always at y<0, green always at y>0, verified 200/200 episodes and 80/80 reserved
@@ -165,17 +171,22 @@ seal. It does not read, import, extend or re-seal `broad_workspace_data`.
       B1's own evaluation layouts from envelope F7. — **6.6 h** (actual: 6.4 h + resume; slot 197
       needed an infeasible-layout substitution, FAILURES #30)
 - [x] **Admission + preflight** — ~1 h CPU + 5 min GPU (actual: 28 min CPU + 1 min GPU)
-- [ ] **Train** X-VLA from base, **33,400 updates = 3.35 epochs — 7.8 h** at the measured
+- [x] **Train** X-VLA from base, **33,400 updates = 3.35 epochs — 7.8 h** at the measured
       0.84 s/update. Doubled from the matched-exposure 16,700/1.67 epochs/3.9 h because B1 splits
       the same 160 training episodes across two instructions and four cells, and because the
       86.1% run was still climbing at its endpoint (70.8% at 12k → 86.1% at 16.7k).
       Checkpoints `[1, 8000, 16700, 25000, 33400]`; 16,700 is retained for comparability.
-- [ ] **Evaluate** the three candidates (16700/25000/33400). Screen on 40 of the 80 held-out
+      (actual: 472 min = 7.9 h, rc=0, zero-error FP32 reload on the final checkpoint)
+- [x] **Evaluate** the three candidates (16700/25000/33400). Screen on 40 of the 80 held-out
       layouts, then report the grounding contrast on the untouched other 40 — a disjoint
       selection set, because offline metrics cannot pick checkpoints here (FAILURES #21).
-- [ ] Report **geometry-clustered** intervals, not naive binomial (per-geometry p ranges
+      (actual: screen 22/40, 34/40, **40/40** — winner 33,400; report **151/160 = 94.4%**,
+      familiar 93.8% vs swapped 95.0% p=1.0, red 96.2% vs green 92.5% p=0.495 — see RESULTS.md)
+- [x] Report **geometry-clustered** intervals, not naive binomial (per-geometry p ranges
       12.5%–87.5%, so trials cluster hard within geometry)
-- Total ≈ **25 h**
+      (actual: much milder clustering than T2a — 34/40 report layouts at 4/4, 3 at 3/4,
+      3 at 2/4, none below 50%)
+- Total ≈ **25 h** (actual, collection start to eval finish: ≈ 33.5 h across 2026-09-25–26)
 
 Comparing B1's C1 cell to the sealed 86.1% is a same-envelope, **different-layouts** comparison — a
 rough sanity check only, never a precise delta. Sharing the holdout was considered and rejected:
@@ -185,6 +196,7 @@ it would drag cross-dataset binding into a package with no other reason to touch
 - Data starvation: 80 episodes per instruction vs 160 for the single-instruction model. The C1-vs-C2
   contrast is within-model so attribution is safe; only the absolute level is exposed. Escalate to
   400 episodes only if the absolute result is ambiguous.
+  (actual: absolute level 94.4% overall, no cell below 92.5% — not ambiguous; no escalation needed)
 - Do **not** evaluate existing checkpoints on the swapped cells as a grounding test — they have
   never seen a red cube at +y, so that measures distribution shift, not grounding.
 
