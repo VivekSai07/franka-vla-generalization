@@ -1,6 +1,9 @@
 # Credentials — never commit
 .env
 
+# Local tool state (Ruflo/claude-flow plugin)
+.claude-flow/
+
 # Python
 __pycache__/
 *.pyc
