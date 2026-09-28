@@ -227,7 +227,9 @@ attributable. Options when it gets its own phase, each with different expert imp
       200 slots: 40 control + 160 distractor-present (1-2 cubes), cells balanced *within* each
       arm, riskiest profiles ordered first, 60 reserved layouts (20 screen / 40 report) banked in
       both conditions. First launch died at episode 0 on inherited parked-cube velocity; fixed
-      before the collection that followed (FAILURES #32, #33).
+      before the collection that followed (FAILURES #32, #33). A later `git switch main` crashed
+      the running collection at episode 49 by checking out a tree missing the package/docs;
+      recovered via rollback + `--resume`, no data lost (FAILURES #34).
 - [ ] **Pilot: watch the first ~15 admits** before committing the full 6.6 h. The expert is
       scripted against the target pair only, so the collision rate with four cubes in the scene
       is unmeasured; a distractor moved > 2 cm is rejected and retried against the budget.
