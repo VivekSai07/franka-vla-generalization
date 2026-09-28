@@ -30,10 +30,17 @@ git switch feat/<axis-name>          # HEAD moves; tree is identical, so no file
 git branch -f main origin/main       # main ref only; main is not checked out, so no files change
 ```
 
-This is safe to run **even while a long collection or training job has this exact directory
-mounted**, because nothing here calls `checkout`/`reset` against the branch that is actually
-checked out — only ref pointers move. Verify after: `git status --short` is unchanged, and the
-job's next status poll still succeeds.
+**While any job has this directory mounted, do not run *any* further `git checkout`/`switch`/
+`reset` in this checkout for any reason, full stop — not "only the destructive ones".** The three
+commands above are safe only because, at that exact moment, the destination tree is provably
+identical to what's already checked out. That fact does not persist: the very next branch
+operation (e.g. switching back to `main` for an unrelated commit) checks out a *different* tree
+and silently deletes/reverts whatever the job depends on — this has actually happened, mid-run, to
+this exact job (FAILURES #34). If you need to commit to a different branch while a job is live,
+use a separate `git worktree` instead of switching this checkout.
+
+Verify after any ref-only move: `git status --short` is unchanged, and the job's next status poll
+still succeeds.
 
 **Do not** do this by checking out `main` and running `git reset --hard origin/main` — that
 rewrites the working-tree files main was pointing at, which is exactly the kind of mid-run source
