@@ -10,6 +10,11 @@ Additional context loaded automatically where supported:
 | [.github/instructions/experiments.instructions.md](.github/instructions/experiments.instructions.md) | `experiments/**` — contracts, bindings, shared helpers |
 | [.github/skills/launching-a-run/SKILL.md](.github/skills/launching-a-run/SKILL.md) | starting training, admission, preflight, evaluation |
 | [.github/skills/diagnosing-a-binding-failure/SKILL.md](.github/skills/diagnosing-a-binding-failure/SKILL.md) | admission / provenance / seal mismatches |
+| [.github/skills/collecting-a-dataset/SKILL.md](.github/skills/collecting-a-dataset/SKILL.md) | `--preflight`/`--collect`, rejection budget, resume/rollback |
+| [.github/skills/training-a-policy/SKILL.md](.github/skills/training-a-policy/SKILL.md) | contract/runner design, checkpoint schedule, disk guards, comparing runs |
+| [.github/skills/evaluating-a-checkpoint/SKILL.md](.github/skills/evaluating-a-checkpoint/SKILL.md) | screening vs report, holdout independence, checkpoint selection |
+| [.github/skills/forking-an-experiment-package/SKILL.md](.github/skills/forking-an-experiment-package/SKILL.md) | copying a package — residue traps, symtable check |
+| [.github/skills/branching-for-an-experiment-axis/SKILL.md](.github/skills/branching-for-an-experiment-axis/SKILL.md) | one branch per axis, safe recovery if work landed on `main` |
 
 Orientation: [README.md](README.md) · [docs/INDEX.md](docs/INDEX.md) ·
 [docs/OPERATIONS.md](docs/OPERATIONS.md) · [docs/FAILURES.md](docs/FAILURES.md) ·
