@@ -219,16 +219,39 @@ attributable. Options when it gets its own phase, each with different expert imp
 - [ ] variable-height place target (platform/riser) — changes place Z but not pick Z
 
 ### B2. Distractors (second axis)
-- [ ] Add 1–2 non-target cubes, target pair unchanged
+
+**Design spec: [docs/superpowers/specs/2026-09-28-b2-distractors-design.md](docs/superpowers/specs/2026-09-28-b2-distractors-design.md)**
+**Plan: [docs/superpowers/plans/2026-09-28-b2-distractors.md](docs/superpowers/plans/2026-09-28-b2-distractors.md)**
+
+- [x] Package `experiments/b2_distractor_data/` implemented and tested (90/90 in-container).
+      200 slots: 40 control + 160 distractor-present (1-2 cubes), cells balanced *within* each
+      arm, riskiest profiles ordered first, 60 reserved layouts (20 screen / 40 report) banked in
+      both conditions. First launch died at episode 0 on inherited parked-cube velocity; fixed
+      before the collection that followed (FAILURES #32, #33).
+- [ ] **Pilot: watch the first ~15 admits** before committing the full 6.6 h. The expert is
+      scripted against the target pair only, so the collision rate with four cubes in the scene
+      is unmeasured; a distractor moved > 2 cm is rejected and retried against the budget.
+- [ ] Full 200-episode collection, then admission, training and the two-tier evaluation
 - [ ] Measures distractor rejection independently of language
 
+**Three spec errors were corrected before implementation** (see the spec's *Corrections* section):
+the floor-colour prerequisite was withdrawn as both a no-op and seal-breaking; "16 episodes per
+cell" is really 32; and screening is 100 trials, not 80.
+
 ### Environment housekeeping
-- [ ] **Floor colour: blue → grey.** `src/robots/franka_panda/model/scene.xml:21` groundplane
-      checker texture (`rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3"`) reads bluish; swap to a neutral
-      grey (e.g. `rgb1="0.35 0.35 0.35" rgb2="0.2 0.2 0.2"`) and check whether
-      `smolvla_scene.xml` duplicates the same block. Do this as its own isolated change (few-episode
-      sanity check that collection/validation still passes) — **never in the same collection run as
-      a new data axis** (B2, B1b, ...), so a regression is attributable to one change, not two.
+- [ ] **Floor colour: blue → grey — BLOCKED, and not a prerequisite for anything.**
+      `src/robots/franka_panda/model/scene.xml:21` groundplane checker texture
+      (`rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3"`) reads bluish. Two findings from the B2 review
+      (2026-09-28) change this item:
+      (a) `scene.xml` is **not** the scene that runs — the packages load `smolvla_scene.xml`
+      (pinned in `experiments/fixed_layout/source.py`), so editing `scene.xml` is a silent no-op;
+      (b) **both** XML files are recorded in the sealed `provenance.json` of `b1_language_data`
+      and `broad_workspace_data`, so editing either invalidates the provenance behind the 94.4%
+      and 86.1% results and would block any future run bound to those datasets.
+      Doing this at all means accepting that those two datasets can no longer be re-verified, or
+      deferring until nothing further is needed from them. B2 does **not** need it: the distractor
+      cubes are already in the scene, and leaving it alone makes B2's control arm visually
+      identical to B1. Still never in the same collection run as a new data axis.
 
 ### B3. Full colour randomisation (third axis)
 - [ ] Only after B1 and B2 each have a measured result
