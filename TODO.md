@@ -222,6 +222,14 @@ attributable. Options when it gets its own phase, each with different expert imp
 - [ ] Add 1–2 non-target cubes, target pair unchanged
 - [ ] Measures distractor rejection independently of language
 
+### Environment housekeeping
+- [ ] **Floor colour: blue → grey.** `src/robots/franka_panda/model/scene.xml:21` groundplane
+      checker texture (`rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3"`) reads bluish; swap to a neutral
+      grey (e.g. `rgb1="0.35 0.35 0.35" rgb2="0.2 0.2 0.2"`) and check whether
+      `smolvla_scene.xml` duplicates the same block. Do this as its own isolated change (few-episode
+      sanity check that collection/validation still passes) — **never in the same collection run as
+      a new data axis** (B2, B1b, ...), so a regression is attributable to one change, not two.
+
 ### B3. Full colour randomisation (third axis)
 - [ ] Only after B1 and B2 each have a measured result
 - [ ] This is closest to the original v1/v2 design; note v2's evaluation was never completed, so
