@@ -229,7 +229,11 @@ attributable. Options when it gets its own phase, each with different expert imp
       both conditions. First launch died at episode 0 on inherited parked-cube velocity; fixed
       before the collection that followed (FAILURES #32, #33). A later `git switch main` crashed
       the running collection at episode 49 by checking out a tree missing the package/docs;
-      recovered via rollback + `--resume`, no data lost (FAILURES #34).
+      recovered via rollback + `--resume`, no data lost (FAILURES #34). Slot 124 (`train_124`)
+      was unsolvable by the expert (9/9 `expert_execution` rejections, same class as B1's
+      `validation_037`); substituting it exposed a fork-hygiene bug in `amend_frozen_plan`'s
+      per-episode equality check, which didn't allow for B2's `distractor_xy_m` recompute — fixed
+      and resumed cleanly, no data lost (FAILURES #35).
 - [ ] **Pilot: watch the first ~15 admits** before committing the full 6.6 h. The expert is
       scripted against the target pair only, so the collision rate with four cubes in the scene
       is unmeasured; a distractor moved > 2 cm is rejected and retried against the budget.
