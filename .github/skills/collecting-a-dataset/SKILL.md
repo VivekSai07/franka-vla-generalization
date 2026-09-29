@@ -36,6 +36,15 @@ change: add the layout to `INFEASIBLE_LAYOUT_RESAMPLES`, then `--resume`. This c
 `amend_frozen_plan`, which refuses unless no already-collected attempt used the moved layout —
 verify that before amending, or the recovery silently invalidates already-collected data.
 
+If this package was forked, do not trust `amend_frozen_plan`'s per-episode equality check as-is:
+it was written against the source package's per-episode fields. If this fork's episodes carry a
+field that legitimately depends on layout geometry (e.g. a distractor position drawn for
+clearance against the layout's cube placement), that field is expected to change for the
+substituted episode too, and the inherited check will wrongly reject the amendment as unauthorized
+drift. Scope the allowance to exactly that field, for exactly the episode(s) whose layout moved —
+never loosen the check generally. Confirm with `--resume`'s dry validation (it raises before
+writing anything, so a wrong fix costs a retry, not data) before trusting it.
+
 ## 3. Rollback
 
 A rejected episode that already committed to the dataset (validation runs after the LeRobot commit)

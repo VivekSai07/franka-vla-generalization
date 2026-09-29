@@ -41,7 +41,20 @@ edit the shared file — it is very likely inside another package's sealed `prov
 `SOURCE_FILES`. Rebind the module globals it reads through a scoped context manager instead, and
 test that every patched global is restored, including when the body raises.
 
-## 5. Confirm a new regression test would actually have caught the bug
+## 5. Audit inherited equality/invariant checks against the fields you added
+
+A copied recovery or validation function (e.g. an amendment/rollback path) often asserts "nothing
+else changed" by comparing whole records field-by-field. That assertion was true for the source
+package's data model; it is not automatically true for the fork's. If the fork adds a per-episode
+or per-layout field that legitimately recomputes from something the recovery is allowed to change
+(e.g. a distractor position that depends on the substituted layout's geometry), the inherited
+check will reject the correct recovery as if it were drift. These bugs are invisible until the
+recovery path actually runs, because every test written against the source package's version was
+correctly asserting the *simpler* invariant. Re-derive the check from the fork's actual data model,
+not by relaxing it generally — scope the allowance to exactly the new field, for exactly the
+record(s) the change is expected to touch.
+
+## 6. Confirm a new regression test would actually have caught the bug
 
 When adding a test for a fork-hygiene bug, confirm it **fails** against the pre-fix file
 (`git stash` the fix, rerun). A test that imports the wrong module, patches the wrong symbol, or
