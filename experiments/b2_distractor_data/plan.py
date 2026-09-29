@@ -102,7 +102,10 @@ FRAME_ROWS = ADMIT_COUNT * EXPECTED_FRAMES  # 105_600
 DECODED_FRAMES = 2 * FRAME_ROWS  # 211_200
 
 # Populated only if a layout proves uncompletable during collection; see broad_workspace #11.
-INFEASIBLE_LAYOUT_RESAMPLES = {}
+# train_124: 9/9 feasible redraws rejected with expert_execution — the scripted expert cannot
+# complete a stack on this geometry (same class as B1 FAILURES #30's validation_037). Verified
+# layout_id 'train_124' is used by exactly episode 124 before substituting (2026-09-29).
+INFEASIBLE_LAYOUT_RESAMPLES = {'train_124': 0}
 
 
 def instruction_for(pick, place):

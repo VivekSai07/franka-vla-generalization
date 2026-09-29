@@ -133,51 +133,49 @@ class FeasibilityGateTests(unittest.TestCase):
         self.assertEqual([e['episode_index'] for e in events if e['event'] == 'started'],
                          list(range(180, self.p.ADMIT_COUNT)))
 
-    def test_infeasible_layout_resample_registry_is_empty_and_mechanism_intact(self):
-        """B2 registers no substitution, and the substitution machinery must stay deterministic.
+    def test_infeasible_layout_resample_only_moves_recorded_layouts(self):
+        """The substitution must be deterministic and must not disturb any episode slot.
 
-        Every planned layout was collectable, so the registry is empty. The mechanism is still
-        exercised here: if a layout were ever registered it must move only itself, deterministically
-        and inside envelope F7.
+        train_124 (slot 124) exhausted every feasible draw during collection — 9/9 expert-execution
+        rejections — so it is the one recorded substitution; nothing else may have moved.
         """
         plan = self.p.make_plan()
-        self.assertEqual(self.p.INFEASIBLE_LAYOUT_RESAMPLES, {})
-        self.assertEqual(plan['infeasible_layout_resamples'], {})
+        self.assertEqual(self.p.INFEASIBLE_LAYOUT_RESAMPLES, {'train_124': 0})
         layouts = {x['layout_id']: x for x in plan['layouts']}
         for lid, layout in layouts.items():
             if lid == 'base':
                 continue
             self.assertIn('region_xy_m', layout)
-        # No layout carries a resampled draw; every one keeps its Latin-hypercube draw.
-        for lid, layout in layouts.items():
-            if lid == 'base':
-                continue
-            self.assertNotEqual(layout['region_xy_m'], self.p.resample_layout_xy(lid, 0))
-        first = self.p.resample_layout_xy('validation_020', 2)
-        self.assertEqual(self.p.resample_layout_xy('validation_020', 2), first)  # deterministic
-        self.assertNotEqual(self.p.resample_layout_xy('validation_020', 1), first)
+        # The substituted layout carries its resampled draw, not its Latin-hypercube one.
+        self.assertEqual(layouts['train_124']['region_xy_m'],
+                         self.p.resample_layout_xy('train_124', 0))
+        first = self.p.resample_layout_xy('train_000', 2)
+        self.assertEqual(self.p.resample_layout_xy('train_000', 2), first)  # deterministic
+        self.assertNotEqual(self.p.resample_layout_xy('train_000', 1), first)
         for axis, value in enumerate(first):  # stays inside envelope F7
             self.assertGreaterEqual(value, self.p.AXIS_LOW[axis])
             self.assertLessEqual(value, self.p.AXIS_HIGH[axis])
-        # A registered substitution moves that layout's draw, and only that one.
-        with patch.object(self.p, 'INFEASIBLE_LAYOUT_RESAMPLES', {'validation_037': 0}):
-            substituted = self.p.make_plan()
-        by_id = {x['layout_id']: x for x in substituted['layouts']}
-        self.assertEqual(by_id['validation_037']['region_xy_m'],
-                         self.p.resample_layout_xy('validation_037', 0))
-        moved = {x['layout_id'] for x, y in zip(substituted['layouts'], plan['layouts'])
-                 if x['region_xy_m'] != y['region_xy_m']}
-        self.assertEqual(moved, {'validation_037'})
+        self.assertEqual(plan['infeasible_layout_resamples'], {'train_124': 0})
         self.p.validate_plan(plan)
 
-    def test_no_layout_moves_for_the_collected_plan(self):
-        """Every episode must be recorded under the draw the canonical plan specifies."""
+    def test_only_the_substituted_layout_moves(self):
+        """Every other layout must keep the draw the 124 collected episodes were recorded under.
+
+        Episode 124's own `distractor_xy_m` is expected to differ too: it is drawn relative to its
+        layout's cube geometry for clearance, so substituting the layout re-derives it. No other
+        episode field, and no other episode, may move.
+        """
         plan = self.p.make_plan()
         with patch.object(self.p, 'INFEASIBLE_LAYOUT_RESAMPLES', {}):
             baseline = self.p.make_plan()
         moved = {x['layout_id'] for x, y in zip(plan['layouts'], baseline['layouts']) if x != y}
-        self.assertEqual(moved, set())
-        self.assertEqual(plan['episodes'], baseline['episodes'])
+        self.assertEqual(moved, {'train_124'})
+        moved_episodes = [i for i, (x, y) in enumerate(zip(plan['episodes'], baseline['episodes']))
+                          if x != y]
+        self.assertEqual(moved_episodes, [124])
+        only_field_diff = {k for k in plan['episodes'][124]
+                           if plan['episodes'][124][k] != baseline['episodes'][124][k]}
+        self.assertEqual(only_field_diff, {'distractor_xy_m'})
 
     def test_infeasible_slot_exhausting_every_redraw_stops(self):
         """A slot with no feasible draw cannot be skipped; admit index must track the plan slot."""
