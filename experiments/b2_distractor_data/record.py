@@ -385,21 +385,33 @@ def amend_frozen_plan(output, plan, bank, bound, expert, check):
     no already-collected slot may depend on a moved layout, so demonstrations recorded under the
     previous plan stay valid. The superseded provenance is preserved in amendment.json because
     substituting a layout necessarily edits the collector source.
+
+    A substituted layout's cube geometry moves, and a moved layout's own episode draws its
+    distractor placement for clearance against that geometry (`draw_distractor_xy`), so that one
+    field of that one episode is expected to change too — everything else, for every episode,
+    must not.
     """
     output = Path(output)
     previous = json.loads((output/'plan.json').read_text())
     previous_bound = json.loads((output/'provenance.json').read_text())
     if previous == plan and previous_bound == bound:
         return json.loads((output/'snapshots.json').read_text())
-    if previous['episodes'] != plan['episodes'] or previous['base_layout'] != plan['base_layout']:
+    if previous['base_layout'] != plan['base_layout']:
         raise ValueError('Amendment may not change any episode slot')
-    if json.loads((output/'configuration.json').read_text()) != expert.config:
-        raise ValueError('Amendment may not change the expert configuration')
     old = {x['layout_id']: x for x in previous['layouts']}
     new = {x['layout_id']: x for x in plan['layouts']}
     moved = {k for k in old if old[k] != new.get(k)}
     if moved - set(p.INFEASIBLE_LAYOUT_RESAMPLES):
         raise ValueError(f'Unrecorded layout substitution: {sorted(moved - set(p.INFEASIBLE_LAYOUT_RESAMPLES))}')
+    for prev_ep, new_ep in zip(previous['episodes'], plan['episodes']):
+        if prev_ep['layout_id'] != new_ep['layout_id']:
+            raise ValueError('Amendment may not change any episode slot')
+        allowed = {'distractor_xy_m'} if prev_ep['layout_id'] in moved else set()
+        changed = {k for k in prev_ep if prev_ep[k] != new_ep.get(k)}
+        if changed - allowed:
+            raise ValueError('Amendment may not change any episode slot')
+    if json.loads((output/'configuration.json').read_text()) != expert.config:
+        raise ValueError('Amendment may not change the expert configuration')
     for directory in sorted((output/'attempts').iterdir()):
         if json.loads((directory/'slot.json').read_text())['layout_id'] in moved:
             raise ValueError(f'Attempt {directory.name} was collected under a substituted layout')
