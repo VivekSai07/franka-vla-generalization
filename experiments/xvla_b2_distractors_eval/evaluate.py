@@ -531,3 +531,8 @@ def parse_args(argv=None):
 def main(argv=None):
     args = parse_args(argv)
     run(c.OUTPUT, args.mode, args.checkpoint)
+
+
+if __name__ == '__main__':
+    main()
+

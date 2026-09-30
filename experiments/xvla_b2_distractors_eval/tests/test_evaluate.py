@@ -158,6 +158,17 @@ class ForkHygieneTests(unittest.TestCase):
                        'from experiments.b1_language_data', 'import experiments.b1_language_data'):
             self.assertNotIn(banned, source, f'evaluate.py still references {banned!r}')
 
+    def test_module_actually_calls_main_when_run_as_a_script(self):
+        """Regression: `python -m ...evaluate --mode=X` silently did nothing and exited 0 in
+        under 5 seconds, because the fork dropped the `if __name__ == '__main__':` guard. Every
+        `docker run` in the eval chain "passed" instantly on a no-op, and the chain moved on to
+        the next stage on a completely fake result. Caught only by checking wall-clock time was
+        implausible for a real GPU rollout -- this test makes it a CPU-visible assertion instead."""
+        source = (Path(__file__).parents[1]/'evaluate.py').read_text()
+        self.assertIn("if __name__ == '__main__':", source)
+        guard = source.split("if __name__ == '__main__':", 1)[1]
+        self.assertIn('main(', guard, 'the __main__ guard must actually call main()')
+
 
 if __name__ == '__main__':
     unittest.main()
