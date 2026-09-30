@@ -234,9 +234,8 @@ attributable. Options when it gets its own phase, each with different expert imp
       `validation_037`); substituting it exposed a fork-hygiene bug in `amend_frozen_plan`'s
       per-episode equality check, which didn't allow for B2's `distractor_xy_m` recompute — fixed
       and resumed cleanly, no data lost (FAILURES #35).
-- [ ] **Pilot: watch the first ~15 admits** before committing the full 6.6 h. The expert is
-      scripted against the target pair only, so the collision rate with four cubes in the scene
-      is unmeasured; a distractor moved > 2 cm is rejected and retried against the budget.
+- [x] **Pilot** — the first ~15 admits ran clean (episode 0 admitted first try after the velocity
+      fix); the full run then rejected only `train_124` (9/9, substituted).
 - [x] Full 200-episode collection: 200/200 admitted, 9 rejections (all on `train_124`), sealed
       `b6cfff3f...0c12340`.
 - [x] Training package `experiments/xvla_b2_distractors/` (forked from `xvla_b1_language`), 50/50
@@ -247,10 +246,21 @@ attributable. Options when it gets its own phase, each with different expert imp
       missing its `if __name__ == '__main__':` guard, so `python -m ...evaluate` exited 0 having
       done nothing; every screening checkpoint "passed" in seconds (FAILURES #36). Fixed, with a
       regression test confirmed to fail against the pre-fix commit, before relaunching.
-- [ ] Evaluation running: smoke -> screen (5 checkpoints x 20 trials, distractor condition) ->
-      report (winner x 160 trials, both conditions x 40 layouts x 2 seeds). See
-      `/home/utxowqr/b2_eval_status.sh`.
-- [ ] Measures distractor rejection independently of language
+- [x] **Evaluation complete (2026-09-30).** Screening tied 33,400 and 50,000 at 17/20; reports:
+      33,400 **132/160 = 82.5%**, 50,000 **147/160 = 91.9%** (paired p = 0.004; FAILURES #37).
+      Control vs distractor: +2.5 / +1.25 pts, not detectable. Full diagnosis of all 41 failures:
+      [docs/B2_DISTRACTOR_EVALUATION_20260930.md](docs/B2_DISTRACTOR_EVALUATION_20260930.md).
+- [x] Measures distractor rejection independently of language — **answer: no detectable effect**,
+      for distractors that never physically interfere (max displacement 0.064 mm).
+- [ ] **Decide next steps** (nothing chosen yet; see section 8 of the report). Candidates, most
+      failure mass first: tighten the expert's release precision (addresses 21/41 failures), add
+      pick-coverage near the `054`/`048` regions, a harder distractor test with possible
+      interference (B2b), and understand why `054` got worse with training and why the *familiar*
+      arrangement fails more. Change one variable per run.
+- [ ] Confirm 50,000's 91.9% on a fresh holdout (it is the larger of two reported results).
+- [ ] Merge `feat/b2-distractors` into `main` once the next step is chosen.
+- [ ] Stage checkpoints/dataset for Windows and HF after the go-ahead (see the
+      `transferring-artifacts-off-rtx` skill). Nothing has been deleted.
 
 **Three spec errors were corrected before implementation** (see the spec's *Corrections* section):
 the floor-colour prerequisite was withdrawn as both a no-op and seal-breaking; "16 episodes per
