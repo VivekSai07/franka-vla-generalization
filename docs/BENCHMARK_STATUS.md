@@ -1,5 +1,21 @@
 # Franka benchmark: start here
 
+## B2 distractors: no detectable distractor effect; 50,000 updates 91.9% vs 82.5% at 33,400 — 2026-09-30
+
+Trained X-VLA from base on `b2_distractor_20260928` (200 episodes, 40 control + 160 with 1–2
+distractor cubes) for 50,000 updates (11.7 h). Screened five checkpoints on 20 layouts
+(distractor condition): 8 / 16 / 17 / 16 / 17 of 20 at 16.7k / 25k / 33.4k / 41.7k / 50k.
+33,400 and 50,000 tied; the chain reported 33,400 by array-order tie-break, and a queued follow-up
+reported 50,000 as well. Report (160 trials, 40 held-out layouts, both conditions, 2 seeds):
+**33,400 132/160 = 82.5%, 50,000 147/160 = 91.9%** (paired McNemar p = 0.004).
+
+Control vs distractor within layout: +2.5 pts (p = 0.82) and +1.25 pts (p = 1.0). Not detectable;
+no distractor was ever touched, so this is a visual-distraction result only. Diagnosis of all 41
+failures: layout-specific, none infeasible (scripted expert 23/23); half are release precision near
+the 2.1 cm tipping limit of the cube, 27% are acquisition failures in two layouts, 17% are
+hesitation. Collection hit four problems of its own (FAILURES #32–#35) and the evaluation chain
+two more (#36, #37). See [B2_DISTRACTOR_EVALUATION_20260930.md](B2_DISTRACTOR_EVALUATION_20260930.md).
+
 ## B1 language grounding: 94.4% report success, no positional shortcut detected — 2026-09-26
 
 Trained X-VLA from base on `b1_language_20260925` (200 episodes, 2×2 factorial: instruction ×
