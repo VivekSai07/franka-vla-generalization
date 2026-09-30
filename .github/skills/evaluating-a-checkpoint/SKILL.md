@@ -37,6 +37,10 @@ checkpoint, or report progress from training-loop metrics.
 - If two conditions are compared (e.g. control vs distractor-present), evaluate **both at every
   report layout** (within-layout contrast) rather than splitting layouts across conditions — this
   is what makes a contrast diagnostic instead of confounded by layout difficulty.
+- **A tie is a tie.** A 20-layout screen moves 5 points per trial, so candidates within a couple of
+  trials of each other are not ranked. Never let the winner rule fall through to array order (the
+  B2 chain reported 33,400 over a tied 50,000 and scored 82.5% vs 91.9%, FAILURES #37). Log the tie
+  and report every tied candidate, or screen on more layouts.
 
 ## 4. A holdout failure is not automatically a policy failure
 
@@ -69,6 +73,8 @@ trials from a handful of layouts describes between-layout variation, not measure
 
 ## See also
 
+[diagnosing-policy-failures](../diagnosing-policy-failures/SKILL.md) once the rollouts are in and
+failures need explaining,
 [training-a-policy](../training-a-policy/SKILL.md) for checkpoint schedule design,
 [launching-a-run](../launching-a-run/SKILL.md) for the container/gate mechanics shared with
 training.

@@ -12,7 +12,8 @@ Additional context loaded automatically where supported:
 | [.github/skills/diagnosing-a-binding-failure/SKILL.md](.github/skills/diagnosing-a-binding-failure/SKILL.md) | admission / provenance / seal mismatches |
 | [.github/skills/collecting-a-dataset/SKILL.md](.github/skills/collecting-a-dataset/SKILL.md) | `--preflight`/`--collect`, rejection budget, resume/rollback |
 | [.github/skills/training-a-policy/SKILL.md](.github/skills/training-a-policy/SKILL.md) | contract/runner design, checkpoint schedule, disk guards, comparing runs |
-| [.github/skills/evaluating-a-checkpoint/SKILL.md](.github/skills/evaluating-a-checkpoint/SKILL.md) | screening vs report, holdout independence, checkpoint selection |
+| [.github/skills/evaluating-a-checkpoint/SKILL.md](.github/skills/evaluating-a-checkpoint/SKILL.md) | screening vs report, holdout independence, checkpoint selection, ties |
+| [.github/skills/diagnosing-policy-failures/SKILL.md](.github/skills/diagnosing-policy-failures/SKILL.md) | explaining failed rollouts: layout, feasibility, mechanism, validating measures |
 | [.github/skills/forking-an-experiment-package/SKILL.md](.github/skills/forking-an-experiment-package/SKILL.md) | copying a package — residue traps, symtable check |
 | [.github/skills/branching-for-an-experiment-axis/SKILL.md](.github/skills/branching-for-an-experiment-axis/SKILL.md) | one branch per axis, safe recovery if work landed on `main` |
 | [.github/skills/transferring-artifacts-off-rtx/SKILL.md](.github/skills/transferring-artifacts-off-rtx/SKILL.md) | stage/transfer/verify/publish/reclaim disk for datasets & checkpoints |
