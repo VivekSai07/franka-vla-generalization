@@ -237,7 +237,19 @@ attributable. Options when it gets its own phase, each with different expert imp
 - [ ] **Pilot: watch the first ~15 admits** before committing the full 6.6 h. The expert is
       scripted against the target pair only, so the collision rate with four cubes in the scene
       is unmeasured; a distractor moved > 2 cm is rejected and retried against the budget.
-- [ ] Full 200-episode collection, then admission, training and the two-tier evaluation
+- [x] Full 200-episode collection: 200/200 admitted, 9 rejections (all on `train_124`), sealed
+      `b6cfff3f...0c12340`.
+- [x] Training package `experiments/xvla_b2_distractors/` (forked from `xvla_b1_language`), 50/50
+      tests passing. CPU admission, GPU preflight, and 50,000-update training all completed
+      cleanly (11.68 h, all 6 checkpoints byte-exact FP32 reload).
+- [x] Eval package `experiments/xvla_b2_distractors_eval/` (forked from `xvla_b1_language_eval`).
+      First launch of the chain silently no-op'd on every stage — the forked `evaluate.py` was
+      missing its `if __name__ == '__main__':` guard, so `python -m ...evaluate` exited 0 having
+      done nothing; every screening checkpoint "passed" in seconds (FAILURES #36). Fixed, with a
+      regression test confirmed to fail against the pre-fix commit, before relaunching.
+- [ ] Evaluation running: smoke -> screen (5 checkpoints x 20 trials, distractor condition) ->
+      report (winner x 160 trials, both conditions x 40 layouts x 2 seeds). See
+      `/home/utxowqr/b2_eval_status.sh`.
 - [ ] Measures distractor rejection independently of language
 
 **Three spec errors were corrected before implementation** (see the spec's *Corrections* section):
