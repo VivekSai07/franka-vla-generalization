@@ -258,7 +258,10 @@ attributable. Options when it gets its own phase, each with different expert imp
       interference (B2b), and understand why `054` got worse with training and why the *familiar*
       arrangement fails more. Change one variable per run.
 - [ ] Confirm 50,000's 91.9% on a fresh holdout (it is the larger of two reported results).
-- [ ] Merge `feat/b2-distractors` into `main` once the next step is chosen.
+- [x] `feat/b2-distractors` merged into `main` (2026-10-01, `511ab25`); local only, not pushed. The
+      branch is kept, as the other axis branches are. The B2 packages are now hash-bound to the
+      trained run: **fork, do not edit** (`experiments/b2_distractor_data/**`,
+      `experiments/xvla_b2_distractors/**`, the B2 spec and plan).
 - [ ] Stage checkpoints/dataset for Windows and HF after the go-ahead (see the
       `transferring-artifacts-off-rtx` skill). Nothing has been deleted.
 
