@@ -202,6 +202,8 @@ it would drag cross-dataset binding into a package with no other reason to touch
 
 ### B1b. Vertical variation (new axis — currently a constant, therefore untestable)
 
+**Deferred to "next week" per user, 2026-10-01.** Separate loop test; do not fold into B3.
+
 Measured across the sealed 200 episodes: initial pick cube Z and place cube Z each take **exactly
 one value** (spread 0.00e+00), and the final stack height spreads 1.5e-05 m. Approach altitude *is*
 varied (±3 cm hover jitter, 200 distinct values) and home pose is varied (±1°, 1400 values), but the
@@ -284,10 +286,19 @@ cell" is really 32; and screening is 100 trials, not 80.
       cubes are already in the scene, and leaving it alone makes B2's control arm visually
       identical to B1. Still never in the same collection run as a new data axis.
 
-### B3. Full colour randomisation (third axis)
-- [ ] Only after B1 and B2 each have a measured result
-- [ ] This is closest to the original v1/v2 design; note v2's evaluation was never completed, so
-      there is no clean verdict on it — do not treat it as a known failure
+### B3. Combined-axis dataset on a new (robosuite) scene
+
+**Design spec (Phase 1 only): [docs/superpowers/specs/2026-10-01-robosuite-scene-bringup-design.md](docs/superpowers/specs/2026-10-01-robosuite-scene-bringup-design.md)**
+**Branch:** `feat/robosuite-scene-bringup` (not yet created; from `main` at `624b156`).
+
+Two-phase project. User accepted the one-variable-per-run attribution trade-off: a strong result from one experiment if it works, limited attribution if it doesn't.
+
+- [ ] **Phase 1 — robosuite scene bring-up.** Prove the simulator swap works end-to-end on a trivial scene (one layout, two cubes, two cameras replicated from the current scene, scripted expert, 5-episode PoC, deterministic resets, LeRobot schema parity). Nothing new is varied. Go/no-go report decides whether Phase 2 starts. See spec above for risks R1-R7.
+- [ ] **Phase 2 — B3 combined-axis collection**, designed only after Phase 1 passes. Will layer: tighter release precision (expert gate ≤ 1.2 cm), harder distractors (reduced clearance / in the carry path), full colour randomisation, extra demonstrations near the acquisition-weak `054`/`048` pick regions, and a floor/prop change. Horizon likely 75-100 k updates.
+- [ ] Confirm 50,000's 91.9% on a fresh holdout as part of Phase 2's eval, since the B2 50k number is the larger of two reported results.
+
+### B3 (original, superseded) — colour randomisation as a standalone axis
+- [ ] Superseded by the Phase 1/Phase 2 plan above. The colour-randomisation idea survives as item (3) inside Phase 2, not as a standalone run.
 
 ### Not planned
 - **Bounding-box / segmentation-mask injection.** Would likely raise numbers but hands the model
