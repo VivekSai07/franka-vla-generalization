@@ -193,7 +193,10 @@ Everything else under `outputs/train/` (smolvla_pilot, single_task, fixed_layout
 `outputs/downloads_20260926/` are pre-staged, hardlinked download bundles for the user's Windows
 machine — the 2026-09-26 one covers both the minimal tier and the full checkpoint-ablation tier
 for B1 and broad-workspace (~50 GB, zero extra disk here); read the `README.md` inside each
-before touching originals. Full file lists and rationale:
+before touching originals. `outputs/downloads_20261001/b2_distractor/` was copied to Windows on
+2026-10-01; all six `model.safetensors` matched `model_sha256` and `seal.json` is
+`b6cfff3f...0c12340`. The Windows check did not re-derive the dataset fingerprint. Do not delete
+the RTX originals without a separate go-ahead. Full file lists and rationale:
 [B1_AND_BROADWORKSPACE_PUBLICATION_20260926.md](B1_AND_BROADWORKSPACE_PUBLICATION_20260926.md).
 
 ---

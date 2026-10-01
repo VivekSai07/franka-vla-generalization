@@ -264,8 +264,13 @@ attributable. Options when it gets its own phase, each with different expert imp
       branch is kept, as the other axis branches are. The B2 packages are now hash-bound to the
       trained run: **fork, do not edit** (`experiments/b2_distractor_data/**`,
       `experiments/xvla_b2_distractors/**`, the B2 spec and plan).
-- [ ] Stage checkpoints/dataset for Windows and HF after the go-ahead (see the
-      `transferring-artifacts-off-rtx` skill). Nothing has been deleted.
+- [x] **Transferred to Windows (2026-10-01).** Staged at
+      `outputs/downloads_20261001/b2_distractor/` and copied to
+      `C:\d drive\RTX trained models\downloads_20261001\b2_distractor`. All six
+      `model.safetensors` matched `checkpoint_result.json` `model_sha256`; `seal.json`
+      is `b6cfff3f...0c12340`. RTX originals not deleted.
+- [ ] Publish that verified copy to Hugging Face after the go-ahead. The Windows check
+      read `seal.json`; it did not re-derive the dataset fingerprint from `dataset/`.
 
 **Three spec errors were corrected before implementation** (see the spec's *Corrections* section):
 the floor-colour prerequisite was withdrawn as both a no-op and seal-breaking; "16 episodes per
