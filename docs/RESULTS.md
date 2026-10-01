@@ -4,7 +4,44 @@ All benchmark numbers. Protocols differ in difficulty and are **not** comparable
 rows unless stated. Chronological narrative lives in [BENCHMARK_STATUS.md](BENCHMARK_STATUS.md);
 failures and lessons in [FAILURES.md](FAILURES.md).
 
-## Current status (2026-09-26)
+## Current status (2026-09-30)
+
+**Headline — B2: distractor cubes had no detectable effect on success; more training helped a lot;
+most failures are release precision, not perception.** X-VLA trained 50,000 updates on
+`b2_distractor_20260928` (200 episodes: 40 control, 160 with 1–2 distractor cubes). Report
+protocol: 160 trials on 40 held-out layouts, each run in both conditions, 2 seeds. Full analysis:
+[B2_DISTRACTOR_EVALUATION_20260930.md](B2_DISTRACTOR_EVALUATION_20260930.md).
+
+| checkpoint | overall | layout-cluster 95% CI | control | distractor-present |
+|---|---|---|---|---|
+| 33,400 | 132/160 = 82.5% | [73.1, 90.6] | 67/80 = 83.8% | 65/80 = 81.2% |
+| **50,000** | **147/160 = 91.9%** | [83.8, 98.1] | 74/80 = 92.5% | 73/80 = 91.2% |
+
+- **Distractor contrast (within-layout, control − distractor):** +2.5 pts at 33,400 (CI [−7.5,
+  +12.5], p = 0.82) and +1.25 pts at 50,000 (CI [−5.0, +8.8], p = 1.0). Not detectable; the
+  interval excludes a drop larger than about 9–12 points. **No distractor was ever touched**
+  (max displacement 0.064 mm over 160 trials), so B2 tested *visual* distraction only.
+- **50,000 vs 33,400, paired on identical layout/condition/seed:** 20 trials only 50,000 solved,
+  5 only 33,400 (McNemar p = 0.004). Screening tied them at 17/20; the chain's first-maximum
+  tie-break picked 33,400, the worse one (FAILURES #37). The 91.9% is the larger of two reported
+  results, so a fresh holdout is the clean confirmation.
+- **Control arm vs B1's 94.4%:** same range (92.5% at 50,000), but different layouts, selection and
+  LR phase. A sanity check, not a delta.
+
+**The 41 failures (of 320 trials) are layout-specific and have identifiable causes.** Five layouts
+hold all 13 failures at 50,000 (permutation p = 0.0002). The scripted expert solved 23/23 attempts,
+including every failing layout, so none is infeasible. First-cause mechanisms: **release precision
+21 (51%)** — success falls from 98% to 22% to 0% as the cube is released 1.5 → 2.0–2.5 → > 2.5 cm
+off-centre, matching the 2.1 cm tipping limit of a 4.2 cm cube; **acquisition failures 11 (27%)**,
+mostly two layouts with a mis-positioned grasp; **hesitation/slowness 7 (17%)**; **wrong cube 2**.
+The policy's release offset has a fatter tail than the expert's (8.7% / 2.6% of releases > 2 cm at
+33,400 / 50,000 vs 0.5% for the expert).
+
+Open and **unexplained**: failures concentrate in the *familiar* arrangement (11/22 layouts vs
+1/18 swapped at 33,400). Exploratory, from roughly thirty uncorrected tests; replicate before
+relying on it.
+
+## Prior status (2026-09-26)
 
 **Headline — B1 shows the trained policy reads the instruction, not the cube's position.** The
 2×2 factorial dataset (instruction × colour/region arrangement) was designed to break the exact

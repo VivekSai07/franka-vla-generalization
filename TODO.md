@@ -219,16 +219,67 @@ attributable. Options when it gets its own phase, each with different expert imp
 - [ ] variable-height place target (platform/riser) — changes place Z but not pick Z
 
 ### B2. Distractors (second axis)
-- [ ] Add 1–2 non-target cubes, target pair unchanged
-- [ ] Measures distractor rejection independently of language
+
+**Design spec: [docs/superpowers/specs/2026-09-28-b2-distractors-design.md](docs/superpowers/specs/2026-09-28-b2-distractors-design.md)**
+**Plan: [docs/superpowers/plans/2026-09-28-b2-distractors.md](docs/superpowers/plans/2026-09-28-b2-distractors.md)**
+
+- [x] Package `experiments/b2_distractor_data/` implemented and tested (90/90 in-container).
+      200 slots: 40 control + 160 distractor-present (1-2 cubes), cells balanced *within* each
+      arm, riskiest profiles ordered first, 60 reserved layouts (20 screen / 40 report) banked in
+      both conditions. First launch died at episode 0 on inherited parked-cube velocity; fixed
+      before the collection that followed (FAILURES #32, #33). A later `git switch main` crashed
+      the running collection at episode 49 by checking out a tree missing the package/docs;
+      recovered via rollback + `--resume`, no data lost (FAILURES #34). Slot 124 (`train_124`)
+      was unsolvable by the expert (9/9 `expert_execution` rejections, same class as B1's
+      `validation_037`); substituting it exposed a fork-hygiene bug in `amend_frozen_plan`'s
+      per-episode equality check, which didn't allow for B2's `distractor_xy_m` recompute — fixed
+      and resumed cleanly, no data lost (FAILURES #35).
+- [x] **Pilot** — the first ~15 admits ran clean (episode 0 admitted first try after the velocity
+      fix); the full run then rejected only `train_124` (9/9, substituted).
+- [x] Full 200-episode collection: 200/200 admitted, 9 rejections (all on `train_124`), sealed
+      `b6cfff3f...0c12340`.
+- [x] Training package `experiments/xvla_b2_distractors/` (forked from `xvla_b1_language`), 50/50
+      tests passing. CPU admission, GPU preflight, and 50,000-update training all completed
+      cleanly (11.68 h, all 6 checkpoints byte-exact FP32 reload).
+- [x] Eval package `experiments/xvla_b2_distractors_eval/` (forked from `xvla_b1_language_eval`).
+      First launch of the chain silently no-op'd on every stage — the forked `evaluate.py` was
+      missing its `if __name__ == '__main__':` guard, so `python -m ...evaluate` exited 0 having
+      done nothing; every screening checkpoint "passed" in seconds (FAILURES #36). Fixed, with a
+      regression test confirmed to fail against the pre-fix commit, before relaunching.
+- [x] **Evaluation complete (2026-09-30).** Screening tied 33,400 and 50,000 at 17/20; reports:
+      33,400 **132/160 = 82.5%**, 50,000 **147/160 = 91.9%** (paired p = 0.004; FAILURES #37).
+      Control vs distractor: +2.5 / +1.25 pts, not detectable. Full diagnosis of all 41 failures:
+      [docs/B2_DISTRACTOR_EVALUATION_20260930.md](docs/B2_DISTRACTOR_EVALUATION_20260930.md).
+- [x] Measures distractor rejection independently of language — **answer: no detectable effect**,
+      for distractors that never physically interfere (max displacement 0.064 mm).
+- [ ] **Decide next steps** (nothing chosen yet; see section 8 of the report). Candidates, most
+      failure mass first: tighten the expert's release precision (addresses 21/41 failures), add
+      pick-coverage near the `054`/`048` regions, a harder distractor test with possible
+      interference (B2b), and understand why `054` got worse with training and why the *familiar*
+      arrangement fails more. Change one variable per run.
+- [ ] Confirm 50,000's 91.9% on a fresh holdout (it is the larger of two reported results).
+- [ ] Merge `feat/b2-distractors` into `main` once the next step is chosen.
+- [ ] Stage checkpoints/dataset for Windows and HF after the go-ahead (see the
+      `transferring-artifacts-off-rtx` skill). Nothing has been deleted.
+
+**Three spec errors were corrected before implementation** (see the spec's *Corrections* section):
+the floor-colour prerequisite was withdrawn as both a no-op and seal-breaking; "16 episodes per
+cell" is really 32; and screening is 100 trials, not 80.
 
 ### Environment housekeeping
-- [ ] **Floor colour: blue → grey.** `src/robots/franka_panda/model/scene.xml:21` groundplane
-      checker texture (`rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3"`) reads bluish; swap to a neutral
-      grey (e.g. `rgb1="0.35 0.35 0.35" rgb2="0.2 0.2 0.2"`) and check whether
-      `smolvla_scene.xml` duplicates the same block. Do this as its own isolated change (few-episode
-      sanity check that collection/validation still passes) — **never in the same collection run as
-      a new data axis** (B2, B1b, ...), so a regression is attributable to one change, not two.
+- [ ] **Floor colour: blue → grey — BLOCKED, and not a prerequisite for anything.**
+      `src/robots/franka_panda/model/scene.xml:21` groundplane checker texture
+      (`rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3"`) reads bluish. Two findings from the B2 review
+      (2026-09-28) change this item:
+      (a) `scene.xml` is **not** the scene that runs — the packages load `smolvla_scene.xml`
+      (pinned in `experiments/fixed_layout/source.py`), so editing `scene.xml` is a silent no-op;
+      (b) **both** XML files are recorded in the sealed `provenance.json` of `b1_language_data`
+      and `broad_workspace_data`, so editing either invalidates the provenance behind the 94.4%
+      and 86.1% results and would block any future run bound to those datasets.
+      Doing this at all means accepting that those two datasets can no longer be re-verified, or
+      deferring until nothing further is needed from them. B2 does **not** need it: the distractor
+      cubes are already in the scene, and leaving it alone makes B2's control arm visually
+      identical to B1. Still never in the same collection run as a new data axis.
 
 ### B3. Full colour randomisation (third axis)
 - [ ] Only after B1 and B2 each have a measured result
