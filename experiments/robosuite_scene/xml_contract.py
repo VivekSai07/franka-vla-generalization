@@ -1,5 +1,7 @@
 import xml.etree.ElementTree as ET
 
+import mujoco
+import numpy as np
 from robosuite.utils.mjcf_utils import new_element
 
 from experiments.robosuite_scene.cameras import FRONT_CAM, GRIPPER_CAM
@@ -11,6 +13,10 @@ RENAMES = {
     "gripper0_right_rightfinger": "right_finger",
     "target_cube_red_main": "target_cube_red",
     "target_cube_green_main": "target_cube_green",
+}
+FINGER_TIPS = {
+    "left_finger": "gripper0_right_finger_joint1_tip",
+    "right_finger": "gripper0_right_finger_joint2_tip",
 }
 ARM_JOINTS = [f"robot0_joint{i}" for i in range(1, 8)]
 FINGER_JOINTS = ["gripper0_right_finger_joint1", "gripper0_right_finger_joint2"]
@@ -81,6 +87,26 @@ def _rewrite_model(root):
         geom = colliding[0]
         geom.attrib.pop("density", None)
         geom.attrib.update(CUBE_CONTACT)
+
+    # Shared code detects grasp and finger contact by the body ids left_finger/right_finger, but
+    # robosuite keeps each pad in a jointless child body. Re-parent the pad geoms, world pose kept;
+    # the tip bodies and their inertials stay, so masses do not change.
+    for finger, tip in FINGER_TIPS.items():
+        finger_body = _by_name(root, "body", finger)
+        tip_body = _by_name(finger_body, "body", tip)
+        pads = [g for g in tip_body.findall("geom") if g.get("contype") != "0" or g.get("conaffinity") != "0"]
+        if not pads:
+            raise ValueError(f"{tip} has no collision geom")
+        tip_pos = np.array(tip_body.get("pos", "0 0 0").split(), dtype=float)
+        tip_quat = np.array(tip_body.get("quat", "1 0 0 0").split(), dtype=float)
+        for geom in pads:
+            pos, quat = np.zeros(3), np.zeros(4)
+            mujoco.mju_rotVecQuat(pos, np.array(geom.get("pos", "0 0 0").split(), dtype=float), tip_quat)
+            mujoco.mju_mulQuat(quat, tip_quat, np.array(geom.get("quat", "1 0 0 0").split(), dtype=float))
+            geom.set("pos", " ".join(repr(float(v)) for v in pos + tip_pos))
+            geom.set("quat", " ".join(repr(float(v)) for v in quat))
+            tip_body.remove(geom)
+            finger_body.append(geom)
 
     # The expert renders with MuJoCo default options (geom groups 0-2 drawn); robosuite keeps its
     # coloured collision geoms in group 0. Push them (and all sites) out so only visual geoms show.

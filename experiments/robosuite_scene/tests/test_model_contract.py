@@ -53,3 +53,14 @@ class ModelContractTests(unittest.TestCase):
     def test_only_visual_geoms_are_drawn(self):
         self.assertFalse(np.any(self.model.geom_group == 0))
         self.assertFalse(np.any(self.model.site_group < 3))
+
+    def test_finger_pads_report_on_the_finger_bodies(self):
+        # Shared code detects grasp and finger contact by the body ids left_finger/right_finger.
+        m = self.model
+        colliding = [g for g in range(m.ngeom) if m.geom_contype[g] or m.geom_conaffinity[g]]
+        for g in colliding:
+            self.assertFalse(m.body(int(m.geom_bodyid[g])).name.endswith("_tip"), m.geom(g).name)
+        for finger in ("left_finger", "right_finger"):
+            pads = [g for g in colliding if m.geom_bodyid[g] == m.body(finger).id
+                    and m.geom_type[g] == mujoco.mjtGeom.mjGEOM_BOX]
+            self.assertEqual(len(pads), 1, finger)
