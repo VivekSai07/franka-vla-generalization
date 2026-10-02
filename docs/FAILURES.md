@@ -1,7 +1,8 @@
 # Failures and lessons
 
 Every failure that cost real time, with the fix and the commit. The actionable
-pre-launch version is the checklist in [TODO.md](../TODO.md).
+pre-launch version is the checklist in
+[.github/skills/launching-a-run/SKILL.md](../.github/skills/launching-a-run/SKILL.md).
 
 ## Failures we hit (and what we learned)
 

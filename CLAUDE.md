@@ -96,7 +96,8 @@ Before treating any of these as a regression, compare counts against `main` in a
 Training/evaluation launch flags, mounts, the `--check` / `--preflight` / `--train` gate
 sequence, and monitoring caveats (Docker `wait` does not reliably notify in this environment —
 poll actively): [docs/OPERATIONS.md](docs/OPERATIONS.md). Before launching any long run, work
-through [TODO.md](TODO.md#before-launching-any-long-run--checklist).
+through the checklist in
+[.github/skills/launching-a-run/SKILL.md](.github/skills/launching-a-run/SKILL.md) (the only copy).
 
 ## Hash-bound files — do not edit
 

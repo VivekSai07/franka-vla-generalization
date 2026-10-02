@@ -7,7 +7,7 @@ Kept current; read these first.
 | file | content |
 |---|---|
 | [../README.md](../README.md) | entry point and navigation |
-| [../TODO.md](../TODO.md) | live plan, pre-launch checklist, known debt |
+| [../TODO.md](../TODO.md) | live plan, known debt (the pre-launch checklist is in `.github/skills/launching-a-run/SKILL.md`) |
 | [RESULTS.md](RESULTS.md) | every benchmark number, with protocols |
 | [FAILURES.md](FAILURES.md) | failures, fixes, meta-lessons |
 | [OPERATIONS.md](OPERATIONS.md) | how to run things now |

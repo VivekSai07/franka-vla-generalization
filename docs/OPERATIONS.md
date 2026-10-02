@@ -8,6 +8,24 @@ Every experiment lives in `experiments/<name>/` as a self-contained package with
 
 ---
 
+## Our Docker images on the RTX machine
+
+The machine is shared; about thirty other images on it belong to other people and projects.
+**Only these two are ours. Never remove, retag or prune anything else** (no `docker image prune`,
+no `docker system prune`).
+
+| local tag | image id | what it is | runs |
+|---|---|---|---|
+| `smolvla:rtc-offline` | `sha256:08de1e09…714abc` | the pinned (admission) image, MuJoCo 3.13.0 | everything sealed: collection, training, evaluation |
+| `vla-robosuite:1.5.2-mj3.4.0` | `sha256:54d861aa…ccf27e` | the image above + robosuite 1.5.2, MuJoCo 3.4.0 | `experiments/robosuite_scene/`, `experiments/robosuite_sim2sim/` |
+
+Tags are local handles only; commands and contracts use the full digest. Neither image is in a
+registry, so losing one means rebuilding it (the second from
+`experiments/robosuite_scene/Dockerfile`; the first cannot be rebuilt bit-identically).
+`vla-robosuite:1.5.2` (`sha256:3ecd62c5…`, robosuite on MuJoCo 3.13.0, could not reset an
+environment) was removed on 2026-10-02. Stopped containers named `xvla-*`, `smolvla-*`, `franka-*`,
+`local-varied-*` and `sim2sim-*` are ours and hold run logs.
+
 ## The pinned image
 
 ```

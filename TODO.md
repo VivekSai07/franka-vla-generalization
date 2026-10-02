@@ -299,6 +299,17 @@ cell" is really 32; and screening is 100 trials, not 80.
 
 Two-phase project. User accepted the one-variable-per-run attribution trade-off: a strong result from one experiment if it works, limited attribution if it doesn't.
 
+> **Direction change (user, 2026-10-02, evening).** The cube work has answered the question it was
+> for: X-VLA learns this task when given the right data in the right format. More cube refinement is
+> no longer the goal. The next step, within about a week, is **real-life props in robosuite** (see
+> "Next project" below). Consequences for the items in this section:
+> - (a) placement offset and the bigger-cube idea: **not pursued**. The offset is understood (the
+>   expert's own jitter) and the results stand as measured.
+> - "Phase 2 — B3 combined-axis collection" on cubes: **on hold, likely superseded** by the props
+>   project. Confirm with the user before spending any time on it.
+> - Sim2sim validation still runs: it is cheap and tells the props project how much of a
+>   MuJoCo-trained policy survives the scene change.
+
 - [x] **Phase 1 — robosuite scene bring-up.** Prove the simulator swap works end-to-end on a trivial scene (one layout, two cubes, two cameras replicated from the current scene, scripted expert, 5-episode PoC, deterministic resets, LeRobot schema parity). Nothing new is varied. Go/no-go report decides whether Phase 2 starts. See spec above for risks R1-R7.
       **Result (2026-10-02): go, conditional on the user ratifying the fingertip-pad re-parenting** (a model-contract fix outside the tuning protocol, whose six allowed attempts all failed; allowed by the executing AI controller's ruling). R1–R7 all pass; 5/5 scripted episodes sealed at `outputs/robosuite_scene/robosuite_bringup_20261002/` (fingerprint `543e300c257d…`). Report: [docs/ROBOSUITE_SCENE_BRINGUP_20261002.md](docs/ROBOSUITE_SCENE_BRINGUP_20261002.md). The robosuite path runs in its own image on MuJoCo 3.4.0 (robosuite 1.5.2 cannot reset on 3.13.0), so robosuite-scene results are not physics-comparable with sealed results.
 - [ ] **Before Phase 2 is designed — carried over from Phase 1:**
@@ -312,7 +323,12 @@ Two-phase project. User accepted the one-variable-per-run attribution trade-off:
 - [ ] **Re-think the B3 axis list before designing Phase 2** (user, 2026-10-02). The list below was written before Phase 1 and before the sim2sim result. Inputs that change it: the ≤ 1.2 cm gate conflicts with the expert's own jitter (item a); the scene change is itself a large visual axis; the sim2sim result will say how much of B2's capability survives it.
       Idea to evaluate there (user): a larger cube, still within the 8 cm finger opening, to make placement more forgiving. Notes for that discussion: the in-hand offset comes from jitter along the pad surface, which a larger cube does not remove; a wider cube tips later, so the physical tolerance grows with the edge length (B2 measured the cliff at half the 4.2 cm edge); but `stack_metrics`' 2 cm xy window is a fixed constant in shared code, so the scored tolerance does not grow unless a new metric is defined; and a wider cube leaves less finger clearance on approach.
 - [ ] **Phase 2 — B3 combined-axis collection**, designed only after Phase 1 passes. Will layer: tighter release precision (expert gate ≤ 1.2 cm), harder distractors (reduced clearance / in the carry path), full colour randomisation, extra demonstrations near the acquisition-weak `054`/`048` pick regions, and a floor/prop change. Horizon likely 75-100 k updates.
-- [ ] **After B3 — robosuite's built-in props / real-life objects** (user idea, 2026-10-02; not planned yet). Move from cubes to robosuite's object library (cans, bottles, boxes, cereal, bread, milk; `robosuite.models.objects`). This is a jump, not an increment: the scripted expert assumes a cube it can grasp top-down at a fixed height and scores a cube-on-cube stack, so it needs new grasp strategies per object, a new task definition and success metric, and instructions that name objects. Plan it as its own project after B3 has a measured result.
+- [ ] **Next project — robosuite's built-in props / real-life objects** (user, 2026-10-02; target: start within about a week; needs its own brainstorm → spec → plan). Move from cubes to robosuite's object library (cans, bottles, boxes, cereal, bread, milk; `robosuite.models.objects`). This is a jump, not an increment: the scripted expert assumes a cube it can grasp top-down at a fixed height and scores a cube-on-cube stack, so it needs new grasp strategies per object, a new task definition and success metric, and instructions that name objects.
+- [ ] **Decide the controller and action space for the props project: our joint-target IK or robosuite's OSC_POSE** (user, 2026-10-02). Plan time for this before any props data is collected, because the choice fixes the dataset's action format. What to weigh:
+      - *Ours* (pinocchio IK → 7 absolute joint targets + gripper, 30 Hz): every existing dataset and checkpoint uses it, so old policies can still be rolled out and sim2sim stays possible; robosuite's runtime is not needed (`env.step` is never called).
+      - *OSC_POSE* (robosuite built-in: 6 end-effector deltas + gripper): the format public robosuite / robomimic / LIBERO data uses, and compliant in contact (the SmolVLA checkpoint this repo started from, `smolvla_libero`, is LIBERO-finetuned). Costs: a new action space (no reuse of existing checkpoints or datasets), a scripted expert rewritten to emit deltas, `env.step` and robosuite's control loop in the collection path, and re-proving determinism and replay.
+      - Questions to answer in the brainstorm: do the props need contact-rich or tilted grasps that joint targets handle badly? Do we want to mix in public data or compare against public baselines? Is rolling out the cube-trained checkpoints on the props scene still wanted?
+      - A cheap experiment that would inform it: have the existing expert drive one prop grasp with joint targets, and the same grasp through OSC_POSE, and compare success and smoothness.
 - [ ] Confirm 50,000's 91.9% on a fresh holdout as part of Phase 2's eval, since the B2 50k number is the larger of two reported results.
 
 ### B3 (original, superseded) — colour randomisation as a standalone axis
@@ -341,33 +357,10 @@ Two-phase project. User accepted the one-variable-per-run attribution trade-off:
 
 ## Before launching any long run — checklist
 
-Derived from the failures in [docs/FAILURES.md](docs/FAILURES.md). Each item
-cost real GPU time at least once.
-
-- [ ] **Package README updated.** It is in `SOURCE_FILES`; a copied one describing the old recipe
-      gets hashed into the run's provenance (#17, and the earlier `sed`-mangled X-VLA README).
-- [ ] **No constant duplicated between contract and runner.** Grep the runner for the horizon,
-      checkpoint schedule and any literal that also lives in `recipe()` (#15).
-- [ ] **Regression tests fail against the unfixed code.** Confirm with `git stash`, not by
-      assumption (#10, #15).
-- [ ] **Nothing hash-bound is edited while a job runs.** Check `SOURCE_FILES` and
-      `provenance()` membership first; remember `provenance()` includes READMEs (#8, #17).
-- [ ] **Worktrees are at the intended commit.** `git log -1` inside the worktree (#18).
-- [ ] **Shared helpers are not edited to accommodate one package.** `xvla_single_task/contract.py`
-      is bound by four contracts; override locally instead.
-- [ ] **All gitignored dirs the container needs are mounted** — `outputs`, `datasets`, `.cache`.
-- [ ] **Run `--check` and `--preflight` first.** Editing any `SOURCE_FILES` member after `--check`
-      invalidates it and forces a full ~1h re-run (#16).
-- [ ] **Poll actively.** `docker wait` has silently failed to notify here; do not assume
-      completion will be reported (#19).
-- [ ] **Forked a package? Repoint its tests.** Copied tests keep importing the source module and
-      will pass while testing the wrong code; re-derive constants from the contract rather than
-      copying the literal (#20).
-- [ ] **Checkpoint schedule chosen from the LR curve, not round numbers.** To compare two runs
-      mid-training you must match *schedule phase*, not step count — update 4,000 meant 80%
-      annealed in one run and 24% in the other, making the comparison worthless (#22).
-- [ ] **Plan for rollout evaluation, not proxies.** Loss and MAE improved monotonically through a
-      run that collapsed to 0/72; budget the GPU hours for real rollouts (#21).
+The checklist lives in one place:
+[.github/skills/launching-a-run/SKILL.md](.github/skills/launching-a-run/SKILL.md), section 1.
+It was moved there on 2026-10-02 because three copies (here, the skill, and
+`copilot-instructions.md`) had started to differ. Every item cost real GPU time at least once.
 
 ## After every finding — documentation pass
 

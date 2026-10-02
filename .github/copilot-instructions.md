@@ -40,14 +40,9 @@ violating them destroyed hours of compute. See [docs/FAILURES.md](../docs/FAILUR
 
 ## Before launching any long run
 
-Work through the checklist in [TODO.md](../TODO.md#before-launching-any-long-run--checklist).
-Each item cost real GPU time at least once. Highlights:
-
-- package README updated — it is in `SOURCE_FILES`
-- no constant duplicated between `contract.py` and `runner.py`
-- `--check` and `--preflight` before `--train`; editing any `SOURCE_FILES` member after `--check`
-  invalidates it
-- all gitignored mounts present: `outputs`, `datasets`, `.cache`
+Work through the checklist in section 1 of
+[skills/launching-a-run/SKILL.md](skills/launching-a-run/SKILL.md) — the only copy. Each item cost
+real GPU time at least once.
 
 ## Monitoring
 
