@@ -42,11 +42,13 @@ dependencies. Nothing runs outside the two images below.
 sha256:08de1e09200539a26f7564bbf095fb846b8104ba07a72564b8232feb58714abc
 ```
 
-Python 3.10, LeRobot 0.4.4, PyTorch 2.7.1+cu128, MuJoCo 3.13.0. Runs every package except
-`experiments/robosuite_scene/`, and three of that package's unit tests (`test_r1_image`,
-`test_seal`, `test_expert_fork`), which use no robosuite.
+Python 3.10, LeRobot 0.4.4, PyTorch 2.7.1+cu128, MuJoCo 3.13.0. Runs every sealed package, plus the
+parts of the two `experiments/robosuite_*` packages that use no robosuite: three `robosuite_scene`
+unit tests (`test_r1_image`, `test_seal`, `test_expert_fork`) and `robosuite_sim2sim`'s export
+stage and tests.
 
-Second image, for the rest of `experiments/robosuite_scene/` only:
+Second image, for everything else in `experiments/robosuite_scene/` and
+`experiments/robosuite_sim2sim/`:
 
 ```
 sha256:54d861aac79c1c8ceed09734a00bbc5d8cbf566c427e47ff23089f9bb0ccf27e
@@ -109,8 +111,10 @@ results. Do not edit them even to fix a stale statement:
 - `experiments/smolvla_local_varied/README.md`
 
 Before editing anything under `experiments/`, check whether it is in `SOURCE_FILES` or reachable
-from `provenance()`. Package READMEs are always in both, except
-`experiments/robosuite_scene/`, which has no contract and no `provenance()`.
+from `provenance()`. Package READMEs are always in both, except in the two
+`experiments/robosuite_*` packages, which have no contract and no `provenance()`.
+
+Working on the robosuite path: load the `working-on-the-robosuite-path` skill first.
 
 ## Evidence and documentation
 
