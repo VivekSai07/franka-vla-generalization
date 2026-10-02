@@ -1,6 +1,6 @@
 # Franka benchmark: start here
 
-## Robosuite scene bring-up (B3 Phase 1): go, with an undiagnosed placement offset — 2026-10-02
+## Robosuite scene bring-up (B3 Phase 1): go, pending ratification of one fix — 2026-10-02
 
 Not a policy result. A scene composed by robosuite 1.5.2 (`experiments/robosuite_scene/`) is now
 driven by the `pose_snapshot_v2` scripted expert and recorded in the existing 9-state / 8-action
@@ -13,8 +13,20 @@ The robosuite path runs in a **second image** on MuJoCo 3.4.0, because robosuite
 an environment on 3.13.0 (FAILURES #39); the sealed pipeline stays on 3.13.0. Robosuite-scene
 numbers are therefore not physics-comparable with any sealed result.
 
-Open: every seed lands 8.6–12.7 mm off-centre in xy (20 mm window; undiagnosed, systematic); the
-B2-checkpoint smoke test was not run; finger pad friction and geometry are robosuite's. The first
+The go is conditional: all six attempts the tuning protocol allows failed, and the pass came from a
+model-contract correction outside it (fingertip pads re-parented into the finger bodies), allowed
+by the executing AI controller's ruling as physically equivalent. The user has not yet ratified it.
+
+Every seed lands 8.6–12.7 mm off-centre in xy (20 mm window). That is the scripted expert's own
+±5 mm (1σ) target jitter, not the robosuite scene: the offset predicted from the seed's draws
+matches the measured signed offset to 0.65 mm in all five seeds, and its direction changes with
+the seed. A ≤ 12 mm expert gate would reject about 15% of episodes with this jitter (calculated),
+so Phase 2 must choose between the jitter and the gate.
+
+A second collection reproduced every file except `meta/stats.json` (key order), so the dataset is
+not byte-reproducible and its fingerprint differs between runs (`08c807bf0095…` the second time).
+
+Open: the B2-checkpoint smoke test was not run; finger pad friction and geometry are robosuite's. The first
 "grasp failed" verdict was a blind contact check, not a failed grasp (FAILURES #40). See
 [ROBOSUITE_SCENE_BRINGUP_20261002.md](ROBOSUITE_SCENE_BRINGUP_20261002.md).
 

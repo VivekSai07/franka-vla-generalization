@@ -91,11 +91,12 @@ Also:
 ## Operations
 
 Container flags, mounts, gate sequence, storage costs: [docs/OPERATIONS.md](../docs/OPERATIONS.md).
-Nothing runs outside a digest-pinned image.
+Nothing runs outside one of two digest-pinned images.
 
 There are two images. The admission image (MuJoCo 3.13.0) runs everything sealed. A second image
-(robosuite 1.5.2, MuJoCo 3.4.0) runs only `experiments/robosuite_scene/`; numbers from the two are
-not physics-comparable. Digests and build notes are in OPERATIONS.md.
+(robosuite 1.5.2, MuJoCo 3.4.0) runs only `experiments/robosuite_scene/`, except three of that
+package's unit tests (`test_r1_image`, `test_seal`, `test_expert_fork`), which run in the admission
+image; numbers from the two are not physics-comparable. Digests and build notes are in OPERATIONS.md.
 
 - **A version pin is proven by running the thing, not by importing it.** robosuite 1.5.2 imports on
   MuJoCo 3.13.0 and cannot reset an environment there (FAILURES #39).

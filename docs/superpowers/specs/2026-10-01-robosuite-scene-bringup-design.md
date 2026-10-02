@@ -182,3 +182,9 @@ specific risk and the specific redesign needed). No partial credit.
 - The R7 tolerance is 1 mm / 0.1 degrees.
 - The smoke test moved to a follow-up plan.
 - The tuning protocol replaces "any single risk failing means stop".
+- Correction to "The scene has a floor, not a table" above: the current scene has a floor and no
+  table; the robosuite scene keeps a table whose top is at z = 0, with the floor at z = −0.05.
+- The proof-of-concept dataset is not byte-reproducible: two collector runs differ in
+  `dataset/meta/stats.json` (same content, different key order) and therefore in fingerprint;
+  every other file is identical.
+- Status as of 2026-10-02: Phase 1 implemented; see docs/ROBOSUITE_SCENE_BRINGUP_20261002.md.

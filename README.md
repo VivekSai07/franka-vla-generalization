@@ -2,7 +2,7 @@
 
 Comparing [SmolVLA](https://huggingface.co/HuggingFaceVLA/smolvla_libero) and X-VLA on a
 cube-stacking task, using sealed, hash-bound datasets collected from a scripted expert in MuJoCo.
-Everything runs inside a digest-pinned Docker image — no conda, no host Python dependencies.
+Everything runs inside one of two digest-pinned Docker images — no conda, no host Python dependencies.
 
 The central question: **how much and what kind of data does a VLA need to generalise spatially?**
 

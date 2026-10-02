@@ -26,7 +26,8 @@ sha256:54d861aac79c1c8ceed09734a00bbc5d8cbf566c427e47ff23089f9bb0ccf27e
 Local tag `vla-robosuite:1.5.2-mj3.4.0`; the value of record is `IMAGE` in
 `experiments/robosuite_scene/contract.py`. Admission image plus robosuite 1.5.2 and
 **MuJoCo 3.4.0** (numpy stays 2.2.6). Only `experiments/robosuite_scene/` runs in it; everything
-else, including all sealed packages, runs in the pinned image above on MuJoCo 3.13.0.
+else, including all sealed packages and three of that package's own unit tests (`test_r1_image`,
+`test_seal`, `test_expert_fork`), runs in the pinned image above on MuJoCo 3.13.0.
 
 - Why a second MuJoCo: robosuite 1.5.2 imports on 3.13.0 but cannot reset an environment there
   ([FAILURES.md](FAILURES.md) #39). Results from the two images are not physics-comparable.

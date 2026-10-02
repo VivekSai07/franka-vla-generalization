@@ -300,12 +300,14 @@ cell" is really 32; and screening is 100 trials, not 80.
 Two-phase project. User accepted the one-variable-per-run attribution trade-off: a strong result from one experiment if it works, limited attribution if it doesn't.
 
 - [x] **Phase 1 — robosuite scene bring-up.** Prove the simulator swap works end-to-end on a trivial scene (one layout, two cubes, two cameras replicated from the current scene, scripted expert, 5-episode PoC, deterministic resets, LeRobot schema parity). Nothing new is varied. Go/no-go report decides whether Phase 2 starts. See spec above for risks R1-R7.
-      **Result (2026-10-02): go.** R1–R7 all pass; 5/5 scripted episodes sealed at `outputs/robosuite_scene/robosuite_bringup_20261002/` (fingerprint `543e300c257d…`). Report: [docs/ROBOSUITE_SCENE_BRINGUP_20261002.md](docs/ROBOSUITE_SCENE_BRINGUP_20261002.md). The robosuite path runs in its own image on MuJoCo 3.4.0 (robosuite 1.5.2 cannot reset on 3.13.0), so robosuite-scene results are not physics-comparable with sealed results.
+      **Result (2026-10-02): go, conditional on the user ratifying the fingertip-pad re-parenting** (a model-contract fix outside the tuning protocol, whose six allowed attempts all failed; allowed by the executing AI controller's ruling). R1–R7 all pass; 5/5 scripted episodes sealed at `outputs/robosuite_scene/robosuite_bringup_20261002/` (fingerprint `543e300c257d…`). Report: [docs/ROBOSUITE_SCENE_BRINGUP_20261002.md](docs/ROBOSUITE_SCENE_BRINGUP_20261002.md). The robosuite path runs in its own image on MuJoCo 3.4.0 (robosuite 1.5.2 cannot reset on 3.13.0), so robosuite-scene results are not physics-comparable with sealed results.
 - [ ] **Before Phase 2 is designed — carried over from Phase 1:**
-      (a) diagnose the systematic 8.6–12.7 mm xy placement offset (all five seeds, 20 mm window; seed 2 at 12.65 mm would fail Phase 2's planned ≤ 1.2 cm expert gate);
+      (a) decide jitter versus gate: the 8.6–12.7 mm xy placement offset (all five seeds, 20 mm window) is the scripted expert's own ±5 mm (1σ) target jitter, reproduced from the seeds to 0.65 mm, not a scene defect. Seed 2 at 12.65 mm fails Phase 2's planned ≤ 1.2 cm expert gate, and about 15% of episodes would (calculated) — reduce the jitter, loosen the gate, or accept the rejections;
       (b) run the B2-checkpoint smoke test on the robosuite scene (deferred from Phase 1 to a follow-up plan, not run);
       (c) decide whether finger pad friction/geometry stay robosuite's;
-      (d) the package is not hash-bound — Phase 2 needs a contract before any result is reported from it.
+      (d) the package is not hash-bound — Phase 2 needs a contract before any result is reported from it;
+      (e) ratify or reject the fingertip-pad re-parenting that the go rests on;
+      (f) the collected dataset is not byte-reproducible: two collector runs differ in `meta/stats.json` key order (all other files identical), so the fingerprint changes between runs. Fix or drop the "identical bytes" requirement before a contract binds a robosuite dataset.
 - [ ] **Phase 2 — B3 combined-axis collection**, designed only after Phase 1 passes. Will layer: tighter release precision (expert gate ≤ 1.2 cm), harder distractors (reduced clearance / in the carry path), full colour randomisation, extra demonstrations near the acquisition-weak `054`/`048` pick regions, and a floor/prop change. Horizon likely 75-100 k updates.
 - [ ] Confirm 50,000's 91.9% on a fresh holdout as part of Phase 2's eval, since the B2 50k number is the larger of two reported results.
 
