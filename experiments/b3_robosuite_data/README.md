@@ -61,6 +61,25 @@ run "$NEW" -m experiments.b3_robosuite_data.record --status  --out /out/b3_robos
 count equals the journal's admitted count and `plan.json` / `provenance.json` match fresh values.
 The `--pilot` output is scratch and never sealed.
 
+## Pilot (2026-10-03) and the frozen clearance
+
+`MIN_CLEARANCE_M` is **0.08 m**, the first rung of the 0.08 -> 0.09 -> 0.10 ladder, frozen here.
+At 0.08 m, single attempt per slot, the pilot admitted 23 of 23: the first 10 `near_pick` and 10
+`near_place` training slots (0 rejected of 20), plus the first 5 inner-corner and 5 outer-corner
+picks (0 of 5 each; some slots are in both groups). Every episode ran 528 frames and passed all six
+gates, replay included.
+
+- Measured, not assumed: across those episodes no distractor moved more than 0.14 mm. At 8-12 cm
+  the gripper never touches a near distractor, so the expert-side rejection risk of the ladder was
+  zero; the ladder could not have selected a larger value on this evidence. Whether crowded layouts
+  are harder for a *policy* is a question for the evaluation, not for this pilot.
+- Frames of three episodes were inspected (slot 0 two-distractor near-pick at an outer corner,
+  slot 3 control, slot 48 two-distractor near-place at an outer corner): the instructed pick cube
+  ends on the instructed place cube, every planned cube is present and correctly coloured, and the
+  distractors stay where planned. The wrist camera sees only part of the table at the home pose
+  (a cube can be cut by its frame edge); the front camera sees every cube.
+- Timing: 38-43 s per episode including replay (six pilot containers in parallel, no slowdown).
+
 ## Not comparable
 
 This scene runs on robosuite 1.5.2 and MuJoCo 3.4.0. Numbers from it are not physics-comparable
