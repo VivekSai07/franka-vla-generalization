@@ -99,3 +99,29 @@ def build_sim():
     env.step = _banned
     env._robosuite_step = real_step
     return env, model, data
+
+
+def overwrite_reset(model, data):
+    """Deterministic reset: arm at Q_HOME, cubes at FIXED_CUBES, settled for 0.2 s. No RNG."""
+    from data_collection.benchmark import capture_state, synchronize_observation
+    from experiments.robosuite_scene.contract import FIXED_CUBES
+    from src.robots.franka_panda.config import Q_HOME
+
+    mujoco.mj_resetData(model, data)
+    data.qpos[:] = 0.0
+    data.qvel[:] = 0.0
+    for name, position in FIXED_CUBES.items():
+        body = model.body(name)
+        joint = model.joint(int(body.jntadr[0]))
+        adr = int(joint.qposadr[0])
+        data.qpos[adr:adr + 3] = position
+        data.qpos[adr + 3:adr + 7] = (1.0, 0.0, 0.0, 0.0)
+    data.qpos[:9] = Q_HOME
+    data.ctrl[:] = 0.0
+    data.ctrl[:7] = Q_HOME[:7]
+    data.ctrl[-1] = 255
+    mujoco.mj_forward(model, data)
+    for _ in range(round(0.2 / model.opt.timestep)):
+        mujoco.mj_step(model, data)
+    synchronize_observation(model, data)
+    return {"qpos": data.qpos.copy(), "initial_state": capture_state(model, data)}

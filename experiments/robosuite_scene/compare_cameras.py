@@ -6,7 +6,7 @@ import mujoco
 import numpy as np
 from PIL import Image
 
-from experiments.robosuite_scene.scene import build_sim
+from experiments.robosuite_scene.scene import build_sim, overwrite_reset
 from src.robots.franka_panda.config import SCENE_PATH, Q_HOME
 
 CAMERAS = ("front_cam", "gripper_cam")
@@ -39,8 +39,7 @@ def main():
     del old_model, old_data
 
     _, model, data = build_sim()
-    data.qpos[:7] = Q_HOME[:7]
-    mujoco.mj_forward(model, data)
+    overwrite_reset(model, data)  # arm at Q_HOME, cubes at FIXED_CUBES
     robosuite = _render(model, data)
 
     for tag, images in (("current", current), ("robosuite", robosuite)):
