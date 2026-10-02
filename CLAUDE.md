@@ -107,7 +107,8 @@ results. Do not edit them even to fix a stale statement:
 - `experiments/smolvla_local_varied/README.md`
 
 Before editing anything under `experiments/`, check whether it is in `SOURCE_FILES` or reachable
-from `provenance()`. Package READMEs are always in both.
+from `provenance()`. Package READMEs are always bound by one or the other, except in
+`experiments/robosuite_scene/`, which has no contract and no `provenance()`.
 
 ## Evidence and documentation
 
