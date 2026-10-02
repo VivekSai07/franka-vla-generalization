@@ -11,13 +11,21 @@ from robosuite.utils.mjcf_utils import new_element
 
 from experiments.robosuite_scene.arena import CopiedCameraTableArena
 from experiments.robosuite_scene.cameras import FRONT_CAM, GRIPPER_CAM
-from experiments.robosuite_scene.xml_contract import apply_scripted_contract
+from experiments.robosuite_scene.xml_contract import CUBE_RGBA, apply_scripted_contract
 
 GRIPPER_BODY_NAME = "robot0_right_hand"
 
 
+def _check_colours(colours):
+    colours = tuple(colours)
+    if len(colours) < 2 or len(set(colours)) != len(colours) or not set(colours) <= set(CUBE_RGBA):
+        raise ValueError(f"colours must be 2-4 distinct names from {sorted(CUBE_RGBA)}, got {colours}")
+    return colours
+
+
 class BringupEnv(ManipulationEnv):
-    def __init__(self, **kwargs):
+    def __init__(self, colours=("red", "green"), **kwargs):
+        self.colours = _check_colours(colours)
         super().__init__(
             robots="Panda",
             base_types="RethinkMinimalMount",
@@ -48,13 +56,14 @@ class BringupEnv(ManipulationEnv):
         mujoco_arena = CopiedCameraTableArena()
         mujoco_arena.set_origin([0, 0, 0])
 
-        red = BoxObject(name="target_cube_red", size=[0.02, 0.02, 0.02], rgba=[0.8, 0.2, 0.2, 1])
-        green = BoxObject(name="target_cube_green", size=[0.02, 0.02, 0.02], rgba=[0.2, 0.8, 0.2, 1])
+        cubes = [BoxObject(name=f"target_cube_{colour}", size=[0.02, 0.02, 0.02],
+                           rgba=[float(v) for v in CUBE_RGBA[colour].split()] + [1])
+                 for colour in self.colours]
 
         self.model = ManipulationTask(
             mujoco_arena=mujoco_arena,
             mujoco_robots=[robot.robot_model for robot in self.robots],
-            mujoco_objects=[red, green],
+            mujoco_objects=cubes,
         )
 
         _attach_gripper_cam(self.model.worldbody)
@@ -67,9 +76,11 @@ def _attach_gripper_cam(worldbody):
             return
 
 
-def build_sim():
+def build_sim(colours=("red", "green")):
+    colours = _check_colours(colours)
     env = robosuite.make(
         "BringupEnv",
+        colours=colours,
         robots="Panda",
         base_types="RethinkMinimalMount",
         has_renderer=False,

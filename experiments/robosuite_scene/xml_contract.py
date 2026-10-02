@@ -11,9 +11,10 @@ GRIPPER_BODY_NAME = "robot0_right_hand"
 RENAMES = {
     "gripper0_right_leftfinger": "left_finger",
     "gripper0_right_rightfinger": "right_finger",
-    "target_cube_red_main": "target_cube_red",
-    "target_cube_green_main": "target_cube_green",
 }
+# rgba of the four cubes in src/robots/franka_panda/model/smolvla_scene.xml
+CUBE_RGBA = {"red": "0.8 0.2 0.2", "green": "0.2 0.8 0.2", "blue": "0.2 0.2 0.8", "yellow": "0.8 0.8 0.2"}
+CUBE_BODY_PREFIX = "target_cube_"
 FINGER_TIPS = {
     "left_finger": "gripper0_right_finger_joint1_tip",
     "right_finger": "gripper0_right_finger_joint2_tip",
@@ -41,9 +42,24 @@ def _by_name(root, tag, name):
     raise ValueError(f"robosuite XML is missing {tag} {name!r}")
 
 
+def _cube_bodies(root):
+    """Names of the cube bodies robosuite composed, as `target_cube_<colour>_main`."""
+    found = [b.get("name") for b in root.iter("body")
+             if (b.get("name") or "").startswith(CUBE_BODY_PREFIX) and b.get("name").endswith("_main")]
+    if not found:
+        raise ValueError("robosuite XML has no target_cube_<colour>_main body")
+    for name in found:
+        if name[len(CUBE_BODY_PREFIX):-len("_main")] not in CUBE_RGBA:
+            raise ValueError(f"unknown cube body {name!r}")
+    return [name[:-len("_main")] for name in found]
+
+
 def _rewrite_model(root):
+    cubes = _cube_bodies(root)
     for old, new in RENAMES.items():
         _by_name(root, "body", old).set("name", new)
+    for cube in cubes:
+        _by_name(root, "body", cube + "_main").set("name", cube)
 
     finger2 = _by_name(root, "joint", FINGER_JOINTS[1])
     finger2.set("axis", "0 -1 0")
@@ -79,7 +95,7 @@ def _rewrite_model(root):
     root.insert(index, equality)
     root.insert(index, tendon)
 
-    for cube in ("target_cube_red", "target_cube_green"):
+    for cube in cubes:
         body = _by_name(root, "body", cube)
         colliding = [g for g in body.findall("geom") if g.get("contype") != "0"]
         if len(colliding) != 1:
