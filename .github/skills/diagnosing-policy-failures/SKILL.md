@@ -9,7 +9,7 @@ The evaluation gives a success count and, for every non-success, the label `time
 is not a cause**; it only means no stable stack within 1,200 ticks. The cause has to be recovered
 from the traces (`trace.npz`, `episode.json`, `cameras.mp4`). Worked example:
 `docs/B2_DISTRACTOR_EVALUATION_20260930.md`, scripts in
-`experiments/xvla_b2_distractors_eval/analysis/` (on `feat/b2-distractors` until merged).
+`experiments/xvla_b2_distractors_eval/analysis/`.
 
 ## Order of questions
 

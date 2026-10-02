@@ -3,7 +3,9 @@
 
 # Local tool state (Ruflo/claude-flow plugin)
 .claude-flow/
-.claude/
+.claude/*
+# ...except the project skills, shared with Copilot: a symlink to .github/skills
+!.claude/skills
 
 # Python
 __pycache__/

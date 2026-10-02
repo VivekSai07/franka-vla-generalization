@@ -71,7 +71,7 @@ prefer `rsync` for a fresh multi-GB pull and reserve `sftp get` for topping up s
 ## 3. Verify integrity on Windows before trusting the copy
 
 ```powershell
-Get-FileHash -Algorithm SHA256 D:\RTX trained models\downloads_<date>\<run>\checkpoints\step_NNNNNN\model.safetensors
+Get-FileHash -Algorithm SHA256 "D:\RTX trained models\downloads_<date>\<run>\checkpoints\step_NNNNNN\model.safetensors"
 ```
 
 Compare against the `model_sha256` field in that checkpoint's `checkpoint_result.json`. For a

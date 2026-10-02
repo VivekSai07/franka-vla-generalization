@@ -29,6 +29,7 @@ Binding covers three independent things. Read the error to see which:
 
 ```python
 import json, importlib
+from pathlib import Path
 c = importlib.import_module('experiments.<pkg>.contract')
 stored = json.loads(Path('<output>/admission.json').read_text())
 fresh  = c.data_binding()          # or c.current_binding()
