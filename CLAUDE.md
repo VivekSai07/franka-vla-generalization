@@ -36,6 +36,14 @@ hashes); a run that cannot reproduce its binding refuses to start.
 Everything runs inside a digest-pinned Docker image — no conda, no host Python dependencies.
 Nothing runs outside that image.
 
+## Pinned image
+
+```
+sha256:08de1e09200539a26f7564bbf095fb846b8104ba07a72564b8232feb58714abc
+```
+
+Python 3.10, LeRobot 0.4.4, PyTorch 2.7.1+cu128, MuJoCo 3.13.0.
+
 ## Commands
 
 Run tests for one experiment package:
@@ -44,15 +52,60 @@ Run tests for one experiment package:
 docker run --rm --runtime runc --network none --read-only \
   --user "$(id -u):$(id -g)" --tmpfs /tmp:rw,size=4g \
   -e MUJOCO_GL=osmesa -e HF_HOME=/tmp/hf -e XDG_CACHE_HOME=/tmp/cache \
-  -e HF_HUB_OFFLINE=1 -e PYTHONPATH=/vla -v "$PWD:/vla:ro" -w /vla \
-  --entrypoint python sha256:<pinned-digest> \
+  -e HF_HUB_OFFLINE=1 -e PYTHONPATH=/vla \
+  -v "$PWD:/vla:ro" \
+  -v "$PWD/outputs/implementation/broad_workspace_data_20260920:/vla/outputs/implementation/broad_workspace_data_20260920:rw" \
+  -v "$PWD/outputs/implementation/local_position_probe_20260919:/vla/outputs/implementation/local_position_probe_20260919:rw" \
+  -v "$PWD/outputs/implementation/local_varied_data_20260919:/vla/outputs/implementation/local_varied_data_20260919:rw" \
+  -v "$PWD/outputs/implementation/b1_language_data_20260925:/vla/outputs/implementation/b1_language_data_20260925:rw" \
+  -w /vla \
+  --entrypoint python sha256:08de1e09200539a26f7564bbf095fb846b8104ba07a72564b8232feb58714abc \
   -m unittest discover -s experiments/<pkg>/tests -t experiments/<pkg>/tests
 ```
+
+`-t` must be the tests directory, not `.` — tests have no `__init__.py` and import siblings
+directly; `-t .` fails with `Start directory is not importable`.
+
+### Known pre-existing failures (not regressions)
+
+Five packages fail on `main` and every branch, caused by the deleted pilot manifest
+([docs/FAILURES.md](docs/FAILURES.md) #2):
+
+| package | errors |
+|---|---|
+| `fixed_layout` | 13 |
+| `single_task` | 5 |
+| `xvla_single_task` | 4 |
+| `smolvla_fixed_layout` | 1 |
+| `smolvla_local_varied` | 1 |
+
+Before treating any of these as a regression, compare counts against `main` in a worktree.
 
 Training/evaluation launch flags, mounts, the `--check` / `--preflight` / `--train` gate
 sequence, and monitoring caveats (Docker `wait` does not reliably notify in this environment —
 poll actively): [docs/OPERATIONS.md](docs/OPERATIONS.md). Before launching any long run, work
 through [TODO.md](TODO.md#before-launching-any-long-run--checklist).
+
+## Hash-bound files — do not edit
+
+These files are inside sealed provenance and cannot be corrected without invalidating sealed
+results. Do not edit them even to fix a stale statement:
+
+- `experiments/broad_workspace_data/README.md`
+- `experiments/xvla_local_varied/README.md`
+- `experiments/smolvla_local_varied/README.md`
+
+Before editing anything under `experiments/`, check whether it is in `SOURCE_FILES` or reachable
+from `provenance()`. Package READMEs are always in both.
+
+## Evidence and documentation
+
+- Never claim something passed without running it and reading the output.
+- Offline metrics (loss, action MAE) are not capability proxies — a checkpoint that scored 0/72
+  on rollouts improved offline metrics monotonically through that run.
+- Every finding triggers a documentation pass: grep all live docs for the specific figures and
+  claims your finding changes, and update every hit in the same turn. Details in
+  [.github/copilot-instructions.md](.github/copilot-instructions.md).
 
 ## Commits
 
