@@ -26,7 +26,12 @@ compiled XML is rewritten by `xml_contract.apply_scripted_contract` and stepped 
 | unit tests that never import robosuite (`test_r1_image`, `test_seal`, `test_expert_fork`) | admission |
 
 Crossing the boundary: export **plain arrays** (qpos, qvel, ctrl) from the admission image and
-load them in the robosuite image. `robosuite_sim2sim/starts.py` → `rollout.py` is the pattern.
+load them in the robosuite image. `robosuite_sim2sim/starts.py` → `rollout.py` is the pattern:
+both containers mount the same host folder under `outputs/` read-write at `/out`, the first writes
+an `.npz` there and the second reads it.
+
+A new `experiments/robosuite_*` package is not hash-bound until someone gives it a contract. Say
+so next to any number it produces, and give it a contract before a result is reported as final.
 
 ## Traps, each one hit for real
 
