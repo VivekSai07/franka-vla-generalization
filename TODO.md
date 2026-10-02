@@ -299,32 +299,34 @@ cell" is really 32; and screening is 100 trials, not 80.
 
 Two-phase project. User accepted the one-variable-per-run attribution trade-off: a strong result from one experiment if it works, limited attribution if it doesn't.
 
-> **Direction change (user, 2026-10-02, evening).** The cube work has answered the question it was
-> for: X-VLA learns this task when given the right data in the right format. More cube refinement is
-> no longer the goal. The next step, within about a week, is **real-life props in robosuite** (see
-> "Next project" below). Consequences for the items in this section:
-> - (a) placement offset and the bigger-cube idea: **not pursued**. The offset is understood (the
->   expert's own jitter) and the results stand as measured.
-> - "Phase 2 — B3 combined-axis collection" on cubes: **on hold, likely superseded** by the props
->   project. Confirm with the user before spending any time on it.
-> - Sim2sim validation still runs: it is cheap and tells the props project how much of a
->   MuJoCo-trained policy survives the scene change.
+> **Direction (user, 2026-10-02; clarified 2026-10-02).** The cube work has answered the question
+> it was for: X-VLA learns this task when given the right data in the right format. **B3 on cubes,
+> collected in the robosuite scene, is the final cube work**, and every axis that was meant to be
+> tested goes into that one dataset. After it, new task ideas use real-life props in robosuite (see
+> "After B3" below). Consequences:
+> - B3 cube collection is the **next thing to do**. It needs its design re-thought first (the item
+>   "Re-think the B3 axis list" below), then spec → plan.
+> - No separate effort goes into the placement offset or a bigger cube. The offset is understood
+>   (the expert's own jitter); how the B3 release gate treats it is one decision inside the B3
+>   design, not a project of its own.
+> - Sim2sim is **not a gate**. It may be repeated, as a matter of interest, once a policy has been
+>   trained on the robosuite scene.
 
 - [x] **Phase 1 — robosuite scene bring-up.** Prove the simulator swap works end-to-end on a trivial scene (one layout, two cubes, two cameras replicated from the current scene, scripted expert, 5-episode PoC, deterministic resets, LeRobot schema parity). Nothing new is varied. Go/no-go report decides whether Phase 2 starts. See spec above for risks R1-R7.
-      **Result (2026-10-02): go, conditional on the user ratifying the fingertip-pad re-parenting** (a model-contract fix outside the tuning protocol, whose six allowed attempts all failed; allowed by the executing AI controller's ruling). R1–R7 all pass; 5/5 scripted episodes sealed at `outputs/robosuite_scene/robosuite_bringup_20261002/` (fingerprint `543e300c257d…`). Report: [docs/ROBOSUITE_SCENE_BRINGUP_20261002.md](docs/ROBOSUITE_SCENE_BRINGUP_20261002.md). The robosuite path runs in its own image on MuJoCo 3.4.0 (robosuite 1.5.2 cannot reset on 3.13.0), so robosuite-scene results are not physics-comparable with sealed results.
+      **Result (2026-10-02): go.** It rests on the fingertip-pad re-parenting, a model-contract fix outside the tuning protocol (whose six allowed attempts all failed), allowed by the executing AI controller's ruling and **ratified by the user on 2026-10-02**. R1–R7 all pass; 5/5 scripted episodes sealed at `outputs/robosuite_scene/robosuite_bringup_20261002/` (fingerprint `543e300c257d…`). Report: [docs/ROBOSUITE_SCENE_BRINGUP_20261002.md](docs/ROBOSUITE_SCENE_BRINGUP_20261002.md). The robosuite path runs in its own image on MuJoCo 3.4.0 (robosuite 1.5.2 cannot reset on 3.13.0), so robosuite-scene results are not physics-comparable with sealed results.
 - [ ] **Before Phase 2 is designed — carried over from Phase 1:**
       (a) decide jitter versus gate: the 8.6–12.7 mm xy placement offset (all five seeds, 20 mm window) is the scripted expert's own ±5 mm (1σ) target jitter, reproduced from the seeds to 0.65 mm, not a scene defect. Seed 2 at 12.65 mm fails Phase 2's planned ≤ 1.2 cm expert gate, and about 15% of episodes would (calculated) — reduce the jitter, loosen the gate, or accept the rejections;
       (b) run the B2-checkpoint smoke test on the robosuite scene (deferred from Phase 1 to a follow-up plan, not run);
       (c) decide whether finger pad friction/geometry stay robosuite's;
       (d) the package is not hash-bound — Phase 2 needs a contract before any result is reported from it;
-      (e) ratify or reject the fingertip-pad re-parenting that the go rests on. On 2026-10-02 the user read the report and directed the work to merge and proceed to sim2sim validation; an explicit "ratified" has not been recorded;
+      (e) ~~ratify or reject the fingertip-pad re-parenting~~ — ratified by the user on 2026-10-02 after the mechanism was explained (pad collision geoms sat in jointless `_tip` bodies, so the body-id contact check could not see a held cube);
       (f) the collected dataset is not byte-reproducible: two collector runs differ in `meta/stats.json` key order (all other files identical), so the fingerprint changes between runs. Fix or drop the "identical bytes" requirement before a contract binds a robosuite dataset.
 - [x] **Sim2sim validation (branch `feat/robosuite-sim2sim`).** The MuJoCo-trained B2 checkpoint (step 50,000) on 20 of B2's own control report trials, both scenes, one loop: **MuJoCo 19/20, robosuite 3/20** (paired 16 vs 0, p = 3 × 10⁻⁵; the control matches B2's own report on these trials). On robosuite, 11 failures lift the cube and never carry it, 6 never lift it. Report: [docs/ROBOSUITE_SIM2SIM_20261002.md](docs/ROBOSUITE_SIM2SIM_20261002.md). Not hash-bound; counts from ten layouts.
-- [ ] *Optional, only if the cause matters for the props project:* give the robosuite table the MuJoCo floor's blue checker and rerun the same 20 trials (one variable; about an hour of GPU). Tests the hypothesis that the carry fails for lack of visual texture.
+- Not planned (user, 2026-10-02): the blue-checker-table rerun that would test whether missing visual texture breaks the carry. Sim2sim is not a priority; revisit only if wanted after a robosuite-trained policy exists.
 - [ ] **Re-think the B3 axis list before designing Phase 2** (user, 2026-10-02). The list below was written before Phase 1 and before the sim2sim result. Inputs that change it: the ≤ 1.2 cm gate conflicts with the expert's own jitter (item a); the scene change is itself a large visual axis; the sim2sim result will say how much of B2's capability survives it.
       Idea to evaluate there (user): a larger cube, still within the 8 cm finger opening, to make placement more forgiving. Notes for that discussion: the in-hand offset comes from jitter along the pad surface, which a larger cube does not remove; a wider cube tips later, so the physical tolerance grows with the edge length (B2 measured the cliff at half the 4.2 cm edge); but `stack_metrics`' 2 cm xy window is a fixed constant in shared code, so the scored tolerance does not grow unless a new metric is defined; and a wider cube leaves less finger clearance on approach.
 - [ ] **Phase 2 — B3 combined-axis collection**, designed only after Phase 1 passes. Will layer: tighter release precision (expert gate ≤ 1.2 cm), harder distractors (reduced clearance / in the carry path), full colour randomisation, extra demonstrations near the acquisition-weak `054`/`048` pick regions, and a floor/prop change. Horizon likely 75-100 k updates.
-- [ ] **Next project — robosuite's built-in props / real-life objects** (user, 2026-10-02; target: start within about a week; needs its own brainstorm → spec → plan). Move from cubes to robosuite's object library (cans, bottles, boxes, cereal, bread, milk; `robosuite.models.objects`). This is a jump, not an increment: the scripted expert assumes a cube it can grasp top-down at a fixed height and scores a cube-on-cube stack, so it needs new grasp strategies per object, a new task definition and success metric, and instructions that name objects.
+- [ ] **After B3 — robosuite's built-in props / real-life objects** (user, 2026-10-02; needs its own brainstorm → spec → plan once B3 has a measured result). Move from cubes to robosuite's object library (cans, bottles, boxes, cereal, bread, milk; `robosuite.models.objects`). This is a jump, not an increment: the scripted expert assumes a cube it can grasp top-down at a fixed height and scores a cube-on-cube stack, so it needs new grasp strategies per object, a new task definition and success metric, and instructions that name objects.
 - [ ] **Decide the controller and action space for the props project: our joint-target IK or robosuite's OSC_POSE** (user, 2026-10-02). Plan time for this before any props data is collected, because the choice fixes the dataset's action format. What to weigh:
       - *Ours* (pinocchio IK → 7 absolute joint targets + gripper, 30 Hz): every existing dataset and checkpoint uses it, so old policies can still be rolled out and sim2sim stays possible; robosuite's runtime is not needed (`env.step` is never called). Note from the sim2sim result: the old checkpoints roll out on the robosuite scene but score 3/20, so "existing checkpoints stay usable" is a weak reason to keep this action space.
       - *OSC_POSE* (robosuite built-in: 6 end-effector deltas + gripper): the format public robosuite / robomimic / LIBERO data uses, and compliant in contact (the SmolVLA checkpoint this repo started from, `smolvla_libero`, is LIBERO-finetuned). Costs: a new action space (no reuse of existing checkpoints or datasets), a scripted expert rewritten to emit deltas, `env.step` and robosuite's control loop in the collection path, and re-proving determinism and replay.

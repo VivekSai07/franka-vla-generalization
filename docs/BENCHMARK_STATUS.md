@@ -16,9 +16,9 @@ rates; the package has no contract. See
 [ROBOSUITE_SIM2SIM_20261002.md](ROBOSUITE_SIM2SIM_20261002.md).
 
 **Consequence:** a policy trained on the MuJoCo cube scene cannot be reused on a robosuite scene
-as it is. The props project needs its own data collected in robosuite.
+as it is. B3 and everything after it need their own data collected in robosuite.
 
-## Robosuite scene bring-up (B3 Phase 1): go, pending ratification of one fix — 2026-10-02
+## Robosuite scene bring-up (B3 Phase 1): go — 2026-10-02 (the one fix it rests on was ratified 2026-10-02)
 
 Not a policy result. A scene composed by robosuite 1.5.2 (`experiments/robosuite_scene/`) is now
 driven by the `pose_snapshot_v2` scripted expert and recorded in the existing 9-state / 8-action
@@ -33,7 +33,7 @@ numbers are therefore not physics-comparable with any sealed result.
 
 The go is conditional: all six attempts the tuning protocol allows failed, and the pass came from a
 model-contract correction outside it (fingertip pads re-parented into the finger bodies), allowed
-by the executing AI controller's ruling as physically equivalent. The user has not yet ratified it.
+by the executing AI controller's ruling as physically equivalent. The user ratified it on 2026-10-02.
 
 Every seed lands 8.6–12.7 mm off-centre in xy (20 mm window). That is the scripted expert's own
 ±5 mm (1σ) target jitter, not the robosuite scene: the offset predicted from the seed's draws
