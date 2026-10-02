@@ -30,7 +30,9 @@ Open: the B2-checkpoint smoke test was not run; finger pad friction and geometry
 "grasp failed" verdict was a blind contact check, not a failed grasp (FAILURES #40). See
 [ROBOSUITE_SCENE_BRINGUP_20261002.md](ROBOSUITE_SCENE_BRINGUP_20261002.md).
 
-**Next:** diagnose the placement offset and run the deferred smoke test before designing Phase 2.
+**Next:** sim2sim validation of the B2 checkpoint on the robosuite scene (branch
+`feat/robosuite-sim2sim`), then decide jitter versus gate and re-think the B3 axis list before
+designing Phase 2. The placement offset needs no diagnosis: it is the expert's own jitter.
 
 ## B2 distractors: no detectable distractor effect; 50,000 updates 91.9% vs 82.5% at 33,400 — 2026-09-30
 

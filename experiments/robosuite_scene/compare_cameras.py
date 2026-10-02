@@ -33,7 +33,7 @@ def main():
 
     old_model = mujoco.MjModel.from_xml_path(str(SCENE_PATH))
     old_data = mujoco.MjData(old_model)
-    old_data.qpos[:7] = Q_HOME[:7]
+    old_data.qpos[:9] = Q_HOME  # arm and open fingers, as overwrite_reset sets on the robosuite side
     mujoco.mj_forward(old_model, old_data)
     current = _render(old_model, old_data)
     del old_model, old_data
