@@ -3,6 +3,7 @@
 
 # Local tool state (Ruflo/claude-flow plugin)
 .claude-flow/
+.claude/
 
 # Python
 __pycache__/
