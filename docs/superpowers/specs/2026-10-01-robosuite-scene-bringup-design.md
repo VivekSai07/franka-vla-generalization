@@ -172,3 +172,13 @@ point, replan.
 
 A single decision in the final report: **go** (Phase 2 B3 spec starts) or **no-go** (identify the
 specific risk and the specific redesign needed). No partial credit.
+
+## Corrections (2026-10-02)
+
+- The MuJoCo pin is 3.4.0 in the robosuite image only; robosuite 1.5.2 does not run on 3.13.0
+  (see FAILURES #39). The admission image is unchanged.
+- Camera names are `front_cam` and `gripper_cam`.
+- The scene has a floor, not a table.
+- The R7 tolerance is 1 mm / 0.1 degrees.
+- The smoke test moved to a follow-up plan.
+- The tuning protocol replaces "any single risk failing means stop".
