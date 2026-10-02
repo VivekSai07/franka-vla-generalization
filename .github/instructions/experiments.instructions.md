@@ -24,7 +24,7 @@ Editing a bound file:
 Currently frozen and uncorrectable (editing would invalidate sealed runs):
 `experiments/broad_workspace_data/README.md`, `experiments/{xvla,smolvla}_local_varied/README.md`.
 
-Not hash-bound: `experiments/robosuite_scene/` (scene bring-up). No contract lists it and it has no
+Not hash-bound: `experiments/robosuite_scene/` (scene bring-up) and `experiments/robosuite_sim2sim/` (sim2sim rollouts). No contract lists it and it has no
 `provenance()`; its `seal.json` is a file fingerprint only. It runs only in the robosuite image
 (`contract.IMAGE`, MuJoCo 3.4.0) — except `test_r1_image`, `test_seal` and `test_expert_fork`, which
 run in the admission image — and its tests are run by module name, not by `discover`. It imports

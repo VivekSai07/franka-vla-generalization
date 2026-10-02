@@ -4,6 +4,18 @@ All benchmark numbers. Protocols differ in difficulty and are **not** comparable
 rows unless stated. Chronological narrative lives in [BENCHMARK_STATUS.md](BENCHMARK_STATUS.md);
 failures and lessons in [FAILURES.md](FAILURES.md).
 
+## Sim2sim check (2026-10-02) — not a sealed result
+
+| scene (same policy, starts, seeds, loop; MuJoCo 3.4.0) | B2 step 50,000, 20 control trials |
+|---|---|
+| MuJoCo scene (trained on) | 19/20 |
+| robosuite bring-up scene | 3/20 |
+
+Ten report layouts × two seeds; paired 16 MuJoCo-only, 0 robosuite-only, p = 3 × 10⁻⁵. Failures on
+robosuite: 11 lifted but never carried or released, 6 never lifted. No contract; counts, not rates;
+the cause among the scene differences is not isolated. Protocol and analysis:
+[ROBOSUITE_SIM2SIM_20261002.md](ROBOSUITE_SIM2SIM_20261002.md).
+
 ## Current status (2026-09-30)
 
 **Headline — B2: distractor cubes had no detectable effect on success; more training helped a lot;

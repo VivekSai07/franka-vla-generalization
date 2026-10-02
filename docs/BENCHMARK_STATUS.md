@@ -1,5 +1,23 @@
 # Franka benchmark: start here
 
+## Sim2sim: the B2 policy on the robosuite scene — 3/20 against 19/20 — 2026-10-02
+
+The MuJoCo-trained B2 checkpoint (step 50,000) was rolled out on 20 of B2's own control-condition
+report trials (10 layouts × 2 seeds, B2's seeds), once on the MuJoCo scene and once on the
+robosuite scene, with one loop, in one image (MuJoCo 3.4.0). **MuJoCo scene 19/20, robosuite scene
+3/20**; paired, 16 trials succeed only on MuJoCo and none only on robosuite (exact McNemar
+p = 3 × 10⁻⁵). The control reproduces B2's own report on these trials (19/20 there too, 18 agreeing
+trial for trial), so the drop is the scene, not the harness or the MuJoCo version.
+
+Of the 17 robosuite failures, 11 grasp and lift the cube and then never carry it to the target or
+release it, and 6 never lift it. Which scene difference causes this is not isolated; "the white
+table gives the wrist camera nothing to navigate by" is a hypothesis. Counts from ten layouts, not
+rates; the package has no contract. See
+[ROBOSUITE_SIM2SIM_20261002.md](ROBOSUITE_SIM2SIM_20261002.md).
+
+**Consequence:** a policy trained on the MuJoCo cube scene cannot be reused on a robosuite scene
+as it is. The props project needs its own data collected in robosuite.
+
 ## Robosuite scene bring-up (B3 Phase 1): go, pending ratification of one fix — 2026-10-02
 
 Not a policy result. A scene composed by robosuite 1.5.2 (`experiments/robosuite_scene/`) is now
