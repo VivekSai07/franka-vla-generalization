@@ -1,5 +1,25 @@
 # Franka benchmark: start here
 
+## Robosuite scene bring-up (B3 Phase 1): go, with an undiagnosed placement offset — 2026-10-02
+
+Not a policy result. A scene composed by robosuite 1.5.2 (`experiments/robosuite_scene/`) is now
+driven by the `pose_snapshot_v2` scripted expert and recorded in the existing 9-state / 8-action
+LeRobot schema. Gates R1–R7 all pass (8 tests in the admission image, 16 in the robosuite image).
+Five scripted red-on-green episodes, 5/5 successful, 528 frames each, are sealed at
+`outputs/robosuite_scene/robosuite_bringup_20261002/` (fingerprint `543e300c257d…`); the dataset
+loads and both AV1 videos decode (2640 frames each).
+
+The robosuite path runs in a **second image** on MuJoCo 3.4.0, because robosuite 1.5.2 cannot reset
+an environment on 3.13.0 (FAILURES #39); the sealed pipeline stays on 3.13.0. Robosuite-scene
+numbers are therefore not physics-comparable with any sealed result.
+
+Open: every seed lands 8.6–12.7 mm off-centre in xy (20 mm window; undiagnosed, systematic); the
+B2-checkpoint smoke test was not run; finger pad friction and geometry are robosuite's. The first
+"grasp failed" verdict was a blind contact check, not a failed grasp (FAILURES #40). See
+[ROBOSUITE_SCENE_BRINGUP_20261002.md](ROBOSUITE_SCENE_BRINGUP_20261002.md).
+
+**Next:** diagnose the placement offset and run the deferred smoke test before designing Phase 2.
+
 ## B2 distractors: no detectable distractor effect; 50,000 updates 91.9% vs 82.5% at 33,400 — 2026-09-30
 
 Trained X-VLA from base on `b2_distractor_20260928` (200 episodes, 40 control + 160 with 1–2

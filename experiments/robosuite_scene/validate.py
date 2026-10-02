@@ -1,4 +1,8 @@
-"""Frame extraction and replay checks. Must import without robosuite installed."""
+"""Frame extraction, replay checks and the seal fingerprint. Must import without robosuite installed."""
+import hashlib
+import json
+from pathlib import Path
+
 import mujoco
 import numpy as np
 
@@ -81,3 +85,24 @@ def kinematic_mismatch(result, traces):
             worst, worst_tick = gap, tick
     kinematic_mismatch.worst_tick = worst_tick
     return worst
+
+
+def _file_hash(path):
+    hasher = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            hasher.update(block)
+    return hasher.hexdigest()
+
+
+def fingerprint(root):
+    """sha256 over the sorted {relative path: sha256(file)} JSON of every file except root/seal.json."""
+    root, files = Path(root), {}
+    if root.is_symlink():
+        raise ValueError("Symlink root")
+    for path in sorted(root.rglob("*")):
+        if path.is_symlink():
+            raise ValueError(f"Symlink in sealed root: {path.relative_to(root)}")
+        if path.is_file() and path != root / "seal.json":
+            files[str(path.relative_to(root))] = _file_hash(path)
+    return hashlib.sha256(json.dumps(files, sort_keys=True).encode()).hexdigest()

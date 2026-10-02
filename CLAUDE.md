@@ -34,7 +34,7 @@ Each experiment package pins what it consumes (dataset seal, source file hashes,
 hashes); a run that cannot reproduce its binding refuses to start.
 
 Everything runs inside a digest-pinned Docker image — no conda, no host Python dependencies.
-Nothing runs outside that image.
+Nothing runs outside the two images below.
 
 ## Pinned image
 
@@ -42,7 +42,18 @@ Nothing runs outside that image.
 sha256:08de1e09200539a26f7564bbf095fb846b8104ba07a72564b8232feb58714abc
 ```
 
-Python 3.10, LeRobot 0.4.4, PyTorch 2.7.1+cu128, MuJoCo 3.13.0.
+Python 3.10, LeRobot 0.4.4, PyTorch 2.7.1+cu128, MuJoCo 3.13.0. Runs every package except
+`experiments/robosuite_scene/`.
+
+Second image, for `experiments/robosuite_scene/` only:
+
+```
+sha256:54d861aac79c1c8ceed09734a00bbc5d8cbf566c427e47ff23089f9bb0ccf27e
+```
+
+The image above plus robosuite 1.5.2 and MuJoCo 3.4.0 (robosuite 1.5.2 cannot reset an environment
+on 3.13.0). Results from the two images are not physics-comparable. How to run that package:
+`experiments/robosuite_scene/README.md`; build notes: [docs/OPERATIONS.md](docs/OPERATIONS.md).
 
 ## Commands
 

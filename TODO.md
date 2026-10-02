@@ -294,11 +294,18 @@ cell" is really 32; and screening is 100 trials, not 80.
 ### B3. Combined-axis dataset on a new (robosuite) scene
 
 **Design spec (Phase 1 only): [docs/superpowers/specs/2026-10-01-robosuite-scene-bringup-design.md](docs/superpowers/specs/2026-10-01-robosuite-scene-bringup-design.md)**
-**Branch:** `feat/robosuite-scene-bringup` (not yet created; from `main` at `624b156`).
+**Plan:** [docs/superpowers/plans/2026-10-01-robosuite-scene-bringup.md](docs/superpowers/plans/2026-10-01-robosuite-scene-bringup.md)
+**Branch:** `feat/robosuite-scene-bringup` (created from `10f2524`; the spec's `624b156` base is stale).
 
 Two-phase project. User accepted the one-variable-per-run attribution trade-off: a strong result from one experiment if it works, limited attribution if it doesn't.
 
-- [ ] **Phase 1 — robosuite scene bring-up.** Prove the simulator swap works end-to-end on a trivial scene (one layout, two cubes, two cameras replicated from the current scene, scripted expert, 5-episode PoC, deterministic resets, LeRobot schema parity). Nothing new is varied. Go/no-go report decides whether Phase 2 starts. See spec above for risks R1-R7.
+- [x] **Phase 1 — robosuite scene bring-up.** Prove the simulator swap works end-to-end on a trivial scene (one layout, two cubes, two cameras replicated from the current scene, scripted expert, 5-episode PoC, deterministic resets, LeRobot schema parity). Nothing new is varied. Go/no-go report decides whether Phase 2 starts. See spec above for risks R1-R7.
+      **Result (2026-10-02): go.** R1–R7 all pass; 5/5 scripted episodes sealed at `outputs/robosuite_scene/robosuite_bringup_20261002/` (fingerprint `543e300c257d…`). Report: [docs/ROBOSUITE_SCENE_BRINGUP_20261002.md](docs/ROBOSUITE_SCENE_BRINGUP_20261002.md). The robosuite path runs in its own image on MuJoCo 3.4.0 (robosuite 1.5.2 cannot reset on 3.13.0), so robosuite-scene results are not physics-comparable with sealed results.
+- [ ] **Before Phase 2 is designed — carried over from Phase 1:**
+      (a) diagnose the systematic 8.6–12.7 mm xy placement offset (all five seeds, 20 mm window; seed 2 at 12.65 mm would fail Phase 2's planned ≤ 1.2 cm expert gate);
+      (b) run the B2-checkpoint smoke test on the robosuite scene (deferred from Phase 1 to a follow-up plan, not run);
+      (c) decide whether finger pad friction/geometry stay robosuite's;
+      (d) the package is not hash-bound — Phase 2 needs a contract before any result is reported from it.
 - [ ] **Phase 2 — B3 combined-axis collection**, designed only after Phase 1 passes. Will layer: tighter release precision (expert gate ≤ 1.2 cm), harder distractors (reduced clearance / in the carry path), full colour randomisation, extra demonstrations near the acquisition-weak `054`/`048` pick regions, and a floor/prop change. Horizon likely 75-100 k updates.
 - [ ] Confirm 50,000's 91.9% on a fresh holdout as part of Phase 2's eval, since the B2 50k number is the larger of two reported results.
 
