@@ -31,6 +31,34 @@
 - Commits: user identity only, no trailers, short messages; no outputs, images or videos. The user pushes; do not push.
 - Outputs: `outputs/b3_robosuite_data/b3_robosuite_<YYYYMMDD>/` in the main checkout, mounted at `/out`.
 
+## Unattended execution (the user's instruction, 2026-10-03)
+
+This plan is meant to be executed overnight by an agent with nobody watching, ending with a
+detached container that finishes the collection on its own. So:
+
+- **No step waits for a human.** Where a decision is needed the executor decides, in favour of the
+  spec, and records it in `STATUS.md` under "Decisions taken" with what it costs if wrong.
+- **What the executor may never decide:** loosening or skipping a gate or test tolerance; changing a
+  count, a region, a band, the held-out pairs or the success window; editing a path the Global
+  Constraints forbid; raising `MIN_CLEARANCE_M` above 0.10 or lowering it below 0.08; deleting or
+  overwriting anything under `outputs/` or `datasets/` except its own scratch under
+  `outputs/b3_robosuite_data/`; touching any Docker image or container that is not this project's;
+  pushing to a remote. If the only way forward needs one of these: stop and write why.
+- **`STATUS.md`** at `outputs/b3_robosuite_data/STATUS.md` (main checkout) is rewritten at every
+  stage boundary and whenever something stops. It is what the user reads in the morning. Always:
+  time, branch and commit, current stage, what is running (container name) and how to check it
+  (`docker ps -a --filter name=b3-collect`, `docker logs <name> 2>&1 | grep '^B3 ' | tail`,
+  `--status`), what passed with its numbers, decisions taken, and — if stopped — the exact reason
+  and the last journal lines.
+- **The collection container is detached and self-finishing.** `--collect` runs to the seal by
+  itself, so it does not depend on the agent's session staying alive. The executor checks it at 5,
+  15 and 60 minutes and then as long as its session lasts, updating `STATUS.md` each time.
+- **What is left for the morning** if the session ends before the container does: Task 8 Steps 4–7
+  (verify the seal, write the report, documentation pass, final commit). Any agent can do those
+  from `STATUS.md` and the output directory.
+- **Expected timing:** Tasks 1–6 are implementation; the pilot is under an hour; the collection is
+  about 11–12 hours from launch. A launch at 01:00 seals around 13:00.
+
 ## Review Focus
 
 1. **Colour predicts position.** If a colour were more often in one region, a policy could skip the instruction. `test_plan` asserts every colour is the pick cube equally often in region A and region B, and likewise as place cube, over the training set.
@@ -58,11 +86,12 @@ Shared names later tasks must not rename:
 
 ```python
 # plan.py
-COLOURS, HELD_OUT_PAIRS, TRAINED_PAIRS, SIDES, CELLS, MIN_CLEARANCE_M, INFEASIBLE_LAYOUT_RESAMPLES
+COLOURS, HELD_OUT_PAIRS, TRAINED_PAIRS, SIDES, CELLS, MIN_CLEARANCE_M
 def seed(identity: str) -> int
 def make_plan() -> dict            # keys below
 def validate_plan(plan: dict) -> None
 def attempt_draw(episode: dict, k: int) -> dict   # {"seed", "home_pose_jitter_deg"} for attempt k; k=0 is the planned draw
+def resample_layout(episode: dict, r: int) -> dict  # r=0 returns the episode; r>=1 the same slot with freshly drawn positions
 # plan dict keys: version, master_seed, rng_seeds, layouts, episodes, train_ids, validation_ids,
 #   evaluation_holdout, evaluation_screen_ids, evaluation_report_ids, min_clearance_m, ...
 # episode keys: episode_index, split, cell, pick, place, side, colours (sorted, present in scene),
@@ -186,7 +215,7 @@ class ColourTests(unittest.TestCase):
 - **Episodes.** Training episodes are ordered by a seeded shuffle of all 500 (so a partial run is roughly balanced), then the four riskiest profiles are swapped to the front (two-distractor `near_pick` at an outer corner; two-distractor `near_place`; one-distractor `near_pick` at an inner corner; a `none` control). Validation episodes follow as indices 500–559. `task_index` is the index of the instruction in the sorted list of the 10 trained instructions.
 - **Reserved layouts** (`evaluation_holdout`, keyed `evaluation_000`…`059`, never an episode): 20 screen (each trained pair × each side), 20 report trained (same), 20 report held-out (each held-out pair × 5 per side). In each tier a quarter are edge layouts (screen 5, report 10; alternating inner/outer), the rest from the evaluation hypercube. Each stores `pick`, `place`, `side`, `edge`, `cube_xy_m`, home and hover jitter, and `conditions`: `"control"` (no distractors) for report layouts, and `"distractor"` (both other colours; first near — pick on even layout indices, place on odd — second far) for all.
 - `attempt_draw(episode, k)`: `k = 0` returns the planned seed and home jitter; `k ≥ 1` derives both from `seed(f"attempt:{episode_index}:{k}:...")`.
-- `INFEASIBLE_LAYOUT_RESAMPLES: dict[str, int] = {}` — a layout id mapped to a resample index redraws that layout's cube and distractor positions from `seed(f"resample:{layout_id}:{index}:...")`, same constraints.
+- `resample_layout(episode, r)`: `r = 0` returns the episode unchanged; `r ≥ 1` returns the same slot — same cell, profile, edge class, colours, instruction — with cube and distractor positions redrawn from `seed(f"resample:{episode_index}:{r}:...")` under the same constraints (an edge slot stays in its band), and a new `layout_id` `f"{old}_r{r}"`. This is the substitution an infeasible layout gets; the collector applies it automatically and records it.
 - All seeds are recorded in `rng_seeds`; a duplicate seed value raises.
 
 - [ ] **Step 1: Write the failing tests** (`test_plan.py`, admission image). One test per bullet; the assertions that matter most:
@@ -240,6 +269,7 @@ class ColourTests(unittest.TestCase):
 
     def test_riskiest_profiles_come_first(self): ...   # the four profiles named above, in slots 0-3
     def test_attempt_draw(self): ...                   # k=0 equals the planned draw; k=1,2 differ, are stable, jitter within +/-1.0
+    def test_resample_layout(self): ...                # r=0 identity; r=1..3 keep cell/profile/edge/colours/instruction, move the cubes, satisfy test_geometry, are stable
     def test_no_simulator_imports(self):               # ast-parse plan.py: no import of robosuite, mujoco, torch, lerobot
 ```
 
@@ -310,9 +340,9 @@ class ColourTests(unittest.TestCase):
 
 `reason` is the first failing gate's name, or `"admitted"`.
 
-- [ ] **Step 1: Write the failing tests** (admission image; `admit` is tested with synthetic results and traces, with `replay_recorded` injected as a parameter so no simulator is needed): each gate fails alone and names itself; all pass ⇒ admitted; a distractor moved 2.5 cm rejects, the pick cube moving does not; `fingerprint` ignores `seal.json`, changes with any other file, rejects symlinks, **and is unchanged when a `.json` file's keys are reordered** but changes when a JSON value changes; `provenance()` lists this package's `.py` files and README, `experiments/robosuite_scene/*.py`, the spec and this plan, and every value is a 64-hex digest; `validate_dataset` rejects a wrong episode count, a wrong cell balance, and an instruction that disagrees with its plan slot (use a tiny fake dataset directory and a stub reader).
+- [ ] **Step 1: Write the failing tests** (admission image; `admit` is tested with synthetic results and traces, with `replay_recorded` injected as a parameter so no simulator is needed): each gate fails alone and names itself; all pass ⇒ admitted; a distractor moved 2.5 cm rejects, the pick cube moving does not; `fingerprint` ignores `seal.json`, changes with any other file, rejects symlinks, **and is unchanged when a `.json` file's keys are reordered** but changes when a JSON value changes; `provenance()` lists this package's `.py` files and README, `experiments/robosuite_scene/*.py`, the spec and this plan, and every value is a 64-hex digest; `validate_dataset` takes the substitutions into account (episode `i` must match `resample_layout(plan episode i, r)`) and rejects a wrong episode count, a wrong cell balance, and an instruction that disagrees with its plan slot (use a tiny fake dataset directory and a stub reader).
 - [ ] **Step 2: Run in `$OLD`** — FAIL.
-- [ ] **Step 3: Implement.** `fingerprint`: sorted `{relative path: digest}` over every file under root except `root/seal.json`; a `.json` file's digest is the sha256 of `json.dumps(json.load(f), sort_keys=True, separators=(",", ":"))`, any other file's is the sha256 of its bytes. `seal` writes `seal.json` = `{"fingerprint", "provenance_sha256", "plan_sha256", "image", "min_clearance_m", "episodes"}` last. `validate.py` imports robosuite-dependent modules only inside the functions that need them.
+- [ ] **Step 3: Implement.** `fingerprint`: sorted `{relative path: digest}` over every file under root except `root/seal.json`; a `.json` file's digest is the sha256 of `json.dumps(json.load(f), sort_keys=True, separators=(",", ":"))`, any other file's is the sha256 of its bytes. `seal` writes `seal.json` = `{"fingerprint", "provenance_sha256", "plan_sha256", "substitutions_sha256", "image", "min_clearance_m", "episodes"}` last. `validate.py` imports robosuite-dependent modules only inside the functions that need them.
 - [ ] **Step 4: Run** — PASS in `$OLD`.
 - [ ] **Step 5: Commit** — `git commit -m "Admit, validate and seal B3 episodes"`.
 
@@ -329,17 +359,17 @@ class ColourTests(unittest.TestCase):
 
 **Scheduler rules:**
 
-- Slots are the plan's episodes in order. Attempt `k` of a slot uses `attempt_draw(episode, k)`. `ATTEMPTS_PER_SLOT = 3`, `REJECTION_BUDGET = 60`.
+- Slots are the plan's episodes in order. A slot tries layout `resample_layout(episode, r)` for `r = 0, 1, 2, 3` (`r = 0` is the planned layout), and on each layout up to `ATTEMPTS_PER_LAYOUT = 3` attempts with `attempt_draw(episode, k)`. So one bad layout is substituted automatically instead of stopping the run. `REJECTION_BUDGET = 150` rejected attempts overall (the pilot accepts up to 20% rejection on crowded layouts, which is up to about 45 on its own).
 - An admitted attempt: `commit` (which calls `add_frame` for each buffered frame, then `save_episode`), write `episodes/episode_<i>.npz` (qpos, ctrl, initial_state, final_qpos), append a journal line `{"slot", "attempt", "admitted": true, "gates", "seed", "wall_seconds"}`, move to the next slot.
-- A rejected attempt: append a journal line with `admitted: false` and the reason; nothing is written to the dataset; retry the same slot. A third rejection, or the 61st overall, stops the run with `SlotExhausted` / `BudgetExhausted`, journal intact.
-- `--resume`: read the journal; admitted slots are skipped; the first non-admitted slot continues at its next attempt index. The dataset is reopened for appending with the pinned encoder settings (see `open_dataset` in `experiments/b2_distractor_data/record.py` for the attributes LeRobot drops on reopen; reproduce the pattern, do not import it). Refuse to resume if the dataset's episode count differs from the journal's admitted count, or if `provenance.json` in the output differs from a fresh `provenance()` in anything but `plan.py`'s own hash. A changed plan is accepted only as an **amendment**: the fresh plan may differ from the frozen `plan.json` solely in layouts named in `INFEASIBLE_LAYOUT_RESAMPLES` and the episodes that use them, and none of those episodes may be admitted in the journal. An accepted amendment rewrites `plan.json` and appends to `amendments.json`; anything else aborts before writing.
+- A rejected attempt: append a journal line with `admitted: false`, `r`, `k` and the reason; nothing is written to the dataset; retry the same slot. Every admitted journal line also carries `r`. When the layout index moves past 0 the collector rewrites `substitutions.json` = `{episode_index: r}` for every admitted slot with `r > 0`. A slot that fails all 4 layouts × 3 attempts stops the run with `SlotExhausted`; the 151st rejection overall stops it with `BudgetExhausted`; journal intact in both cases.
+- `--resume`: read the journal; admitted slots are skipped; the first non-admitted slot continues at its next attempt index. The dataset is reopened for appending with the pinned encoder settings (see `open_dataset` in `experiments/b2_distractor_data/record.py` for the attributes LeRobot drops on reopen; reproduce the pattern, do not import it). Refuse to resume if the dataset's episode count differs from the journal's admitted count, or if `plan.json` or `provenance.json` in the output differ from fresh values. Substitutions never change `plan.json`: the plan of record is `plan.json` plus `substitutions.json`.
 - `--collect` refuses an existing output directory; it first writes `plan.json`, `provenance.json`, `bank.npz` + `bank.json` (from `make_bank`), then runs. After the last slot: `validate_dataset`, `validation.json`, `seal`.
 - At start and every 25 admits: require ≥ 20 GB free under the output root, and re-hash `provenance()`; drift aborts.
 - `--pilot` (Task 7) takes `--slots I J K ...` and `--attempts N` (default 1), runs those slots into a scratch output and never seals.
 - `--status` prints admitted / rejected counts, the current slot and the last five journal lines.
 - Log one line per attempt starting with `B3 ` so `docker logs | grep '^B3 '` shows progress.
 
-- [ ] **Step 1: Write the failing tests** (admission image, fake `execute` / `commit`): all slots admitted in order; an injected rejection retries the same slot with attempt 1 and its different draw; three rejections raise `SlotExhausted` and leave a readable journal; the 61st rejection raises `BudgetExhausted`; a run interrupted after slot 7 and resumed admits every slot exactly once and calls `commit` exactly once per slot; resume refuses a dataset/journal count mismatch; a rejected attempt never calls `commit`; an amendment touching only an unadmitted resampled layout is accepted and recorded, and one touching an admitted episode or any other field is refused.
+- [ ] **Step 1: Write the failing tests** (admission image, fake `execute` / `commit`): all slots admitted in order; an injected rejection retries the same slot with attempt 1 and its different draw; twelve rejections on one slot raise `SlotExhausted` and leave a readable journal; the 151st rejection raises `BudgetExhausted`; a run interrupted after slot 7 and resumed admits every slot exactly once and calls `commit` exactly once per slot; resume refuses a dataset/journal count mismatch; a rejected attempt never calls `commit`; a slot whose planned layout is rejected three times is admitted on layout `r = 1`, the journal and `substitutions.json` both say so, and resume after that point keeps `r`; a slot failing all 12 attempts raises `SlotExhausted`.
 - [ ] **Step 2: Run in `$OLD`** — FAIL.
 - [ ] **Step 3: Implement** `record.py` and `README.md` (what the package is, images, gate order, the commands, "hash-bound once sealed: fork, do not edit").
 - [ ] **Step 4: Run** — `test_record` PASS in `$OLD`. Then a real 3-slot end-to-end check in `$NEW`: `--pilot --slots 0 3 500 --out /out/e2e_check` must leave a dataset with one episode per admitted slot that loads with `LeRobotDataset` and whose videos pass `media.decode_video`.
@@ -355,7 +385,7 @@ Operational, no new code unless the pilot exposes a defect.
 - [ ] **Step 2: Corners.** `--pilot` on the first 5 `inner` and 5 `outer` edge slots. Any corner with more than 2 of 5 rejected is reported to the user before collection.
 - [ ] **Step 3: Look.** Extract a first, middle and last frame of both cameras from three pilot episodes (a control, a two-distractor near-pick, an outer-corner) and view them. Check: the right cubes are present and coloured, distractors sit where planned, nothing is clipped by the camera, the stack is on the instructed place cube. Describe what is seen in the task report.
 - [ ] **Step 4: Freeze.** Commit the final `MIN_CLEARANCE_M` (and `test_plan` still passing) as `git commit -m "Freeze B3 distractor clearance at <value> m after the pilot"`. Write the pilot numbers into `README.md`. From this commit on the package is frozen until the seal.
-- [ ] **Step 5: Tell the user** the clearance, the two rejection rates and what the frames show, and get a go-ahead for the 12-hour run. This is the one planned stop.
+- [ ] **Step 5: Go / no-go, decided by the executor, not by a human** (see *Unattended execution*). **Go** only if all hold: a clearance on the ladder met ≤ 4 of 20; each corner had ≤ 2 of 5 rejected; the three inspected episodes show the instructed pick cube on the instructed place cube with every planned cube visible and correctly coloured; every test is green; the end-to-end check from Task 6 loaded and decoded. Anything else is **no-go**: do not launch, write the numbers and the reason into `STATUS.md`, stop.
 
 ---
 
@@ -363,7 +393,7 @@ Operational, no new code unless the pilot exposes a defect.
 
 - [ ] **Step 1: Pre-launch.** Work through section 1 of `.github/skills/launching-a-run/SKILL.md`. In particular: worktree at the frozen commit, `df -h` shows ≥ 30 GB free, all tests green (`$OLD`: `test_plan test_contract test_expert_fork test_record test_validate`; `$NEW`: `test_scenes test_expert` and the robosuite_scene suite), nothing in `provenance()` will be edited during the run.
 - [ ] **Step 2: Launch** `docker run -d --name b3-collect-<YYYYMMDD> ... -m experiments.b3_robosuite_data.record --collect --out /out/b3_robosuite_<YYYYMMDD>`. Check `--status` after 5, 15 and 60 minutes, then at least hourly. Expected rate: about 72 s per admitted episode, about 11–12 h in total.
-- [ ] **Step 3: If it stops.** `SlotExhausted`: confirm no admitted episode used that layout, add the layout to `INFEASIBLE_LAYOUT_RESAMPLES`, commit, `--resume` (the resume check must accept exactly that recorded plan amendment and nothing else — if it does not, stop and report). `BudgetExhausted`, a crash, or a provenance drift: stop and report with the journal's tail; do not restart from scratch without the user.
+- [ ] **Step 3: If it stops.** A crash or a killed container with an intact journal: `--resume`, once; if it stops again at the same slot, do not loop. `SlotExhausted`, `BudgetExhausted` or a provenance drift: do not resume and do not restart from scratch; write the journal's tail and the rejection gates into `STATUS.md` and leave it for the user.
 - [ ] **Step 4: Verify the seal.** `seal.json` present; recompute `fingerprint` in a second process and compare; load the dataset with `LeRobotDataset` and read first and last frame; `validation.json` shows 560 episodes, 25 + 3 per cell, 100 / 200 / 200 by distractor count in training, 400 / 50 / 50 by edge class, and no held-out pair.
 - [ ] **Step 5: Report** `docs/B3_ROBOSUITE_COLLECTION_<YYYYMMDD>.md`: what was collected (the table of counts as measured), the frozen clearance and pilot numbers, rejections by gate and by profile, any substituted layout, wall-clock, the seal fingerprint and image digest, the per-episode placement offsets (min / median / max `final_xy_m`), and anything odd seen in the frames. Caveats beside the figures.
 - [ ] **Step 6: Documentation pass.** `TODO.md` (B3 collection done, next: training plan), `docs/BENCHMARK_STATUS.md`, `docs/OPERATIONS.md` (output census row), `docs/INDEX.md`, `docs/FAILURES.md` for anything that went wrong and could recur, `CLAUDE.md` and `.github/instructions/experiments.instructions.md` (the new package is hash-bound: fork, do not edit), the `working-on-the-robosuite-path` skill if a new trap was hit.
@@ -377,4 +407,5 @@ Operational, no new code unless the pilot exposes a defect.
 - Review Focus items map to tests: (1) (2) `test_plan`; (3) (4) `test_record`; (5) `test_validate`.
 - Names used across tasks match the shared-names block; `replay_recorded`'s new keyword arguments are produced in Task 1 and consumed in Task 5.
 - Plan-mandated duplication a reviewer will see: `B3Expert.run` is a verbatim copy (the repo's expert-versioning pattern, pinned by the AST test), and the dataset-reopen attributes are reproduced from B2's collector (that module cannot be imported without its MuJoCo-scene dependencies).
-- Not known when this plan was written, and found out by Tasks 4 and 7: whether the expert clears a distractor at 8 cm, whether the corner picks are reachable on the robosuite Panda, and the real rejection rate.
+- Checked before hand-over (2026-10-03): the Phase 1 expert stacks red on green from both edge corners on both sides, 14 of 14 (`outputs/robosuite_scene/spike_b3_corners/result.json`; no distractors, two cubes). So a corner failure in the pilot points at the new code, not at reach.
+- Not known when this plan was written, and found out by Tasks 4 and 7: whether the expert clears a distractor at 8 cm, and the real rejection rate.

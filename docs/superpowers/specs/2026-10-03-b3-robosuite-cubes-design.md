@@ -150,8 +150,11 @@ green-tests-wrong-code failures came from. It runs in the robosuite image (MuJoC
   memory and written to the dataset only after the episode passes admission, so a rejected attempt
   never touches the dataset and no rollback path is needed. A journal line is appended per
   attempt. A rejected attempt retries the **same slot** with the next home-jitter and expert-seed
-  draw (never skips a slot); 3 attempts per slot, a global budget of 60 rejections; an exhausted
-  slot stops the run and is recovered by a recorded layout substitution, as in B2.
+  draw (never skips a slot); 3 attempts per layout. A layout that fails all three is substituted
+  automatically by a deterministic redraw of the same slot (same cell, profile and edge class; up
+  to 3 substitutions), recorded in `substitutions.json` — B2 did this by hand, and the collection is
+  meant to run unattended. A global budget of 150 rejected attempts stops a run that is failing
+  systematically.
 - **`validate.py`** — per-episode admission, final dataset validation (counts, cell balance,
   condition balance, edge share, instruction ↔ plan agreement), `fingerprint()`, `seal()`.
 - **`contract.py`** — `provenance()`: hashes of this package's files and README, of
@@ -243,7 +246,7 @@ The machine is shared; check `nvidia-smi` and `df -h` before each long stage.
 | risk | handling |
 |---|---|
 | near distractors make the expert knock cubes over | the clearance ladder in the pilot; rejection budget; the value is frozen before collection |
-| edge-corner picks are unreachable or unstable on the robosuite Panda (shorter fingers) | pilot includes both corners; an infeasible layout is substituted, never forced by loosening a gate |
+| edge-corner picks are unreachable or unstable on the robosuite Panda (shorter fingers) | checked before the plan was handed over (2026-10-03, Phase 1 expert, red→green, no distractors): 14 of 14 episodes succeeded at inner and outer corners on both sides, including each band's extreme points (reach 0.297–0.563 m; final xy 6.8–11.7 mm). The pilot repeats it with the B3 code; an infeasible layout is substituted, never forced by loosening a gate |
 | the fingertip-pad contract fix hides a real grasp problem | admission needs a *released, stable stack*, which does not depend on the grasp check alone |
 | four cubes change the model per episode | one cached model per colour set; each episode's trace records its set; replay uses the same model |
 | three axes at once make a failure hard to attribute | the within-evaluation contrasts in section 4 |
