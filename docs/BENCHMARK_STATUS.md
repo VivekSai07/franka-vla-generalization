@@ -1,5 +1,39 @@
 # Franka benchmark: start here
 
+## Robosuite scene bring-up (B3 Phase 1): go, pending ratification of one fix — 2026-10-02
+
+Not a policy result. A scene composed by robosuite 1.5.2 (`experiments/robosuite_scene/`) is now
+driven by the `pose_snapshot_v2` scripted expert and recorded in the existing 9-state / 8-action
+LeRobot schema. Gates R1–R7 all pass (8 tests in the admission image, 16 in the robosuite image).
+Five scripted red-on-green episodes, 5/5 successful, 528 frames each, are sealed at
+`outputs/robosuite_scene/robosuite_bringup_20261002/` (fingerprint `543e300c257d…`); the dataset
+loads and both AV1 videos decode (2640 frames each).
+
+The robosuite path runs in a **second image** on MuJoCo 3.4.0, because robosuite 1.5.2 cannot reset
+an environment on 3.13.0 (FAILURES #39); the sealed pipeline stays on 3.13.0. Robosuite-scene
+numbers are therefore not physics-comparable with any sealed result.
+
+The go is conditional: all six attempts the tuning protocol allows failed, and the pass came from a
+model-contract correction outside it (fingertip pads re-parented into the finger bodies), allowed
+by the executing AI controller's ruling as physically equivalent. The user has not yet ratified it.
+
+Every seed lands 8.6–12.7 mm off-centre in xy (20 mm window). That is the scripted expert's own
+±5 mm (1σ) target jitter, not the robosuite scene: the offset predicted from the seed's draws
+matches the measured signed offset to 0.65 mm in all five seeds, and its direction changes with
+the seed. A ≤ 12 mm expert gate would reject about 15% of episodes with this jitter (calculated),
+so Phase 2 must choose between the jitter and the gate.
+
+A second collection reproduced every file except `meta/stats.json` (key order), so the dataset is
+not byte-reproducible and its fingerprint differs between runs (`08c807bf0095…` the second time).
+
+Open: the B2-checkpoint smoke test was not run; finger pad friction and geometry are robosuite's. The first
+"grasp failed" verdict was a blind contact check, not a failed grasp (FAILURES #40). See
+[ROBOSUITE_SCENE_BRINGUP_20261002.md](ROBOSUITE_SCENE_BRINGUP_20261002.md).
+
+**Next:** sim2sim validation of the B2 checkpoint on the robosuite scene (branch
+`feat/robosuite-sim2sim`), then decide jitter versus gate and re-think the B3 axis list before
+designing Phase 2. The placement offset needs no diagnosis: it is the expert's own jitter.
+
 ## B2 distractors: no detectable distractor effect; 50,000 updates 91.9% vs 82.5% at 33,400 — 2026-09-30
 
 Trained X-VLA from base on `b2_distractor_20260928` (200 episodes, 40 control + 160 with 1–2

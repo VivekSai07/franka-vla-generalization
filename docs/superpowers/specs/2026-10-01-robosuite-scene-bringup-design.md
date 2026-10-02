@@ -172,3 +172,19 @@ point, replan.
 
 A single decision in the final report: **go** (Phase 2 B3 spec starts) or **no-go** (identify the
 specific risk and the specific redesign needed). No partial credit.
+
+## Corrections (2026-10-02)
+
+- The MuJoCo pin is 3.4.0 in the robosuite image only; robosuite 1.5.2 does not run on 3.13.0
+  (see FAILURES #39). The admission image is unchanged.
+- Camera names are `front_cam` and `gripper_cam`.
+- The scene has a floor, not a table.
+- The R7 tolerance is 1 mm / 0.1 degrees.
+- The smoke test moved to a follow-up plan.
+- The tuning protocol replaces "any single risk failing means stop".
+- Correction to "The scene has a floor, not a table" above: the current scene has a floor and no
+  table; the robosuite scene keeps a table whose top is at z = 0, with the floor at z = −0.05.
+- The proof-of-concept dataset is not byte-reproducible: two collector runs differ in
+  `dataset/meta/stats.json` (same content, different key order) and therefore in fingerprint;
+  every other file is identical.
+- Status as of 2026-10-02: Phase 1 implemented; see docs/ROBOSUITE_SCENE_BRINGUP_20261002.md.

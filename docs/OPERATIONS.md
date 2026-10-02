@@ -17,6 +17,29 @@ sha256:08de1e09200539a26f7564bbf095fb846b8104ba07a72564b8232feb58714abc
 Always referenced by digest, never by tag. Python 3.10, LeRobot 0.4.4, PyTorch 2.7.1+cu128,
 MuJoCo 3.13.0.
 
+## The second image (robosuite only)
+
+```
+sha256:54d861aac79c1c8ceed09734a00bbc5d8cbf566c427e47ff23089f9bb0ccf27e
+```
+
+Local tag `vla-robosuite:1.5.2-mj3.4.0`; the value of record is `IMAGE` in
+`experiments/robosuite_scene/contract.py`. Admission image plus robosuite 1.5.2 and
+**MuJoCo 3.4.0** (numpy stays 2.2.6). Only `experiments/robosuite_scene/` runs in it; everything
+else, including all sealed packages and three of that package's own unit tests (`test_r1_image`,
+`test_seal`, `test_expert_fork`), runs in the pinned image above on MuJoCo 3.13.0.
+
+- Why a second MuJoCo: robosuite 1.5.2 imports on 3.13.0 but cannot reset an environment there
+  ([FAILURES.md](FAILURES.md) #39). Results from the two images are not physics-comparable.
+- Why `--no-deps`: robosuite depends on `mink`, which requires numpy<2. `pip check` in this image
+  lists `mink`, `opencv-python`, `pytest` and `qpsolvers` as missing; that is intended.
+- Build with the classic builder, `DOCKER_BUILDKIT=0 docker build -f experiments/robosuite_scene/Dockerfile ...`
+  — BuildKit tries to pull the bare `sha256:` base reference from a registry. Never rebuild or
+  retag the admission image.
+- Run helper, test order and collector: `experiments/robosuite_scene/README.md`. Its tests are run
+  by module name (`-m unittest experiments.robosuite_scene.tests.<module>`), three of them in the
+  admission image.
+
 ## Standard container flags
 
 CPU work (tests, admission, collection):

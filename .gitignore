@@ -36,6 +36,9 @@ cam_check.png
 .vscode/
 *.swp
 
+# Linked worktrees — local checkouts, never part of the repo
+.worktrees/
+
 # Existing machine-local offline setup — preserved on disk, not portable source.
 /Dockerfile.offline
 /Dockerfile.offline.dockerignore
