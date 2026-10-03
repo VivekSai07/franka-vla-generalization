@@ -109,10 +109,14 @@ results. Do not edit them even to fix a stale statement:
 - `experiments/broad_workspace_data/README.md`
 - `experiments/xvla_local_varied/README.md`
 - `experiments/smolvla_local_varied/README.md`
+- `experiments/b3_robosuite_data/` (every `.py` including tests, and its README), and
+  `experiments/robosuite_scene/*.py`, the B3 spec and the B3 collection plan: the B3 seal's
+  `provenance()` hashes them (sealed 2026-10-03)
 
 Before editing anything under `experiments/`, check whether it is in `SOURCE_FILES` or reachable
-from `provenance()`. Package READMEs are always in both, except in the two
-`experiments/robosuite_*` packages, which have no contract and no `provenance()`.
+from `provenance()`. Package READMEs are always in both, except in `experiments/robosuite_sim2sim/`
+and the README of `experiments/robosuite_scene/`, which have no contract and no `provenance()`
+(`experiments/robosuite_scene/*.py` are bound through `b3_robosuite_data`'s `provenance()`).
 
 Working on the robosuite path: load the `working-on-the-robosuite-path` skill first.
 

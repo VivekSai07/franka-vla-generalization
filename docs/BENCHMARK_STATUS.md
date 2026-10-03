@@ -1,5 +1,24 @@
 # Franka benchmark: start here
 
+## B3 cube dataset collected and sealed in the robosuite scene — 560/560 episodes — 2026-10-03
+
+Not a policy result. `experiments/b3_robosuite_data/` collected the B3 dataset in the robosuite
+scene: 500 training + 60 validation scripted episodes, 20 cells (10 trained colour pairs × 2 sides) at
+25 + 3 each, training distractors none / one / two = 100 / 200 / 200, pick position interior / inner
+corner / outer corner = 400 / 50 / 50, the two held-out pairs (`yellow→red`, `green→blue`) never
+collected, 60 evaluation layouts banked and never executed. Distractor clearance 8 cm (frozen after
+a 23/23 pilot). 7 rejected attempts of a 150 budget, 0 substituted layouts; final stack offset
+0.19 / 6.9 / 18.9 mm (min / median / max, window 20 mm). Sealed at
+`outputs/b3_robosuite_data/b3_robosuite_20261003/`, fingerprint `e14af864…`, 2.9 GB.
+
+The run crashed once at episode 541 (the `/tmp` tmpfs filled by a per-episode dataset reopen,
+FAILURES #41) and was resumed with no data lost and no code change. The seal binds
+`experiments/robosuite_scene/*.py`, so that package is now frozen as well.
+See [B3_ROBOSUITE_COLLECTION_20261003.md](B3_ROBOSUITE_COLLECTION_20261003.md).
+
+**Next:** the training package and run (plan 2 of the spec, about 36 h GPU), then the evaluation
+package (plan 3); neither is written.
+
 ## Sim2sim: the B2 policy on the robosuite scene — 3/20 against 19/20 — 2026-10-02
 
 The MuJoCo-trained B2 checkpoint (step 50,000) was rolled out on 20 of B2's own control-condition

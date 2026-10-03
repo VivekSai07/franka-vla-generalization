@@ -5,8 +5,10 @@ Bring-up of a scene composed by robosuite 1.5.2 and driven by this repo's script
 9-state / 8-action LeRobot schema. Result and open issues:
 [docs/ROBOSUITE_SCENE_BRINGUP_20261002.md](../../docs/ROBOSUITE_SCENE_BRINGUP_20261002.md).
 
-**This package is not hash-bound to any sealed run.** No contract lists it in `SOURCE_FILES` and it
-has no `provenance()`. It imports the sealed modules read-only and must not edit them.
+**This package is not hash-bound to any run of its own.** No contract lists it in `SOURCE_FILES` and it
+has no `provenance()`. Since 2026-10-03 its `*.py` files are hashed by `b3_robosuite_data`'s
+`provenance()` and so by the B3 seal: do not edit them. It imports the sealed modules read-only and
+must not edit them.
 
 ## Image
 

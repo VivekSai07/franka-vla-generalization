@@ -43,7 +43,9 @@ sha256:54d861aac79c1c8ceed09734a00bbc5d8cbf566c427e47ff23089f9bb0ccf27e
 
 Local tag `vla-robosuite:1.5.2-mj3.4.0`; the value of record is `IMAGE` in
 `experiments/robosuite_scene/contract.py`. Admission image plus robosuite 1.5.2 and
-**MuJoCo 3.4.0** (numpy stays 2.2.6). Only `experiments/robosuite_scene/` runs in it; everything
+**MuJoCo 3.4.0** (numpy stays 2.2.6). Only `experiments/robosuite_scene/` and the simulating parts
+of `experiments/b3_robosuite_data/` (hash-bound; its tests that import no simulator run in the
+admission image) run in it; everything
 else, including all sealed packages and three of that package's own unit tests (`test_r1_image`,
 `test_seal`, `test_expert_fork`), runs in the pinned image above on MuJoCo 3.13.0.
 
@@ -54,6 +56,10 @@ else, including all sealed packages and three of that package's own unit tests (
 - Build with the classic builder, `DOCKER_BUILDKIT=0 docker build -f experiments/robosuite_scene/Dockerfile ...`
   — BuildKit tries to pull the bare `sha256:` base reference from a registry. Never rebuild or
   retag the admission image.
+- Scratch size: a collection that reopens a LeRobot dataset builds a Hugging Face arrow cache under
+  `HF_HOME` each time (31 MB at 541 episodes). With `HF_HOME=/tmp/hf` on a tmpfs, give `/tmp` at
+  least the sum over all reopens (the B3 run needed more than 8 GB; `--tmpfs /tmp:rw,size=24g`
+  finished it). FAILURES #41.
 - Run helper, test order and collector: `experiments/robosuite_scene/README.md`. Its tests are run
   by module name (`-m unittest experiments.robosuite_scene.tests.<module>`), three of them in the
   admission image.
@@ -219,6 +225,7 @@ HF-Hub-ready LeRobot payload is the `dataset/` subdirectory only, ~1.1 GB; `atte
 | `local_varied_data` | `local_varied_data/local_varied_20260919/` | `ae8828ea...25dcf52c` | 60 | 2.8% (2/72) on the broad holdout — superseded, generalises poorly |
 | `b1_language_data` | `b1_language_data/b1_language_20260925/` | `b152cba2...4837fdf22` | 200 | X-VLA 94.4% (151/160), no positional shortcut — see RESULTS.md |
 | `fixed_layout` | `fixed_layout/fixed_layout_20260918/` | `403b8ec2...8d8fba5` | 24 | Tier 2 baseline, 100% at base pose — superseded, single fixed layout |
+| `b3_robosuite_data` (2026-10-03) | `b3_robosuite_data/b3_robosuite_20261003/` | `e14af864...92b8e6c0` | 560 | not yet trained on; robosuite scene (MuJoCo 3.4.0), 2.9 GB, `episodes/` holds per-episode traces, `bank.npz` the 100 reserved scenes — see [B3_ROBOSUITE_COLLECTION_20261003.md](B3_ROBOSUITE_COLLECTION_20261003.md) |
 
 Trained models worth keeping (`outputs/train/`; checkpoint dirs `step_NNNNNN/N`, only the final one
 per run carries `training_state.pt`, the ~7 GB optimizer state, not needed for inference):

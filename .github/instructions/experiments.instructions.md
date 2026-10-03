@@ -24,8 +24,15 @@ Editing a bound file:
 Currently frozen and uncorrectable (editing would invalidate sealed runs):
 `experiments/broad_workspace_data/README.md`, `experiments/{xvla,smolvla}_local_varied/README.md`.
 
-Not hash-bound: `experiments/robosuite_scene/` (scene bring-up) and `experiments/robosuite_sim2sim/` (sim2sim rollouts). No contract lists it and it has no
-`provenance()`; its `seal.json` is a file fingerprint only. It runs only in the robosuite image
+Hash-bound by the B3 seal (2026-10-03): `experiments/b3_robosuite_data/` (a real `provenance()`:
+every `.py` incl. tests, its README) and, through it, `experiments/robosuite_scene/*.py`, the shared
+modules it imports, `src/`, and the B3 spec and collection plan. Editing any of them invalidates
+the seal; fork instead. Its `plan.py` and `contract.py` import no simulator so training can import
+them in the admission image.
+
+Not hash-bound: `experiments/robosuite_sim2sim/` (sim2sim rollouts) and the README of
+`experiments/robosuite_scene/` (scene bring-up). No contract lists them; the bring-up `seal.json` is
+a file fingerprint only. `robosuite_scene` runs only in the robosuite image
 (`contract.IMAGE`, MuJoCo 3.4.0) — except `test_r1_image`, `test_seal` and `test_expert_fork`, which
 run in the admission image — and its tests are run by module name, not by `discover`. It imports
 sealed modules read-only; `test_r1_image` fails if a sealed path changes on that branch.

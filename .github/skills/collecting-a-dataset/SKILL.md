@@ -61,6 +61,11 @@ a region), that path is unverified. Watch the first ~10-15 admits interactively 
 to the full multi-hour budget. A parked prop can carry residual velocity invisible in `qpos` —
 check `qvel` too before trusting "at rest".
 
+A pilot of 10-15 episodes cannot show a cost that grows with the dataset: B3 reopened the dataset
+after every episode and filled an 8 GB `/tmp` with Hugging Face caches at episode 541 (FAILURES
+#41). For anything done once per episode, measure it at the final dataset size (one open of a
+copy is enough) and size scratch space for the sum.
+
 ## 5. Monitor
 
 Same caveat as training: `docker wait` does not reliably notify. Poll `--status` (or
