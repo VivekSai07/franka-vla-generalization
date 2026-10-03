@@ -190,7 +190,7 @@ gpu -d --name b3-train $FLAGS -v $MAIN/${OUT}_admission:/vla/${OUT}_admission:ro
 ```
 
 - [ ] **Step 3:** Check at 5, 15 and 60 minutes, then every few hours: `docker logs b3-train 2>&1 | grep -E '^TRAIN|^CHECKPOINT|Traceback' | tail -3`. Confirm `step_000001` lands immediately and `step_031200` at about the predicted time. Keep `outputs/train/STATUS_b3.md` current (time, update count, seconds per update, ETA, last checkpoint, disk free).
-- [ ] **Step 4:** If it dies: do not resume (there is no resume) and do not relaunch without the user. Record the traceback and the last checkpoint in `STATUS_b3.md`.
+- [ ] **Step 4:** If it dies: do not relaunch without the user. Record the traceback and the last checkpoint in `STATUS_b3.md`. *(Amended 2026-10-03: this plan assumed "there is no resume". The v1 launch could not be continued after a crash, so it was replaced by v2 in `outputs/train/..._v2`, which snapshots every 2,600 updates and has `--train --resume`, gated by `--resume-proof`; see the package README, "Resuming a failed run", and FAILURES #43. Container `b3v2-train`; output paths above read `_v2`.)*
 
 ### Task 7: completion and documentation
 
