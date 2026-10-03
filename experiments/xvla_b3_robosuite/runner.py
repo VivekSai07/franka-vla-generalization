@@ -1,4 +1,4 @@
-"""CPU admission, exact two-update scratch, or fresh B3 robosuite X-VLA fine-tune. No automatic resume."""
+"""CPU admission, two-update scratch, resume proof, or B3 robosuite X-VLA fine-tune; --resume is manual."""
 import argparse
 import gc
 import json
@@ -21,9 +21,14 @@ EXPECTED_PARAM_NUMEL = 879482456
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     mode = parser.add_mutually_exclusive_group(required=True)
-    for name in ('check', 'preflight', 'train'):
+    for name in ('check', 'preflight', 'resume-proof', 'train'):
         mode.add_argument('--'+name, action='store_true')
-    return parser.parse_args(argv)
+    parser.add_argument('--resume', action='store_true',
+                        help='continue a failed --train from its newest verified snapshot')
+    args = parser.parse_args(argv)
+    if args.resume and not args.train:
+        parser.error('--resume only continues --train')
+    return args
 
 
 def require_disk(output, gib):
@@ -32,9 +37,10 @@ def require_disk(output, gib):
 
 
 def require_resources(output, preflight):
-    # 6 checkpoints: 5x3.3 + 9.9 = 26.4 GB, so 33 GiB leaves ~6.6 GB headroom. Measured from this
-    # package's own schedule, not copied from another package (see FAILURES #31).
-    require_disk(output, 15 if preflight else 33)
+    # Train: checkpoints 5x3.3 + 9.9 = 26.4 GB, plus two kept snapshots and one being written
+    # (3 x ~10.5 GB) = ~58 GB, so 60 GiB. Preflight / resume proof: step 1 and 2 (13.2 GB), one
+    # snapshot (10.5 GB) and, for the proof, the copied scratch snapshot, so 28 GiB.
+    require_disk(output, 28 if preflight else 60)
     free, total = torch.cuda.mem_get_info()
     if free < 28*1024**3:
         raise RuntimeError('Require 28 GiB GPU free; do not interfere with other workloads')
@@ -46,7 +52,11 @@ def failure(output, report, exc):
     if torch.cuda.is_initialized():
         report['failure_memory'] = c.p.memory()
     try:
-        with (output/'failure.json').open('x') as stream:
+        path, number = output/'failure.json', 1
+        while path.exists():  # a resumed run that fails again must not lose its own traceback
+            number += 1
+            path = output/f'failure_{number}.json'
+        with path.open('x') as stream:
             json.dump(report, stream, allow_nan=False)
         c.write_json(output/'result.json', report)
     except (OSError, ValueError):
@@ -213,8 +223,130 @@ def save_checkpoint(policy, pre, post, optimizer, ds, probe, output, update, fin
     return marker
 
 
-def train(output, preflight, report):
-    """Training loop shared with the other X-VLA packages, bound to the B3 robosuite dataset."""
+SNAPSHOT_FILES = ('model.pt', 'optimizer.pt', 'rng.pt', 'report.json')
+
+
+class BindingChanged(Exception):
+    """The sources or data differ from what the snapshot was written under; no snapshot is usable."""
+
+
+def capture_rng():
+    numpy_state = np.random.get_state()
+    return dict(python=random.getstate(), numpy=numpy_state, torch=torch.get_rng_state(),
+                cuda=torch.cuda.get_rng_state() if torch.cuda.is_initialized() else None)
+
+
+def restore_rng(python, numpy, tensors):
+    random.setstate((python[0], tuple(python[1]), python[2]))
+    np.random.set_state((numpy[0], np.array(numpy[1], dtype=np.uint32), *numpy[2:]))
+    torch.set_rng_state(tensors['torch'])
+    if 'cuda' in tensors:
+        torch.cuda.set_rng_state(tensors['cuda'])
+
+
+def save_snapshot(policy, optimizer, report, output, update, binding):
+    """Atomic: written under tmp_, hashed, renamed; only the newest KEEP_SNAPSHOTS survive."""
+    require_disk(output, 12)
+    began = time.monotonic()
+    root = output/'resume'
+    root.mkdir(exist_ok=True)
+    tmp = root/f'tmp_{update:06d}'
+    tmp.mkdir()
+    torch.save(policy.state_dict(), tmp/'model.pt')
+    torch.save(optimizer.state_dict(), tmp/'optimizer.pt')
+    rng = capture_rng()
+    torch.save({'torch': rng['torch'], **({'cuda': rng['cuda']} if rng['cuda'] is not None else {})},
+               tmp/'rng.pt')
+    c.write_json(tmp/'report.json', report)
+    meta = dict(update=update, binding_digest=c.digest_json(binding),
+                files={name: c.sha256(tmp/name) for name in SNAPSHOT_FILES},
+                python_rng=[rng['python'][0], list(rng['python'][1]), rng['python'][2]],
+                numpy_rng=[rng['numpy'][0], rng['numpy'][1].tolist(), *rng['numpy'][2:]])
+    c.write_json(tmp/'snapshot.json', meta)
+    tmp.rename(root/f'snap_{update:06d}')
+    for old in sorted(root.glob('snap_*'))[:-c.KEEP_SNAPSHOTS]:
+        shutil.rmtree(old)  # own regenerable intermediate; the newer snapshots cover it
+    seconds = time.monotonic()-began
+    print('SNAPSHOT', json.dumps(dict(update=update, seconds=seconds,
+          bytes=sum(f.stat().st_size for f in (root/f'snap_{update:06d}').iterdir()))), flush=True)
+    return seconds
+
+
+def load_snapshot(source, binding):
+    """Newest snapshot whose bytes still hash to its record; a damaged newest one falls back."""
+    problems = []
+    for directory in sorted((source/'resume').glob('snap_*'), reverse=True):
+        try:
+            meta = json.loads((directory/'snapshot.json').read_text())
+            if meta['binding_digest'] != c.digest_json(binding):
+                raise BindingChanged(directory.name)
+            if meta['update'] != int(directory.name[len('snap_'):]) or set(meta['files']) != set(SNAPSHOT_FILES):
+                raise ValueError('snapshot record does not match its directory')
+            for name, digest in meta['files'].items():
+                if c.sha256(directory/name) != digest:
+                    raise ValueError(f'{name} does not hash to its record')
+            return directory, meta, problems
+        except BindingChanged:
+            raise ValueError('Sources/data differ from the run the snapshot belongs to; refusing to resume')
+        except (OSError, ValueError, KeyError) as exc:
+            problems.append(f'{directory.name}: {exc}')
+    raise RuntimeError(f'No verifiable snapshot in {source/"resume"}: {problems}')
+
+
+def quarantine(output, number, restored, update):
+    """Move aside, never delete, whatever the chosen snapshot does not vouch for."""
+    where = output/'quarantine'/f'resume_{number:02d}'
+    where.mkdir(parents=True, exist_ok=True)
+
+    def move(path, group=''):
+        target = where/group
+        target.mkdir(parents=True, exist_ok=True)
+        path.rename(target/path.name)
+        return f'{group}/{path.name}'.strip('/')
+
+    moved = []
+    kept = {c.checkpoint_directory(m['update']) for m in restored['checkpoints']}
+    for directory in sorted((output/'checkpoints').glob('*')):
+        if directory.name not in kept:
+            moved.append(move(directory, 'checkpoints'))
+    for directory in sorted((output/'resume').glob('*')):
+        if directory.name.startswith('tmp_') or (directory.name.startswith('snap_')
+                                                 and int(directory.name[len('snap_'):]) > update):
+            moved.append(move(directory, 'resume'))
+    for name in ('failure.json', 'result.json'):
+        if (output/name).exists():
+            moved.append(move(output/name))
+    metrics = output/'metrics.jsonl'
+    rows = metrics.read_text().splitlines()
+    if len(rows) < update or [json.loads(row)['update'] for row in rows[:update]] != list(range(1, update+1)):
+        raise ValueError('metrics.jsonl does not cover updates 1..snapshot update')
+    moved.append(move(metrics))
+    metrics.write_text(''.join(row+'\n' for row in rows[:update]))
+    return moved
+
+
+def compare_with_reference(output, reference, update):
+    """Resume proof: the resumed run's logged updates and final files equal the uninterrupted run's."""
+    def rows(root):
+        return [json.loads(line) for line in (root/'metrics.jsonl').read_text().splitlines()]
+    keys = ('update', 'loss', 'grad_norm', 'dataset_rows', 'learning_rates')
+    resumed, original = rows(output), rows(reference)
+    key = c.checkpoint_directory(update)
+    sha = lambda root, name: c.sha256(root/'checkpoints'/key/name)
+    return dict(from_update=update-1, compared_update=update,
+                metrics_equal=(len(resumed) == len(original) == update
+                               and all({k: a[k] for k in keys} == {k: b[k] for k in keys}
+                                       for a, b in zip(resumed, original))),
+                model_sha256_equal=sha(output, 'model.safetensors') == sha(reference, 'model.safetensors'),
+                training_state_sha256_equal=sha(output, 'training_state.pt') == sha(reference, 'training_state.pt'),
+                scratch_model_sha256=sha(reference, 'model.safetensors'))
+
+
+def train(output, preflight, report, resume=0, reference=None):
+    """Training loop shared with the other X-VLA packages, bound to the B3 robosuite dataset.
+
+    `resume` is the resume number (0 = fresh). The snapshot is read from `output`.
+    """
     from lerobot.policies.xvla.processor_xvla import make_xvla_pre_post_processors
 
     def progress(**fields):
@@ -223,13 +355,18 @@ def train(output, preflight, report):
 
     ds, starts, stats, binding = c.prepare_data()
     encoded_stats, cpu_hash = statistics_json(stats), c.sha256(c.CPU_ADMISSION)
-    scratch_hash = None
+    scratch_hash = proof_hash = None
     if not preflight:
         scratch_hash = c.sha256(c.SCRATCH/'result.json')
         proof = json.loads((c.SCRATCH/'result.json').read_text())
         c.validate_scratch(proof, binding, c.SCRATCH, encoded_stats, cpu_hash)
+        proof_hash = c.sha256(c.PROOF/'result.json')
+        c.validate_resume_proof(json.loads((c.PROOF/'result.json').read_text()), binding, proof, c.PROOF)
         if json.loads((c.SCRATCH/'training_stats.json').read_text()) != encoded_stats:
             raise ValueError('Scratch training statistics changed')
+    elif reference is not None:
+        c.validate_scratch(json.loads((reference/'result.json').read_text()), binding, reference,
+                           encoded_stats, cpu_hash)
     if not torch.cuda.is_available() or not torch.cuda.is_bf16_supported():
         raise RuntimeError('CUDA BF16 required; no fallback')
     resources = require_resources(output, preflight)
@@ -239,20 +376,37 @@ def train(output, preflight, report):
     torch.manual_seed(c.SEED)
     torch.backends.cudnn.benchmark = False
     torch.use_deterministic_algorithms(True)
-    c.write_json(output/'training_stats.json', encoded_stats)
     rows, verified = c.indices(ds.meta.episodes)
     if starts != verified or (len(rows), len(starts)) != (c.TRAINING_ROWS, c.COMPLETE_STARTS):
         raise ValueError('Derived training counts changed')
-    progress(status='training', stage='fresh_base_load', binding=binding, cpu_admission_sha256=cpu_hash,
-             scratch_result_sha256=scratch_hash, scratch_used_for_initialization=False,
-             training_rows=len(rows), complete_training_chunks=len(starts),
-             resource_admission=resources,
-             training_stats_sha256=c.sha256(output/'training_stats.json'),
-             checkpoints=[], checkpoint_files={}, completed_updates=0, rollouts=0,
-             device=dict(name=torch.cuda.get_device_name(),
-                         properties=str(torch.cuda.get_device_properties(0))),
-             initial_memory=c.p.memory(),
-             base_weights_sha256=c.sha256(c.CACHE/'model/model.safetensors'))
+    snapshot = None
+    if resume:
+        snapshot, meta, skipped = load_snapshot(output, binding)
+        restored = json.loads((snapshot/'report.json').read_text())
+        if (restored.get('binding') != binding or restored['completed_updates'] != meta['update']
+                or json.loads((output/'training_stats.json').read_text()) != encoded_stats):
+            raise ValueError('Snapshot report does not belong to this binding/statistics')
+        moved = quarantine(output, resume, restored, meta['update'])
+        report.clear()
+        report.update(restored)
+        report.setdefault('resumes', []).append(dict(
+            number=resume, from_update=meta['update'], snapshot=snapshot.name, skipped_snapshots=skipped,
+            quarantined=moved, resource_admission=resources, resumed_at=time.strftime('%Y-%m-%dT%H:%M:%S%z')))
+        progress(status='training', stage='resumed', scratch_result_sha256=scratch_hash,
+                 resume_proof_sha256=proof_hash)
+    else:
+        c.write_json(output/'training_stats.json', encoded_stats)
+        progress(status='training', stage='fresh_base_load', binding=binding, cpu_admission_sha256=cpu_hash,
+                 scratch_result_sha256=scratch_hash, resume_proof_sha256=proof_hash,
+                 scratch_used_for_initialization=False,
+                 training_rows=len(rows), complete_training_chunks=len(starts),
+                 resource_admission=resources,
+                 training_stats_sha256=c.sha256(output/'training_stats.json'),
+                 checkpoints=[], checkpoint_files={}, completed_updates=0, rollouts=0,
+                 device=dict(name=torch.cuda.get_device_name(),
+                             properties=str(torch.cuda.get_device_properties(0))),
+                 initial_memory=c.p.memory(),
+                 base_weights_sha256=c.sha256(c.CACHE/'model/model.safetensors'))
     config = c.make_config('cpu')
     policy, params = load_fresh_policy(config)
     policy = policy.to('cuda')
@@ -275,12 +429,31 @@ def train(output, preflight, report):
              after_load_memory=c.p.memory(), stage='training')
     del raw, checked
     samples = c.sample_batches(starts)
+    done, rng_tensors = 0, None
+    if resume:
+        done = meta['update']
+        policy.load_state_dict(torch.load(snapshot/'model.pt', map_location='cpu', weights_only=True), strict=True)
+        saved = torch.load(snapshot/'optimizer.pt', map_location='cpu', weights_only=True)
+        optimizer.load_state_dict(saved)
+        c.p.verify_precision(params, optimizer)
+        for group, stored in zip(optimizer.param_groups, saved['param_groups'], strict=True):
+            for p, index in zip(group['params'], stored['params'], strict=True):
+                if any(not torch.equal(optimizer.state[p][key].cpu(), saved['state'][index][key])
+                       for key in ('exp_avg', 'exp_avg_sq', 'step')):
+                    raise ValueError('Restored Adam state differs from the snapshot')
+        del saved
+        rng_tensors = torch.load(snapshot/'rng.pt', map_location='cpu', weights_only=True)
+        for _ in range(2*done):  # the sampler is a pure function of the seed: replay to the position
+            next(samples)
     began = time.monotonic()
+    elapsed_before = report.get('elapsed_seconds', 0.)
     policy.train()
+    if resume:  # last: nothing after this may draw from the RNG before the first update
+        restore_rng(meta['python_rng'], meta['numpy_rng'], rng_tensors)
     # Horizon comes from the contract; hardcoding it here silently truncated a 16700-update run.
     maximum = 2 if preflight else c.recipe(False)['max_optimizer_updates']
-    with (output/'metrics.jsonl').open('x') as log:
-        for update in range(1, maximum+1):
+    with (output/'metrics.jsonl').open('a' if resume else 'x') as log:
+        for update in range(done+1, maximum+1):
             tick = time.monotonic()
             c.set_learning_rate(optimizer, update)
             optimizer.zero_grad(set_to_none=True)
@@ -289,7 +462,7 @@ def train(output, preflight, report):
                 selected = next(samples)
                 batch = pre(c.collate_rows([ds[i] for i in selected]))
                 if batch['action'].shape != (4, 30, 8):
-                    raise ValueError('Processed microbatch shape changed')
+                    raise ValueError('Processed microbatch elapsed_before+shape changed')
                 with torch.autocast('cuda', dtype=torch.bfloat16):
                     loss, _ = policy(batch)
                 c.backward_microbatch(loss)
@@ -322,12 +495,18 @@ def train(output, preflight, report):
                 report['checkpoints'].append(marker)
                 report['checkpoint_files'][key] = c.inventory(directory)
                 progress(startup_save_reload_passed=True)
+            if update in c.snapshot_updates(preflight):
+                report.setdefault('snapshot_updates_written', []).append(update)
+                progress(last_snapshot_seconds=save_snapshot(policy, optimizer, report, output, update, binding))
     if c.admission() != binding or c.sha256(c.CPU_ADMISSION) != cpu_hash:
         raise ValueError('Post-training dataset/source/cache/CPU proof changed')
     if c.sha256(output/'training_stats.json') != report['training_stats_sha256']:
         raise ValueError('Training statistics bytes changed')
-    if not preflight and c.sha256(c.SCRATCH/'result.json') != scratch_hash:
-        raise ValueError('Scratch proof changed during main')
+    if not preflight and (c.sha256(c.SCRATCH/'result.json') != scratch_hash
+                          or c.sha256(c.PROOF/'result.json') != proof_hash):
+        raise ValueError('Scratch or resume proof changed during main')
+    if reference is not None:
+        progress(resume_proof=compare_with_reference(output, reference, maximum))
     c.verify_checkpoints(report, output, preflight)
     if not preflight:
         final_config = json.loads((output/'checkpoints'/c.checkpoint_directory(maximum)/'config.json').read_text())
@@ -350,12 +529,24 @@ def main(argv=None):
     if args.check:
         check()
         return
-    output = c.SCRATCH if args.preflight else c.OUTPUT
-    c.claim_output(output)
-    report = dict(status='preparing', stage='admission', **c.recipe(args.preflight))
+    preflight = args.preflight or args.resume_proof
+    output = c.PROOF if args.resume_proof else c.SCRATCH if args.preflight else c.OUTPUT
+    resume = 0
+    if args.resume:
+        resume = c.claim_resume(output)
+        # A hard kill leaves no failure.json; result.json is then the only record of where it stopped.
+        shutil.copy2(output/'result.json', output/f'result_before_resume_{resume:02d}.json')
+    else:
+        c.claim_output(output)
+        if args.resume_proof:  # a fresh dir seeded with the scratch run's files up to snapshot 1
+            shutil.copytree(c.SCRATCH, output, dirs_exist_ok=True, ignore=shutil.ignore_patterns(
+                'step_000002', 'failure*.json', 'result.json', 'run_claim.json', 'resume_claim_*.json'))
+            resume = c.claim_resume(output)
+    report = dict(status='preparing', stage='admission', **c.recipe(preflight))
     try:
-        c.write_json(output/'result.json', report)
-        train(output, args.preflight, report)
+        if not resume:
+            c.write_json(output/'result.json', report)
+        train(output, preflight, report, resume=resume, reference=c.SCRATCH if args.resume_proof else None)
     except BaseException as exc:
         failure(output, report, exc)
         raise

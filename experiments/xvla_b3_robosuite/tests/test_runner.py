@@ -3,12 +3,74 @@ from contextlib import ExitStack, nullcontext
 import importlib
 import json
 from pathlib import Path
+import random
 import tempfile
 import unittest
 from unittest.mock import patch
 
+import numpy as np
 import torch
 from test_contract import frame, metadata
+
+
+class SynConfig:
+    device = 'cuda'
+    dtype = 'float32'
+    chunk_size = 30
+
+    def __init__(self):
+        from types import SimpleNamespace
+        self.action_feature = SimpleNamespace(shape=(8,))
+
+    def save_pretrained(self, path):
+        path.mkdir(exist_ok=True)
+        (path/'config.json').write_text(json.dumps({'dtype': 'float32'}))
+
+    def get_optimizer_preset(self):
+        class Preset:
+            def build(self, params):
+                return torch.optim.AdamW([{'params': list(params.values()), 'name': 'other', 'lr': 1e-4,
+                                           'betas': (.9, .95), 'eps': 1e-8, 'weight_decay': 1e-4}])
+        return Preset()
+
+
+class SynTiny(torch.nn.Module):
+    """One weight; the loss draws from the global RNG, so a restored run only matches if the RNG is."""
+
+    def __init__(self):
+        super().__init__()
+        self.config = SynConfig()
+        self.action_out_proj = torch.nn.Linear(1, 1, bias=False)
+        with torch.no_grad():
+            self.action_out_proj.weight.fill_(1.)
+
+    def forward(self, batch):
+        return (self.action_out_proj.weight*torch.randn(1)).square().mean(), {}
+
+    def predict_action_chunk(self, batch):
+        return self.action_out_proj.weight.expand(1, 30, 8)
+
+    def save_pretrained(self, path):
+        from safetensors.torch import save_model
+        save_model(self, str(path/'model.safetensors'))
+        self.config.save_pretrained(path)
+
+    def get_optim_params(self):
+        return dict(self.named_parameters())
+
+    def to(self, device):
+        return self
+
+
+class SynProcessor:
+    def __init__(self, name):
+        self.name = name
+
+    def __call__(self, value):
+        return value
+
+    def save_pretrained(self, path):
+        (path/self.name).write_text('{}')
 
 
 class RunnerTests(unittest.TestCase):
@@ -32,21 +94,28 @@ class RunnerTests(unittest.TestCase):
                          'LR schedule horizon must match the training horizon')
 
     def test_cli_no_default_gpu_resume_override_or_abbreviation(self):
+        # --resume continues only --train: never alone, never with a gate, never abbreviated.
         for argv in ([], ['--resume'], ['--train', '--preflight'], ['--batch-size', '4'],
-                     ['--tr'], ['--check', '--preflight'], ['--evaluate'], ['--train', '--steps', '1']):
+                     ['--tr'], ['--check', '--preflight'], ['--evaluate'], ['--train', '--steps', '1'],
+                     ['--check', '--resume'], ['--preflight', '--resume'], ['--resume-proof', '--resume'],
+                     ['--train', '--resume-proof'], ['--train', '--res'], ['--resume-p']):
             with self.assertRaises(SystemExit):
                 self.r.parse_args(argv)
         self.assertTrue(self.r.parse_args(['--check']).check)
         self.assertTrue(self.r.parse_args(['--preflight']).preflight)
         self.assertTrue(self.r.parse_args(['--train']).train)
+        self.assertFalse(self.r.parse_args(['--train']).resume)
+        self.assertTrue(self.r.parse_args(['--train', '--resume']).resume)
+        self.assertTrue(self.r.parse_args(['--resume-proof']).resume_proof)
 
-    def test_resources_fail_below_preflight_15_and_train_33_disk_or_28_gpu(self):
+    def test_resources_fail_below_preflight_28_and_train_60_disk_or_28_gpu(self):
         from types import SimpleNamespace
-        # Preflight: 15 GiB disk, 28 GiB GPU. Train: 33 GiB disk (6-checkpoint schedule), 28 GiB GPU.
-        for disk, gpu, preflight, passes in ((14, 40, True, False), (15, 40, True, True),
-                                             (15, 27, True, False),
-                                             (32, 40, False, False), (33, 40, False, True),
-                                             (33, 27, False, False)):
+        # Preflight / resume proof: 28 GiB disk. Train: 60 GiB disk (6 checkpoints + 3 snapshots).
+        # Both need 28 GiB of free GPU memory.
+        for disk, gpu, preflight, passes in ((27, 40, True, False), (28, 40, True, True),
+                                             (28, 27, True, False),
+                                             (59, 40, False, False), (60, 40, False, True),
+                                             (60, 27, False, False)):
             with patch.object(self.r.shutil, 'disk_usage',
                               return_value=SimpleNamespace(free=disk*1024**3)), \
                     patch.object(torch.cuda, 'mem_get_info',
@@ -57,16 +126,17 @@ class RunnerTests(unittest.TestCase):
                     with self.assertRaises(RuntimeError):
                         self.r.require_resources(Path('/tmp'), preflight)
 
-    def test_training_disk_guard_covers_the_checkpoint_schedule(self):
-        """6-checkpoint schedule: 3.3 GB per checkpoint, 9.9 GB for the final one."""
+    def test_training_disk_guard_covers_checkpoints_and_the_snapshot_working_set(self):
+        """6 checkpoints (3.3 GB each, 9.9 GB final) + KEEP_SNAPSHOTS kept + 1 being written (~10.5 GB)."""
         from types import SimpleNamespace
         updates = self.r.c.checkpoint_updates(False)
         self.assertEqual(len(updates), 6)
-        needed = 3.3*(len(updates)-1) + 9.9
+        needed_gb = 3.3*(len(updates)-1) + 9.9 + (self.r.c.KEEP_SNAPSHOTS+1)*10.5
+        self.assertLess(needed_gb*1e9, 60*1024**3, 'the 60 GiB guard must cover the working set')
         with patch.object(self.r.shutil, 'disk_usage',
-                          return_value=SimpleNamespace(free=int(needed*1024**3))), \
+                          return_value=SimpleNamespace(free=int(needed_gb*1e9))), \
                 patch.object(torch.cuda, 'mem_get_info', return_value=(40*1024**3, 48*1024**3)):
-            with self.assertRaises(RuntimeError):  # the guard must sit above the bare requirement
+            with self.assertRaises(RuntimeError):  # free space equal to the bare need is not enough
                 self.r.require_resources(Path('/tmp'), False)
 
     def test_processor_check_uses_real_processor_no_model_construction(self):
@@ -386,6 +456,289 @@ class RunnerTests(unittest.TestCase):
             r.main(['--train'])
             # No evaluate module exists; main() must complete without raising ImportError.
             self.assertTrue((Path(tmp)/'main/run_claim.json').is_file())
+    # --- resume ---------------------------------------------------------------------------------
+    # A 4-update synthetic run: checkpoints at 1, 3 and 4 (4 is final), snapshots as given. Checkpoint 3
+    # lies past a snapshot at 2, and update 2 is not a checkpoint update, so the RNG at snapshot 2 is
+    # mid-stream (a checkpoint reseeds it) and the restore is actually exercised.
+
+    def _synthetic_run(self, root, out, resume=0, crash_at=None, snapshots=(2,), binding=None):
+        from safetensors.torch import load_model
+        c, r = self.c, self.r
+        cpu = root/'cpu.json'
+        cpu.write_text('cpu')
+        for name in ('scratch', 'proof'):
+            (root/name).mkdir(exist_ok=True)
+            (root/name/'result.json').write_text('{}')
+        (root/'scratch/training_stats.json').write_text(json.dumps({'action': {'mean': [0.]*8}}))
+        binding = binding or {'bound': 'data'}
+        tiny, config = SynTiny(), SynConfig()
+        ds = type('Dataset', (), {
+            'meta': type('Meta', (), {'episodes': metadata()})(), 'sample': frame(),
+            '__getitem__': lambda self, index: {**self.sample, 'episode_index': torch.tensor(index//528)}})()
+        starts = c.indices(metadata())[1]
+        real_recipe = c.recipe
+
+        def reload(checkpoint, expected):
+            new = SynTiny()
+            load_model(new, str(checkpoint/'model.safetensors'), strict=True)
+            if not torch.equal(new.predict_action_chunk(None).detach(), expected['prediction']):
+                raise ValueError('reload mismatch')
+            return 0.
+
+        def batches(starts):
+            number = 0
+            while True:
+                number += 1
+                yield [starts[number]]*4
+
+        def rate(optimizer, update):
+            if update == crash_at:
+                raise RuntimeError('synthetic crash')
+            for group in optimizer.param_groups:
+                group['lr'] = 1e-4*update
+
+        with ExitStack() as stack:
+            for item in [
+                    patch.object(c, 'SCRATCH', root/'scratch'), patch.object(c, 'PROOF', root/'proof'),
+                    patch.object(c, 'CPU_ADMISSION', cpu),
+                    patch.object(c, 'recipe', side_effect=lambda p: {**real_recipe(p), 'max_optimizer_updates': 4}),
+                    patch.object(c, 'checkpoint_updates', return_value=[1, 3, 4]),
+                    patch.object(c, 'snapshot_updates', return_value=list(snapshots)),
+                    patch.object(c, 'prepare_data', return_value=(ds, starts, {'action': {'mean': torch.zeros(8)}},
+                                                                  binding)),
+                    patch.object(c, 'admission', return_value=binding),
+                    patch.object(c, 'validate_scratch'), patch.object(c, 'validate_resume_proof'),
+                    patch.object(c, 'make_config', return_value=config),
+                    patch.object(r, 'load_fresh_policy', return_value=(tiny, tiny.get_optim_params())),
+                    patch.object(r, 'EXPECTED_PARAM_TENSORS', 1),
+                    patch.object(r, 'require_resources', return_value={}), patch.object(r, 'require_disk'),
+                    patch.object(c, 'verify_checkpoints'),
+                    patch.object(c, 'check_model_inputs', return_value={'checked': True}),
+                    patch.object(c, 'set_learning_rate', side_effect=rate),
+                    patch.object(c, 'collate_rows',
+                                 side_effect=lambda rows: {**frame(), 'action': torch.zeros(4, 30, 8)}),
+                    patch.object(c, 'backward_microbatch', side_effect=lambda loss: (loss/2).backward()),
+                    patch.object(c, 'observation', side_effect=lambda x: dict(x)),
+                    patch.object(c, 'sample_batches', side_effect=batches),
+                    patch.object(c, 'inventory',
+                                 side_effect=lambda d: {p.name: c.sha256(p) for p in Path(d).iterdir()}),
+                    patch.object(c.p, 'verify_precision'), patch.object(c.p, 'memory', return_value={}),
+                    patch.object(c.p, 'load_weights', side_effect=lambda pol, path: pol),
+                    patch.object(c.p, 'process_row', side_effect=lambda pre, obs: obs),
+                    patch.object(r, '_reload_and_verify', side_effect=reload),
+                    patch.object(torch.cuda, 'is_available', return_value=True),
+                    patch.object(torch.cuda, 'is_bf16_supported', return_value=True),
+                    patch.object(torch.cuda, 'reset_peak_memory_stats'), patch.object(torch.cuda, 'synchronize'),
+                    patch.object(torch.cuda, 'is_current_stream_capturing', return_value=False),
+                    patch.object(torch.cuda, 'get_device_name', return_value='fake'),
+                    patch.object(torch.cuda, 'get_device_properties', return_value=object()),
+                    patch.object(torch, 'autocast', side_effect=lambda *a, **k: nullcontext()),
+                    patch.object(torch.nn.utils, 'clip_grad_norm_',
+                                 side_effect=lambda ps, m, error_if_nonfinite=True: torch.tensor(.5)),
+                    patch('lerobot.policies.xvla.processor_xvla.make_xvla_pre_post_processors',
+                          return_value=(SynProcessor('policy_preprocessor.json'),
+                                        SynProcessor('policy_postprocessor.json'))),
+                    patch.object(torch, 'use_deterministic_algorithms')]:
+                stack.enter_context(item)
+            report = {**real_recipe(False), 'binding': None}
+            if resume:
+                report = {}
+            r.train(out, False, report, resume=resume)
+        return tiny.action_out_proj.weight.detach().clone(), report
+
+    @staticmethod
+    def _metric_rows(directory):
+        keys = ('update', 'loss', 'grad_norm', 'dataset_rows', 'learning_rates')
+        return [{k: json.loads(line)[k] for k in keys}
+                for line in (directory/'metrics.jsonl').read_text().splitlines()]
+
+    def _crash_then_resume(self, root, snapshots=(2,), before_resume=None):
+        full, part = root/'full', root/'part'
+        full.mkdir()
+        part.mkdir()
+        weight, _ = self._synthetic_run(root, full, snapshots=snapshots)
+        with self.assertRaisesRegex(RuntimeError, 'synthetic crash'):
+            self._synthetic_run(root, part, crash_at=4, snapshots=snapshots)
+        if before_resume:
+            before_resume(part)
+        torch.manual_seed(12345)  # a fresh process does not share the dead one's RNG stream
+        random.seed(1)
+        np.random.seed(1)
+        resumed, report = self._synthetic_run(root, part, resume=1, snapshots=snapshots)
+        return full, part, weight, resumed, report
+
+    def test_a_resumed_run_reproduces_the_uninterrupted_run_exactly(self):
+        c = self.c
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            full, part, weight, resumed, report = self._crash_then_resume(root)
+            self.assertEqual(len(self._metric_rows(full)), 4)
+            self.assertEqual(self._metric_rows(part), self._metric_rows(full))
+            self.assertTrue(torch.equal(weight, resumed))
+            for update in (1, 3, 4):
+                name = c.checkpoint_directory(update)
+                self.assertEqual(c.sha256(part/'checkpoints'/name/'model.safetensors'),
+                                 c.sha256(full/'checkpoints'/name/'model.safetensors'), name)
+            self.assertTrue(torch.equal(*(torch.load(d/'checkpoints/step_000004/training_state.pt',
+                                                     weights_only=True)['state'][0]['exp_avg']
+                                          for d in (part, full))))
+            self.assertEqual([m['update'] for m in report['checkpoints']], [1, 3, 4])
+            self.assertEqual(report['status'], 'complete')
+            self.assertEqual((report['resumes'][0]['number'], report['resumes'][0]['from_update']), (1, 2))
+            self.assertEqual(report['completed_updates'], 4)
+
+    def test_resume_quarantines_what_the_snapshot_does_not_vouch_for_and_deletes_nothing(self):
+        c = self.c
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+
+            def leftovers(part):
+                (part/'resume/tmp_000003').mkdir()  # a snapshot write the crash interrupted
+                (part/'resume/tmp_000003/model.pt').write_bytes(b'half')
+                (part/'failure.json').write_text('{"status": "failed"}')
+
+            full, part, _, _, report = self._crash_then_resume(root, before_resume=leftovers)
+            aside = part/'quarantine/resume_01'
+            self.assertEqual(sorted(p.name for p in (aside/'checkpoints').iterdir()), ['step_000003'])
+            self.assertEqual(sorted(p.name for p in (aside/'resume').iterdir()), ['tmp_000003'])
+            self.assertTrue((aside/'failure.json').is_file())
+            self.assertTrue((aside/'result.json').is_file())
+            self.assertEqual(len((aside/'metrics.jsonl').read_text().splitlines()), 3,
+                             'the three rows logged before the crash are kept, aside')
+            # The checkpoint the crash left behind was regenerated byte for byte.
+            self.assertEqual(c.sha256(aside/'checkpoints/step_000003/model.safetensors'),
+                             c.sha256(part/'checkpoints/step_000003/model.safetensors'))
+            self.assertEqual(sorted(report['resumes'][0]['quarantined']),
+                             sorted(['checkpoints/step_000003', 'resume/tmp_000003', 'failure.json',
+                                     'result.json', 'metrics.jsonl']))
+
+    def test_a_damaged_newest_snapshot_falls_back_to_the_previous_one(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+
+            def damage(part):
+                self.assertEqual(sorted(p.name for p in (part/'resume').iterdir()),
+                                 ['snap_000002', 'snap_000003'], 'only the newest two are kept')
+                with (part/'resume/snap_000003/model.pt').open('ab') as stream:
+                    stream.write(b'x')
+
+            full, part, weight, resumed, report = self._crash_then_resume(root, snapshots=(1, 2, 3),
+                                                                          before_resume=damage)
+            self.assertEqual(report['resumes'][0]['from_update'], 2)
+            self.assertIn('snap_000003', report['resumes'][0]['skipped_snapshots'][0])
+            self.assertEqual(self._metric_rows(part), self._metric_rows(full))
+            self.assertTrue(torch.equal(weight, resumed))
+            self.assertTrue((part/'quarantine/resume_01/resume/snap_000003').is_dir())
+
+    def test_resume_refuses_when_every_snapshot_is_damaged_or_the_binding_changed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            part = root/'part'
+            part.mkdir()
+            with self.assertRaisesRegex(RuntimeError, 'synthetic crash'):
+                self._synthetic_run(root, part, crash_at=4, snapshots=(2, 3))
+            with self.assertRaisesRegex(ValueError, 'refusing to resume'):
+                self._synthetic_run(root, part, resume=1, snapshots=(2, 3), binding={'bound': 'other'})
+            self.assertTrue((part/'metrics.jsonl').is_file(), 'a refused resume must not move anything')
+            for snap in (part/'resume').iterdir():
+                (snap/'optimizer.pt').write_bytes(b'')
+            with self.assertRaisesRegex(RuntimeError, 'No verifiable snapshot'):
+                self._synthetic_run(root, part, resume=1, snapshots=(2, 3))
+            self.assertTrue((part/'metrics.jsonl').is_file())
+
+    def test_rng_state_roundtrips_through_the_snapshot_encoding(self):
+        r = self.r
+        random.seed(5)
+        np.random.seed(6)
+        torch.manual_seed(7)
+        state = r.capture_rng()
+        expected = (random.random(), float(np.random.rand()), float(torch.rand(1)))
+        python = [state['python'][0], list(state['python'][1]), state['python'][2]]
+        numpy = json.loads(json.dumps([state['numpy'][0], state['numpy'][1].tolist(), *state['numpy'][2:]]))
+        random.random(), np.random.rand(), torch.rand(3)
+        r.restore_rng(json.loads(json.dumps(python)), numpy, {'torch': state['torch']})
+        self.assertEqual((random.random(), float(np.random.rand()), float(torch.rand(1))), expected)
+
+    def test_failures_never_overwrite_an_earlier_traceback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            for number, text in enumerate(('first', 'second', 'third'), start=1):
+                self.r.failure(out, {'stage': 'x'}, ValueError(text))
+            names = sorted(p.name for p in out.glob('failure*.json'))
+            self.assertEqual(names, ['failure.json', 'failure_2.json', 'failure_3.json'])
+            self.assertEqual(json.loads((out/'failure.json').read_text())['error'], 'first')
+            self.assertEqual(json.loads((out/'failure_3.json').read_text())['error'], 'third')
+
+    def test_resume_proof_validation_needs_bit_exact_equality_with_the_scratch_run(self):
+        c = self.c
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            c.write_json(root/'training_stats.json', {'action': {'mean': [0.]*8}})
+            markers, files = self._synthetic_checkpoint(root, [1, 2], 2, True)
+            binding = {'data': 'sealed'}
+            scratch = {'checkpoints': markers}
+            report = {**c.recipe(True), 'status': 'complete', 'completed_updates': 2, 'binding': binding,
+                      'final_data_binding_passed': True, 'adam_reload_fp32_exact': True, 'rollouts': 0,
+                      'checkpoints': markers, 'checkpoint_files': files,
+                      'training_stats_sha256': c.sha256(root/'training_stats.json'),
+                      'resume_proof': dict(from_update=1, compared_update=2, metrics_equal=True,
+                                           model_sha256_equal=True, training_state_sha256_equal=True,
+                                           scratch_model_sha256=markers[-1]['model_sha256'])}
+            c.validate_resume_proof(report, binding, scratch, root)
+            for key in ('metrics_equal', 'model_sha256_equal', 'training_state_sha256_equal'):
+                with self.subTest(key=key), self.assertRaises(ValueError):
+                    c.validate_resume_proof({**report, 'resume_proof': {**report['resume_proof'], key: False}},
+                                            binding, scratch, root)
+            for change in ({'binding': {}}, {'completed_updates': 1}, {'resume_proof': None},
+                           {'adam_reload_fp32_exact': False},
+                           {'resume_proof': {**report['resume_proof'], 'from_update': 0}},
+                           {'resume_proof': {**report['resume_proof'], 'scratch_model_sha256': 'other'}}):
+                with self.subTest(change=change), self.assertRaises(ValueError):
+                    c.validate_resume_proof({**report, **change}, binding, scratch, root)
+
+    def test_compare_with_reference_detects_any_divergence(self):
+        c = self.c
+        with tempfile.TemporaryDirectory() as tmp:
+            roots = [Path(tmp)/'a', Path(tmp)/'b']
+            for root in roots:
+                (root/'checkpoints/step_000002').mkdir(parents=True)
+                (root/'checkpoints/step_000002/model.safetensors').write_bytes(b'm')
+                (root/'checkpoints/step_000002/training_state.pt').write_bytes(b'o')
+                rows = [dict(update=u, loss=.5, grad_norm=.1, dataset_rows=[[u]], learning_rates={'o': 1e-4},
+                             seconds=float(u+len(root.name))) for u in (1, 2)]
+                (root/'metrics.jsonl').write_text(''.join(json.dumps(x)+'\n' for x in rows))
+            same = self.r.compare_with_reference(roots[0], roots[1], 2)
+            self.assertEqual((same['metrics_equal'], same['model_sha256_equal'],
+                              same['training_state_sha256_equal']), (True, True, True),
+                             'wall-clock fields must not count')
+            (roots[0]/'checkpoints/step_000002/model.safetensors').write_bytes(b'M')
+            (roots[0]/'checkpoints/step_000002/training_state.pt').write_bytes(b'O')
+            rows = [json.loads(x) for x in (roots[0]/'metrics.jsonl').read_text().splitlines()]
+            rows[1]['loss'] = .75
+            (roots[0]/'metrics.jsonl').write_text(''.join(json.dumps(x)+'\n' for x in rows))
+            different = self.r.compare_with_reference(roots[0], roots[1], 2)
+            self.assertEqual((different['metrics_equal'], different['model_sha256_equal'],
+                              different['training_state_sha256_equal']), (False, False, False))
+
+    def test_main_resume_uses_the_original_mount_and_fresh_runs_still_refuse_a_used_one(self):
+        r, c = self.r, self.c
+        with tempfile.TemporaryDirectory() as tmp, patch.object(c, 'OUTPUT', Path(tmp)/'main'), \
+                patch.object(c, 'is_mountpoint', return_value=True), \
+                patch.object(r, 'train') as train:
+            out = Path(tmp)/'main'
+            out.mkdir()
+            with self.assertRaises(FileExistsError):
+                r.main(['--train', '--resume'])  # nothing was ever claimed here
+            r.main(['--train'])
+            c.write_json(out/'result.json', {'status': 'training'})
+            with self.assertRaises(FileExistsError):
+                r.main(['--train'])  # a used output is never silently reused
+            r.main(['--train', '--resume'])
+            self.assertEqual(train.call_args.kwargs['resume'], 1)
+            self.assertEqual(json.loads((out/'result_before_resume_01.json').read_text()),
+                             {'status': 'training'})
+            r.main(['--train', '--resume'])
+            self.assertEqual(train.call_args.kwargs['resume'], 2)
 
 
 if __name__ == '__main__':

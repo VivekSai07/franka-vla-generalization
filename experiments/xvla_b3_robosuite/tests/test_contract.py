@@ -409,6 +409,37 @@ class ContractTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 self.c.claim_output(link)
 
+    def test_snapshot_schedule_aligns_with_the_checkpoints_and_excludes_the_final_update(self):
+        c = self.c
+        updates = c.snapshot_updates(False)
+        self.assertEqual((updates[0], updates[1], len(updates)), (2600, 5200, 59))
+        self.assertEqual(updates[-1], c.TOTAL_UPDATES-c.SNAPSHOT_EVERY)
+        self.assertTrue(set(c.checkpoint_updates(False)[1:-1]) <= set(updates),
+                        'every epoch checkpoint must also be a snapshot update')
+        self.assertNotIn(c.TOTAL_UPDATES, updates)  # the final checkpoint carries the optimizer
+        self.assertEqual(c.snapshot_updates(True), [1])
+        self.assertEqual(c.recipe(False)['snapshot_updates'], updates)
+
+    def test_resume_claim_needs_the_original_mount_and_numbers_each_resume(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            with patch.object(self.c, 'is_mountpoint', return_value=True):
+                with self.assertRaises(FileExistsError):  # nothing was ever claimed here
+                    self.c.claim_resume(root)
+                self.c.claim_output(root)
+                self.assertEqual(self.c.claim_resume(root), 1)
+                self.assertEqual(self.c.claim_resume(root), 2)
+                self.assertEqual(json.loads((root/'resume_claim_02.json').read_text())['resume'], 2)
+                (root/'run_claim.json').write_text(json.dumps({'purpose': 'someone_else', 'resume': False}))
+                with self.assertRaises(ValueError):
+                    self.c.claim_resume(root)
+            with self.assertRaises(FileExistsError):  # not a bind mount
+                self.c.claim_resume(root)
+            link = root/'link'
+            link.symlink_to(root, target_is_directory=True)
+            with self.assertRaises(ValueError):
+                self.c.claim_resume(link)
+
     def test_require_assets_accepts_real_bundle_and_rejects_tamper(self):
         from experiments.xvla_trial.assets import require_assets, ASSETS
         if not (self.c.CACHE/'manifest.json').exists():
@@ -442,7 +473,10 @@ class ContractTests(unittest.TestCase):
             self.assertEqual(recipe['seed'], 20260917)
             self.assertEqual(recipe['train_episodes'], list(range(500)))
             self.assertEqual(recipe['validation_episodes'], list(range(500, 560)))
-            self.assertFalse(recipe['resume'])
+            self.assertEqual(recipe['resume'], 'manual_from_verified_snapshot')
+            self.assertEqual(recipe['snapshot_updates'], c.snapshot_updates(scratch))
+            self.assertEqual(recipe['keep_snapshots'], 2)
+            self.assertFalse(recipe['retries'])
             self.assertEqual(recipe['precision'], 'fp32_parameters_gradients_adam_bf16_autocast')
             self.assertEqual(recipe['optimizer_storage'], 'final_only')
             self.assertEqual(recipe['schedule']['total'], c.TOTAL_UPDATES)
@@ -501,9 +535,10 @@ class ContractTests(unittest.TestCase):
 
     def test_output_paths_are_isolated(self):
         c = self.c
-        self.assertEqual(c.OUTPUT.name, 'xvla_franka_stacking_b3_robosuite_v1')
-        self.assertEqual(c.SCRATCH.name, 'xvla_franka_stacking_b3_robosuite_v1_preflight')
-        self.assertEqual(c.ADMISSION.name, 'xvla_franka_stacking_b3_robosuite_v1_admission')
+        self.assertEqual(c.OUTPUT.name, 'xvla_franka_stacking_b3_robosuite_v2')
+        self.assertEqual(c.SCRATCH.name, 'xvla_franka_stacking_b3_robosuite_v2_preflight')
+        self.assertEqual(c.PROOF.name, 'xvla_franka_stacking_b3_robosuite_v2_resumeproof')
+        self.assertEqual(c.ADMISSION.name, 'xvla_franka_stacking_b3_robosuite_v2_admission')
         self.assertEqual(c.PARENT, c.ROOT/'outputs/b3_robosuite_data/b3_robosuite_20261003')
         self.assertEqual(c.DATA, c.PARENT/'dataset')
         self.assertEqual(c.CACHE, c.ROOT/'.cache/xvla_trial/bundle')

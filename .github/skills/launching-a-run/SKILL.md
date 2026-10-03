@@ -72,6 +72,12 @@ mkdir -p ${OUT}_admission ${OUT}_preflight ${OUT}
 **Do not edit any `SOURCE_FILES` member between `--check` and `--train`.** The admission is
 invalidated and must be re-run in full.
 
+A run of tens of hours needs a way back from a crash: snapshot the model, the optimizer and the RNG
+every few thousand updates, and gate `--train` on a `--resume-proof` that shows a resumed process
+reproduces the uninterrupted run byte for byte. `xvla_b3_robosuite` (v2) is the reference: its
+README, "Resuming a failed run". The first B3 launch saved the optimizer only at the end and could
+not be continued (FAILURES #43).
+
 ## 3. Container invocation
 
 CPU gates:

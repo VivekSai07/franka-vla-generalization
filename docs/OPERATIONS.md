@@ -167,7 +167,19 @@ mkdir -p ${OUT}_admission ${OUT}_preflight ${OUT}
 **Editing any `SOURCE_FILES` member after `--check` invalidates it** and forces a full re-run.
 Finish code changes before starting the sequence.
 
-There is no resume. `--train` always starts from the base bundle; a failed run restarts from zero.
+There is no resume for the older packages: `--train` starts from the base bundle and a failed run
+restarts from zero. `xvla_b3_robosuite` (v2) is the exception: it snapshots model, Adam and RNG every
+2,600 updates and has `--resume-proof` and `--train --resume`. Procedure after a failure:
+
+1. Read `failure.json` (written on any Python exception) and `docker logs <container>`. A hard kill
+   (OOM, host reboot) leaves neither; `docker inspect` shows `OOMKilled`, and `result.json` shows
+   where it stopped. Keep the dead container; do not `--rm`.
+2. Fix the *environment* (flags, memory, disk). Changing a `SOURCE_FILES` member makes it a different
+   run and `--resume` will refuse.
+3. Relaunch the same `--train` command with `--resume` added, same mounts, same output directory
+   (the claim token `run_claim.json` is how it recognises its own). Check at 5 and 15 minutes: the
+   log prints `SNAPSHOT` every 2,600 updates and `result.json['resumes']` lists each resume.
+4. Everything past the snapshot lands in `quarantine/resume_NN/`; it is evidence, not clutter.
 
 ---
 
@@ -204,7 +216,7 @@ Do not treat "launched" as "will report". A run has failed silently for 47 minut
 
 | item | cost |
 |---|---|
-| training run | 27–37 GB (checkpoints ~3.3 GB; final ~9.9 GB with optimizer state) |
+| training run | 27–37 GB (checkpoints ~3.3 GB; final ~9.9 GB with optimizer state); B3 v2 adds up to ~32 GB of resume snapshots (three of ~10.5 GB while one is being written) |
 | full evaluation | ~150 MB |
 | sealed 200-episode dataset | ~18 GB |
 

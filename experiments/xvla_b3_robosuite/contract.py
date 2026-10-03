@@ -49,8 +49,10 @@ ROOT = Path(__file__).resolve().parents[2]
 PARENT = ROOT/'outputs/b3_robosuite_data/b3_robosuite_20261003'
 DATA = PARENT/'dataset'
 CACHE = ROOT/'.cache/xvla_trial/bundle'
-OUTPUT = ROOT/'outputs/train/xvla_franka_stacking_b3_robosuite_v1'
+# v2: v1 had no resumable state (Adam saved only on the final update) and was superseded.
+OUTPUT = ROOT/'outputs/train/xvla_franka_stacking_b3_robosuite_v2'
 SCRATCH = OUTPUT.with_name(OUTPUT.name+'_preflight')
+PROOF = OUTPUT.with_name(OUTPUT.name+'_resumeproof')
 ADMISSION = OUTPUT.with_name(OUTPUT.name+'_admission')
 CPU_ADMISSION = ADMISSION/'result.json'
 SEAL = 'e14af864596caf7cb515ebc500957e970a3cf12a40a3a65c1692696d92b8e6c0'
@@ -162,11 +164,28 @@ def claim_output(path):
         raise ValueError('Symlink output forbidden')
     if path.exists():
         if not path.is_dir() or not is_mountpoint(path) or any(path.iterdir()):
-            raise FileExistsError('Preserve existing output; no overwrite/resume/retry')
+            raise FileExistsError('Preserve existing output; no overwrite; resume only via --resume')
     else:
         claim_directory(path)
     with (path/'run_claim.json').open('x') as stream:
         json.dump({'purpose': 'xvla_b3_robosuite', 'resume': False, 'required_image': IMAGE}, stream)
+
+
+def claim_resume(path):
+    """Resume only the bind-mounted output that a fresh claim created; every resume leaves a token."""
+    path = Path(path).absolute()
+    if any(item.is_symlink() for item in (path, *path.parents)):
+        raise ValueError('Symlink output forbidden')
+    claim = path/'run_claim.json'
+    if not path.is_dir() or not is_mountpoint(path) or not claim.is_file():
+        raise FileExistsError('Resume needs the original bind-mounted output holding run_claim.json')
+    if json.loads(claim.read_text()) != {'purpose': 'xvla_b3_robosuite', 'resume': False,
+                                         'required_image': IMAGE}:
+        raise ValueError('run_claim.json is not this package\'s claim')
+    number = len(list(path.glob('resume_claim_*.json')))+1
+    with (path/f'resume_claim_{number:02d}.json').open('x') as stream:
+        json.dump({'purpose': 'xvla_b3_robosuite', 'resume': number, 'required_image': IMAGE}, stream)
+    return number
 
 
 def require_fields(actual, expected, message):
@@ -351,6 +370,16 @@ def prepare_data():
 # 156,000 = 5 x 31,200 so the checkpoints fall on whole-epoch boundaries (31,200 x 8 = 249,600
 # chunks, 1.0004 epochs). B2's exposure was 5.01 epochs.
 TOTAL_UPDATES = 156000
+# Resume snapshot (model + Adam + RNG, ~10.5 GB) every 2,600 updates (~36 min): it divides 31,200, so
+# every epoch checkpoint is also a snapshot update, and a crash loses at most 2,600 updates.
+SNAPSHOT_EVERY = 2600
+KEEP_SNAPSHOTS = 2
+
+
+def snapshot_updates(preflight):
+    """Updates after which a resume snapshot is written; the final update has the final checkpoint."""
+    every, maximum = (1, 2) if preflight else (SNAPSHOT_EVERY, TOTAL_UPDATES)
+    return list(range(every, maximum, every))
 
 
 def learning_rate(update):
@@ -398,7 +427,9 @@ def recipe(preflight):
                                vlm_weight_decay=1e-5, betas=[.9, .95], eps=1e-8, clip=10.),
                 schedule=dict(warmup=500, total=TOTAL_UPDATES, floor_fraction=.1),
                 train_episodes=list(TRAIN), validation_episodes=list(VAL),
-                optimizer_storage='final_only', resume=False, autotune=False, retries=False)
+                optimizer_storage='final_only', resume='manual_from_verified_snapshot',
+                snapshot_updates=snapshot_updates(preflight), keep_snapshots=KEEP_SNAPSHOTS,
+                autotune=False, retries=False)
 
 
 def checkpoint_updates(preflight):
@@ -470,4 +501,23 @@ def validate_scratch(report, binding, output, stats, cpu_hash):
     if (report.get('training_stats_sha256') != sha256(output/'training_stats.json')
             or json.loads((output/'training_stats.json').read_text()) != stats):
         raise ValueError('Scratch training statistics changed')
+    verify_checkpoints(report, output, True)
+
+
+def validate_resume_proof(report, binding, scratch_report, output):
+    """A resumed run reproduced the uninterrupted run's second update bit for bit."""
+    require_fields(report, {**recipe(True), 'status': 'complete', 'completed_updates': 2,
+                   'binding': binding, 'final_data_binding_passed': True,
+                   'adam_reload_fp32_exact': True, 'rollouts': 0},
+                   'Exact current resume proof required')
+    scratch_model = scratch_report['checkpoints'][-1]['model_sha256']
+    require_fields(report.get('resume_proof') or {},
+                   dict(from_update=1, compared_update=2, metrics_equal=True,
+                        model_sha256_equal=True, training_state_sha256_equal=True,
+                        scratch_model_sha256=scratch_model),
+                   'Resumed run must reproduce the uninterrupted second update exactly')
+    if report['checkpoints'][-1]['model_sha256'] != scratch_model:
+        raise ValueError('Resumed final weights differ from the uninterrupted run')
+    if report.get('training_stats_sha256') != sha256(output/'training_stats.json'):
+        raise ValueError('Resume-proof training statistics changed')
     verify_checkpoints(report, output, True)
