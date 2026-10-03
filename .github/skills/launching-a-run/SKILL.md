@@ -94,6 +94,11 @@ GPU gates: swap to `--runtime nvidia --gpus all`, add `-e CUBLAS_WORKSPACE_CONFI
 
 Omitting `HF_HOME`/`XDG_CACHE_HOME` under `--read-only` → `OSError: Read-only file system`.
 
+A dataset with one video file per episode per camera (B3: 1,120 files) needs `--ulimit
+nofile=65536:65536`: LeRobot never closes its decoder handles and the default limit is 1024
+(FAILURES #42). Before launching `--train` on a new dataset, read one row from every episode once
+in a throw-away container; it takes seconds and shows the descriptor count.
+
 ## 4. Monitor actively
 
 `docker wait` has silently failed to notify here. Poll:

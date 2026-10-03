@@ -60,6 +60,10 @@ else, including all sealed packages and three of that package's own unit tests (
   `HF_HOME` each time (31 MB at 541 episodes). With `HF_HOME=/tmp/hf` on a tmpfs, give `/tmp` at
   least the sum over all reopens (the B3 run needed more than 8 GB; `--tmpfs /tmp:rw,size=24g`
   finished it). FAILURES #41.
+- Open files: LeRobot's video decoder cache holds one descriptor per distinct video file for the
+  life of the process, and a container's default `ulimit -n` is 1024. A dataset with one mp4 per
+  episode per camera needs 2 x episodes descriptors for random sampling (B3: 1,120). Add
+  `--ulimit nofile=65536:65536` to any training or random-access run on such a dataset. FAILURES #42.
 - Run helper, test order and collector: `experiments/robosuite_scene/README.md`. Its tests are run
   by module name (`-m unittest experiments.robosuite_scene.tests.<module>`), three of them in the
   admission image.
