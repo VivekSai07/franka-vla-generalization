@@ -345,6 +345,41 @@ Two-phase project. User accepted the one-variable-per-run attribution trade-off:
 - Superseded by the 2026-10-03 spec above (kept as the original sketch): **Phase 2 — B3 combined-axis collection**, designed only after Phase 1 passes. Will layer: tighter release precision (expert gate ≤ 1.2 cm), harder distractors (reduced clearance / in the carry path), full colour randomisation, extra demonstrations near the acquisition-weak `054`/`048` pick regions, and a floor/prop change. Horizon likely 75-100 k updates.
 - [ ] **Publish B3 steps 124,800 and 156,000** (user, 2026-10-05): staged and hash-verified at `outputs/downloads_20261005/b3_robosuite/` (zero extra disk); copy to Windows, verify the two hashes, upload as a private model repo — commands in the staging `README.md`, record in [docs/B3_PUBLICATION_20261005.md](docs/B3_PUBLICATION_20261005.md). Keep all RTX originals.
 - [ ] **Next project — robosuite's built-in props / real-life objects** (user, 2026-10-02; B3 now has its measured result, so this is next: brainstorm → spec → plan). Move from cubes to robosuite's object library (cans, bottles, boxes, cereal, bread, milk; `robosuite.models.objects`). This is a jump, not an increment: the scripted expert assumes a cube it can grasp top-down at a fixed height and scores a cube-on-cube stack, so it needs new grasp strategies per object, a new task definition and success metric, and instructions that name objects.
+- **Inputs for the props project, collected 2026-10-05** (read before its brainstorm):
+      - *Carried over from B3, as questions to design in, not as more cube work:* (1) the +y side near
+        the robot base is the policy's weak corner in both B2 and B3 — put a stratum of layouts there
+        and check the expert and policy for left/right asymmetry before trusting a layout
+        distribution; (2) object orientation decides grasps and placements — log yaw (and full
+        orientation) in every trace from the start; (3) the place phase was the unstable part of B3
+        (topples, stalls) — bins make placement forgiving, which should remove the topple mode but not
+        the stall.
+      - *Process lessons:* evaluate several checkpoints spread through training and keep an untouched
+        set of layouts to confirm the winner (B3's report both selected and measured); define a
+        detailed failure-mode classifier before the first rollout (FAILURES #45); training on one
+        video file per episode needs `--ulimit nofile=65536:65536` (#42); size `/tmp` for the
+        HuggingFace cache (#41); resumable training from the start (#43).
+      - *What robosuite 1.5.2 ships (checked in our image):* a ready **bin-sorting setup** —
+        environment `PickPlace` with `BinsArena`: a source bin and a target bin split into four
+        compartments, four objects (milk, bread, cereal, can), success = object inside its
+        compartment volume with the gripper away. It assumes a 0.8 m table and robosuite's OSC
+        controller, so for us it is a template: compose our own `BinsArena` scene the way
+        `robosuite_scene` composes `TableArena`, and drive it with our expert.
+        Other objects: lemon, bottle, plus `HammerObject`, `PotWithHandlesObject`, nuts/pegs (assembly,
+        not sorting), and primitives (box, cylinder, ball, capsule). Each food object also has a
+        visual-only twin (`*VisualObject`) for showing a target.
+      - *Measured object sizes (bounding box) and masses:* milk 4.0 × 4.0 × 14.4 cm, 0.021 kg;
+        bread 4.8 × 4.0 × 4.8 cm, 0.004 kg; cereal 10 × 3 × 15 cm, 0.067 kg; can 5.2 × 5.2 × 8 cm,
+        0.016 kg; lemon 7 × 4 × 4.3 cm, 0.003 kg; bottle 5.5 × 5.9 × 16 cm, 0.014 kg. Our gripper
+        opens 8 cm, so all of them fit across their narrow side, but cereal (3 cm wide, 10 cm long)
+        and lemon must be grasped at the right yaw, and the tall ones (milk, cereal, bottle) need a
+        per-object grasp height. Several are implausibly light (bread 4 g, lemon 3 g) — set masses
+        explicitly.
+      - *User's idea (2026-10-05): sort objects into two bins.* Design questions for the brainstorm:
+        what decides the bin (an instruction naming object and bin, or a rule such as food vs drink);
+        swap the bins' sides between episodes so position never predicts the answer (the B1 lesson,
+        FAILURES #27); hold out some object × bin combinations, as B3 held out colour pairs; how many
+        objects per scene and whether the rest act as distractors; random yaw as an axis; and the
+        controller decision below.
 - [ ] **Decide the controller and action space for the props project: our joint-target IK or robosuite's OSC_POSE** (user, 2026-10-02). Plan time for this before any props data is collected, because the choice fixes the dataset's action format. What to weigh:
       - *Ours* (pinocchio IK → 7 absolute joint targets + gripper, 30 Hz): every existing dataset and checkpoint uses it, so old policies can still be rolled out and sim2sim stays possible; robosuite's runtime is not needed (`env.step` is never called). Note from the sim2sim result: the old checkpoints roll out on the robosuite scene but score 3/20, so "existing checkpoints stay usable" is a weak reason to keep this action space.
       - *OSC_POSE* (robosuite built-in: 6 end-effector deltas + gripper): the format public robosuite / robomimic / LIBERO data uses, and compliant in contact (the SmolVLA checkpoint this repo started from, `smolvla_libero`, is LIBERO-finetuned). Costs: a new action space (no reuse of existing checkpoints or datasets), a scripted expert rewritten to emit deltas, `env.step` and robosuite's control loop in the collection path, and re-proving determinism and replay.
