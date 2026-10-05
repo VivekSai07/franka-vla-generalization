@@ -54,7 +54,11 @@ composes, plain MuJoCo drives, `env.step` never called, robosuite image (MuJoCo 
   `CerealObject`, with masses set explicitly: can 0.15, bread 0.05, lemon 0.08, milk 0.20,
   bottle 0.20, cereal 0.15 kg. Only the objects in an episode exist in its model (one cached model
   per object set and bin arrangement).
-- **Start region** for objects: x ∈ [0.22, 0.40], y ∈ [−0.12, 0.12], yaw uniform in [−90°, 90°).
+- **Start region** for objects: x ∈ [0.27, 0.40], y ∈ [−0.12, 0.12], yaw uniform in [−90°, 90°).
+  *(Amended 2026-10-05 after the first P0 run: the original lower bound of 0.22 m put starts inside the
+  arm's working envelope — below about 0.285 m radius joint 4 saturates on the straight-line approach
+  and the hand closes on air, 59 of 300 attempts. B3 used radius ≥ 0.28 m. There is no near-base
+  stratum in props as a result; the B2/B3 weak corner is not tested here.)*
 
 ### Expert
 
@@ -72,13 +76,24 @@ with 20 substeps. Per object, from its model geometry:
 
 ### Success
 
-The object's centre is inside the target bin's inner box (x, y within the inner walls, z below the wall
-top), the gripper is open and not touching it, for 30 consecutive ticks, within 900 ticks.
+The object's **lowest point** is below the target bin's wall top, its centre is inside the bin's inner
+box in x and y, and the gripper is open and not touching it, for 30 consecutive ticks, within 900
+ticks.
+
+*(Amended 2026-10-05 after the first P0 run. The original rule required the object's **centre** below
+the wall top, which a 14–16 cm object standing in a 7 cm bin can never satisfy: milk's centre sits at
+7.2 cm, cereal's at 7.5 cm, bottle's at 8.0 cm. Measured consequence: 77 of 136 failures were objects
+resting correctly in the bin, and all 35 tall-object "successes" were objects that had fallen over
+(tilt 52–57°) — the rule rewarded toppling. The amended rule is what `metrics.placement` already
+computes; re-scoring the existing 300 attempts under it gives 241/300, and 205/206 once the start
+region is also fixed.)*
 
 ### P0 gate (go / no-go)
 
 - **Expert success ≥ 95%** over 300 scripted attempts: 6 objects × 2 target bins × 2 bin arrangements
-  × ~12 seeds, random start pose and yaw.
+  × ~12 seeds, random start pose and yaw. *(Re-scoring the first run under the two amendments above
+  predicts 99.5%, every object ≥ 97%, both slots ≥ 99% — so the re-run is expected to pass, and a
+  result far from that means something else changed.)*
 - Every object reaches ≥ 90% on its own (no object carried by the others).
 - Both bin slots ≥ 93% (the left/right asymmetry check).
 - Replay of recorded actions reproduces states (< 1e-3); two processes give byte-equal traces.
