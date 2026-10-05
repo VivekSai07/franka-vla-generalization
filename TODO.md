@@ -345,6 +345,24 @@ Two-phase project. User accepted the one-variable-per-run attribution trade-off:
 - Superseded by the 2026-10-03 spec above (kept as the original sketch): **Phase 2 — B3 combined-axis collection**, designed only after Phase 1 passes. Will layer: tighter release precision (expert gate ≤ 1.2 cm), harder distractors (reduced clearance / in the carry path), full colour randomisation, extra demonstrations near the acquisition-weak `054`/`048` pick regions, and a floor/prop change. Horizon likely 75-100 k updates.
 - [ ] **Publish B3 steps 124,800 and 156,000** (user, 2026-10-05): staged and hash-verified at `outputs/downloads_20261005/b3_robosuite/` (zero extra disk); copy to Windows, verify the two hashes, upload as a private model repo — commands in the staging `README.md`, record in [docs/B3_PUBLICATION_20261005.md](docs/B3_PUBLICATION_20261005.md). Keep all RTX originals.
 - [ ] **Next project — robosuite's built-in props / real-life objects** (user, 2026-10-02; B3 now has its measured result, so this is next: brainstorm → spec → plan). Move from cubes to robosuite's object library (cans, bottles, boxes, cereal, bread, milk; `robosuite.models.objects`). This is a jump, not an increment: the scripted expert assumes a cube it can grasp top-down at a fixed height and scores a cube-on-cube stack, so it needs new grasp strategies per object, a new task definition and success metric, and instructions that name objects.
+- **Props roadmap (agreed direction, user 2026-10-05; each phase gets its own spec → plan → go/no-go):**
+      - **P0 — scene and expert bring-up (no policy).** Two-bin scene composed like `robosuite_scene`
+        (table at z = 0, our two cameras), 4–6 robosuite objects with explicit masses, our joint-target
+        IK expert extended with per-object grasp height and yaw-aligned grasps. Gate: the expert drops
+        every object into either bin from random yaw, ≥ 95% over a few hundred scripted attempts,
+        deterministic replay, yaw logged. The controller question is settled here cheaply: switch to
+        OSC only if the IK expert cannot reach that rate.
+      - **P1 — instruction sorting, one object, no distractors.** "put the <object> in the <bin> bin";
+        bins swap sides every episode; some object × bin pairs held out. Small dataset, train, evaluate
+        held-out pairs and both bin arrangements. Gate: the policy beats a position-only shortcut on the
+        swapped arrangement.
+      - **P2 — instruction sorting with 1–2 distractor objects** (the main dataset, B3-sized). The
+        policy must find the named object among others. Strata for the +y near-base corner; random yaw;
+        held-out pairs; several checkpoints + an untouched confirmation set.
+      - **P3 — rule-based Food vs Drinks**, two visually distinct containers. First one object per
+        episode with a fixed prompt; then held-out objects as a stretch test (zero-shot category from
+        six objects is a long shot and is read as exploratory). Multi-object sequential sorting only
+        after that.
 - **Inputs for the props project, collected 2026-10-05** (read before its brainstorm):
       - *Carried over from B3, as questions to design in, not as more cube work:* (1) the +y side near
         the robot base is the policy's weak corner in both B2 and B3 — put a stratum of layouts there
