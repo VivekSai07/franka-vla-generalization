@@ -34,7 +34,8 @@ them in the admission image.
 training package; the B3 evaluation imports that contract, so edit neither.
 
 Not hash-bound: `experiments/robosuite_sim2sim/` (sim2sim rollouts), `experiments/xvla_b3_robosuite_eval/`
-(B3 evaluation) and the README of `experiments/robosuite_scene/` (scene bring-up). No contract lists them; the bring-up `seal.json` is
+(B3 evaluation), `experiments/props_scene/` (props P0: scene, expert, 300-attempt gate; robosuite image; it has no
+contract and imports sealed code read-only, so give it a contract before a result is final) and the README of `experiments/robosuite_scene/` (scene bring-up). No contract lists them; the bring-up `seal.json` is
 a file fingerprint only. `robosuite_scene` runs only in the robosuite image
 (`contract.IMAGE`, MuJoCo 3.4.0) — except `test_r1_image`, `test_seal` and `test_expert_fork`, which
 run in the admission image — and its tests are run by module name, not by `discover`. It imports

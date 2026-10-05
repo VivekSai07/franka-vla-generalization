@@ -17,7 +17,7 @@ no `docker system prune`).
 | local tag | image id | what it is | runs |
 |---|---|---|---|
 | `smolvla:rtc-offline` | `sha256:08de1e09…714abc` | the pinned (admission) image, MuJoCo 3.13.0 | everything sealed: collection, training, evaluation — including B3 **training** (`xvla_b3_robosuite`), which needs no simulator |
-| `vla-robosuite:1.5.2-mj3.4.0` | `sha256:54d861aa…ccf27e` | the image above + robosuite 1.5.2, MuJoCo 3.4.0 | everything that builds the robosuite scene: `robosuite_scene`, `robosuite_sim2sim`, `b3_robosuite_data` collection, `xvla_b3_robosuite_eval` rollouts |
+| `vla-robosuite:1.5.2-mj3.4.0` | `sha256:54d861aa…ccf27e` | the image above + robosuite 1.5.2, MuJoCo 3.4.0 | everything that builds the robosuite scene: `robosuite_scene`, `robosuite_sim2sim`, `b3_robosuite_data` collection, `xvla_b3_robosuite_eval` rollouts, `props_scene` (props P0: scene, expert, gate) |
 
 Tags are local handles only; commands and contracts use the full digest. Neither image is in a
 registry, so losing one means rebuilding it (the second from
@@ -72,6 +72,14 @@ the pinned image above on MuJoCo 3.13.0.
 - Run helper, test order and collector: `experiments/robosuite_scene/README.md`. Its tests are run
   by module name (`-m unittest experiments.robosuite_scene.tests.<module>`), three of them in the
   admission image.
+- Props P0 (`experiments/props_scene/`, no contract, not hash-bound): same flags with `--tmpfs /tmp:rw,size=16g` and
+  an output folder mounted at `/out` (`outputs/props_p0/`: `gate_20261005*/` per-attempt JSON lines, `probes/`,
+  `contact_sheets/`, `osc_gate/`, `HANDOFF.md`). The gate is six detached containers
+  (`python -m experiments.props_scene.benchmark --out /out/<dir> --shard K/6`), about 25 minutes, about 34 s an
+  attempt with rendering; poll with `docker ps` and `wc -l`. Never run a parallel job over its models with more
+  than about 30 workers: each worker is a few GB resident and 44 exhausted 125 GB (FAILURES #50). OSMesa rendering is
+  multi-threaded, so a CPU-heavy probe slows a running gate. Its tests are run by module name and the printed test
+  count must be read (`Ran 0 tests … OK` is possible).
 
 ## Standard container flags
 
@@ -262,6 +270,12 @@ B3 superseded runs, kept until you decide otherwise: `…_b3_robosuite_v1_failed
 (3.3 GB, died at update ~220), `…_v1_superseded_20261003` (3.3 GB, stopped at ~1,900 for the resumable
 v2), and the v1/v2 `_preflight` / `_resumeproof` scratch (~60 GB together). B3 evaluation outputs:
 `outputs/xvla_b3_robosuite_eval/` (1.2 GB, all trials with videos).
+
+`outputs/props_p0/` (2026-10-05; props P0, scripted, no dataset and no model): `gate_20261005/` (first gate, 165/300,
+before the square-footprint fix) and `gate_20261005b/` (final code, 164/300) each hold six
+`attempts_shard<K>of6.jsonl`, `plan.json`, `recheck.json`, `summary.json`; `probes/` (tuning re-runs, one JSON per
+change), `osc_gate/` (OSC comparison), `contact_sheets/`, `scene_check/`, `diag*.py`/`probe.py`/`reach*.py` scratch and
+`HANDOFF.md`. A few hundred MB; reproducible from `experiments/props_scene/`, nothing sealed.
 
 Everything else under `outputs/train/` (smolvla_pilot, single_task, fixed_layout, the plain
 `broadworkspace_v1`/`localvaried_v1` runs) is superseded Tier 2-4 work — see

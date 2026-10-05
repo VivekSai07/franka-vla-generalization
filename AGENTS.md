@@ -17,7 +17,7 @@ Additional context loaded automatically where supported:
 | [.github/skills/forking-an-experiment-package/SKILL.md](.github/skills/forking-an-experiment-package/SKILL.md) | copying a package — residue traps, symtable check |
 | [.github/skills/branching-for-an-experiment-axis/SKILL.md](.github/skills/branching-for-an-experiment-axis/SKILL.md) | one branch per axis, safe recovery if work landed on `main` |
 | [.github/skills/transferring-artifacts-off-rtx/SKILL.md](.github/skills/transferring-artifacts-off-rtx/SKILL.md) | stage/transfer/verify/publish/reclaim disk for datasets & checkpoints |
-| [.github/skills/working-on-the-robosuite-path/SKILL.md](.github/skills/working-on-the-robosuite-path/SKILL.md) | `experiments/robosuite_*` — which image, crossing between the two MuJoCo versions, the traps hit so far |
+| [.github/skills/working-on-the-robosuite-path/SKILL.md](.github/skills/working-on-the-robosuite-path/SKILL.md) | `experiments/robosuite_*` and `experiments/props_scene` — which image, crossing between the two MuJoCo versions, the traps hit so far |
 
 Orientation: [README.md](README.md) · [docs/INDEX.md](docs/INDEX.md) ·
 [docs/OPERATIONS.md](docs/OPERATIONS.md) · [docs/FAILURES.md](docs/FAILURES.md) ·

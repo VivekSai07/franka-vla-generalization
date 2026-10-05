@@ -14,7 +14,9 @@ Comparing SmolVLA and X-VLA fine-tuning on a Franka Panda cube-stacking task, us
 hash-bound datasets collected from a scripted expert — in a plain MuJoCo scene through B2, in a
 robosuite-composed scene for B3. Central question: how much and what kind of data does a VLA need to
 generalise? The cube programme closed with B3 (2026-10-05); the next project is real-life props in
-robosuite. See [README.md](README.md) for results and [TODO.md](TODO.md) for what is open.
+robosuite (P0, the scene and a scripted expert, ran on 2026-10-05 and failed its gate; see
+[docs/PROPS_P0_20261005.md](docs/PROPS_P0_20261005.md)). See [README.md](README.md) for results and
+[TODO.md](TODO.md) for what is open.
 
 ## Layout
 
@@ -48,8 +50,9 @@ training (`experiments/xvla_b3_robosuite/`, which needs no simulator), and every
 simulator.
 
 Second image, for everything that builds the robosuite scene: `experiments/robosuite_scene/`, the rollout stage of
-`experiments/robosuite_sim2sim/`, B3 collection (`experiments/b3_robosuite_data/`) and B3 evaluation
-rollouts (`experiments/xvla_b3_robosuite_eval/`):
+`experiments/robosuite_sim2sim/`, B3 collection (`experiments/b3_robosuite_data/`), B3 evaluation
+rollouts (`experiments/xvla_b3_robosuite_eval/`) and the props scene, expert and gate
+(`experiments/props_scene/`, not hash-bound):
 
 ```
 sha256:54d861aac79c1c8ceed09734a00bbc5d8cbf566c427e47ff23089f9bb0ccf27e

@@ -32,7 +32,8 @@ picks at the region edges. Evaluated on reserved layouts, 160 trials per checkpo
 - Robosuite 1.5.2 / MuJoCo 3.4.0 — not comparable with the MuJoCo-scene numbers below.
 
 Report: [docs/B3_XVLA_EVALUATION_20261005.md](docs/B3_XVLA_EVALUATION_20261005.md). Next: real-life
-props in robosuite ([TODO.md](TODO.md)).
+props in robosuite ([TODO.md](TODO.md)); P0 (scene and scripted expert, no policy) ran on 2026-10-05 and
+failed its gate, 164/300 against 95%, for two reasons that need a decision ([docs/PROPS_P0_20261005.md](docs/PROPS_P0_20261005.md)).
 
 ## The results arc
 

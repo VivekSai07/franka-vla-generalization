@@ -1,5 +1,17 @@
 # Franka benchmark: start here
 
+## Props P0 (two-bin scene and scripted expert): no-go, 164/300 = 54.7% — 2026-10-05
+
+Not a policy result. `experiments/props_scene/` (branch `feat/props-p0`, robosuite image, no contract, not merged)
+builds the two-bin scene with six robosuite objects and a scripted expert that sorts any of them into either bin.
+300 scripted attempts against the 95% gate: **164 (54.7%)**; can 45/50, bread 45, lemon 39, milk 20, bottle 14,
+cereal 1; target slots 85/150 and 79/150; every replay exact; 12 of 12 re-executions byte-equal. Two causes the
+plan's tuning list cannot reach: the written success definition (centre below the 7 cm wall) cannot be met by a
+tall object standing in the bin (77 of 136 failures), and the start region within 0.285 m of the base is not
+reached along the expert's straight-line approach (58). Outside the verdict, 241/300 end resting in the bin and 198 of
+the 199 attempts starting 0.285 m or more from the base do. No tuning change was adopted; robosuite's OSC scored
+148/300 on the same attempts. Report: [PROPS_P0_20261005.md](PROPS_P0_20261005.md); decisions: [TODO.md](../TODO.md).
+
 ## Cube programme closed; B3 reviewed, merged and staged for publication — 2026-10-05
 
 An independent check of the B3 evaluation reproduced every headline figure from the raw results and
