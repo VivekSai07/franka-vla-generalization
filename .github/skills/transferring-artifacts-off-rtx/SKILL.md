@@ -36,8 +36,18 @@ outputs/downloads_<YYYYMMDD>/<axis>/
 ```
 
 Omit a section only when it does not exist for that axis (e.g. no `dataset_episodes/` when the
-collector wrote none). "We only want to publish the weights" is not a reason to omit one — the
-bundle is the archive, and `hf_upload/` is how you publish from it.
+collector wrote none) — say so in the README rather than leaving a silent gap, and fold any small
+stray files from the sealed root into `dataset_provenance/`. "We only want to publish the weights"
+is not a reason to omit a section — the bundle is the archive, and `hf_upload/` is how you publish
+from it.
+
+`hf_upload/` holds the winning checkpoint's files at its root (so the repo root is the model), the
+other kept checkpoints under `checkpoints/step_NNNNNN/`, the evaluation `result.json` summaries, the
+training record, and `README.md` — the model card, whose numbers come from the axis's dated report
+and `docs/RESULTS.md`, never re-derived.
+
+The README's hash table lists every `model.safetensors` in the bundle with its sha256, because that
+is what the Windows side re-checks after the transfer.
 
 Worked examples: `outputs/downloads_20261001/b2_distractor/`,
 `outputs/downloads_20261005/b3_robosuite/`.
@@ -111,7 +121,12 @@ get /home/utxowqr/smolvla_franka/outputs/downloads_<date>/<run>/checkpoints/step
 bye
 ```
 
-Keep the destination path structure identical to the source (`downloads_<date>/<run>/...`) so the
+**`hf_upload/` is hardlinked to `checkpoints/`, but no transfer tool preserves that.** `sftp`,
+`scp` and `rsync` all resend those bytes as a second copy, so pulling the whole bundle sends the
+winning checkpoint's weights twice. Pull the bundle *excluding* `hf_upload/`, and rebuild that view
+on Windows (or pull it separately only when you are about to upload).
+
+Keep the destination path structure identical to the source (`downloads_<date>/<axis>/...`) so the
 Windows side mirrors the staging bundle exactly — this is what makes the verify step below a
 direct path-for-path comparison. `sftp get` does not resume a partial file the way `rsync` does;
 prefer `rsync` for a fresh multi-GB pull and reserve `sftp get` for topping up specific files.
