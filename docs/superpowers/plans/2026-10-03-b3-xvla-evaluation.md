@@ -83,7 +83,7 @@ MAIN=/home/utxowqr/smolvla_franka
 OLD=sha256:08de1e09200539a26f7564bbf095fb846b8104ba07a72564b8232feb58714abc
 NEW=sha256:54d861aac79c1c8ceed09734a00bbc5d8cbf566c427e47ff23089f9bb0ccf27e
 PARENT=outputs/b3_robosuite_data/b3_robosuite_20261003
-TRAIN=outputs/train/xvla_franka_stacking_b3_robosuite_v1
+TRAIN=outputs/train/xvla_franka_stacking_b3_robosuite_v2   # v1 was superseded by the resumable v2 (FAILURES #43)
 EVAL=outputs/xvla_b3_robosuite_eval
 mkdir -p $PARENT $TRAIN $EVAL .cache $MAIN/$EVAL       # mount points in the worktree; host output root
 FLAGS="--network none --read-only --user $(id -u):$(id -g) --tmpfs /tmp:rw,size=16g \
