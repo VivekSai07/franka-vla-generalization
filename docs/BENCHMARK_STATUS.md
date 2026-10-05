@@ -1,6 +1,16 @@
 # Franka benchmark: start here
 
-## Props P0 (two-bin scene and scripted expert): no-go, 164/300 = 54.7% — 2026-10-05
+## Props P0 re-run against the amended spec: GO, 283/288 = 98.3% — 2026-10-05
+
+Not a policy result. The first run (below) failed because of two errors in the spec; both were amended
+(success by the object's lowest point below the wall top; start region x ≥ 0.27, no near-base stratum, 288 attempts)
+and the gate re-run on the same expert plus the square-footprint fix. **283/288 (98.3%)** against 95%: can, bread, cereal
+48/48, milk 47/48, bottle 46/48, lemon 46/48; target slots 143/144 and 140/144; replay exact on all 288; determinism 12/12
+in the gate's recheck and 12/12 on the other bin arrangement. Four of the five failures start at radius 0.278–0.283 m, inside
+the reach band the region still admits; beyond 0.285 m, 274/275. Report: [PROPS_P0_RERUN_20261005.md](PROPS_P0_RERUN_20261005.md).
+Next: P1 design ([TODO.md](../TODO.md)).
+
+## Props P0 (two-bin scene and scripted expert): no-go, 164/300 = 54.7% — 2026-10-05 (first run, superseded by the re-run above)
 
 Not a policy result. `experiments/props_scene/` (branch `feat/props-p0`, robosuite image, no contract, not merged)
 builds the two-bin scene with six robosuite objects and a scripted expert that sorts any of them into either bin.
@@ -10,7 +20,8 @@ plan's tuning list cannot reach: the written success definition (centre below th
 tall object standing in the bin (77 of 136 failures), and the start region within 0.285 m of the base is not
 reached along the expert's straight-line approach (58). Outside the verdict, 241/300 end resting in the bin and 198 of
 the 199 attempts starting 0.285 m or more from the base do. No tuning change was adopted; robosuite's OSC scored
-148/300 on the same attempts. Report: [PROPS_P0_20261005.md](PROPS_P0_20261005.md); decisions: [TODO.md](../TODO.md).
+148/300 on the same attempts. Report: [PROPS_P0_20261005.md](PROPS_P0_20261005.md); the two causes were then
+resolved by amending the spec (above).
 
 ## Cube programme closed; B3 reviewed, merged and staged for publication — 2026-10-05
 

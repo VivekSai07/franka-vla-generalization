@@ -272,7 +272,8 @@ v2), and the v1/v2 `_preflight` / `_resumeproof` scratch (~60 GB together). B3 e
 `outputs/xvla_b3_robosuite_eval/` (1.2 GB, all trials with videos).
 
 `outputs/props_p0/` (2026-10-05; props P0, scripted, no dataset and no model): `gate_20261005/` (first gate, 165/300,
-before the square-footprint fix) and `gate_20261005b/` (final code, 164/300) each hold six
+before the square-footprint fix), `gate_20261005b/` (164/300, written spec) and `gate_20261005c/` (the amended spec,
+283/288, the gate of record) each hold six
 `attempts_shard<K>of6.jsonl`, `plan.json`, `recheck.json`, `summary.json`; `probes/` (tuning re-runs, one JSON per
 change), `osc_gate/` (OSC comparison), `contact_sheets/`, `scene_check/`, `diag*.py`/`probe.py`/`reach*.py` scratch and
 `HANDOFF.md`. A few hundred MB; reproducible from `experiments/props_scene/`, nothing sealed.

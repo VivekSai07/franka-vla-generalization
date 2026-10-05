@@ -10,12 +10,13 @@
 - **Open now:** publish B3 steps 124,800 and 156,000 (staged; Windows transfer and the Hugging Face
   upload are the user's, see the B3 section); then the **props project** and its controller
   decision (end of the B3 section).
-- **Props P0 ran (2026-10-05): no-go, 164/300 = 54.7% against 95%** (robosuite image, scripted, branch
-  `feat/props-p0`, not merged). Scene, expert, metric, replay (exact on all 300) and determinism (12/12) work.
-  Two things stop the gate that the tuning list cannot touch: the written success definition cannot be met by
-  a tall object standing in the bin (centre above the 7 cm wall: 77 of 136 failures), and the start region
-  within 0.285 m of the base is not reached along the expert's path (58). Decisions needed before P1: see
-  "Props P0 result and open decisions" below. Report: [docs/PROPS_P0_20261005.md](docs/PROPS_P0_20261005.md).
+- **Props P0 is GO (re-run 2026-10-05): 283/288 = 98.3% against 95%** (robosuite image, scripted, branch
+  `feat/props-p0`, not merged). The first run failed (164/300) on two errors in the spec, not in the expert: success
+  required the centre below the wall (impossible for a tall object standing in the bin) and the start region began
+  inside the arm's working envelope. Both are amended (success by lowest point; start x from 0.27; no near-base
+  stratum; 288 attempts). Every object at least 95.8%, both slots at least 97.2%, replay exact, determinism 24/24.
+  **Next: P1 design.** Reports: [docs/PROPS_P0_RERUN_20261005.md](docs/PROPS_P0_RERUN_20261005.md) (the pass) and
+  [docs/PROPS_P0_20261005.md](docs/PROPS_P0_20261005.md) (the first run, kept as the record).
 - Items from Phases A and B that the closed cube programme made moot are ticked with
   *(closed 2026-10-05, not pursued)* and kept for their reasoning.
 
@@ -355,7 +356,7 @@ Two-phase project. User accepted the one-variable-per-run attribution trade-off:
 - **Props P0 PASSED (2026-10-05): 283/288 = 98.3%** after two spec amendments I had got wrong (success by lowest point, not centre; start region clear of the arm's working envelope). Report: [docs/PROPS_P0_RERUN_20261005.md](docs/PROPS_P0_RERUN_20261005.md). **Next: P1 collection — [docs/superpowers/plans/2026-10-06-props-p1-collection.md](docs/superpowers/plans/2026-10-06-props-p1-collection.md)** (amend region+yaw, re-confirm P0, build the collector, pilot, then 540 episodes ≈ 6 h). Branch `feat/props-p0`, not merged.
 - **Props roadmap (agreed direction, user 2026-10-05; each phase gets its own spec → plan → go/no-go):**
       Spec: [docs/superpowers/specs/2026-10-05-props-sorting-design.md](docs/superpowers/specs/2026-10-05-props-sorting-design.md). P0 plan: [docs/superpowers/plans/2026-10-05-props-p0-scene-expert.md](docs/superpowers/plans/2026-10-05-props-p0-scene-expert.md) (ends with a report and a handoff prompt). P1 bins are told apart by colour (blue / orange), not by side; they swap sides.
-      - **P0 — scene and expert bring-up (no policy). Ran 2026-10-05: no-go, 164/300 = 54.7%** (see below). Two-bin scene composed like `robosuite_scene`
+      - **P0 — scene and expert bring-up (no policy). GO 2026-10-05: 283/288 = 98.3%** after the spec amendments below (first run 164/300, no-go). Two-bin scene composed like `robosuite_scene`
         (table at z = 0, our two cameras), 4–6 robosuite objects with explicit masses, our joint-target
         IK expert extended with per-object grasp height and yaw-aligned grasps. Gate: the expert drops
         every object into either bin from random yaw, ≥ 95% over a few hundred scripted attempts,
@@ -367,21 +368,20 @@ Two-phase project. User accepted the one-variable-per-run attribution trade-off:
         swapped arrangement.
       - **P2 — instruction sorting with 1–2 distractor objects** (the main dataset, B3-sized). The
         policy must find the named object among others. Strata for the +y near-base corner; random yaw;
-        held-out pairs; several checkpoints + an untouched confirmation set.
+        held-out pairs; several checkpoints + an untouched confirmation set. *(P0 found the expert cannot
+        reach starts closer than about 0.285 m to the base; unless the approach path is rebuilt, P2's
+        layouts start at x ≥ 0.27 and the near-base corner is not tested.)*
       - **P3 — rule-based Food vs Drinks**, two visually distinct containers. First one object per
         episode with a fixed prompt; then held-out objects as a stretch test (zero-shot category from
         six objects is a long shot and is read as exploratory). Multi-object sequential sorting only
         after that.
-- **Props P0 result and open decisions (2026-10-05)** — [docs/PROPS_P0_20261005.md](docs/PROPS_P0_20261005.md),
-  package `experiments/props_scene/` on `feat/props-p0` (robosuite image, no contract, not merged). Gate on the
-  written definition: 164/300 = 54.7% (can 45/50, bread 45, lemon 39, milk 20, bottle 14, cereal 1; slots 85/150
-  and 79/150; replay exact; determinism 12/12). Diagnostic outside the verdict: 241/300 end resting in the bin, and
-  198 of the 199 attempts that start 0.285 m or more from the base. Decisions for the owner of the plan:
-      1. **The success definition** (centre below the wall top) cannot be met by milk, bottle or cereal standing in a 7 cm bin; all 35 tall-object successes are objects that fell over. Amend it (for example: centre inside in x and y and the object's lowest point below the wall top, resting on the bin floor), or deepen the bins / change the objects. Not changed.
-      2. **The start region.** The 20% of it within 0.265 m of the base fails (12/30 for short objects against 117/120 beyond it): move it to x ≥ 0.27 (B3 started at radius ≥ 0.28 m), or give the expert an approach that is not a straight line from home (descend first, then move in), which the plan's tuning list does not allow.
-      3. Whether the square-footprint fix (`3e19c01`, a defect fix not on the tuning list) is accepted: it is in the final code.
-      4. Whether OSC is worth more work: on the same attempts it scored 148/300 and reaches only slightly closer to the base; the standing-object problem is the same.
-      None of the plan's tuning knobs helped (a whole-plan table is in the report); no change was adopted.
+- **Props P0 result and its resolution (2026-10-05)** — package `experiments/props_scene/` on `feat/props-p0`
+  (robosuite image, no contract, not merged). First run, written spec: 164/300 = 54.7% no-go ([docs/PROPS_P0_20261005.md](docs/PROPS_P0_20261005.md)).
+  Decisions taken by the owner of the plan the same day, and what they gave ([docs/PROPS_P0_RERUN_20261005.md](docs/PROPS_P0_RERUN_20261005.md)):
+      1. **Success** is now: centre inside the bin in x and y, **lowest point** below the wall top, gripper open and clear, 30 ticks. Re-run: milk 47/48, bottle 46/48, cereal 48/48.
+      2. **Start region** is x ≥ 0.27 (was 0.22), no near-base stratum, 288 attempts. 4 of the 5 remaining failures start at radius 0.278–0.283 m, inside the reach band the region still admits (5.9% of its area); beyond 0.285 m: 274/275.
+      3. The square-footprint fix is accepted; centre = centre of mass; the cube's contact parameters are kept; OSC is dropped as a gate input (148/300 on the first run's attempts) and kept as evidence.
+      Open from the re-run: a lemon at y ≈ −0.12, yaw ≈ 80° fails repeatably with joint 4 not saturated (cause unknown); the gate's built-in determinism recheck only lands on one bin arrangement.
 - **Inputs for the props project, collected 2026-10-05** (read before its brainstorm):
       - *Carried over from B3, as questions to design in, not as more cube work:* (1) the +y side near
         the robot base is the policy's weak corner in both B2 and B3 — put a stratum of layouts there

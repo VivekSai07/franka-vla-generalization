@@ -41,7 +41,7 @@ replaying actions is exact.
 
 ## Success
 
-`metrics.in_bin` (amended 2026-10-05, [report](../../docs/PROPS_P0_20261005_RERUN.md)): the prop's centre (its body
+`metrics.in_bin` (amended 2026-10-05, [report](../../docs/PROPS_P0_RERUN_20261005.md)): the prop's centre (its body
 origin, the centre of mass) is inside the target bin's inner box in x and y, its **lowest point is below the wall
 top**, the gripper is open (`ctrl > 127`) and no finger touches it, for 30 consecutive ticks, and it still holds
 at the last tick of the episode (the end of the home phase). 900 ticks is the cap; an episode is about 450.
@@ -79,7 +79,8 @@ All run in the robosuite image against a finished gate directory and never chang
   physics): the plan's fallback comparison. It is not the expert and not a gate.
 - `contact_sheet.py` renders both cameras at the start of every phase for chosen attempts.
 
-Results and what they mean: [docs/PROPS_P0_20261005.md](../../docs/PROPS_P0_20261005.md).
+Results and what they mean: [docs/PROPS_P0_RERUN_20261005.md](../../docs/PROPS_P0_RERUN_20261005.md) (the gate of
+record) and [docs/PROPS_P0_20261005.md](../../docs/PROPS_P0_20261005.md) (the first run, before the amendments).
 
 ## Tests
 
