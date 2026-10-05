@@ -27,9 +27,10 @@ class ReplayTests(unittest.TestCase):
             self.assertEqual(float(trace["ctrl"][-1]), float(action[7]))
 
     def test_replay_reproduces_a_failure_too(self):
-        attempt = {**ATTEMPT, "object": "cereal", "bin": "blue", "pose": [0.30, 0.02, 80.0]}
+        attempt = {**ATTEMPT, "object": "can", "bin": "blue", "pose": [0.245, -0.028, 26.7]}   # beyond the arm's reach
         result, actions, traces, check, _, _ = v.execute(attempt, render=False)
-        self.assertFalse(result["success"])             # the written definition cannot be met by a standing box
+        self.assertFalse(result["success"])
+        self.assertEqual(result["reason"], "grasp")
         self.assertTrue(check["ok"], check)
 
     def test_replay_notices_a_changed_action(self):

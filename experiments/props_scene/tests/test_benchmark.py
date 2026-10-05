@@ -5,6 +5,8 @@ import unittest
 from collections import Counter
 from pathlib import Path
 
+import numpy as np
+
 from experiments.props_scene import benchmark as b
 from experiments.props_scene import constants as c
 
@@ -24,12 +26,12 @@ class PlanTests(unittest.TestCase):
     def test_size_and_balance(self):
         plan = self.plan
         self.assertEqual(len(plan), c.GATE_ATTEMPTS)
-        self.assertEqual(Counter(a["stratum"] for a in plan), {"grid": 288, "corner": 12})
-        cells = Counter((a["object"], a["bin"], a["blue_slot"]) for a in plan if a["stratum"] == "grid")
+        self.assertEqual(Counter(a["stratum"] for a in plan), {"grid": 288})
+        cells = Counter((a["object"], a["bin"], a["blue_slot"]) for a in plan)
         self.assertEqual(len(cells), 24)
         self.assertEqual(set(cells.values()), {c.GATE_SEEDS_PER_CELL})
-        self.assertEqual(Counter(a["target_slot"] for a in plan), {"left": 150, "right": 150})
-        self.assertEqual(Counter(a["object"] for a in plan), {o: 50 for o in c.OBJECTS})
+        self.assertEqual(Counter(a["target_slot"] for a in plan), {"left": 144, "right": 144})
+        self.assertEqual(Counter(a["object"] for a in plan), {o: 48 for o in c.OBJECTS})
 
     def test_target_slot_is_where_the_target_bin_is(self):
         for a in self.plan:
@@ -39,16 +41,12 @@ class PlanTests(unittest.TestCase):
     def test_poses_stay_in_their_regions(self):
         for a in self.plan:
             x, y, yaw = a["pose"]
-            xr, yr = (c.CORNER_X_M, c.CORNER_Y_M) if a["stratum"] == "corner" else (c.START_X_M, c.START_Y_M)
+            xr, yr = c.START_X_M, c.START_Y_M
             self.assertTrue(xr[0] <= x <= xr[1] and yr[0] <= y <= yr[1], a["id"])
+            self.assertGreaterEqual(float(np.hypot(x, y)), 0.27, a["id"])   # clear of the arm's envelope
             self.assertTrue(c.START_YAW_DEG[0] <= yaw < c.START_YAW_DEG[1], a["id"])
             self.assertEqual(len(a["home_pose_jitter_deg"]), 7)
             self.assertTrue(all(abs(j) <= c.HOME_JITTER_DEG_MAX for j in a["home_pose_jitter_deg"]))
-
-    def test_corner_attempts_cover_every_object_and_both_target_slots(self):
-        corner = [a for a in self.plan if a["stratum"] == "corner"]
-        self.assertEqual(Counter(a["object"] for a in corner), {o: 2 for o in c.OBJECTS})
-        self.assertEqual(Counter(a["target_slot"] for a in corner), {"left": 6, "right": 6})
 
     def test_ids_and_seeds_are_unique_and_the_plan_is_reproducible(self):
         self.assertEqual(len({a["id"] for a in self.plan}), c.GATE_ATTEMPTS)
@@ -58,7 +56,7 @@ class PlanTests(unittest.TestCase):
 
     def test_shards_partition_the_plan_evenly(self):
         shards = [b.shard_of(self.plan, k, 6) for k in range(1, 7)]
-        self.assertEqual([len(s) for s in shards], [50] * 6)
+        self.assertEqual([len(s) for s in shards], [48] * 6)
         self.assertEqual(sorted(a["id"] for s in shards for a in s), sorted(a["id"] for a in self.plan))
         for s in shards:
             self.assertEqual(len({a["object"] for a in s}), 6)
@@ -146,7 +144,7 @@ class SummaryTests(unittest.TestCase):
 
     def test_overall_below_95_percent_fails(self):
         records = self._all()
-        for r in records[:16]:                         # 16 failures spread over the plan -> 94.7%
+        for r in records[:16]:                         # 16 failures spread over the plan -> 272/288 = 94.4%
             r["success"], r["reason"] = False, "not_in_bin"
         records = [r for r in records]
         failing = {r["id"] for r in records if not r["success"]}
@@ -158,7 +156,7 @@ class SummaryTests(unittest.TestCase):
     def test_one_object_hidden_behind_the_others_fails_the_per_object_gate(self):
         records = self._all()
         milk = [r for r in records if r["object"] == "milk"]
-        for r in milk[:6]:                              # 44 of 50 = 88% for milk, 294 of 300 = 98% overall
+        for r in milk[:6]:                              # 42 of 48 = 87.5% for milk, 282 of 288 = 97.9% overall
             r["success"], r["reason"] = False, "not_in_bin"
         s = b.summarise(records, self.plan, recheck={"count": 12, "matched": 12})
         self.assertTrue(s["gates"]["overall"])
@@ -168,7 +166,7 @@ class SummaryTests(unittest.TestCase):
     def test_one_slot_worse_fails_the_per_slot_gate(self):
         records = self._all()
         left = [r for r in records if r["target_slot"] == "left"]
-        for r in left[:11]:                             # 139 of 150 = 92.7% < 93%, overall 289/300 = 96.3%
+        for r in left[:11]:                             # 133 of 144 = 92.4% < 93%, overall 277/288 = 96.2%
             r["success"], r["reason"] = False, "not_in_bin"
         s = b.summarise(records, self.plan, recheck={"count": 12, "matched": 12})
         self.assertTrue(s["gates"]["overall"])
@@ -196,11 +194,11 @@ class SummaryTests(unittest.TestCase):
         self.assertEqual(s["verdict"], "no-go")
         self.assertEqual(s["diagnostic_resting_in_bin"]["overall"]["rate"], 1.0)
 
-    def test_reasons_and_corner_are_reported(self):
+    def test_reasons_are_reported(self):
         records = self._all()
         s = b.summarise(records, self.plan, recheck={"count": 12, "matched": 12})
-        self.assertEqual(s["by_stratum"]["corner"]["n"], 12)
-        self.assertEqual(s["by_reason"], {"success": 300})
+        self.assertEqual(s["by_stratum"]["grid"]["n"], 288)
+        self.assertEqual(s["by_reason"], {"success": 288})
         self.assertEqual(set(s["by_target_slot"]), {"left", "right"})
 
 

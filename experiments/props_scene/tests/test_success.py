@@ -56,9 +56,21 @@ class InBinTests(unittest.TestCase):
         self.assertLess(result["xy_margin_m"], 0.0)
 
     def test_balanced_on_the_rim_with_centre_over_the_inner_box_is_not_inside(self):
-        result = Scene().place((0.32 + 0.10, 0.33, 0.07 + 0.07))
+        result = Scene().place((0.32 + 0.10, 0.33, 0.07 + 0.075))   # lowest point 0.075, above the 0.07 wall
         self.assertGreater(result["xy_margin_m"], 0.0)
         self.assertFalse(result["inside"])
+        self.assertFalse(result["success_tick"])
+
+    def test_a_tall_object_standing_on_the_bin_floor_is_inside(self):
+        # Amended 2026-10-05: its centre (0.08) is above the 0.07 wall, its lowest point (0.01) is not.
+        result = Scene().place((0.32, 0.33, 0.08))
+        self.assertGreater(result["z_m"], 0.07)
+        self.assertAlmostEqual(result["lowest_z_m"], 0.01, places=6)
+        self.assertTrue(result["inside"] and result["success_tick"])
+
+    def test_a_tall_object_standing_on_the_table_beside_the_bin_is_not_inside(self):
+        result = Scene().place((0.32 + 0.30, 0.33, 0.07))
+        self.assertLess(result["xy_margin_m"], 0.0)
         self.assertFalse(result["success_tick"])
 
     def test_the_other_bin_does_not_count(self):

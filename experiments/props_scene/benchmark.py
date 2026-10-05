@@ -1,7 +1,7 @@
-"""The P0 gate: 300 scripted attempts, run as parallel shards, summarised against fixed thresholds.
+"""The P0 gate: 288 scripted attempts, run as parallel shards, summarised against fixed thresholds.
 
-288 grid attempts (6 objects x 2 target bins x 2 bin arrangements x 12 seeds) plus 12 in the +y
-near-base corner. Start pose, yaw, home jitter and the expert's seed all come from the attempt's
+6 objects x 2 target bins x 2 bin arrangements x 12 seeds. Start pose, yaw, home jitter and the expert's
+seed all come from the attempt's
 identity, so a plan is reproducible and a shard can be resumed. The success definition and the
 thresholds are constants in `constants.py` and are not parameters here.
 
@@ -33,7 +33,7 @@ def _rng(identity):
 
 def _attempt(index, stratum, obj, bin_colour, blue_slot, identity):
     pose_rng = _rng(identity + ":pose")
-    x_range, y_range = (c.CORNER_X_M, c.CORNER_Y_M) if stratum == "corner" else (c.START_X_M, c.START_Y_M)
+    x_range, y_range = c.START_X_M, c.START_Y_M
     pose = [float(pose_rng.uniform(*x_range)), float(pose_rng.uniform(*y_range)),
             float(pose_rng.uniform(*c.START_YAW_DEG))]
     jitter_rng = _rng(identity + ":home")
@@ -52,10 +52,6 @@ def build_plan():
                 for k in range(c.GATE_SEEDS_PER_CELL):
                     plan.append(_attempt(len(plan), "grid", obj, bin_colour, blue_slot,
                                          f"grid:{obj}:{bin_colour}:{blue_slot}:{k}"))
-    for i, obj in enumerate(c.OBJECTS):
-        slot = SLOTS[i % 2]  # alternate the arrangement so the corner covers both target slots six times each
-        for j, bin_colour in enumerate(c.BINS):
-            plan.append(_attempt(len(plan), "corner", obj, bin_colour, slot, f"corner:{obj}:{j}"))
     if len(plan) != c.GATE_ATTEMPTS:
         raise AssertionError(f"plan has {len(plan)} attempts, expected {c.GATE_ATTEMPTS}")
     return plan

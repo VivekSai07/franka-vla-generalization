@@ -1,23 +1,33 @@
-"""Prop geometry from the compiled collision meshes, for grasp planning.
+"""Prop geometry from the compiled collision geoms, for grasp planning and success.
 
 Every prop is a single collision mesh, which MuJoCo collides as its convex hull, so the vertices
-are the hull's. All numbers are metres. Bodies rest upright (body z is world up) apart from yaw.
+are the hull's (a box geom contributes its corners, which the hand-built test models use). All
+numbers are metres. Bodies rest upright (body z is world up) apart from yaw.
 """
 import mujoco
 import numpy as np
+
+_CORNERS = np.array([[sx, sy, sz] for sx in (-1, 1) for sy in (-1, 1) for sz in (-1, 1)], dtype=np.float64)
 
 
 def _body_vertices(model, name):
     body = model.body(f"prop_{name}").id
     chunks = []
     for g in range(model.ngeom):
-        if model.geom_bodyid[g] != body or not model.geom_contype[g] or model.geom_type[g] != mujoco.mjtGeom.mjGEOM_MESH:
+        if model.geom_bodyid[g] != body or not model.geom_contype[g]:
             continue
-        mesh = int(model.geom_dataid[g])
-        adr, num = int(model.mesh_vertadr[mesh]), int(model.mesh_vertnum[mesh])
+        kind = model.geom_type[g]
+        if kind == mujoco.mjtGeom.mjGEOM_MESH:
+            mesh = int(model.geom_dataid[g])
+            adr, num = int(model.mesh_vertadr[mesh]), int(model.mesh_vertnum[mesh])
+            local = model.mesh_vert[adr:adr + num].astype(np.float64)
+        elif kind == mujoco.mjtGeom.mjGEOM_BOX:
+            local = _CORNERS * model.geom_size[g]
+        else:
+            continue
         rotation = np.zeros(9)
         mujoco.mju_quat2Mat(rotation, model.geom_quat[g])
-        chunks.append(model.mesh_vert[adr:adr + num].astype(np.float64) @ rotation.reshape(3, 3).T + model.geom_pos[g])
+        chunks.append(local @ rotation.reshape(3, 3).T + model.geom_pos[g])
     if not chunks:
         raise ValueError(f"prop_{name} has no collision mesh")
     return np.vstack(chunks)

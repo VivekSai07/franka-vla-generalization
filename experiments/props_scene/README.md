@@ -41,14 +41,13 @@ replaying actions is exact.
 
 ## Success
 
-`metrics.in_bin`: the prop's body origin (its centre of mass) is inside the target bin's inner box in x
-and y and **below the wall top**, the gripper is open (`ctrl > 127`) and no finger touches it, for 30
-consecutive ticks, and it still holds at the last tick of the episode (the end of the home phase). 900
-ticks is the cap; an episode is about 450.
+`metrics.in_bin` (amended 2026-10-05, [report](../../docs/PROPS_P0_20261005_RERUN.md)): the prop's centre (its body
+origin, the centre of mass) is inside the target bin's inner box in x and y, its **lowest point is below the wall
+top**, the gripper is open (`ctrl > 127`) and no finger touches it, for 30 consecutive ticks, and it still holds
+at the last tick of the episode (the end of the home phase). 900 ticks is the cap; an episode is about 450.
+The first rule required the centre below the wall top, which a 15 cm box standing in a 7 cm bin cannot meet.
 
-`metrics.placement` is a diagnostic only (bottom height, tilt, resting on the bin floor). It never
-enters the verdict. See the report for why it exists: a 15 cm box standing on the bin floor has its
-centre above the 7 cm wall.
+`metrics.placement` adds tilt, top height and floor contact as a diagnostic; it never enters the verdict.
 
 ## Gate
 
@@ -58,8 +57,9 @@ python -m experiments.props_scene.benchmark --out /out/gate_<date> --recheck 12 
 python -m experiments.props_scene.benchmark --out /out/gate_<date> --summary
 ```
 
-300 attempts: 6 objects x 2 target bins x 2 arrangements x 12 seeds = 288, plus 12 in the +y near-base
-corner (x 0.22-0.26, y 0.08-0.12). Start pose and yaw, home jitter and the expert seed derive from
+288 attempts: 6 objects x 2 target bins x 2 arrangements x 12 seeds, start x 0.27-0.40, |y| <= 0.12 (amended
+from 0.22: below about 0.285 m radius the expert's approach saturates joint 4; there is no near-base stratum).
+Start pose and yaw, home jitter and the expert seed derive from
 `sha256("props_p0_v1:20261005:<identity>")`. Go requires: overall >= 95%, every object >= 90%, both
 target slots >= 93%, every replay within 1e-3 of the recorded states and prop poses, and 12 re-executed
 attempts byte-equal in a second process. About 34 s an attempt with rendering (median over the first gate),

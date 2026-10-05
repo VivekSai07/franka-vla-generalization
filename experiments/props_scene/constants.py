@@ -16,11 +16,9 @@ SLOT_XY = {"left": (0.32, 0.33), "right": (0.32, -0.33)}
 BIN_RGBA = {"blue": (0.15, 0.35, 0.85, 1.0), "orange": (0.95, 0.55, 0.10, 1.0)}
 BINS = tuple(BIN_RGBA)
 
-START_X_M = (0.22, 0.40)
+START_X_M = (0.27, 0.40)    # amended 2026-10-05; was 0.22, inside the arm's working envelope (spec amendment)
 START_Y_M = (-0.12, 0.12)
 START_YAW_DEG = (-90.0, 90.0)
-CORNER_X_M = (0.22, 0.26)   # the +y near-base corner, where B2 and B3 were weakest
-CORNER_Y_M = (0.08, 0.12)
 
 HAND_OFFSET_M = 0.105       # EE frame above the pad centre; the sealed cube expert's value
 GRASP_BELOW_TOP_M = 0.03    # grasp point is min(this, height / 2) below the object's top
@@ -47,8 +45,7 @@ PHASE_DURATION_S = {"approach": 2.0, "descend": 1.5, "close": 1.0, "lift": 1.5, 
 PROP_CONTACT = dict(solref="0.002 1", solimp="0.9 0.95 0.001", margin="0.001")
 PROP_FRICTION = {name: (1.2, 0.005, 0.0001) for name in OBJECTS}
 
-GATE_ATTEMPTS = 300
-GATE_CORNER_ATTEMPTS = 12
+GATE_ATTEMPTS = 288
 GATE_SEEDS_PER_CELL = 12
 GATE_OVERALL = 0.95
 GATE_PER_OBJECT = 0.90

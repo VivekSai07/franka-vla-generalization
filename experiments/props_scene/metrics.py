@@ -1,7 +1,8 @@
 """Bin success: where the prop is, whether the gripper has let go, and the 30-tick streak.
 
-The prop's position is its body origin, which MuJoCo puts at the centre of mass. Imports no robosuite,
-so it runs in either image.
+Inside means the prop's centre (its body origin, the centre of mass) is within the bin's inner box in
+x and y and its lowest point is below the wall top (spec amended 2026-10-05: the centre rule cannot
+be met by an object taller than the bin is deep). Imports no robosuite, so it runs in either image.
 """
 import numpy as np
 
@@ -11,11 +12,14 @@ from experiments.props_scene import constants as c
 def in_bin(model, data, name, bin_colour):
     if bin_colour not in c.BIN_RGBA:
         raise ValueError(f"bin must be one of {sorted(c.BIN_RGBA)}, got {bin_colour!r}")
+    from experiments.props_scene import geometry
     prop = model.body(f"prop_{name}").id
-    delta = data.xpos[prop] - data.xpos[model.body(f"bin_{bin_colour}").id]
+    bin_origin = data.xpos[model.body(f"bin_{bin_colour}").id]
+    delta = data.xpos[prop] - bin_origin
     margin = c.BIN_INNER_M / 2 - max(abs(float(delta[0])), abs(float(delta[1])))
     z = float(delta[2])
-    inside = margin > 0.0 and z < c.BIN_WALL_HEIGHT_M
+    lowest = geometry.bottom_z(model, data, name) - float(bin_origin[2])
+    inside = margin > 0.0 and lowest < c.BIN_WALL_HEIGHT_M
     fingers = {model.body("left_finger").id, model.body("right_finger").id}
     touching = False
     for i in range(data.ncon):
@@ -25,15 +29,15 @@ def in_bin(model, data, name, bin_colour):
             touching = True
             break
     open_ = bool(data.ctrl[-1] > c.GRIPPER_OPEN_CTRL)
-    return {"inside": bool(inside), "xy_margin_m": float(margin), "z_m": z, "gripper_open": open_,
+    return {"inside": bool(inside), "xy_margin_m": float(margin), "z_m": z, "lowest_z_m": float(lowest),
+            "gripper_open": open_,
             "finger_contact": touching, "success_tick": bool(inside and open_ and not touching)}
 
 
 def placement(model, data, name, bin_colour):
-    """Diagnostic, never part of success: where the prop rests, for objects taller than the bin is deep.
+    """Diagnostic beyond the success rule: tilt, top height and floor contact of the resting prop.
 
-    A 15 cm box standing on the bin floor has its centre above the 7 cm wall top, so `in_bin` calls it
-    outside; this records that it is upright, centred and resting on the floor.
+    `resting_in_bin` is the same position test as `in_bin`'s `inside`; the rest says how it lies.
     """
     from experiments.props_scene import geometry
     prop = model.body(f"prop_{name}").id

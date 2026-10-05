@@ -19,11 +19,10 @@ class SpecValuesTests(unittest.TestCase):
                                      "milk": 0.20, "bottle": 0.20, "cereal": 0.15})
 
     def test_start_region(self):
-        self.assertEqual(c.START_X_M, (0.22, 0.40))
+        self.assertEqual(c.START_X_M, (0.27, 0.40))   # amended 2026-10-05: clear of the arm's working envelope
         self.assertEqual(c.START_Y_M, (-0.12, 0.12))
         self.assertEqual(c.START_YAW_DEG, (-90.0, 90.0))
-        self.assertEqual(c.CORNER_X_M, (0.22, 0.26))
-        self.assertEqual(c.CORNER_Y_M, (0.08, 0.12))
+        self.assertFalse(hasattr(c, "CORNER_X_M"))    # no near-base stratum any more
 
     def test_expert_geometry(self):
         self.assertEqual(c.GRASP_BELOW_TOP_M, 0.03)
@@ -39,7 +38,7 @@ class SpecValuesTests(unittest.TestCase):
 
     def test_gate_thresholds(self):
         self.assertEqual((c.GATE_OVERALL, c.GATE_PER_OBJECT, c.GATE_PER_SLOT), (0.95, 0.90, 0.93))
-        self.assertEqual((c.GATE_ATTEMPTS, c.GATE_CORNER_ATTEMPTS), (300, 12))
+        self.assertEqual(c.GATE_ATTEMPTS, 288)
 
     def test_seed_is_b3_style(self):
         import hashlib

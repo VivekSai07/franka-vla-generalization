@@ -95,21 +95,20 @@ class EpisodeTests(unittest.TestCase):
                 self.assertLess(placed["bottom_z_m"], 0.02, (obj, placed))          # on the bin floor
                 self.assertTrue(final["gripper_open"] and not final["finger_contact"], (obj, final))
 
-    def test_written_success_for_objects_whose_centre_can_sit_below_the_wall_top(self):
-        for obj in ("can", "bread", "lemon", "bottle"):
+    def test_written_success_for_every_object(self):
+        for obj in c.OBJECTS:
             with self.subTest(obj=obj):
                 _, result, _, _ = self._run(obj, "blue")
                 self.assertTrue(result["success"], (obj, result["reason"], result["final_metrics"]))
                 self.assertGreaterEqual(result["stable_ticks"], c.SUCCESS_TICKS)
 
-    def test_a_tall_box_stands_upright_so_its_centre_stays_above_the_wall_top(self):
-        # Finding, not a goal: the written definition (centre below the 7 cm wall top) cannot be met by
-        # a 15 cm box standing on the bin floor, whatever the expert does. The definition is not changed.
+    def test_a_tall_box_standing_in_the_bin_is_a_success(self):
+        # The first spec required the centre below the 7 cm wall, which a 15 cm box cannot meet (FAILURES #46).
         _, result, _, _ = self._run("cereal", "blue")
         self.assertLess(result["final_placement"]["tilt_deg"], 5.0)
         self.assertGreater(result["final_metrics"]["z_m"], c.BIN_WALL_HEIGHT_M)
-        self.assertFalse(result["success"])
-        self.assertEqual(result["reason"], "not_in_bin")
+        self.assertTrue(result["success"], result["final_metrics"])
+        self.assertEqual(result["reason"], "success")
 
     def test_the_other_bin_and_the_other_arrangement(self):
         for blue_slot in ("left", "right"):
