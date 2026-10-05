@@ -5,6 +5,11 @@ exists, the training run's checkpoints verify, and the sealed parent still repro
 fingerprint. Writes only under `outputs/xvla_b3_robosuite_eval/<mode>_step_<N>/`; the dataset and
 the training output are read-only inputs. After every trial `result.json` is rewritten with the
 trials so far and every read-out.
+
+`--resume` continues a `running` or `failed` run: it re-checks that the checkpoint, parent and
+trial list are the ones recorded, keeps every finished trial, moves any half-written trial
+folder (and `failure.json`) under `quarantine/` and runs only the rest. Each trial reseeds
+itself, so a resumed trial equals an uninterrupted one. It is never automatic.
 """
 import argparse
 import json
@@ -33,6 +38,7 @@ def parse_args(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     parser.add_argument('--mode', choices=list(protocol.MODES), required=True)
     parser.add_argument('--checkpoint', type=int, choices=protocol.CANDIDATES, required=True)
+    parser.add_argument('--resume', action='store_true')
     return parser.parse_args(argv)
 
 
@@ -84,7 +90,46 @@ def load_policy(checkpoint):
     return policy
 
 
-def run(mode, candidate):
+TRIAL_FILES = ('cameras.mp4', 'trace.npz', 'episode.json')
+
+
+def resume_state(directory, expected):
+    """Finished rows to keep and folders to quarantine; raises unless this is the run `expected` describes."""
+    path = Path(directory)/'result.json'
+    if not path.is_file():
+        raise FileNotFoundError(f'Nothing to resume: {path} is missing')
+    prior = json.loads(path.read_text())
+    if prior.get('status') not in ('running', 'failed'):
+        raise ValueError(f"Cannot resume a run whose status is {prior.get('status')!r}")
+    for key, value in expected.items():
+        if prior.get(key) != json.loads(json.dumps(value)):
+            raise ValueError(f'Cannot resume: {key} differs from the recorded run')
+    done, ordinals = [], set()
+    for row in prior.get('episodes', []):
+        folder = Path(directory)/f"trial_{row['ordinal']:03d}_{row['layout_id']}_{row['condition']}"
+        if not all((folder/name).is_file() for name in TRIAL_FILES):
+            raise ValueError(f'Recorded trial {row["ordinal"]} has no complete folder')
+        if json.loads((folder/'episode.json').read_text()) != row:
+            raise ValueError(f'Recorded trial {row["ordinal"]} differs from its episode.json')
+        done.append(row)
+        ordinals.add(row['ordinal'])
+    stale = [p for p in sorted(Path(directory).glob('trial_*')) if int(p.name.split('_')[1]) not in ordinals]
+    stale += [p for p in (Path(directory)/'failure.json',) if p.exists()]
+    return done, stale, prior
+
+
+def quarantine(directory, paths):
+    """Move, never delete."""
+    target = Path(directory)/'quarantine'
+    target.mkdir(exist_ok=True)
+    for path in paths:
+        n = 0
+        while (target/f'{path.name}.{n}').exists():
+            n += 1
+        path.rename(target/f'{path.name}.{n}')
+
+
+def run(mode, candidate, resume=False):
     import mujoco
     from experiments.xvla_b3_robosuite_eval import rollout
     if mujoco.__version__ != MUJOCO_VERSION:
@@ -96,14 +141,24 @@ def run(mode, candidate):
     checkpoint, model_sha256, fingerprint, seal = verify_checkpoint(candidate)
     if fingerprint != seal:
         raise ValueError('B3 parent fingerprint differs from the seal')
-    directory.mkdir(parents=True, exist_ok=False)
     report = dict(status='running', mode=mode, candidate=candidate, model_sha256=model_sha256,
                   parent_fingerprint=fingerprint, max_control_ticks=rollout.MAX_TICKS, strict_score_ticks=30,
                   excluded_layouts=sorted(excluded), planned_trials=len(trials), retries=False,
                   trials=trials, episodes=[])
+    done = []
+    if resume:
+        recorded = {k: report[k] for k in ('mode', 'candidate', 'model_sha256', 'parent_fingerprint',
+                                           'max_control_ticks', 'strict_score_ticks', 'excluded_layouts',
+                                           'planned_trials', 'trials')}
+        done, stale, prior = resume_state(directory, recorded)
+        quarantine(directory, stale)
+        report.update(resumes=prior.get('resumes', []) + [dict(finished_trials=len(done),
+                                                                quarantined=[p.name for p in stale])])
+    else:
+        directory.mkdir(parents=True, exist_ok=False)
     write_json(directory/'result.json', report)
     try:
-        _run_trials(directory, report, trials, excluded, checkpoint)
+        _run_trials(directory, report, trials, excluded, checkpoint, done)
     except BaseException as exc:
         report.update(status='failed', error_type=type(exc).__name__, error=str(exc), retries=False)
         write_json(directory/'failure.json', report)
@@ -113,7 +168,17 @@ def run(mode, candidate):
     write_json(directory/'result.json', report)
 
 
-def _run_trials(directory, report, trials, excluded, checkpoint):
+def remaining_by_colours(trials, done):
+    """Unfinished trials grouped by colour set: one renderer per set, OSMesa contexts must never overlap."""
+    finished = {row['ordinal'] for row in done}
+    groups = defaultdict(list)
+    for trial in trials:
+        if trial['ordinal'] not in finished:
+            groups[tuple(trial['colours'])].append(trial)
+    return groups
+
+
+def _run_trials(directory, report, trials, excluded, checkpoint, done=()):
     import mujoco
     import torch
     from lerobot.policies.factory import make_pre_post_processors
@@ -121,10 +186,11 @@ def _run_trials(directory, report, trials, excluded, checkpoint):
     torch.use_deterministic_algorithms(True)
     policy = load_policy(checkpoint)
     pre, post = make_pre_post_processors(policy.config, pretrained_path=str(checkpoint))
-    groups = defaultdict(list)  # one renderer per colour set; OSMesa contexts must never overlap
-    for trial in trials:
-        groups[tuple(trial['colours'])].append(trial)
-    rows = []
+    groups = remaining_by_colours(trials, done)
+    rows = list(done)
+    if rows:
+        ordered = sorted(rows, key=lambda r: r['ordinal'])
+        report.update(episodes=ordered, readouts=analysis.readouts(ordered, excluded))
     for colours, members in groups.items():
         model = scenes.build_model(colours)
         with mujoco.Renderer(model, height=512, width=512) as renderer:
@@ -149,7 +215,7 @@ def main(argv=None):
     args = parse_args(argv)
     os.environ.update(HF_HUB_OFFLINE='1', TRANSFORMERS_OFFLINE='1', HF_DATASETS_OFFLINE='1',
                       CUBLAS_WORKSPACE_CONFIG=':4096:8')
-    run(args.mode, args.checkpoint)
+    run(args.mode, args.checkpoint, args.resume)
 
 
 if __name__ == '__main__':

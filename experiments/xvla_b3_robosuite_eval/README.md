@@ -53,7 +53,31 @@ read-only (see the plan's "Running things").
    `--mode screen` for each candidate one after another (one GPU), then `--mode report` for the
    carried candidate(s). `evaluate.py` refuses without the feasibility file, without a complete
    training run whose checkpoints verify, and if the sealed parent no longer reproduces its
-   fingerprint. An existing output directory is never reused.
+   fingerprint. An existing output directory is never reused, except by an explicit `--resume`
+   of a `running` or `failed` run (finished trials kept, half-written ones quarantined).
 
 An `rc=0` is not evidence that a rollout ran: check the wall-clock time and that `result.json`
 lists every planned trial (FAILURES #36).
+
+## Screen review and the exploratory predictions (written before any report trial)
+
+The four screens (13 / 12 / 13 / 13 of 20) are a tie, so all four candidates go to the report.
+Reviewing every failure on video and trace (`outputs/xvla_b3_robosuite_eval/screen_review/`)
+showed that the pre-fixed `released_off_target` label holds five different failures and that
+`lifted_not_carried` means a cube carried to the target and held 13-17 cm too high. The pre-fixed
+`cause` stays the reported cause; a finer mode is added beside it, never in its place.
+
+In the 20 screen layouts, side A is always `near_pick` and side B always `near_place` (parity of
+the layout index in `b3_robosuite_data/plan.py`), so crowding and side cannot be separated there.
+The report separates them: the control condition keeps the side and drops the distractors.
+
+Exploratory, not gates, not part of spec section 4. Recorded now so no figure can move them:
+
+1. Crowding of the place target causes the side-B place-phase failures (stall above the target,
+   mid-air release). Supported if, on report trained side-B layouts, control success exceeds
+   distractor success by 15 points or more for at least 3 of the 4 candidates; refuted if the two
+   are within 5 points for at least 3 of the 4; otherwise inconclusive.
+2. Failures are properties of the layout rather than of the seed: at least 80% of layout x
+   condition cells have both seeds agreeing (both succeed or both fail), per candidate.
+3. Near-miss placements are decided by the 2 cm xy criterion: a release that fails and then topples
+   has a signed offset above 2 cm, a successful release 2 cm or less.
