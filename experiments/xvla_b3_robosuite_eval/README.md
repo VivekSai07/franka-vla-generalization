@@ -38,6 +38,8 @@ it). All outputs go to `outputs/xvla_b3_robosuite_eval/`. Results from this scen
 | `scenes.py` | restore a banked scene with hash checks | robosuite |
 | `feasibility.py` | the scripted expert on all 100 banked scenes | robosuite, CPU |
 | `rollout.py` | one policy rollout with per-cube tracking | robosuite, GPU |
+| `failure_modes.py` | finer failure mode of a failed trial, read from `trace.npz` (`--dir RUN --out FILE`); beside `cause`, never instead | admission or robosuite |
+| `screen_labels.json` | the 29 screen failures with the mode each was reviewed as | - |
 | `evaluate.py` | `--mode smoke|screen|report --checkpoint N` | robosuite, GPU |
 
 Tests: `test_protocol` and `test_analysis` in the admission image; `test_scenes`, `test_rollout`
@@ -70,6 +72,17 @@ showed that the pre-fixed `released_off_target` label holds five different failu
 In the 20 screen layouts, side A is always `near_pick` and side B always `near_place` (parity of
 the layout index in `b3_robosuite_data/plan.py`), so crowding and side cannot be separated there.
 The report separates them: the control condition keeps the side and drops the distractors.
+
+`failure_modes.py` fixes the modes before any report trial is read: `cube_lost`,
+`wrong_cube_lifted`, `never_started` (gripper never closes), `grasp_failed`, `stacked_on_wrong_cube`,
+`stall_above_target` (held closed 7 cm or more over the stacking height, near the target),
+`near_miss_toppled` (carried release within 5 cm of the target that then fails),
+`released_away_from_target`, `carry_aborted_near_pick`, `other`. On the screen it gives 8 / 6 / 5 /
+3 / 2 / 2 / 1 / 1 / 1 for stall, near miss, released away, never started, grasp failed, carry
+aborted, wrong cube, wrong-cube stack and cube lost. It was written to reproduce the reviewed
+labels, so agreement there is a fit, not a validation; the report is its first held-out use. One
+label was corrected by the trace: 093600 #10 holds the cube 11-13 cm beside the target for about
+600 ticks and releases it there, which is `released_away_from_target`, not a stall over the target.
 
 Exploratory, not gates, not part of spec section 4. Recorded now so no figure can move them:
 
