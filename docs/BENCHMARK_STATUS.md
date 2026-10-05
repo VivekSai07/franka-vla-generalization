@@ -1,5 +1,22 @@
 # Franka benchmark: start here
 
+## Cube programme closed; B3 reviewed, merged and staged for publication — 2026-10-05
+
+An independent check of the B3 evaluation reproduced every headline figure from the raw results and
+added two points to the report (dated addendum in
+[B3_XVLA_EVALUATION_20261005.md](B3_XVLA_EVALUATION_20261005.md)):
+
+- **Headline lowered to about 85% overall, about 75% with distractors.** The report both chose and
+  measured step 124,800 (141/160 = 88.1%); the independent screen gives 13/20 on its one condition
+  (trained pairs, distractors) against 31/40 in the report.
+- **The persistent failures sit in B2's weak corner.** The three layouts that fail at every
+  checkpoint all put the pick on the +y side near the robot base, where B2's `evaluation_054` failed.
+
+`feat/b3-robosuite-cubes` (which contains the training-resume work of `feat/b3-resume`) was merged
+into `main`. Steps 124,800 and 156,000 are staged at `outputs/downloads_20261005/b3_robosuite/` for
+the Windows copy and a Hugging Face model repo; nothing was deleted. B3 was the last cube experiment
+(user, 2026-10-02); next is the props project ([TODO.md](../TODO.md)).
+
 ## B3 X-VLA trained and evaluated in the robosuite scene — 2026-10-03 to 2026-10-05
 
 `xvla_b3_robosuite` v2 trained 156,000 updates (5.0 epochs, 132,298 s) on the sealed 560-episode dataset
@@ -81,6 +98,8 @@ Open: the B2-checkpoint smoke test was not run; finger pad friction and geometry
 **Next:** sim2sim validation of the B2 checkpoint on the robosuite scene (branch
 `feat/robosuite-sim2sim`), then decide jitter versus gate and re-think the B3 axis list before
 designing Phase 2. The placement offset needs no diagnosis: it is the expert's own jitter.
+*(Outcome: sim2sim done 2026-10-02; the jitter-vs-gate question was dropped with the tighter gate;
+B3 designed 2026-10-03 and evaluated 2026-10-05 — entries above.)*
 
 ## B2 distractors: no detectable distractor effect; 50,000 updates 91.9% vs 82.5% at 33,400 — 2026-09-30
 
@@ -124,6 +143,8 @@ fork source that didn't fit B1's schedule. See [RESULTS.md](RESULTS.md) for the 
 **Next:** none planned yet — B1's own follow-up (height/vertical grounding, deferred per TODO
 "B1b") is unscheduled. Read [RESULTS.md](RESULTS.md) and [FAILURES.md](FAILURES.md) before
 proposing the next experiment.
+*(Outcome: B2 distractors followed, 2026-09-28; B1b was never scheduled and was closed with the cube
+programme on 2026-10-05.)*
 
 ## Matched exposure: 68.1% → 86.1%, and the failure mode identified — 2026-09-24
 

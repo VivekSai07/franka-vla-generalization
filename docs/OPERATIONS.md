@@ -16,15 +16,19 @@ no `docker system prune`).
 
 | local tag | image id | what it is | runs |
 |---|---|---|---|
-| `smolvla:rtc-offline` | `sha256:08de1e09…714abc` | the pinned (admission) image, MuJoCo 3.13.0 | everything sealed: collection, training, evaluation |
-| `vla-robosuite:1.5.2-mj3.4.0` | `sha256:54d861aa…ccf27e` | the image above + robosuite 1.5.2, MuJoCo 3.4.0 | `experiments/robosuite_scene/`, `experiments/robosuite_sim2sim/` |
+| `smolvla:rtc-offline` | `sha256:08de1e09…714abc` | the pinned (admission) image, MuJoCo 3.13.0 | everything sealed: collection, training, evaluation — including B3 **training** (`xvla_b3_robosuite`), which needs no simulator |
+| `vla-robosuite:1.5.2-mj3.4.0` | `sha256:54d861aa…ccf27e` | the image above + robosuite 1.5.2, MuJoCo 3.4.0 | everything that builds the robosuite scene: `robosuite_scene`, `robosuite_sim2sim`, `b3_robosuite_data` collection, `xvla_b3_robosuite_eval` rollouts |
 
 Tags are local handles only; commands and contracts use the full digest. Neither image is in a
 registry, so losing one means rebuilding it (the second from
 `experiments/robosuite_scene/Dockerfile`; the first cannot be rebuilt bit-identically).
 `vla-robosuite:1.5.2` (`sha256:3ecd62c5…`, robosuite on MuJoCo 3.13.0, could not reset an
 environment) was removed on 2026-10-02. Stopped containers named `xvla-*`, `smolvla-*`, `franka-*`,
-`local-varied-*` and `sim2sim-*` are ours and hold run logs.
+`local-varied-*`, `sim2sim-*`, `b3-*` and `b3v2-*` are ours and hold run logs.
+
+Two environment settings every long robosuite-path run here has needed: a large `/tmp` (16–32 GB;
+the HuggingFace arrow cache lands there, FAILURES #41) and, for training on datasets with one video
+file per episode, `--ulimit nofile=65536:65536` (FAILURES #42).
 
 ## The pinned image
 
@@ -43,11 +47,12 @@ sha256:54d861aac79c1c8ceed09734a00bbc5d8cbf566c427e47ff23089f9bb0ccf27e
 
 Local tag `vla-robosuite:1.5.2-mj3.4.0`; the value of record is `IMAGE` in
 `experiments/robosuite_scene/contract.py`. Admission image plus robosuite 1.5.2 and
-**MuJoCo 3.4.0** (numpy stays 2.2.6). Only `experiments/robosuite_scene/` and the simulating parts
-of `experiments/b3_robosuite_data/` (hash-bound; its tests that import no simulator run in the
-admission image) run in it; everything
-else, including all sealed packages and three of that package's own unit tests (`test_r1_image`,
-`test_seal`, `test_expert_fork`), runs in the pinned image above on MuJoCo 3.13.0.
+**MuJoCo 3.4.0** (numpy stays 2.2.6). It runs everything that builds the robosuite scene:
+`experiments/robosuite_scene/`, `experiments/robosuite_sim2sim/` (rollout stage), the simulating
+parts of `experiments/b3_robosuite_data/` (hash-bound) and the rollouts, scene restore and
+feasibility pass of `experiments/xvla_b3_robosuite_eval/`. Everything else — all sealed packages,
+B3 training (`experiments/xvla_b3_robosuite/`), and every test that imports no simulator — runs in
+the pinned image above on MuJoCo 3.13.0.
 
 - Why a second MuJoCo: robosuite 1.5.2 imports on 3.13.0 but cannot reset an environment there
   ([FAILURES.md](FAILURES.md) #39). Results from the two images are not physics-comparable.
@@ -225,11 +230,11 @@ listed in a report to exist. Control cost via the checkpoint *schedule* before l
 
 `outputs/downloads_*` are hardlinks to files under `outputs/train/` — deleting them frees nothing.
 
-**Disk is tight.** As of 2026-09-26: 879 GB total, ~13 GB free (99% full). Check `df -h .` before
+**Disk.** As of 2026-10-05: 879 GB total, ~96 GB free (89% full). Check `df -h .` before
 any new collection or training launch; the checkpoint schedule alone can need 20-30 GB. See
 Storage census below for what is safe to reclaim.
 
-## Current outputs/ census (2026-09-26)
+## Current outputs/ census (updated 2026-10-05)
 
 Sealed, results-worthy datasets (all under `outputs/`, each is the *collection root* — the
 HF-Hub-ready LeRobot payload is the `dataset/` subdirectory only, ~1.1 GB; `attempts/`, `rejected/`,
@@ -241,7 +246,7 @@ HF-Hub-ready LeRobot payload is the `dataset/` subdirectory only, ~1.1 GB; `atte
 | `local_varied_data` | `local_varied_data/local_varied_20260919/` | `ae8828ea...25dcf52c` | 60 | 2.8% (2/72) on the broad holdout — superseded, generalises poorly |
 | `b1_language_data` | `b1_language_data/b1_language_20260925/` | `b152cba2...4837fdf22` | 200 | X-VLA 94.4% (151/160), no positional shortcut — see RESULTS.md |
 | `fixed_layout` | `fixed_layout/fixed_layout_20260918/` | `403b8ec2...8d8fba5` | 24 | Tier 2 baseline, 100% at base pose — superseded, single fixed layout |
-| `b3_robosuite_data` (2026-10-03) | `b3_robosuite_data/b3_robosuite_20261003/` | `e14af864...92b8e6c0` | 560 | not yet trained on; robosuite scene (MuJoCo 3.4.0), 2.9 GB, `episodes/` holds per-episode traces, `bank.npz` the 100 reserved scenes — see [B3_ROBOSUITE_COLLECTION_20261003.md](B3_ROBOSUITE_COLLECTION_20261003.md) |
+| `b3_robosuite_data` (2026-10-03) | `b3_robosuite_data/b3_robosuite_20261003/` | `e14af864...92b8e6c0` | 560 | X-VLA ~85% overall at step 124,800 (88.1% best-of-four on the report); robosuite scene (MuJoCo 3.4.0), 2.9 GB, `episodes/` holds per-episode traces, `bank.npz` the 100 reserved scenes — see [B3_ROBOSUITE_COLLECTION_20261003.md](B3_ROBOSUITE_COLLECTION_20261003.md) |
 
 Trained models worth keeping (`outputs/train/`; checkpoint dirs `step_NNNNNN/N`, only the final one
 per run carries `training_state.pt`, the ~7 GB optimizer state, not needed for inference):
@@ -250,6 +255,13 @@ per run carries `training_state.pt`, the ~7 GB optimizer state, not needed for i
 |---|---|---|
 | `xvla_franka_stacking_broadworkspace_long_v1_20260923` | `step_016700` | 86.1% broad holdout |
 | `xvla_franka_stacking_b1_language_v1_20260925` | `step_033400` | 94.4% report, checkpoints [1,8000,16700,25000,33400] all kept for the ablation curve |
+| `xvla_franka_stacking_b2_distractors_v1_20260928` | `step_050000` | 91.9% report (MuJoCo scene) |
+| `xvla_franka_stacking_b3_robosuite_v2` | `step_124800` | robosuite scene, 141/160 best of four (~85%); `step_156000` 105/160 kept for contrast; 46 GB incl. two ~10.5 GB resume snapshots under `resume/` |
+
+B3 superseded runs, kept until you decide otherwise: `…_b3_robosuite_v1_failed_20261003_nofile`
+(3.3 GB, died at update ~220), `…_v1_superseded_20261003` (3.3 GB, stopped at ~1,900 for the resumable
+v2), and the v1/v2 `_preflight` / `_resumeproof` scratch (~60 GB together). B3 evaluation outputs:
+`outputs/xvla_b3_robosuite_eval/` (1.2 GB, all trials with videos).
 
 Everything else under `outputs/train/` (smolvla_pilot, single_task, fixed_layout, the plain
 `broadworkspace_v1`/`localvaried_v1` runs) is superseded Tier 2-4 work — see
@@ -257,7 +269,9 @@ Everything else under `outputs/train/` (smolvla_pilot, single_task, fixed_layout
 `outputs/downloads_20260926/` are pre-staged, hardlinked download bundles for the user's Windows
 machine — the 2026-09-26 one covers both the minimal tier and the full checkpoint-ablation tier
 for B1 and broad-workspace (~50 GB, zero extra disk here); read the `README.md` inside each
-before touching originals. `outputs/downloads_20261001/b2_distractor/` was copied to Windows on
+before touching originals. `outputs/downloads_20261005/b3_robosuite/` (2026-10-05) stages B3 steps
+124,800 and 156,000 for Windows and Hugging Face, laid out as the model repo; its `README.md` has the
+transfer, verify and upload commands (not yet transferred). `outputs/downloads_20261001/b2_distractor/` was copied to Windows on
 2026-10-01; all six `model.safetensors` matched `model_sha256` and `seal.json` is
 `b6cfff3f...0c12340`. The Windows check did not re-derive the dataset fingerprint. Do not delete
 the RTX originals without a separate go-ahead. Full file lists and rationale:

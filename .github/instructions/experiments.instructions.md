@@ -30,8 +30,11 @@ modules it imports, `src/`, and the B3 spec and collection plan. Editing any of 
 the seal; fork instead. Its `plan.py` and `contract.py` import no simulator so training can import
 them in the admission image.
 
-Not hash-bound: `experiments/robosuite_sim2sim/` (sim2sim rollouts) and the README of
-`experiments/robosuite_scene/` (scene bring-up). No contract lists them; the bring-up `seal.json` is
+`experiments/xvla_b3_robosuite/` (B3 training) is bound by its own `SOURCE_FILES`, like every
+training package; the B3 evaluation imports that contract, so edit neither.
+
+Not hash-bound: `experiments/robosuite_sim2sim/` (sim2sim rollouts), `experiments/xvla_b3_robosuite_eval/`
+(B3 evaluation) and the README of `experiments/robosuite_scene/` (scene bring-up). No contract lists them; the bring-up `seal.json` is
 a file fingerprint only. `robosuite_scene` runs only in the robosuite image
 (`contract.IMAGE`, MuJoCo 3.4.0) — except `test_r1_image`, `test_seal` and `test_expert_fork`, which
 run in the admission image — and its tests are run by module name, not by `discover`. It imports

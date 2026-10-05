@@ -195,3 +195,41 @@ Runs: `outputs/xvla_b3_robosuite_eval/{smoke,screen,report}_step_<N>/` (read-onl
 committed). Review artefacts and scripts: `outputs/xvla_b3_robosuite_eval/screen_review/` and
 `.../report_review/` (`analysis.txt` … `analysis4.txt`, contact sheets). The modes come from
 `python -m experiments.xvla_b3_robosuite_eval.failure_modes --dir <run dir> --out <file>`.
+
+## Addendum — independent review, 2026-10-05
+
+Added after the report above was written; nothing above was changed. Every figure here was
+recomputed from the four `report_step_*/result.json` and `screen_step_*/result.json` files.
+
+**1. A cross-check that lowers the headline.** All four checkpoints went to the report, so the
+report both chose 124,800 and measured it, and the control condition (95%) lifts its average. The
+screen is an independent sample of one report condition — trained pairs with distractors, on 20
+layouts the report never used:
+
+| checkpoint | screen: trained + distractor | report: trained + distractor |
+|---|---|---|
+| 62,400 | 13/20 | 27/40 |
+| 93,600 | 12/20 | 29/40 |
+| 124,800 | 13/20 = 65% | 31/40 = 77.5% |
+| 156,000 | 13/20 | 25/40 |
+
+Pooled for 124,800 that condition is 44/60 = 73%. The ranking itself is solid (paired, 124,800
+won 37 trials that 156,000 lost and lost 1 that it won; 39 against 8 versus 62,400), but the level
+is best quoted as **about 85% overall and about 75% with distractors present**, not 88.1%.
+
+**2. The final checkpoint's loss is one-sided.** From 124,800 to 156,000, side A went from 78/80 to
+74/80 and side B from 63/80 to 31/80. Same non-monotonic pattern as FAILURES #21–#22: capability
+moved between checkpoints while the loss kept falling.
+
+**3. The hard spot is the one B2 failed at.** Only three layouts fail at least two of their four
+trials at every checkpoint — `evaluation_033`, `evaluation_046`, `evaluation_057` — and all three
+put the pick cube on side B close to the robot base (pick at (0.210, 0.222), (0.209, 0.242),
+(0.239, 0.239)). B2's worst layout, `evaluation_054`, was a pick at (0.242, 0.203), the same corner.
+B3's 50 inner-corner training episodes did not remove it. With 54 of the 65 stalls on side B, and
+stalls present with no distractor on the table, the evidence points at reaching toward +y near the
+base, not at crowding or colour. Why is not tested; an untested guess is that the arm and the wrist
+camera are not mirror-symmetric (the hand is rotated 45° about its axis).
+
+**4. Which failure dominates changes with the checkpoint.** Near-miss topples are 34 of the
+failures at 93,600, stalls are 36 at 156,000, and 124,800 has few of either. The place phase is the
+unstable part of what was learned.

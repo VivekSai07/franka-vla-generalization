@@ -88,10 +88,13 @@ Also:
 Container flags, mounts, gate sequence, storage costs: [docs/OPERATIONS.md](../docs/OPERATIONS.md).
 Nothing runs outside one of two digest-pinned images.
 
-There are two images. The admission image (MuJoCo 3.13.0) runs everything sealed. A second image
-(robosuite 1.5.2, MuJoCo 3.4.0) runs only `experiments/robosuite_scene/` and `experiments/robosuite_sim2sim/` (whose export stage and tests run in the admission image), except three of that
-package's unit tests (`test_r1_image`, `test_seal`, `test_expert_fork`), which run in the admission
-image; numbers from the two are not physics-comparable. Digests and build notes are in OPERATIONS.md.
+There are two images. The admission image (MuJoCo 3.13.0) runs everything sealed, B3 training
+(`experiments/xvla_b3_robosuite/`, no simulator needed) and every test that imports no simulator. A
+second image (robosuite 1.5.2, MuJoCo 3.4.0) runs everything that builds the robosuite scene: `experiments/robosuite_scene/`, the rollout stage of
+`experiments/robosuite_sim2sim/`, B3 collection (`experiments/b3_robosuite_data/`) and B3 evaluation
+rollouts (`experiments/xvla_b3_robosuite_eval/`). Numbers from the two
+are not physics-comparable. Digests, build notes and which runs need `--ulimit nofile=65536:65536` or a
+large `/tmp`: OPERATIONS.md.
 
 - **A version pin is proven by running the thing, not by importing it.** robosuite 1.5.2 imports on
   MuJoCo 3.13.0 and cannot reset an environment there (FAILURES #39).
