@@ -1,5 +1,52 @@
 # Franka benchmark: start here
 
+## Cube programme closed; B3 reviewed, merged and staged for publication — 2026-10-05
+
+An independent check of the B3 evaluation reproduced every headline figure from the raw results and
+added two points to the report (dated addendum in
+[B3_XVLA_EVALUATION_20261005.md](B3_XVLA_EVALUATION_20261005.md)):
+
+- **Headline lowered to about 85% overall, about 75% with distractors.** The report both chose and
+  measured step 124,800 (141/160 = 88.1%); the independent screen gives 13/20 on its one condition
+  (trained pairs, distractors) against 31/40 in the report.
+- **The persistent failures sit in B2's weak corner.** The three layouts that fail at every
+  checkpoint all put the pick on the +y side near the robot base, where B2's `evaluation_054` failed.
+
+`feat/b3-robosuite-cubes` (which contains the training-resume work of `feat/b3-resume`) was merged
+into `main`. Steps 124,800 and 156,000 are staged at `outputs/downloads_20261005/b3_robosuite/` for
+the Windows copy and a Hugging Face model repo; nothing was deleted. B3 was the last cube experiment
+(user, 2026-10-02); next is the props project ([TODO.md](../TODO.md)).
+
+## B3 X-VLA trained and evaluated in the robosuite scene — 2026-10-03 to 2026-10-05
+
+`xvla_b3_robosuite` v2 trained 156,000 updates (5.0 epochs, 132,298 s) on the sealed 560-episode dataset
+after v1 died at update 227 (FAILURES #42) and could not resume (#43); six checkpoints verify. The
+expert solves all 100 banked evaluation scenes. Screen (20 layouts × distractor, one seed): 13 / 12 / 13 /
+13 of 20 at steps 62,400 / 93,600 / 124,800 / 156,000, a tie, so all four were carried. Report (160 trials
+each): **110 / 116 / 141 / 105 of 160 = 68.8 / 72.5 / 88.1 / 65.6%.** Held-out pairs within 10 points of
+trained with wrong-cube rate under 5% at every checkpoint; the final checkpoint is the worst; 124,800
+beats the others by 16–23 points. Failures: near-miss placements that topple and stalls above the target
+dominate; the stall is a side effect (FAILURES #44), the pre-fixed cause labels hide several mechanisms
+(#45). Not physics-comparable with MuJoCo 3.13.0 results. See [B3_XVLA_EVALUATION_20261005.md](B3_XVLA_EVALUATION_20261005.md).
+
+## B3 cube dataset collected and sealed in the robosuite scene — 560/560 episodes — 2026-10-03
+
+Not a policy result. `experiments/b3_robosuite_data/` collected the B3 dataset in the robosuite
+scene: 500 training + 60 validation scripted episodes, 20 cells (10 trained colour pairs × 2 sides) at
+25 + 3 each, training distractors none / one / two = 100 / 200 / 200, pick position interior / inner
+corner / outer corner = 400 / 50 / 50, the two held-out pairs (`yellow→red`, `green→blue`) never
+collected, 60 evaluation layouts banked and never executed. Distractor clearance 8 cm (frozen after
+a 23/23 pilot). 7 rejected attempts of a 150 budget, 0 substituted layouts; final stack offset
+0.19 / 6.9 / 18.9 mm (min / median / max, window 20 mm). Sealed at
+`outputs/b3_robosuite_data/b3_robosuite_20261003/`, fingerprint `e14af864…`, 2.9 GB.
+
+The run crashed once at episode 541 (the `/tmp` tmpfs filled by a per-episode dataset reopen,
+FAILURES #41) and was resumed with no data lost and no code change. The seal binds
+`experiments/robosuite_scene/*.py`, so that package is now frozen as well.
+See [B3_ROBOSUITE_COLLECTION_20261003.md](B3_ROBOSUITE_COLLECTION_20261003.md).
+
+**Next (done):** training and evaluation ran 2026-10-03 to 2026-10-05; see the section above.
+
 ## Sim2sim: the B2 policy on the robosuite scene — 3/20 against 19/20 — 2026-10-02
 
 The MuJoCo-trained B2 checkpoint (step 50,000) was rolled out on 20 of B2's own control-condition
@@ -51,6 +98,8 @@ Open: the B2-checkpoint smoke test was not run; finger pad friction and geometry
 **Next:** sim2sim validation of the B2 checkpoint on the robosuite scene (branch
 `feat/robosuite-sim2sim`), then decide jitter versus gate and re-think the B3 axis list before
 designing Phase 2. The placement offset needs no diagnosis: it is the expert's own jitter.
+*(Outcome: sim2sim done 2026-10-02; the jitter-vs-gate question was dropped with the tighter gate;
+B3 designed 2026-10-03 and evaluated 2026-10-05 — entries above.)*
 
 ## B2 distractors: no detectable distractor effect; 50,000 updates 91.9% vs 82.5% at 33,400 — 2026-09-30
 
@@ -94,6 +143,8 @@ fork source that didn't fit B1's schedule. See [RESULTS.md](RESULTS.md) for the 
 **Next:** none planned yet — B1's own follow-up (height/vertical grounding, deferred per TODO
 "B1b") is unscheduled. Read [RESULTS.md](RESULTS.md) and [FAILURES.md](FAILURES.md) before
 proposing the next experiment.
+*(Outcome: B2 distractors followed, 2026-09-28; B1b was never scheduled and was closed with the cube
+programme on 2026-10-05.)*
 
 ## Matched exposure: 68.1% → 86.1%, and the failure mode identified — 2026-09-24
 

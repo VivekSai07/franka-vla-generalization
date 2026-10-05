@@ -11,9 +11,10 @@ standards, experiment-design rules, and the documentation pass required after ev
 ## What this repo is
 
 Comparing SmolVLA and X-VLA fine-tuning on a Franka Panda cube-stacking task, using sealed,
-hash-bound datasets collected from a scripted expert in MuJoCo. Central question: how much and
-what kind of data does a VLA need to generalise spatially? See [README.md](README.md) for current
-results.
+hash-bound datasets collected from a scripted expert — in a plain MuJoCo scene through B2, in a
+robosuite-composed scene for B3. Central question: how much and what kind of data does a VLA need to
+generalise? The cube programme closed with B3 (2026-10-05); the next project is real-life props in
+robosuite. See [README.md](README.md) for results and [TODO.md](TODO.md) for what is open.
 
 ## Layout
 
@@ -42,21 +43,22 @@ dependencies. Nothing runs outside the two images below.
 sha256:08de1e09200539a26f7564bbf095fb846b8104ba07a72564b8232feb58714abc
 ```
 
-Python 3.10, LeRobot 0.4.4, PyTorch 2.7.1+cu128, MuJoCo 3.13.0. Runs every sealed package, plus the
-parts of the two `experiments/robosuite_*` packages that use no robosuite: three `robosuite_scene`
-unit tests (`test_r1_image`, `test_seal`, `test_expert_fork`) and `robosuite_sim2sim`'s export
-stage and tests.
+Python 3.10, LeRobot 0.4.4, PyTorch 2.7.1+cu128, MuJoCo 3.13.0. Runs every sealed package, B3
+training (`experiments/xvla_b3_robosuite/`, which needs no simulator), and every test that imports no
+simulator.
 
-Second image, for everything else in `experiments/robosuite_scene/` and
-`experiments/robosuite_sim2sim/`:
+Second image, for everything that builds the robosuite scene: `experiments/robosuite_scene/`, the rollout stage of
+`experiments/robosuite_sim2sim/`, B3 collection (`experiments/b3_robosuite_data/`) and B3 evaluation
+rollouts (`experiments/xvla_b3_robosuite_eval/`):
 
 ```
 sha256:54d861aac79c1c8ceed09734a00bbc5d8cbf566c427e47ff23089f9bb0ccf27e
 ```
 
 The image above plus robosuite 1.5.2 and MuJoCo 3.4.0 (robosuite 1.5.2 cannot reset an environment
-on 3.13.0). Results from the two images are not physics-comparable. How to run that package:
-`experiments/robosuite_scene/README.md`; build notes: [docs/OPERATIONS.md](docs/OPERATIONS.md).
+on 3.13.0). Results from the two images are not physics-comparable. Local tags, container names,
+build notes and the `--ulimit nofile` / large `/tmp` settings long runs need:
+[docs/OPERATIONS.md](docs/OPERATIONS.md).
 
 ## Commands
 
@@ -109,10 +111,14 @@ results. Do not edit them even to fix a stale statement:
 - `experiments/broad_workspace_data/README.md`
 - `experiments/xvla_local_varied/README.md`
 - `experiments/smolvla_local_varied/README.md`
+- `experiments/b3_robosuite_data/` (every `.py` including tests, and its README), and
+  `experiments/robosuite_scene/*.py`, the B3 spec and the B3 collection plan: the B3 seal's
+  `provenance()` hashes them (sealed 2026-10-03)
 
 Before editing anything under `experiments/`, check whether it is in `SOURCE_FILES` or reachable
-from `provenance()`. Package READMEs are always in both, except in the two
-`experiments/robosuite_*` packages, which have no contract and no `provenance()`.
+from `provenance()`. Package READMEs are always in both, except in `experiments/robosuite_sim2sim/`
+and the README of `experiments/robosuite_scene/`, which have no contract and no `provenance()`
+(`experiments/robosuite_scene/*.py` are bound through `b3_robosuite_data`'s `provenance()`).
 
 Working on the robosuite path: load the `working-on-the-robosuite-path` skill first.
 

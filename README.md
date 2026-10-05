@@ -1,14 +1,54 @@
-# VLA fine-tuning on Franka Panda cube stacking (MuJoCo)
+# VLA fine-tuning on Franka Panda cube stacking (MuJoCo and robosuite)
 
 Comparing [SmolVLA](https://huggingface.co/HuggingFaceVLA/smolvla_libero) and X-VLA on a
-cube-stacking task, using sealed, hash-bound datasets collected from a scripted expert in MuJoCo.
+cube-stacking task, using sealed, hash-bound datasets collected from a scripted expert — first in a
+plain MuJoCo scene, latterly in a robosuite-composed scene.
 Everything runs inside one of two digest-pinned Docker images — no conda, no host Python dependencies.
 
 The central question: **how much and what kind of data does a VLA need to generalise spatially?**
 
 ---
 
-## Current headline (2026-09-26)
+## Latest (2026-10-05): B3 in the robosuite scene — the last cube experiment
+
+X-VLA trained 156,000 updates (5 epochs) on 560 scripted episodes collected in the robosuite scene:
+four cube colours with two of the twelve instruction pairs never collected, 0–2 distractors, extra
+picks at the region edges. Evaluated on reserved layouts, 160 trials per checkpoint:
+
+| checkpoint | overall | trained pairs | held-out pairs | no distractor | distractors |
+|---|---|---|---|---|---|
+| 62,400 | 68.8% | 68.8% | 68.8% | 70.0% | 67.5% |
+| 93,600 | 72.5% | 72.5% | 72.5% | 78.8% | 66.3% |
+| **124,800** | **88.1%** | 88.8% | 87.5% | 95.0% | 81.3% |
+| 156,000 (final) | 65.6% | 70.0% | 61.3% | 71.3% | 60.0% |
+
+- **The policy follows colour instructions it never trained on**: held-out pairs within 10 points of
+  trained ones at every checkpoint, and 3 wrong-cube picks in 640 trials.
+- **Quote 124,800 as about 85% overall and about 75% with distractors.** The report both chose and
+  measured it; the independent screen gives 13/20 on the distractor condition.
+- **The final checkpoint is the worst**, almost entirely on one side of the workspace, while the
+  training loss kept falling. The persistent failures sit where B2's did: picks close to the robot
+  base on the +y side.
+- Robosuite 1.5.2 / MuJoCo 3.4.0 — not comparable with the MuJoCo-scene numbers below.
+
+Report: [docs/B3_XVLA_EVALUATION_20261005.md](docs/B3_XVLA_EVALUATION_20261005.md). Next: real-life
+props in robosuite ([TODO.md](TODO.md)).
+
+## The results arc
+
+| date | experiment | headline |
+|---|---|---|
+| 2026-09-24 | broad workspace (spatial), MuJoCo | X-VLA 86.1% at matched exposure |
+| 2026-09-26 | B1 language grounding, MuJoCo | 94.4%, no positional shortcut |
+| 2026-09-30 | B2 distractors, MuJoCo | 91.9% at 50,000 updates; no detectable distractor effect |
+| 2026-10-02 | sim2sim: the B2 policy on the robosuite scene | 3/20 against 19/20 on its own scene |
+| 2026-10-05 | B3, robosuite (four colours, held-out pairs, harder distractors) | ~85% overall at the best checkpoint |
+
+Every number with its protocol and caveats: [docs/RESULTS.md](docs/RESULTS.md).
+
+---
+
+## Previous headline (2026-09-26, MuJoCo scene)
 
 **B1 language grounding: 94.4% (151/160), and no positional shortcut.** Every prior result on
 this repo (including the 86.1% below) measured spatial capability only — the training data made

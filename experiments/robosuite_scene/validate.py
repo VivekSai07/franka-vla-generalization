@@ -27,7 +27,7 @@ def frame_from_sim(model, data, action, task):
     return frame
 
 
-def _replay(result, frames, traces, use_recorded_ctrl):
+def _replay(result, frames, traces, use_recorded_ctrl, pick="red", place="green"):
     """Restore the initial state and re-apply controls; mirrors paired_demonstrations replay."""
     from data_collection.benchmark import apply_action, restore_state, stack_metrics, step_control
     from src.robots.franka_panda.config import ACTIVE_JOINTS, ARM_DOF
@@ -49,7 +49,7 @@ def _replay(result, frames, traces, use_recorded_ctrl):
             continue  # failed Verify Lift: the final tick was recorded but never stepped
         if step_control(model, data, 1 / 30, ARM_DOF) != int(trace["substeps"]):
             raise ValueError(f"Replay substeps changed at tick {tick}")
-        metrics = stack_metrics(model, data, "red", "green")
+        metrics = stack_metrics(model, data, pick, place)
         stable = stable + 1 if metrics["released_stack"] else 0
         if use_recorded_ctrl and metrics["released_stack"] != bool(trace["released_stack"]):
             raise ValueError(f"Reference success transcript mismatch at tick {tick}")
@@ -58,14 +58,14 @@ def _replay(result, frames, traces, use_recorded_ctrl):
     return {"max_policy_state_error": max_policy, "max_full_qpos_error": max_full, "stable_ticks": stable}
 
 
-def replay_recorded(result, frames, traces):
+def replay_recorded(result, frames, traces, pick="red", place="green"):
     """Replay the recorded policy actions through apply_action."""
-    return _replay(result, frames, traces, use_recorded_ctrl=False)
+    return _replay(result, frames, traces, use_recorded_ctrl=False, pick=pick, place=place)
 
 
-def replay_reference(result, frames, traces):
+def replay_reference(result, frames, traces, pick="red", place="green"):
     """Replay the exact recorded ctrl vectors (the true-expert reference)."""
-    out = _replay(result, frames, traces, use_recorded_ctrl=True)
+    out = _replay(result, frames, traces, use_recorded_ctrl=True, pick=pick, place=place)
     return {"max_full_qpos_error": out["max_full_qpos_error"], "stable_ticks": out["stable_ticks"]}
 
 

@@ -1,5 +1,18 @@
 # SmolVLA / X-VLA Franka TODO
 
+## Where things stand (2026-10-05)
+
+- **The cube programme is closed.** B3 — four colours with two held-out instruction pairs, 0–2
+  distractors, edge positions, collected in the robosuite scene — was the last cube experiment
+  (user, 2026-10-02). Best checkpoint (step 124,800): about 85% overall and about 75% with
+  distractors on reserved layouts; held-out colour pairs as good as trained ones. Results arc:
+  [docs/RESULTS.md](docs/RESULTS.md).
+- **Open now:** publish B3 steps 124,800 and 156,000 (staged; Windows transfer and the Hugging Face
+  upload are the user's, see the B3 section); then the **props project** and its controller
+  decision (end of the B3 section).
+- Items from Phases A and B that the closed cube programme made moot are ticked with
+  *(closed 2026-10-05, not pursued)* and kept for their reasoning.
+
 Live plan is below. The original `docker-compose` + `franka_libero_stacking_v1/v2` work is
 preserved as an archive at the bottom; see [README](README.md) and
 [docs/BENCHMARK_STATUS.md](docs/BENCHMARK_STATUS.md) for current status.
@@ -40,7 +53,7 @@ Caveat recorded: part of the final jump is the cosine anneal, so do not extrapol
 - [x] Fresh run from base, not a resume
 - [x] Checkpoint schedule extended so the curve stays measurable
 - [x] Re-evaluated on the same holdout: **62/72 = 86.1%** vs 49/72 = 68.1% (Fisher p = 0.0165)
-- [ ] Repeat for SmolVLA (2.09 epochs currently) — **hold**; see A4, the remaining failure is not
+- [x] *(closed 2026-10-05, not pursued: the cube programme ended with B3)* Repeat for SmolVLA (2.09 epochs currently) — **hold**; see A4, the remaining failure is not
       obviously exposure-limited and a SmolVLA run would cost ~4 h to answer a different question
 
 **Outcome (2026-09-24): exposure was the deficit, and it is now largely paid off.** Two findings
@@ -56,7 +69,7 @@ changed the plan and are recorded in [docs/RESULTS.md](docs/RESULTS.md) and
 - [x] Evaluate checkpoint **12,000** — the LR-matched comparison against the short run's 4,000.
       **Result: 51/72 = 70.8% vs 20.8%, p = 2.2e-9.** Exposure drives capability, not the anneal;
       at matched epochs a 4.4× LR difference changes nothing (p = 0.69).
-- [ ] Decide whether the 65/72 gate is right for this protocol — argue it on its own terms,
+- [x] *(closed 2026-10-05, not pursued: the cube programme ended with B3)* Decide whether the 65/72 gate is right for this protocol — argue it on its own terms,
       not by fitting it to whatever number we got. Note 62/72 misses by three trials and every
       miss is the same 4.5 cm offset, so the gate question is now entangled with A4.
 
@@ -91,19 +104,19 @@ Ruled out by test, not assumption:
       Aggregate rates survive at 2 seeds. Lock this into the B1 protocol before collecting.
 
 #### Tier 1 — inference-time (downgraded by T2a)
-- [ ] **T1b** best-of-N — projected 62 → ~65 of 72, and cannot help the three bad-dominant layouts.
+- [x] *(closed 2026-10-05, not pursued: the cube programme ended with B3)* **T1b** best-of-N — projected 62 → ~65 of 72, and cannot help the three bad-dominant layouts.
       Marginal; **not a blocker for B1**. Do only if the gate matters more than N× inference cost.
-- [ ] **T1a** `num_denoising_steps` 10 → 30; 16-trial probe (~40 min) — cheapest remaining probe
-- [ ] **T1c** temporal ensembling — **averaging is unsafe**: the mean of the two modes lands inside
+- [x] *(closed 2026-10-05, not pursued: the cube programme ended with B3)* **T1a** `num_denoising_steps` 10 → 30; 16-trial probe (~40 min) — cheapest remaining probe
+- [x] *(closed 2026-10-05, not pursued: the cube programme ended with B3)* **T1c** temporal ensembling — **averaging is unsafe**: the mean of the two modes lands inside
       the empty band and fails everywhere. Cluster-then-pick-largest only.
 - Each is a separate protocol in its own package; never compare to the sealed 86.1% unless the
   layout roster and seeds are identical
 
 #### Tier 3 — data design for B1 (low expected value here)
-- [ ] Audit expert approach-direction consistency against the sealed dataset (CPU-only, cheap) —
+- [x] *(closed 2026-10-05, not pursued: the cube programme ended with B3)* Audit expert approach-direction consistency against the sealed dataset (CPU-only, cheap) —
       the only data-side lever with a plausible mechanism
-- [ ] Terminal-phase supervision density — hypothesis only
-- [ ] **Not planned:** more episodes, denser layout coverage
+- [x] *(closed 2026-10-05, not pursued: the cube programme ended with B3)* Terminal-phase supervision density — hypothesis only
+- [x] **Not planned:** more episodes, denser layout coverage
 
 Only after Tier 2 + Tier 1: decide whether the 65/72 gate is right, and finalise B1 collection.
 
@@ -152,12 +165,12 @@ override in the B1 package handles three; `read_rows` (per-frame `task_index == 
 result.
 
 Two viable options, needing a decision:
-- [ ] **(A) Duplicate locally.** Fork `read_rows` and `_episode_inputs` into the B1 package with
+- [x] *(resolved: B1 was collected and sealed on 2026-09-25)* **(A) Duplicate locally.** Fork `read_rows` and `_episode_inputs` into the B1 package with
       task-aware checks. ~90 lines of deep validation logic copied. Risk: a transcription slip
       yields a validator *weaker* than intended, which still passes — the worst failure mode here.
       Mitigate by diffing the copy against the original and asserting equivalence on a single-task
       fixture before trusting it.
-- [ ] **(B) Parameterise the shared module** with a `tasks=(TASK,)` default that preserves current
+- [x] *(resolved: B1 was collected and sealed on 2026-09-25)* **(B) Parameterise the shared module** with a `tasks=(TASK,)` default that preserves current
       behaviour byte-for-byte, then re-seal the affected datasets. Cleaner long-term, but re-sealing
       `broad_workspace_data` invalidates every binding built on it.
 
@@ -216,9 +229,9 @@ capability untestable and the success metric cannot see it.
 
 Deliberately **not** folded into B1 — that would be two new axes at once and a failure would not be
 attributable. Options when it gets its own phase, each with different expert implications:
-- [ ] cube-size variation — changes grasp aperture the controller assumes, and the stack height
-- [ ] table-height variation — uniform shift of both cubes; touches the scene
-- [ ] variable-height place target (platform/riser) — changes place Z but not pick Z
+- [x] *(closed 2026-10-05, not pursued: the cube programme ended with B3)* cube-size variation — changes grasp aperture the controller assumes, and the stack height
+- [x] *(closed 2026-10-05, not pursued: the cube programme ended with B3)* table-height variation — uniform shift of both cubes; touches the scene
+- [x] *(closed 2026-10-05, not pursued: the cube programme ended with B3)* variable-height place target (platform/riser) — changes place Z but not pick Z
 
 ### B2. Distractors (second axis)
 
@@ -254,13 +267,13 @@ attributable. Options when it gets its own phase, each with different expert imp
       [docs/B2_DISTRACTOR_EVALUATION_20260930.md](docs/B2_DISTRACTOR_EVALUATION_20260930.md).
 - [x] Measures distractor rejection independently of language — **answer: no detectable effect**,
       for distractors that never physically interfere (max displacement 0.064 mm).
-- [ ] **Decide next steps** (nothing chosen yet; see section 8 of the report). Candidates, most
+- [x] *(answered 2026-10-02: the user folded these into B3 — pick-coverage near `054`/`048`, harder distractors; the release-precision gate was dropped)* **Decide next steps** (see section 8 of the report). Candidates, most
       failure mass first: tighten the expert's release precision (addresses 21/41 failures), add
       pick-coverage near the `054`/`048` regions, a harder distractor test with possible
       interference (B2b), and understand why `054` got worse with training and why the *familiar*
       arrangement fails more. Change one variable per run.
-- [ ] Confirm 50,000's 91.9% on a fresh holdout (it is the larger of two reported results).
-- [x] `feat/b2-distractors` merged into `main` (2026-10-01, `511ab25`); local only, not pushed. The
+- [x] *(closed 2026-10-05, not pursued: the cube programme ended with B3)* Confirm 50,000's 91.9% on a fresh holdout (it is the larger of two reported results).
+- [x] `feat/b2-distractors` merged into `main` (2026-10-01, `511ab25`), since pushed. The
       branch is kept, as the other axis branches are. The B2 packages are now hash-bound to the
       trained run: **fork, do not edit** (`experiments/b2_distractor_data/**`,
       `experiments/xvla_b2_distractors/**`, the B2 spec and plan).
@@ -277,7 +290,7 @@ the floor-colour prerequisite was withdrawn as both a no-op and seal-breaking; "
 cell" is really 32; and screening is 100 trials, not 80.
 
 ### Environment housekeeping
-- [ ] **Floor colour: blue → grey — BLOCKED, and not a prerequisite for anything.**
+- [x] *(closed 2026-10-05: moot — later work moved to the robosuite scene, which has its own table and floor)* **Floor colour: blue → grey — BLOCKED, and not a prerequisite for anything.**
       `src/robots/franka_panda/model/scene.xml:21` groundplane checker texture
       (`rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3"`) reads bluish. Two findings from the B2 review
       (2026-09-28) change this item:
@@ -304,8 +317,8 @@ Two-phase project. User accepted the one-variable-per-run attribution trade-off:
 > collected in the robosuite scene, is the final cube work**, and every axis that was meant to be
 > tested goes into that one dataset. After it, new task ideas use real-life props in robosuite (see
 > "After B3" below). Consequences:
-> - B3 cube collection is the **next thing to do**. It needs its design re-thought first (the item
->   "Re-think the B3 axis list" below), then spec → plan.
+> - B3 cube collection was the next thing to do; it was designed, collected, trained and evaluated
+>   2026-10-03 to 2026-10-05 (below).
 > - No separate effort goes into the placement offset or a bigger cube. The offset is understood
 >   (the expert's own jitter); how the B3 release gate treats it is one decision inside the B3
 >   design, not a project of its own.
@@ -314,7 +327,7 @@ Two-phase project. User accepted the one-variable-per-run attribution trade-off:
 
 - [x] **Phase 1 — robosuite scene bring-up.** Prove the simulator swap works end-to-end on a trivial scene (one layout, two cubes, two cameras replicated from the current scene, scripted expert, 5-episode PoC, deterministic resets, LeRobot schema parity). Nothing new is varied. Go/no-go report decides whether Phase 2 starts. See spec above for risks R1-R7.
       **Result (2026-10-02): go.** It rests on the fingertip-pad re-parenting, a model-contract fix outside the tuning protocol (whose six allowed attempts all failed), allowed by the executing AI controller's ruling and **ratified by the user on 2026-10-02**. R1–R7 all pass; 5/5 scripted episodes sealed at `outputs/robosuite_scene/robosuite_bringup_20261002/` (fingerprint `543e300c257d…`). Report: [docs/ROBOSUITE_SCENE_BRINGUP_20261002.md](docs/ROBOSUITE_SCENE_BRINGUP_20261002.md). The robosuite path runs in its own image on MuJoCo 3.4.0 (robosuite 1.5.2 cannot reset on 3.13.0), so robosuite-scene results are not physics-comparable with sealed results.
-- [ ] **Before Phase 2 is designed — carried over from Phase 1:**
+- [x] **Before Phase 2 is designed — carried over from Phase 1** — all settled by 2026-10-03: (a) the jitter-vs-gate question was dropped with the tighter gate (the 2 cm window stayed); (b) done as the sim2sim check (3/20 vs 19/20); (c) pad friction and geometry stayed robosuite's; (d) B3 got `b3_robosuite_data.contract.provenance()` and a seal; (e) ratified; (f) fixed — the B3 fingerprint hashes JSON files in canonical form. Original items:
       (a) decide jitter versus gate: the 8.6–12.7 mm xy placement offset (all five seeds, 20 mm window) is the scripted expert's own ±5 mm (1σ) target jitter, reproduced from the seeds to 0.65 mm, not a scene defect. Seed 2 at 12.65 mm fails Phase 2's planned ≤ 1.2 cm expert gate, and about 15% of episodes would (calculated) — reduce the jitter, loosen the gate, or accept the rejections;
       (b) run the B2-checkpoint smoke test on the robosuite scene (deferred from Phase 1 to a follow-up plan, not run);
       (c) decide whether finger pad friction/geometry stay robosuite's;
@@ -323,20 +336,24 @@ Two-phase project. User accepted the one-variable-per-run attribution trade-off:
       (f) the collected dataset is not byte-reproducible: two collector runs differ in `meta/stats.json` key order (all other files identical), so the fingerprint changes between runs. Fix or drop the "identical bytes" requirement before a contract binds a robosuite dataset.
 - [x] **Sim2sim validation (branch `feat/robosuite-sim2sim`).** The MuJoCo-trained B2 checkpoint (step 50,000) on 20 of B2's own control report trials, both scenes, one loop: **MuJoCo 19/20, robosuite 3/20** (paired 16 vs 0, p = 3 × 10⁻⁵; the control matches B2's own report on these trials). On robosuite, 11 failures lift the cube and never carry it, 6 never lift it. Report: [docs/ROBOSUITE_SIM2SIM_20261002.md](docs/ROBOSUITE_SIM2SIM_20261002.md). Not hash-bound; counts from ten layouts.
 - Not planned (user, 2026-10-02): the blue-checker-table rerun that would test whether missing visual texture breaks the carry. Sim2sim is not a priority; revisit only if wanted after a robosuite-trained policy exists.
-- [ ] **B3 design done (2026-10-03); collection is next.** Spec: [docs/superpowers/specs/2026-10-03-b3-robosuite-cubes-design.md](docs/superpowers/specs/2026-10-03-b3-robosuite-cubes-design.md) (awaiting the user's review of sections 2–4). Plan 1 of 3, collection: [docs/superpowers/plans/2026-10-03-b3-robosuite-collection.md](docs/superpowers/plans/2026-10-03-b3-robosuite-collection.md). Branch `feat/b3-robosuite-cubes` (not yet created). Decided with the user: colour randomisation over four colours with 2 of 12 pairs held out, harder distractors (none / one / two at 20 / 40 / 40%), denser edge coverage in the same two regions, 500 training episodes, the 2 cm window unchanged. Training is sized at 156,000 updates, about 36 h.
+- [x] **B3 collection done and sealed (2026-10-03): 560/560, fingerprint `e14af864…`**, 7 rejections, 0 substituted layouts, one crash at episode 541 recovered without data loss (FAILURES #41). Report: [docs/B3_ROBOSUITE_COLLECTION_20261003.md](docs/B3_ROBOSUITE_COLLECTION_20261003.md). Branch `feat/b3-robosuite-cubes`, merged into `main` 2026-10-05. Seal, provenance, plan, journal and per-episode instructions independently re-verified the same day. **Then: plan 2, training ([docs/superpowers/plans/2026-10-03-b3-xvla-training.md](docs/superpowers/plans/2026-10-03-b3-xvla-training.md)) and plan 3, evaluation ([docs/superpowers/plans/2026-10-03-b3-xvla-evaluation.md](docs/superpowers/plans/2026-10-03-b3-xvla-evaluation.md)): both done 2026-10-05.** `experiments/robosuite_scene/*.py` and the B3 spec/plan are now bound by the seal: do not edit them.
+- [x] **B3 trained and evaluated (2026-10-05).** Training v2, 156,000 updates; report on reserved layouts, 160 trials per checkpoint: **110 / 116 / 141 / 105 of 160 = 68.8 / 72.5 / 88.1 / 65.6%** at steps 62,400 / 93,600 / 124,800 / 156,000 (robosuite 1.5.2, not comparable with earlier results). Held-out colour pairs within 10 points of trained, wrong-cube rate under 5%, at all four. Final checkpoint worst; 124,800 best by 16–23 points (paired). **Quote 124,800 as about 85% overall and about 75% with distractors present**: it was both selected and measured on the report, and the independent screen gives 13/20 on the distractor condition (report addendum). Report: [docs/B3_XVLA_EVALUATION_20261005.md](docs/B3_XVLA_EVALUATION_20261005.md). Branch `feat/b3-robosuite-cubes` (with the training-resume work of `feat/b3-resume`), merged into `main` 2026-10-05.
+- [ ] **B3 follow-ups the report left open** (none started; each is a hypothesis, not a plan): (a) why side B stalls 12–14 cm above the target and side A does not (stalls at 156,000: 36 of 160 trials, all side B, also with no distractor): compare the expert demonstrations on the two sides, joint-limit margins on the side-B reach; (b) log cube orientation in the evaluation trace before any further rollouts: 23 of 69 near-miss placements released within 2 cm of centre and still toppled, yaw untested; (c) a distractor 8–12 cm from the pick raised pick-phase failures from 2/160 to 20/160 on the same layouts: needs a randomised contrast, not a between-layout reading; (d) confirm the 124,800 figure on fresh layouts — partly done: the screen, never used for selection, gives 13/20 on its one condition (report addendum); the three persistently failing layouts are all side-B picks near the base, the corner B2's `evaluation_054` failed at; (e) ~~decide whether to publish~~ decided 2026-10-05: steps 124,800 and 156,000 go to Windows and Hugging Face (below).
+- [x] ~~B3 design done (2026-10-03); collection is next.~~ Superseded by the line above; kept for the design. Spec: [docs/superpowers/specs/2026-10-03-b3-robosuite-cubes-design.md](docs/superpowers/specs/2026-10-03-b3-robosuite-cubes-design.md) (reviewed and approved by the user). Plan 1 of 3, collection: [docs/superpowers/plans/2026-10-03-b3-robosuite-collection.md](docs/superpowers/plans/2026-10-03-b3-robosuite-collection.md). Branch `feat/b3-robosuite-cubes` (created 2026-10-03). Decided with the user: colour randomisation over four colours with 2 of 12 pairs held out, harder distractors (none / one / two at 20 / 40 / 40%), denser edge coverage in the same two regions, 500 training episodes, the 2 cm window unchanged. Training is sized at 156,000 updates, about 36 h.
 - [x] ~~Re-think the B3 axis list before designing Phase 2~~ (user, 2026-10-02) — done in the spec above; kept for the reasoning. The list below was written before Phase 1 and before the sim2sim result. Inputs that change it: the ≤ 1.2 cm gate conflicts with the expert's own jitter (item a); the scene change is itself a large visual axis; the sim2sim result will say how much of B2's capability survives it.
       Idea to evaluate there (user): a larger cube, still within the 8 cm finger opening, to make placement more forgiving. Notes for that discussion: the in-hand offset comes from jitter along the pad surface, which a larger cube does not remove; a wider cube tips later, so the physical tolerance grows with the edge length (B2 measured the cliff at half the 4.2 cm edge); but `stack_metrics`' 2 cm xy window is a fixed constant in shared code, so the scored tolerance does not grow unless a new metric is defined; and a wider cube leaves less finger clearance on approach.
 - Superseded by the 2026-10-03 spec above (kept as the original sketch): **Phase 2 — B3 combined-axis collection**, designed only after Phase 1 passes. Will layer: tighter release precision (expert gate ≤ 1.2 cm), harder distractors (reduced clearance / in the carry path), full colour randomisation, extra demonstrations near the acquisition-weak `054`/`048` pick regions, and a floor/prop change. Horizon likely 75-100 k updates.
-- [ ] **After B3 — robosuite's built-in props / real-life objects** (user, 2026-10-02; needs its own brainstorm → spec → plan once B3 has a measured result). Move from cubes to robosuite's object library (cans, bottles, boxes, cereal, bread, milk; `robosuite.models.objects`). This is a jump, not an increment: the scripted expert assumes a cube it can grasp top-down at a fixed height and scores a cube-on-cube stack, so it needs new grasp strategies per object, a new task definition and success metric, and instructions that name objects.
+- [ ] **Publish B3 steps 124,800 and 156,000** (user, 2026-10-05): staged and hash-verified at `outputs/downloads_20261005/b3_robosuite/` (zero extra disk); copy to Windows, verify the two hashes, upload as a private model repo — commands in the staging `README.md`, record in [docs/B3_PUBLICATION_20261005.md](docs/B3_PUBLICATION_20261005.md). Keep all RTX originals.
+- [ ] **Next project — robosuite's built-in props / real-life objects** (user, 2026-10-02; B3 now has its measured result, so this is next: brainstorm → spec → plan). Move from cubes to robosuite's object library (cans, bottles, boxes, cereal, bread, milk; `robosuite.models.objects`). This is a jump, not an increment: the scripted expert assumes a cube it can grasp top-down at a fixed height and scores a cube-on-cube stack, so it needs new grasp strategies per object, a new task definition and success metric, and instructions that name objects.
 - [ ] **Decide the controller and action space for the props project: our joint-target IK or robosuite's OSC_POSE** (user, 2026-10-02). Plan time for this before any props data is collected, because the choice fixes the dataset's action format. What to weigh:
       - *Ours* (pinocchio IK → 7 absolute joint targets + gripper, 30 Hz): every existing dataset and checkpoint uses it, so old policies can still be rolled out and sim2sim stays possible; robosuite's runtime is not needed (`env.step` is never called). Note from the sim2sim result: the old checkpoints roll out on the robosuite scene but score 3/20, so "existing checkpoints stay usable" is a weak reason to keep this action space.
       - *OSC_POSE* (robosuite built-in: 6 end-effector deltas + gripper): the format public robosuite / robomimic / LIBERO data uses, and compliant in contact (the SmolVLA checkpoint this repo started from, `smolvla_libero`, is LIBERO-finetuned). Costs: a new action space (no reuse of existing checkpoints or datasets), a scripted expert rewritten to emit deltas, `env.step` and robosuite's control loop in the collection path, and re-proving determinism and replay.
       - Questions to answer in the brainstorm: do the props need contact-rich or tilted grasps that joint targets handle badly? Do we want to mix in public data or compare against public baselines? Is rolling out the cube-trained checkpoints on the props scene still wanted?
       - A cheap experiment that would inform it: have the existing expert drive one prop grasp with joint targets, and the same grasp through OSC_POSE, and compare success and smoothness.
-- [ ] Confirm 50,000's 91.9% on a fresh holdout as part of Phase 2's eval, since the B2 50k number is the larger of two reported results.
+- [x] *(closed 2026-10-05, not pursued: the cube programme ended with B3)* Confirm 50,000's 91.9% on a fresh holdout as part of Phase 2's eval, since the B2 50k number is the larger of two reported results.
 
 ### B3 (original, superseded) — colour randomisation as a standalone axis
-- [ ] Superseded by the Phase 1/Phase 2 plan above. The colour-randomisation idea survives as item (3) inside Phase 2, not as a standalone run.
+- [x] Superseded by B3, which randomised four colours with two held-out pairs.
 
 ### Not planned
 - **Bounding-box / segmentation-mask injection.** Would likely raise numbers but hands the model

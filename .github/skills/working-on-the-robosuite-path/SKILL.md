@@ -8,7 +8,9 @@ description: "Use when running, testing, collecting, rolling out or debugging an
 The repo has two worlds. The **sealed pipeline** (every `*_data`, training and eval package) runs
 in the admission image on MuJoCo 3.13.0 and is hash-bound. The **robosuite path**
 (`experiments/robosuite_scene/`, `experiments/robosuite_sim2sim/`) runs in a second image on
-MuJoCo 3.4.0 and is not hash-bound. Image names, digests and why there are two:
+MuJoCo 3.4.0. `experiments/robosuite_sim2sim/` and the `robosuite_scene` README are not
+hash-bound; **`experiments/robosuite_scene/*.py` and `experiments/b3_robosuite_data/` are bound by
+the B3 seal** (2026-10-03), so do not edit them — fork. Image names, digests and why there are two:
 [docs/OPERATIONS.md](../../../docs/OPERATIONS.md). How to run:
 `experiments/robosuite_scene/README.md`. What was measured:
 `docs/ROBOSUITE_SCENE_BRINGUP_20261002.md`.
@@ -30,7 +32,8 @@ load them in the robosuite image. `robosuite_sim2sim/starts.py` → `rollout.py`
 both containers mount the same host folder under `outputs/` read-write at `/out`, the first writes
 an `.npz` there and the second reads it.
 
-A new `experiments/robosuite_*` package is not hash-bound until someone gives it a contract. Say
+A new `experiments/robosuite_*` package is not hash-bound until someone gives it a contract
+(`b3_robosuite_data` is the pattern: `contract.provenance()` plus a seal). Say
 so next to any number it produces, and give it a contract before a result is reported as final.
 
 ## Traps, each one hit for real
@@ -47,6 +50,7 @@ so next to any number it produces, and give it a contract before a result is rep
 | Comparing a robosuite number with a sealed number | Not comparable (different MuJoCo, different scene). Run the control in the same image with the same loop, starts and seeds. |
 | "The dataset fingerprint changed" | Two collections differ in `meta/stats.json` key order only. Robosuite datasets are not byte-reproducible yet. |
 | Side-by-side images look different between the scenes | Check both sides were put in the same state first (arm, **fingers**, cubes) before blaming the simulator. |
+| A long collection dies with `No space left on device` while the disk is nearly empty | `HF_HOME` is on the container's `/tmp` tmpfs and every dataset reopen writes a whole-dataset arrow cache (31 MB at 541 episodes). Size `/tmp` for the sum, or do not reopen per episode (FAILURES #41). `--resume` needs the journal and dataset episode counts to agree. |
 
 ## Names in the robosuite-built model (before the contract renames them)
 

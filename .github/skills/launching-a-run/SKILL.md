@@ -72,6 +72,12 @@ mkdir -p ${OUT}_admission ${OUT}_preflight ${OUT}
 **Do not edit any `SOURCE_FILES` member between `--check` and `--train`.** The admission is
 invalidated and must be re-run in full.
 
+A run of tens of hours needs a way back from a crash: snapshot the model, the optimizer and the RNG
+every few thousand updates, and gate `--train` on a `--resume-proof` that shows a resumed process
+reproduces the uninterrupted run byte for byte. `xvla_b3_robosuite` (v2) is the reference: its
+README, "Resuming a failed run". The first B3 launch saved the optimizer only at the end and could
+not be continued (FAILURES #43).
+
 ## 3. Container invocation
 
 CPU gates:
@@ -93,6 +99,11 @@ GPU gates: swap to `--runtime nvidia --gpus all`, add `-e CUBLAS_WORKSPACE_CONFI
 `NVIDIA_VISIBLE_DEVICES=void`, and mount `.cache` read-only for the base model bundle.
 
 Omitting `HF_HOME`/`XDG_CACHE_HOME` under `--read-only` → `OSError: Read-only file system`.
+
+A dataset with one video file per episode per camera (B3: 1,120 files) needs `--ulimit
+nofile=65536:65536`: LeRobot never closes its decoder handles and the default limit is 1024
+(FAILURES #42). Before launching `--train` on a new dataset, read one row from every episode once
+in a throw-away container; it takes seconds and shows the descriptor count.
 
 ## 4. Monitor actively
 

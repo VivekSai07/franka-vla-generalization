@@ -4,6 +4,42 @@ All benchmark numbers. Protocols differ in difficulty and are **not** comparable
 rows unless stated. Chronological narrative lives in [BENCHMARK_STATUS.md](BENCHMARK_STATUS.md);
 failures and lessons in [FAILURES.md](FAILURES.md).
 
+## B3 X-VLA in the robosuite scene (2026-10-05) — measured, not sealed
+
+Reserved layouts the policy never trained on, 160 trials per checkpoint (40 layouts × {control,
+distractor} × 2 seeds), robosuite 1.5.2 / MuJoCo 3.4.0, **not physics-comparable with any row below**.
+Intervals resample layouts.
+
+| checkpoint | overall | trained pairs | held-out pairs | control | distractor | edge / interior |
+|---|---|---|---|---|---|---|
+| 62,400 (epoch 2) | 110/160 = 68.8% [56.9, 80.0] | 68.8% | 68.8% | 70.0% | 67.5% | 42.5% / 77.5% |
+| 93,600 (epoch 3) | 116/160 = 72.5% [61.3, 83.1] | 72.5% | 72.5% | 78.8% | 66.3% | 62.5% / 75.8% |
+| **124,800 (epoch 4)** | **141/160 = 88.1% [80.0, 95.0]** | 88.8% | 87.5% | 95.0% | 81.3% | 82.5% / 90.0% |
+| 156,000 (epoch 5, final) | 105/160 = 65.6% [53.7, 76.9] | 70.0% | 61.3% | 71.3% | 60.0% | 52.5% / 70.0% |
+
+- Spec reading (fixed in advance): held-out within 10 points of trained and wrong-cube rate under 5%
+  for all four, i.e. the policy follows colour words it has not seen combined; the gap intervals are wide
+  (about ±20 points) and 156,000 is 8.7 points down.
+- The final checkpoint is the worst; 124,800 beats each of the others by 16–23 points (paired, intervals
+  exclude 0); the other three are indistinguishable. Training loss fell monotonically throughout. 124,800
+  is the maximum of four on the same trials: its 88.1% is optimistic. Cross-check (report addendum): the
+  screen, never used for selection, gives 13/20 on its one condition (trained pairs, distractors) against
+  31/40 for the same condition in the report; pooled 44/60 = 73%. **Quote 124,800 as about 85% overall and
+  about 75% with distractors.**
+- Distractors lower success for all four (−2.5 to −13.8 points; zero excluded only at 124,800); edge
+  layouts are lower for all four (10 layouts; zero excluded only at 62,400).
+- Failures (168): near-miss placements that topple (69) and stalls 12–14 cm above the target (65) dominate.
+  Stalls are a side effect (all at 156,000 on side B, also with no distractor); a distractor 8–12 cm from
+  the pick raises pick-phase failures (2/160 without, 20/160 with, on the same layouts). Two of three
+  pre-registered exploratory predictions were not fully supported; see the report.
+- Caveats: about 80 independent layout × condition cells per checkpoint (seed agreement 90–96%); no
+  per-layout claims; side and crowding are confounded between layouts; the finer failure modes were fitted
+  to the screen and are descriptive. Screen (20 trials) was 13 / 12 / 13 / 13 and did not see the spread.
+- The three layouts that fail at least half their trials at every checkpoint (`evaluation_033`, `046`,
+  `057`) all put the pick on the +y side near the robot base — the corner where B2's `evaluation_054`
+  failed. B3's extra inner-corner demonstrations did not remove it.
+Full analysis: [B3_XVLA_EVALUATION_20261005.md](B3_XVLA_EVALUATION_20261005.md).
+
 ## Sim2sim check (2026-10-02) — not a sealed result
 
 | scene (same policy, starts, seeds, loop; MuJoCo 3.4.0) | B2 step 50,000, 20 control trials |
@@ -16,7 +52,7 @@ robosuite: 11 lifted but never carried or released, 6 never lifted. No contract;
 the cause among the scene differences is not isolated. Protocol and analysis:
 [ROBOSUITE_SIM2SIM_20261002.md](ROBOSUITE_SIM2SIM_20261002.md).
 
-## Current status (2026-09-30)
+## B2 distractors, MuJoCo scene (2026-09-30)
 
 **Headline — B2: distractor cubes had no detectable effect on success; more training helped a lot;
 most failures are release precision, not perception.** X-VLA trained 50,000 updates on
@@ -384,11 +420,19 @@ local-varied checkpoints score 2.8% on the identical broad holdout.
 | `experiments/fixed_layout/` | Single-geometry pilot (source reset ep 7) | 24 | sealed |
 | `experiments/local_varied_data/` | 60 layouts, ±1° pose jitter | 60 (48 train / 12 val) | sealed |
 | `experiments/broad_workspace_data/` | F7 envelope, retries permitted | 200 (160 train / 40 val) | **sealed** |
+| `experiments/b1_language_data/` | 2×2 instruction × arrangement | 200 (160 / 40) | sealed |
+| `experiments/b2_distractor_data/` | B1 design + 0–2 distractor cubes | 200 (160 / 40) | sealed |
+| `experiments/robosuite_scene/` | robosuite bring-up proof (one layout) | 5 | sealed (file fingerprint only) |
+| `experiments/b3_robosuite_data/` | robosuite scene; 4 colours, 2 held-out pairs, 0–2 near/far distractors, edge picks | 560 (500 / 60) | **sealed** |
 | `experiments/{smolvla,xvla}_local_varied/` | Local-varied finetunes | — | trained + evaluated |
 | `experiments/{smolvla,xvla}_broad_workspace/` | Broad-workspace finetunes | — | trained + evaluated |
 | `experiments/xvla_broad_workspace_long/` | Matched-exposure X-VLA (16,700 updates) | — | trained + evaluated |
 | `experiments/xvla_broad_workspace_long_eval/` | Eval bound to the matched-exposure run | — | complete |
 | `experiments/xvla_localvaried_broad_eval/` | Cross-eval: old checkpoint, new holdout | — | complete |
+| `experiments/xvla_b1_language{,_eval}/` | B1 finetune + evaluation | — | trained + evaluated |
+| `experiments/xvla_b2_distractors{,_eval}/` | B2 finetune + evaluation | — | trained + evaluated |
+| `experiments/robosuite_sim2sim/` | B2 policy on the robosuite scene | — | complete |
+| `experiments/xvla_b3_robosuite{,_eval}/` | B3 finetune (156,000 updates) + evaluation | — | trained + evaluated |
 
 Training reports: `outputs/train/{smolvla,xvla}_franka_stacking_{localvaried_v1_20260919,broadworkspace_v1_20260921}/result.json`.
 Evaluation reports: `.../evaluation/{varied_holdout,broad_holdout,fixed_parity}/result.json`, per-trial `episode.json`, `trace.npz`, `cameras.mp4`.
@@ -411,6 +455,10 @@ comparable across rows — each is noted.
 | 5 | `broad_workspace`, **matched exposure** (1.67 ep) | `broad_holdout` 36 layouts × 2 seeds | not run | **62/72** (86.1%) |
 | 5 | `broad_workspace`, matched exposure | `fixed_parity` 20 seeds | not run | 20/20 (100%) |
 | — | `local_varied` checkpoints | `broad_holdout` (cross-eval) | 2/72 (2.8%) | 2/72 (2.8%) |
+| 6 | B1 language (200 eps, 2×2) | 40 report layouts × 2 instructions × 2 | not run | **151/160** (94.4%) |
+| 7 | B2 distractors (200 eps) | 40 report layouts × 2 conditions × 2 | not run | **147/160** (91.9%) at 50,000 |
+| — | B2 checkpoint, robosuite scene (sim2sim) | 20 B2 control trials, both scenes | not run | MuJoCo 19/20, robosuite **3/20** |
+| 8 | B3, robosuite scene (560 eps) | 40 report layouts × 2 conditions × 2 | not run | **141/160** (88.1%, best of four; ~85% after cross-check) |
 
 Reading across: both architectures failed the 9-episode single-task gate outright, reached
 ceiling on one fixed geometry at 24 episodes, and generalised within a ±1 cm neighbourhood at 60.
@@ -425,7 +473,8 @@ Experiment reports: `docs/SINGLE_TASK_20260917.md`, `docs/{XVLA,SMOLVLA}_FIXED_L
 
 ## Variations tried
 
-- **Datasets**: fixed pilot → local-varied (60 layouts × ±1° jitter) → broad-workspace (F7 envelope × ±1° × ±3 cm).
+- **Datasets**: fixed pilot → local-varied (60 layouts × ±1° jitter) → broad-workspace (F7 envelope × ±1° × ±3 cm) → B1 (two instructions × colour/region arrangement) → B2 (+ distractors) → B3 (robosuite scene, four colours, held-out pairs, closer distractors, edge picks).
+- **Scenes**: plain MuJoCo scene (MuJoCo 3.13.0) through B2; robosuite-composed scene (robosuite 1.5.2, MuJoCo 3.4.0) for B3. Not physics-comparable.
 - **Policies**: SmolVLA (`chunk_size=50, n_action_steps=10`) vs X-VLA (`chunk_size=30, n_action_steps=10`).
 - **Failure handling**: no-retry (fixed_layout) → retry-with-rejection-budget (broad_workspace, 100 rejections allowed per 200 admits).
 - **Rollout precision**: SmolVLA uses FP32; X-VLA uses FP32 params + BF16 autocast (matches training loss path exactly).
