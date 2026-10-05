@@ -71,7 +71,17 @@ def narrow_axis_yaw(model, data, name):
     return _wrap_half_turn(float(np.arctan2(direction[1], direction[0])))
 
 
-def aspect(model, name):
-    """Long horizontal half-extent over the short one; 1.0 for a round or square footprint."""
-    half = extents(model, name)[:2]
-    return float(half.max() / half.min())
+def axis_yaws(model, data, name):
+    """World yaws (radians, mod pi) of the body's horizontal x and y axes."""
+    rotation = data.xmat[model.body(f"prop_{name}").id].reshape(3, 3)
+    return tuple(float(np.arctan2(rotation[1, k], rotation[0, k]) % np.pi) for k in (0, 1))
+
+
+def footprint_widths(model, data, name):
+    """Hull widths along the body x axis, its 45-degree diagonal, the body y axis and the other diagonal.
+
+    A round footprint has four equal widths; a square one has faces (0, 2) 1.41 times narrower than its
+    diagonals (1, 3), which is why aspect alone cannot tell the two apart.
+    """
+    psi = axis_yaws(model, data, name)[0]
+    return tuple(horizontal_width(model, data, name, psi + k * np.pi / 4) for k in range(4))

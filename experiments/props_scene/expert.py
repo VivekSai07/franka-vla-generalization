@@ -24,7 +24,8 @@ from experiments.props_scene.metrics import in_bin, placement, success_streak
 from experiments.props_scene.scene import build_model, present_objects
 
 EXPERT_VERSION = "props_p0_expert_v1"
-ROUND_ASPECT = 1.1   # a footprint this close to square or round has no narrow side worth aligning to
+ROUND_RATIO = 1.1    # widest over narrowest hull width: below this the footprint is round and any finger yaw does
+FACE_TOLERANCE = 1.05  # two faces this close in width are equally good; the nearer one needs less hand rotation
 HOLDING = ("close", "lift", "move", "lower")
 
 
@@ -66,15 +67,18 @@ class PropsExpert:
     def plan_grasp(self, data, name):
         """Hand yaw and grasp point for the prop as it currently lies; pure geometry, no stepping."""
         model = self.model
-        round_ = geo.aspect(model, name) < ROUND_ASPECT
-        narrow = geo.narrow_axis_yaw(model, data, name)
-        hand_yaw = 0.0 if round_ else hand_yaw_for(self.finger_axis_yaw, narrow)
+        widths = geo.footprint_widths(model, data, name)
+        round_ = max(widths) / min(widths) < ROUND_RATIO
+        faces = list(zip((widths[0], widths[2]), geo.axis_yaws(model, data, name)))
+        narrowest = min(width for width, _ in faces)
+        candidates = [yaw for width, yaw in faces if width <= narrowest * FACE_TOLERANCE]
+        hand_yaw = 0.0 if round_ else min((hand_yaw_for(self.finger_axis_yaw, yaw) for yaw in candidates), key=abs)
+        finger_axis_yaw = (self.finger_axis_yaw + hand_yaw) % np.pi
         top, bottom = geo.top_z(model, data, name), geo.bottom_z(model, data, name)
         below_top = min(c.GRASP_BELOW_TOP_M, (top - bottom) / 2)
         centre = geo.centre_world(model, data, name)
-        return {"hand_yaw": hand_yaw, "finger_axis_yaw": (self.finger_axis_yaw + hand_yaw) % np.pi,
-                "narrow_yaw": narrow % np.pi, "round": bool(round_),
-                "hand_point": np.array([centre[0], centre[1], top - below_top + c.HAND_OFFSET_M])}
+        return {"hand_yaw": hand_yaw, "finger_axis_yaw": finger_axis_yaw,
+                "round": bool(round_), "hand_point": np.array([centre[0], centre[1], top - below_top + c.HAND_OFFSET_M])}
 
     def run(self, initial_state, episode, sink, render=True):
         """Restore once, execute once. Sink receives copied pre-step frame/trace after each tick's physics."""

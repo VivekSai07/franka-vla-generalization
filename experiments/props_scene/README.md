@@ -62,8 +62,8 @@ python -m experiments.props_scene.benchmark --out /out/gate_<date> --summary
 corner (x 0.22-0.26, y 0.08-0.12). Start pose and yaw, home jitter and the expert seed derive from
 `sha256("props_p0_v1:20261005:<identity>")`. Go requires: overall >= 95%, every object >= 90%, both
 target slots >= 93%, every replay within 1e-3 of the recorded states and prop poses, and 12 re-executed
-attempts byte-equal in a second process. About 45 s an attempt with rendering, so about 40 minutes per
-shard on 6 shards. Results are one JSON line per attempt in `attempts_shard<K>of<N>.jsonl`.
+attempts byte-equal in a second process. About 34 s an attempt with rendering (median over the first gate),
+so about 25 minutes on 6 shards. Results are one JSON line per attempt in `attempts_shard<K>of<N>.jsonl`.
 
 ## Evidence tools (not part of the gate)
 

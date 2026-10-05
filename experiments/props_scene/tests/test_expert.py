@@ -37,7 +37,7 @@ class HandYawTests(unittest.TestCase):
             _, data = _settled(expert.model, "cereal", (0.30, 0.0, yaw_deg))
             plan = expert.plan_grasp(data, "cereal")
             self.assertFalse(plan["round"])
-            difference = (plan["finger_axis_yaw"] - plan["narrow_yaw"] + np.pi / 2) % np.pi - np.pi / 2
+            difference = (plan["finger_axis_yaw"] - geo.narrow_axis_yaw(expert.model, data, "cereal") + np.pi / 2) % np.pi - np.pi / 2
             self.assertLess(abs(np.degrees(difference)), 5.0, yaw_deg)
             # independent check: the hull is thin along the finger axis and long across it
             finger = plan["finger_axis_yaw"]
@@ -45,6 +45,28 @@ class HandYawTests(unittest.TestCase):
             wide = geo.horizontal_width(expert.model, data, "cereal", finger + np.pi / 2)
             self.assertLess(thin, 0.04, yaw_deg)
             self.assertGreater(wide, 0.09, yaw_deg)
+
+    def test_a_square_footprint_is_gripped_by_a_face_not_a_corner(self):
+        # Found by the first gate: milk (4 x 4 cm) was treated as round, so at a diagonal yaw the fingers
+        # closed on two corners and the carton squeezed out (4 of its 17 grasp failures, all at 47-65 deg).
+        expert = PropsExpert(("milk",), "left")
+        for yaw_deg in (-89.0, -60.0, -45.0, -30.0, 0.0, 17.0, 30.0, 47.0, 65.0, 89.0):
+            _, data = _settled(expert.model, "milk", (0.30, 0.0, yaw_deg))
+            plan = expert.plan_grasp(data, "milk")
+            self.assertFalse(plan["round"], yaw_deg)
+            finger = plan["finger_axis_yaw"]
+            width = geo.horizontal_width(expert.model, data, "milk", finger)
+            self.assertLess(width, 0.042, yaw_deg)                       # a face is 4.0 cm, a diagonal 5.7 cm
+            self.assertLessEqual(abs(plan["hand_yaw"]), np.pi / 4 + 1e-9, yaw_deg)   # the nearer of the two faces
+
+    def test_round_and_near_round_footprints_keep_the_home_yaw(self):
+        for obj in ("can", "bottle"):
+            expert = PropsExpert((obj,), "left")
+            for yaw_deg in (-70.0, 0.0, 33.0, 80.0):
+                _, data = _settled(expert.model, obj, (0.30, 0.0, yaw_deg))
+                plan = expert.plan_grasp(data, obj)
+                self.assertTrue(plan["round"], (obj, yaw_deg))
+                self.assertEqual(plan["hand_yaw"], 0.0)
 
     def test_grasp_point_is_below_the_top(self):
         for obj, top_expected in (("milk", 0.144), ("lemon", 0.043), ("cereal", 0.15)):
@@ -108,7 +130,7 @@ class EpisodeTests(unittest.TestCase):
         plan_data = mujoco.MjData(model)
         mujoco.mj_setState(model, plan_data, result["initial_state"], mujoco.mjtState.mjSTATE_INTEGRATION)
         mujoco.mj_forward(model, plan_data)
-        narrow = expert.plan_grasp(plan_data, "cereal")["narrow_yaw"]
+        narrow = geo.narrow_axis_yaw(model, plan_data, "cereal") % np.pi
         difference = (measured - narrow + np.pi / 2) % np.pi - np.pi / 2
         self.assertLess(abs(np.degrees(difference)), 5.0)
 
