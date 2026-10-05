@@ -65,10 +65,26 @@ target slots >= 93%, every replay within 1e-3 of the recorded states and prop po
 attempts byte-equal in a second process. About 45 s an attempt with rendering, so about 40 minutes per
 shard on 6 shards. Results are one JSON line per attempt in `attempts_shard<K>of<N>.jsonl`.
 
+## Evidence tools (not part of the gate)
+
+All run in the robosuite image against a finished gate directory and never change the worktree.
+
+- `tuning_probe.py` re-runs attempts without rendering, in parallel, with constants overridden
+  (`GRASP_BELOW_TOP_M`, `LIFT_CLEARANCE_M`, `RELEASE_ABOVE_WALL_M`, `PHASE_DURATION_S`, `PROP_FRICTION`,
+  `APPROACH_HEIGHT_M`). With no override it reproduces the gate outcome for outcome (300 of 300 equal).
+  Use at most 30 workers: each holds a few GB.
+- `diagnose_attempt.py` replays one attempt and prints hand, target and joint-limit margin per phase.
+- `reach_study.py` is a numerical-IK study of how close a vertical hand can get at a given height.
+- `osc_comparison.py` drives the same attempts with robosuite's OSC_POSE controller (`env.step`, its own
+  physics): the plan's fallback comparison. It is not the expert and not a gate.
+- `contact_sheet.py` renders both cameras at the start of every phase for chosen attempts.
+
+Results and what they mean: [docs/PROPS_P0_20261005.md](../../docs/PROPS_P0_20261005.md).
+
 ## Tests
 
 ```bash
-run $NEW -m unittest experiments.props_scene.tests.test_scene      # also _geometry, _expert, _replay
+run $NEW -m unittest experiments.props_scene.tests.test_scene      # also _geometry, _expert, _replay, _osc_comparison
 run $OLD -m unittest experiments.props_scene.tests.test_constants  # also _success, _benchmark
 ```
 
