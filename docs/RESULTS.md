@@ -4,6 +4,36 @@ All benchmark numbers. Protocols differ in difficulty and are **not** comparable
 rows unless stated. Chronological narrative lives in [BENCHMARK_STATUS.md](BENCHMARK_STATUS.md);
 failures and lessons in [FAILURES.md](FAILURES.md).
 
+## B3 X-VLA in the robosuite scene (2026-10-05) — measured, not sealed
+
+Reserved layouts the policy never trained on, 160 trials per checkpoint (40 layouts × {control,
+distractor} × 2 seeds), robosuite 1.5.2 / MuJoCo 3.4.0, **not physics-comparable with any row below**.
+Intervals resample layouts.
+
+| checkpoint | overall | trained pairs | held-out pairs | control | distractor | edge / interior |
+|---|---|---|---|---|---|---|
+| 62,400 (epoch 2) | 110/160 = 68.8% [56.9, 80.0] | 68.8% | 68.8% | 70.0% | 67.5% | 42.5% / 77.5% |
+| 93,600 (epoch 3) | 116/160 = 72.5% [61.3, 83.1] | 72.5% | 72.5% | 78.8% | 66.3% | 62.5% / 75.8% |
+| **124,800 (epoch 4)** | **141/160 = 88.1% [80.0, 95.0]** | 88.8% | 87.5% | 95.0% | 81.3% | 82.5% / 90.0% |
+| 156,000 (epoch 5, final) | 105/160 = 65.6% [53.7, 76.9] | 70.0% | 61.3% | 71.3% | 60.0% | 52.5% / 70.0% |
+
+- Spec reading (fixed in advance): held-out within 10 points of trained and wrong-cube rate under 5%
+  for all four, i.e. the policy follows colour words it has not seen combined; the gap intervals are wide
+  (about ±20 points) and 156,000 is 8.7 points down.
+- The final checkpoint is the worst; 124,800 beats each of the others by 16–23 points (paired, intervals
+  exclude 0); the other three are indistinguishable. Training loss fell monotonically throughout. 124,800
+  is the maximum of four on the same trials: its 88.1% is optimistic and unconfirmed.
+- Distractors lower success for all four (−2.5 to −13.8 points; zero excluded only at 124,800); edge
+  layouts are lower for all four (10 layouts; zero excluded only at 62,400).
+- Failures (168): near-miss placements that topple (69) and stalls 12–14 cm above the target (65) dominate.
+  Stalls are a side effect (all at 156,000 on side B, also with no distractor); a distractor 8–12 cm from
+  the pick raises pick-phase failures (2/160 without, 20/160 with, on the same layouts). Two of three
+  pre-registered exploratory predictions were not fully supported; see the report.
+- Caveats: about 80 independent layout × condition cells per checkpoint (seed agreement 90–96%); no
+  per-layout claims; side and crowding are confounded between layouts; the finer failure modes were fitted
+  to the screen and are descriptive. Screen (20 trials) was 13 / 12 / 13 / 13 and did not see the spread.
+Full analysis: [B3_XVLA_EVALUATION_20261005.md](B3_XVLA_EVALUATION_20261005.md).
+
 ## Sim2sim check (2026-10-02) — not a sealed result
 
 | scene (same policy, starts, seeds, loop; MuJoCo 3.4.0) | B2 step 50,000, 20 control trials |

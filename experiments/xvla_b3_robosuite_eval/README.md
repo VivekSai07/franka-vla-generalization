@@ -94,3 +94,15 @@ Exploratory, not gates, not part of spec section 4. Recorded now so no figure ca
    condition cells have both seeds agreeing (both succeed or both fail), per candidate.
 3. Near-miss placements are decided by the 2 cm xy criterion: a release that fails and then topples
    has a signed offset above 2 cm, a successful release 2 cm or less.
+
+### Outcome (2026-10-05; the text above was fixed before any report trial was read)
+
+1. Inconclusive by the stated rule: side-B control minus distractor is +0, −5, +35, +20 points (two at
+   or above 15, two within 5). Side is the larger effect: at 156,000, stalls occur in 16 of 40 side-B
+   control trials and 0 of 40 side-A ones.
+2. Supported: seed agreement 90.0 / 90.0 / 96.2 / 93.8%.
+3. Half supported: 471 of 472 successful carried releases are at 2.0 cm or less, but only 54 of 79 failed
+   releases within 5 cm of the target (68%) are above 2 cm.
+
+All four candidates went to the report. Results and analysis: `docs/B3_XVLA_EVALUATION_20261005.md`.
+`--resume` was written and tested but not needed.

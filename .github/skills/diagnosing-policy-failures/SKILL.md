@@ -46,6 +46,12 @@ from the traces (`trace.npz`, `episode.json`, `cameras.mp4`). Worked example:
 - **Do hand-frame geometry** for grasp questions (cube centre in the gripper's own frame at first
   closure); world-frame distances conflate the arm pose with the grasp.
 - **Retract wrong interim claims in the written record**, where they were made.
+- **A perfect confound has no likelier half.** If two factors move together in the layouts (B3
+  screen: side and distractor placement), state both and name the contrast that separates them
+  (the control condition) before ranking either (FAILURES #44).
+- **Name a failure for what the cube did, not what the gripper was told.** Check every label of a
+  first-cause taxonomy on video before the numbers are written up, and log what you will need to
+  explain a failure (cube orientation was not in the trace) (FAILURES #45).
 
 ## Outputs
 

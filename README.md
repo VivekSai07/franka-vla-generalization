@@ -8,7 +8,19 @@ The central question: **how much and what kind of data does a VLA need to genera
 
 ---
 
-## Current headline (2026-09-26)
+## Latest (2026-10-05): B3 in the robosuite scene — 65.6–88.1% on unseen layouts
+
+X-VLA trained 156,000 updates on 560 scripted episodes in the robosuite scene (four cube colours with two
+instruction pairs never collected, 0/1/2 distractors, edge positions), then rolled out on reserved
+layouts, 160 trials per checkpoint. **Step 124,800: 141/160 = 88.1%; 62,400: 68.8%; 93,600: 72.5%; final
+156,000: 65.6%.** Held-out colour pairs score within 10 points of trained ones with a wrong-cube rate
+under 5% at every checkpoint. Not comparable with the MuJoCo-scene numbers below (different physics
+version, scene and protocol); the final checkpoint is the worst and loss fell throughout. See
+[docs/B3_XVLA_EVALUATION_20261005.md](docs/B3_XVLA_EVALUATION_20261005.md).
+
+---
+
+## Previous headline (2026-09-26, MuJoCo scene)
 
 **B1 language grounding: 94.4% (151/160), and no positional shortcut.** Every prior result on
 this repo (including the 86.1% below) measured spatial capability only — the training data made

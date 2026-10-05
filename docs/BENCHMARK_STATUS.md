@@ -1,5 +1,17 @@
 # Franka benchmark: start here
 
+## B3 X-VLA trained and evaluated in the robosuite scene — 2026-10-03 to 2026-10-05
+
+`xvla_b3_robosuite` v2 trained 156,000 updates (5.0 epochs, 132,298 s) on the sealed 560-episode dataset
+after v1 died at update 227 (FAILURES #42) and could not resume (#43); six checkpoints verify. The
+expert solves all 100 banked evaluation scenes. Screen (20 layouts × distractor, one seed): 13 / 12 / 13 /
+13 of 20 at steps 62,400 / 93,600 / 124,800 / 156,000, a tie, so all four were carried. Report (160 trials
+each): **110 / 116 / 141 / 105 of 160 = 68.8 / 72.5 / 88.1 / 65.6%.** Held-out pairs within 10 points of
+trained with wrong-cube rate under 5% at every checkpoint; the final checkpoint is the worst; 124,800
+beats the others by 16–23 points. Failures: near-miss placements that topple and stalls above the target
+dominate; the stall is a side effect (FAILURES #44), the pre-fixed cause labels hide several mechanisms
+(#45). Not physics-comparable with MuJoCo 3.13.0 results. See [B3_XVLA_EVALUATION_20261005.md](B3_XVLA_EVALUATION_20261005.md).
+
 ## B3 cube dataset collected and sealed in the robosuite scene — 560/560 episodes — 2026-10-03
 
 Not a policy result. `experiments/b3_robosuite_data/` collected the B3 dataset in the robosuite
@@ -16,8 +28,7 @@ FAILURES #41) and was resumed with no data lost and no code change. The seal bin
 `experiments/robosuite_scene/*.py`, so that package is now frozen as well.
 See [B3_ROBOSUITE_COLLECTION_20261003.md](B3_ROBOSUITE_COLLECTION_20261003.md).
 
-**Next:** the training package and run (plan 2 of the spec, about 36 h GPU), then the evaluation
-package (plan 3); neither is written.
+**Next (done):** training and evaluation ran 2026-10-03 to 2026-10-05; see the section above.
 
 ## Sim2sim: the B2 policy on the robosuite scene — 3/20 against 19/20 — 2026-10-02
 

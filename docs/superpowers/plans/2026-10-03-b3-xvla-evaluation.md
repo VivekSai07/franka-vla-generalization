@@ -204,11 +204,15 @@ FLAGS="--network none --read-only --user $(id -u):$(id -g) --tmpfs /tmp:rw,size=
 
 ### Task 7: smoke, screen, report (GPU, after training finishes)
 
+**Done 2026-10-05.** Deviations: the four screens and the four reports ran as parallel containers (GPU idle, rollouts CPU-bound); `--resume` was added before the report launch.
+
 - [ ] **Smoke:** `--mode smoke --checkpoint 156000`; both trials finish (any outcome), `cameras.mp4` plays, wall-clock per trial is plausible (tens of seconds to a few minutes — `evaluating-a-checkpoint` §1: an `rc=0` in seconds means nothing ran). Look at one video frame per trial.
 - [ ] **Screen:** the four candidates, one detached container each, run **one after another** (one GPU). About 1.5–4.5 h per candidate. Read each `result.json`; apply the tie rule; write the screen table into `STATUS_b3.md` with the carried candidate(s).
 - [ ] **Report:** each carried candidate, 160 trials, about 3–9 h each. Poll; never rely on `docker wait`.
 
 ### Task 8: report and documentation
+
+**Done 2026-10-05:** `docs/B3_XVLA_EVALUATION_20261005.md`; the documentation pass listed below.
 
 - [ ] **Check the classifier on the real data first:** every success classifies as `success` with `first_lifted == pick`; read the videos of at least one trial per failure cause and of every `wrong_cube` trial before writing a cause into the report.
 - [ ] **Report** `docs/B3_XVLA_EVALUATION_<YYYYMMDD>.md`: the screen table and tie decision; the report read-outs with clustered intervals; the interpretation per spec section 4 (state which of its pre-fixed readings applies, with the numbers); the cause table; feasibility exclusions; limitations (2 seeds per layout; robosuite scene only; no contract on the robosuite scene package; MuJoCo 3.4.0 not comparable with earlier results); what was ruled out.
