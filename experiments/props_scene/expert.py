@@ -138,10 +138,10 @@ class PropsExpert:
                 target, applied, saturated = bounded_joint_target(
                     q_target[ACTIVE_JOINTS], dq[ACTIVE_JOINTS], 1 / c.FPS, self.bounds)
                 q_target[ACTIVE_JOINTS] = target
-                data.ctrl[ACTIVE_JOINTS] = target
                 gripper = 0 if name in HOLDING else 255
                 action = np.zeros(8, dtype=np.float32)
                 action[:7], action[7] = q_target[:7], float(gripper)
+                data.ctrl[ACTIVE_JOINTS] = action[:7]  # the float32 value that is recorded, so a replay is exact
                 grasp.command(gripper)
                 validate_expert_commands(action[None], self.bounds)
                 frame = {**images, "observation.state": q_current[:9].astype(np.float32), "action": action, "task": task}
@@ -175,7 +175,8 @@ class PropsExpert:
                     "stable_ticks": stable, "final_metrics": metrics,
                     "final_placement": placement(model, data, obj, bin_colour), "final_qpos": data.qpos.copy(),
                     "final_state": capture_state(model, data), "phase_reached": min(phase_index, len(c.PHASE_NAMES) - 1),
-                    "grasp_lost_phase": grasp_lost, "model": model, "initial_state": np.asarray(initial_state).copy()}
+                    "grasp_lost_phase": grasp_lost, "model": model, "initial_state": np.asarray(initial_state).copy(),
+                    "episode": dict(episode)}
         finally:
             if renderer is not None:
                 renderer.close()
