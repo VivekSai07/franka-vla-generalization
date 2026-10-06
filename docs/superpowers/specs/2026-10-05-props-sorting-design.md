@@ -123,8 +123,12 @@ named bin, when the bins swap sides and it has never seen that object–bin pair
 
 ### Cells and the held-out pairs
 
-6 objects × 2 target colours = **12 object–bin pairs**; each is collected in both bin arrangements,
-so **24 cells**.
+6 objects × 2 target colours = **12 object–bin pairs**; each appears in both bin arrangements, so
+**24 cells in total — of which 20 are trained** (the other 4 belong to the two held-out pairs and are
+never collected).
+
+*(Corrected 2026-10-06: the first draft said "24 training cells", conflating all 24 cells with the 20
+that are actually trained. The totals below are unchanged; the per-cell counts are.)*
 
 **Held out of training entirely: `milk → blue` and `bread → orange`.** Every object is still trained
 into both colours through its other pairs, and every colour is still a target for five objects, so a
@@ -132,8 +136,10 @@ held-out pair can only be solved by combining the object word with the colour wo
 
 ### Size
 
-- **480 training episodes** — 24 training cells (10 trained pairs × 2 arrangements) × 20 episodes.
-- **60 validation episodes** (training-loss monitoring only), same cells, no held-out pair.
+- **480 training episodes** — **20 trained cells × 24 episodes**. (24 per cell is close to B3's
+  proven 25 per cell; 20 per cell would give 400, which is thinner than anything that has worked here.)
+- **60 validation episodes** (training-loss monitoring only) — 20 trained cells × 3, no held-out pair.
+- **540 admitted episodes** in total.
 - Collection at P0's measured rate (about 34 s per attempt with rendering) is roughly **6 hours**
   for 540 admitted episodes including rejections.
 
@@ -141,11 +147,14 @@ held-out pair can only be solved by combining the object word with the colour wo
 
 **96 layouts**, drawn in the same plan and never executed by the collector:
 
-| tier | layouts | what it is for |
+| tier | layouts | composition |
 |---|---|---|
-| screen | 24 | choosing a checkpoint: the 10 trained pairs, both arrangements |
-| report | 48 | the headline: trained pairs (24) and **held-out pairs (24)**, both arrangements |
-| confirm | 24 | an untouched set, used once on the winner only — the B3 lesson |
+| screen | 20 | one per trained cell — choosing a checkpoint |
+| report | 40 | **20 trained** (one per trained cell) + **20 held-out** (5 per held-out cell × 4) |
+| confirm | 20 | one per trained cell — untouched, used once on the winner only (the B3 lesson) |
+
+**80 reserved layouts.** The report tier is deliberately balanced 20 trained against 20 held-out, so
+the grounding comparison is like-for-like.
 
 ### Admission of one episode
 

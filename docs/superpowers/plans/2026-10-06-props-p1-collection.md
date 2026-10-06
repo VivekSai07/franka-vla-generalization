@@ -20,7 +20,7 @@
 - Never `env.step()`; one `mujoco.Renderer` at a time.
 - Spec values, verbatim: start region x ∈ [0.27, 0.40], y ∈ [−0.12, 0.12], **radius ≥ 0.285 m**, yaw ∈ [−90°, 90°) except **lemon ±75°**; bins `blue` / `orange`, slots (0.32, ±0.33), inner 0.22 m, walls 0.07 m; objects and masses as P0; success = lowest point below the wall top, centre inside in x and y, gripper open and not touching, 30 consecutive ticks within 900.
 - Held out of training: **`milk → blue`** and **`bread → orange`**. They appear only in reserved report layouts.
-- Counts: 24 training cells × 20 = **480 training**; 24 cells with 2–3 each = **60 validation**; **540 admitted**; reserved **96** = 24 screen + 48 report + 24 confirm.
+- Counts (corrected 2026-10-06): **20 trained cells** (10 trained pairs × 2 arrangements) × 24 = **480 training**; 20 cells × 3 = **60 validation**; **540 admitted**; reserved **80** = 20 screen + 40 report (20 trained + 20 held-out) + 20 confirm. 24 cells exist in total; the 4 belonging to the held-out pairs are never collected.
 - Recording schema, unchanged from every dataset here: `observation.state` float32 (9,), `action` float32 (8,), `observation.images.image` / `image2` 512 × 512 at 30 Hz, `task` the instruction string. `FEATURES`, `ENCODING`, `PairedDataset` come from `experiments.paired_demonstrations.media`; do not fork them.
 - Seeds: `sha256("props_p1_v1:20261006:<identity>")[:4]` big-endian. Balance by construction (shuffled decks), never by sampling.
 - The success rule and admission gates are never weakened to admit an episode.
@@ -87,7 +87,7 @@ run() { local image=$1; shift; docker run --rm --runtime runc --network none --r
 
 Each episode carries: `episode_index`, `split`, `object`, `bin` (colour), `blue_slot` (`left`/`right`), `cell`, `instruction`, `start` `(x, y, yaw_deg)`, `home_pose_jitter_deg`, `seed`.
 
-- [ ] **Step 1: Write the failing tests** — the five Review Focus items, plus: 480 training and 60 validation episodes; 20 per training cell; every cell is `(object, bin, blue_slot)` from the 10 trained pairs; `make_plan()` is deterministic and `validate_plan` rejects a tampered copy; reserved layouts are 24/48/24, the report tier holds both held-out pairs in both arrangements, and no reserved start coincides with a collected one; `instruction` comes from one helper and names the bin colour.
+- [ ] **Step 1: Write the failing tests** — the five Review Focus items, plus: 480 training and 60 validation episodes; **24 per trained cell and 3 validation per cell**; exactly 20 trained cells, each `(object, bin, blue_slot)` from the 10 trained pairs; `make_plan()` is deterministic and `validate_plan` rejects a tampered copy; reserved layouts are **20 screen / 40 report / 20 confirm**, the report tier is 20 trained + 20 held-out with both held-out pairs in both arrangements (5 each), and no reserved start coincides with a collected one; `instruction` comes from one helper and names the bin colour.
 - [ ] **Step 2:** run in `$OLD` → FAIL. **Step 3:** implement (follow `b3_robosuite_data/plan.py` for the seed and deck idioms; do not import it). **Step 4:** PASS. **Step 5:** commit `"Plan the P1 instruction-sorting collection"`.
 
 ### Task 3: one episode
