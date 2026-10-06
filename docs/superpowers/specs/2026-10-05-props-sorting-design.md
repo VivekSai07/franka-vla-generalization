@@ -145,7 +145,7 @@ held-out pair can only be solved by combining the object word with the colour wo
 
 ### Reserved evaluation layouts (never collected)
 
-**96 layouts**, drawn in the same plan and never executed by the collector:
+**80 layouts**, drawn in the same plan and never executed by the collector:
 
 | tier | layouts | composition |
 |---|---|---|
