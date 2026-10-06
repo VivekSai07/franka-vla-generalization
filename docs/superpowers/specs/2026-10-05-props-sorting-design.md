@@ -54,7 +54,8 @@ composes, plain MuJoCo drives, `env.step` never called, robosuite image (MuJoCo 
   `CerealObject`, with masses set explicitly: can 0.15, bread 0.05, lemon 0.08, milk 0.20,
   bottle 0.20, cereal 0.15 kg. Only the objects in an episode exist in its model (one cached model
   per object set and bin arrangement).
-- **Start region** for objects: x ∈ [0.27, 0.40], y ∈ [−0.12, 0.12], yaw uniform in [−90°, 90°).
+- **Start region** for objects: x ∈ [0.27, 0.40], y ∈ [−0.12, 0.12] **and radius √(x²+y²) ≥ 0.285 m**,
+  yaw uniform in [−90°, 90°) — except the **lemon, whose yaw is capped at ±75°**.
   *(Amended 2026-10-05 after the first P0 run: the original lower bound of 0.22 m put starts inside the
   arm's working envelope — below about 0.285 m radius joint 4 saturates on the straight-line approach
   and the hand closes on air, 59 of 300 attempts. B3 used radius ≥ 0.28 m. There is no near-base
@@ -105,22 +106,80 @@ region is also fixed.)*
 
 ---
 
-## P1 — instruction sorting, one object, no distractors (roadmap level)
+## P1 — instruction sorting, one object, no distractors
 
+**Status:** designed 2026-10-06, after P0 passed (283/288 = 98.3%). Plan:
+`docs/superpowers/plans/2026-10-06-props-p1-collection.md`.
+
+The first phase with a policy. It asks one question: **can the policy put the named object in the
+named bin, when the bins swap sides and it has never seen that object–bin pair?**
+
+### The task
+
+- One object on the table, two bins, nothing else.
 - Instruction: `put the <object> in the <colour> bin`, colour ∈ {blue, orange}.
-- Cells: 6 objects × 2 target bins × 2 arrangements (which slot the blue bin is in) = 24; **2
-  object × bin pairs held out** of training (chosen in P1's design, each object still trained into
-  both bins overall).
-- About 300 training episodes (12–13 per cell), validation episodes, reserved screen / report /
-  confirmation layouts.
-- **Shortcut check:** success on the arrangement the instruction's bin is in the "other" slot must not
-  collapse; a policy that ignores the colour and uses position scores ~50%.
+- The bins **swap slots** between episodes, so the colour word is the only thing that says where to
+  put it. A policy that learned "always the left bin" scores about 50%.
+
+### Cells and the held-out pairs
+
+6 objects × 2 target colours = **12 object–bin pairs**; each is collected in both bin arrangements,
+so **24 cells**.
+
+**Held out of training entirely: `milk → blue` and `bread → orange`.** Every object is still trained
+into both colours through its other pairs, and every colour is still a target for five objects, so a
+held-out pair can only be solved by combining the object word with the colour word.
+
+### Size
+
+- **480 training episodes** — 24 training cells (10 trained pairs × 2 arrangements) × 20 episodes.
+- **60 validation episodes** (training-loss monitoring only), same cells, no held-out pair.
+- Collection at P0's measured rate (about 34 s per attempt with rendering) is roughly **6 hours**
+  for 540 admitted episodes including rejections.
+
+### Reserved evaluation layouts (never collected)
+
+**96 layouts**, drawn in the same plan and never executed by the collector:
+
+| tier | layouts | what it is for |
+|---|---|---|
+| screen | 24 | choosing a checkpoint: the 10 trained pairs, both arrangements |
+| report | 48 | the headline: trained pairs (24) and **held-out pairs (24)**, both arrangements |
+| confirm | 24 | an untouched set, used once on the winner only — the B3 lesson |
+
+### Admission of one episode
+
+The P0 success rule (object's lowest point below the wall top, centre inside in x and y, gripper open
+and clear, 30 consecutive ticks within 900), plus: frame count as recorded, the replayed actions
+reproduce the trajectory (< 1e-3), and the recorded instruction matches the plan slot. A rejected
+attempt retries the same slot with a fresh draw; a layout that fails three times is resampled
+deterministically, as in B3.
+
+### Read-outs, fixed in advance
+
+- overall success, with layout-clustered intervals;
+- **held-out pairs vs trained pairs** — the grounding result;
+- **the shortcut check:** success split by bin arrangement. A policy using position rather than
+  colour collapses on the arrangement where the named bin is in the other slot. The two arrangements
+  must be within a few points of each other;
+- **wrong-bin rate:** how often the object is placed, correctly and stably, in the *other* bin. This
+  is the clean failure signature for a colour that was not read;
+- failure causes from the classifier, written before the first rollout.
+
+### What P1 does not test
+
+Distractors (P2), categories (P3), the near-base corner (outside the start region), multi-object
+scenes. No claim about an individual layout: seeds per layout are few.
 
 ## P2 — instruction sorting with 1–2 distractor objects (roadmap level)
 
 - Same instructions; 1–2 other objects in the start region, untouched by a correct episode.
-- About 500 training episodes; a stratum of start positions toward the +y near-base side.
+- About 500 training episodes.
 - Read-outs: held-out pairs, distractor count, wrong-object rate (first object lifted), bin errors.
+- **The near-base stratum is dropped** (decision 2026-10-06). The start region now excludes radii
+  below 0.285 m because the expert's straight-line approach cannot reach there, so props tests no
+  position that B2 and B3 found weak. Rebuilding the approach (descend first, then move in) is a
+  motion-planning project of its own, not a P2 prerequisite; the gap is recorded here deliberately.
 
 ## P3 — Food vs Drinks (roadmap level)
 
