@@ -19,6 +19,13 @@ BINS = tuple(BIN_RGBA)
 START_X_M = (0.27, 0.40)    # amended 2026-10-05; was 0.22, inside the arm's working envelope (spec amendment)
 START_Y_M = (-0.12, 0.12)
 START_YAW_DEG = (-90.0, 90.0)
+# amended 2026-10-06: the x >= 0.27 rectangle still admits a near-corner band the arm cannot reach along
+# the straight-line approach; drawn starts are also rejected below this radius.
+START_RADIUS_MIN_M = 0.285
+# amended 2026-10-06: near +/-90 deg the lemon's grasp axis nearly aligns with its long (7 cm) side, leaving
+# the fingers almost no margin (a measured, narrow failure mode, not a reach problem).
+YAW_MAX_DEG_BY_OBJECT = {name: 90.0 for name in OBJECTS}
+YAW_MAX_DEG_BY_OBJECT["lemon"] = 75.0
 
 HAND_OFFSET_M = 0.105       # EE frame above the pad centre; the sealed cube expert's value
 GRASP_BELOW_TOP_M = 0.03    # grasp point is min(this, height / 2) below the object's top

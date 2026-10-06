@@ -23,6 +23,12 @@ class SpecValuesTests(unittest.TestCase):
         self.assertEqual(c.START_Y_M, (-0.12, 0.12))
         self.assertEqual(c.START_YAW_DEG, (-90.0, 90.0))
         self.assertFalse(hasattr(c, "CORNER_X_M"))    # no near-base stratum any more
+        # amended 2026-10-06: a rectangle bound alone still admits a reach-limited band near its near corner
+        self.assertEqual(c.START_RADIUS_MIN_M, 0.285)
+        self.assertEqual(c.YAW_MAX_DEG_BY_OBJECT["lemon"], 75.0)   # its long side nearly aligns with the grasp axis
+        for obj in c.OBJECTS:
+            if obj != "lemon":
+                self.assertEqual(c.YAW_MAX_DEG_BY_OBJECT[obj], 90.0)
 
     def test_expert_geometry(self):
         self.assertEqual(c.GRASP_BELOW_TOP_M, 0.03)

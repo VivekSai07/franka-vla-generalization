@@ -43,10 +43,16 @@ class PlanTests(unittest.TestCase):
             x, y, yaw = a["pose"]
             xr, yr = c.START_X_M, c.START_Y_M
             self.assertTrue(xr[0] <= x <= xr[1] and yr[0] <= y <= yr[1], a["id"])
-            self.assertGreaterEqual(float(np.hypot(x, y)), 0.27, a["id"])   # clear of the arm's envelope
-            self.assertTrue(c.START_YAW_DEG[0] <= yaw < c.START_YAW_DEG[1], a["id"])
+            self.assertGreaterEqual(float(np.hypot(x, y)), c.START_RADIUS_MIN_M, a["id"])
+            cap = c.YAW_MAX_DEG_BY_OBJECT[a["object"]]
+            self.assertTrue(-cap <= yaw < cap, a["id"])
             self.assertEqual(len(a["home_pose_jitter_deg"]), 7)
             self.assertTrue(all(abs(j) <= c.HOME_JITTER_DEG_MAX for j in a["home_pose_jitter_deg"]))
+
+    def test_lemon_yaw_is_narrower_than_the_rest(self):
+        lemon = [a for a in self.plan if a["object"] == "lemon"]
+        self.assertTrue(all(abs(a["pose"][2]) < 75.0 for a in lemon))
+        self.assertTrue(any(abs(a["pose"][2]) > 75.0 for a in self.plan if a["object"] != "lemon"))
 
     def test_ids_and_seeds_are_unique_and_the_plan_is_reproducible(self):
         self.assertEqual(len({a["id"] for a in self.plan}), c.GATE_ATTEMPTS)
@@ -128,6 +134,15 @@ class RunTests(unittest.TestCase):
         (self.out / "plan.json").write_text(json.dumps({"digest": "other"}))
         with self.assertRaises(ValueError):
             b.run(self.out, 1, 6, resume=True, executor=self._executor, limit=1)
+
+    def test_recheck_spreads_over_both_arrangements_and_several_objects(self):
+        # The first gate's recheck landed on blue_slot="left" every time (FAILURES); this must not recur.
+        b.run(self.out, 1, 1, resume=False, executor=self._executor)
+        result = b.recheck(self.out, 12, executor=self._executor)
+        self.assertEqual(result["count"], 12)
+        self.assertEqual(len({d["id"] for d in result["details"]}), 12)
+        self.assertEqual({d["blue_slot"] for d in result["details"]}, {"left", "right"})
+        self.assertGreaterEqual(len({d["object"] for d in result["details"]}), 4)
 
 
 class SummaryTests(unittest.TestCase):

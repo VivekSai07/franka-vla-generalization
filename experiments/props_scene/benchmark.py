@@ -14,6 +14,7 @@ Planning and summarising import no simulator; `run` imports it when it first exe
 import argparse
 import hashlib
 import json
+import math
 import os
 import time
 from collections import Counter, defaultdict
@@ -31,11 +32,21 @@ def _rng(identity):
     return np.random.RandomState(c.seed(identity))
 
 
+def _draw_start_xy(pose_rng):
+    """Reject draws inside the reach limit; the x >= 0.27 rectangle still admits a band closer than that."""
+    for _ in range(100_000):
+        x = float(pose_rng.uniform(*c.START_X_M))
+        y = float(pose_rng.uniform(*c.START_Y_M))
+        if math.hypot(x, y) >= c.START_RADIUS_MIN_M:
+            return x, y
+    raise RuntimeError("could not draw a start pose clear of the reach limit")
+
+
 def _attempt(index, stratum, obj, bin_colour, blue_slot, identity):
     pose_rng = _rng(identity + ":pose")
-    x_range, y_range = c.START_X_M, c.START_Y_M
-    pose = [float(pose_rng.uniform(*x_range)), float(pose_rng.uniform(*y_range)),
-            float(pose_rng.uniform(*c.START_YAW_DEG))]
+    x, y = _draw_start_xy(pose_rng)
+    cap = c.YAW_MAX_DEG_BY_OBJECT[obj]
+    pose = [x, y, float(pose_rng.uniform(-cap, cap))]
     jitter_rng = _rng(identity + ":home")
     jitter = [float(v) for v in jitter_rng.uniform(-c.HOME_JITTER_DEG_MAX, c.HOME_JITTER_DEG_MAX, 7)]
     other = "right" if blue_slot == "left" else "left"
@@ -188,18 +199,28 @@ def load_records(out):
 
 
 def recheck(out, count, executor=execute_attempt):
-    """Re-run `count` attempts spread over the plan in this process; digests must equal the recorded ones."""
+    """Re-run `count` attempts spread over the plan in this process; digests must equal the recorded ones.
+
+    Spreads across every (object, blue_slot) pair before repeating one, so a small recheck still covers
+    both bin arrangements and several objects rather than landing on a single one (the first props gate's
+    recheck always hit blue_slot="left": index strides that are a multiple of a cell's width never leave it).
+    """
     plan = build_plan()
     by_id = {r["id"]: r for r in load_records(out)}
     recorded = [a for a in plan if a["id"] in by_id]
     if len(recorded) < count:
         raise ValueError(f"only {len(recorded)} attempts are recorded, cannot recheck {count}")
-    picked = [recorded[i * len(recorded) // count] for i in range(count)]
+    groups = defaultdict(list)
+    for a in recorded:
+        groups[(a["object"], a["blue_slot"])].append(a)
+    keys = sorted(groups)
+    picked = [groups[keys[i % len(keys)]][(i // len(keys)) % len(groups[keys[i % len(keys)]])] for i in range(count)]
     details = []
     for attempt in picked:
         again = executor(attempt)
         original = by_id[attempt["id"]]
-        details.append({"id": attempt["id"], "original": original["trace_sha256"], "again": again["trace_sha256"],
+        details.append({"id": attempt["id"], "object": attempt["object"], "blue_slot": attempt["blue_slot"],
+                        "original": original["trace_sha256"], "again": again["trace_sha256"],
                         "same": original["trace_sha256"] is not None and original["trace_sha256"] == again["trace_sha256"]})
         print(f"recheck {attempt['id']}: {'same' if details[-1]['same'] else 'DIFFERENT'}", flush=True)
     result = {"count": len(details), "matched": sum(d["same"] for d in details), "details": details}
