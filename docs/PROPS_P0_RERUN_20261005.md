@@ -94,3 +94,15 @@ home pose. The first run's sheets (`successes*.png`, `failures.png`) remain vali
   outside the bin was not checked; the lowest-point rule would count it, as the spec is written.
 
 Decision: go
+
+## 2026-10-06 — re-confirmation after the region and yaw amendments
+
+Before the P1 collector, the start region gained a radius floor (0.285 m, not just x ≥ 0.27) and the lemon's
+yaw was capped at ±75° (the two remaining lemon failures above were a yaw effect: grasp axis near-aligned
+with the long side past 75°, not a reach effect). The full 288-attempt gate re-run on this region
+(`outputs/props_p0/gate_20261006_reconfirm/`, code `a927a6f`): **286/288 = 99.3%**; can, bread, cereal,
+milk and bottle all 48/48; **lemon 46/48** (one `grasp`, one `lost_in_carry`); target slots 143/144 and
+143/144; replay exact on all 288; determinism recheck 12/12, this time spread over all six objects and
+both bin arrangements (the sampling gap noted above is fixed). Verdict: go. The remaining two lemon
+failures are not examined further here; P1's collection will reject and resample them like any other
+expert failure.
