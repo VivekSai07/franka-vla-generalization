@@ -119,7 +119,7 @@ As B3's: slots in plan order; 3 attempts per layout then up to 3 deterministic r
 - [ ] **Step 1: Pilot** (`--pilot`, ~20 slots chosen to cover both arrangements, both held-out-adjacent pairs, all six objects, including a lemon at 70–75° and a start near the radius floor). Expect ≥ 95% admitted. Extract first/middle/last frames of three episodes and **look at them**: the right object, both bins, the instructed colour filled.
 - [ ] **Step 2: Go/no-go, decided by the executor**: pilot ≥ 95% admitted, frames correct, all tests green, disk ≥ 30 GB, `nvidia-smi` irrelevant (CPU). Anything else: write `STATUS.md` and stop.
 - [ ] **Step 3: Collect** detached (`props-p1-collect-<date>`), ~6 h. Poll at 5, 15, 60 minutes then hourly; keep `outputs/props_p1_data/STATUS.md` current. Never rely on `docker wait`. One `--resume` after a crash; if it stops again at the same slot, stop.
-- [ ] **Step 4: Verify the seal** in a second process: recomputed fingerprint equals `seal.json`; dataset loads with `LeRobotDataset`; videos decode; `validation.json` shows 540 episodes, 24 per training cell, no held-out pair, every start inside the region.
+- [ ] **Step 4: Verify the seal** in a second process: recomputed fingerprint equals `seal.json`; dataset loads with `LeRobotDataset`; videos decode; `validation.json` shows 540 episodes, 20 per training cell, no held-out pair, every start inside the region.
 
 ### Task 7: report and handoff
 
