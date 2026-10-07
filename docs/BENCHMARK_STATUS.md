@@ -1,5 +1,16 @@
 # Franka benchmark: start here
 
+## Props P1 dataset collected and sealed: 540/540 episodes — 2026-10-07
+
+Not a policy result. `experiments/props_p1_data/` (branch `feat/props-p0`, robosuite image, now hash-bound/sealed)
+collected the instruction-sorting dataset: one object, two bins swapping sides,
+`put the <object> in the <colour> bin`. **540/540 episodes admitted** (480 train, 60 validation), 7 of 547
+attempts rejected (all lemon, the P0 success gate), 2 start-pose substitutions, seal fingerprint verified
+independently in a second process. `milk→blue` and `bread→orange` held out of training entirely (0 collected).
+True wall-clock 9h38m (the plan's "~6 h" estimate only timed the scripted attempt, not the per-episode video
+encode and commit). Report: [PROPS_P1_COLLECTION_20261007.md](PROPS_P1_COLLECTION_20261007.md). Next: design
+P1 training and evaluation.
+
 ## Props P0 re-run against the amended spec: GO, 283/288 = 98.3% — 2026-10-05
 
 Not a policy result. The first run (below) failed because of two errors in the spec; both were amended
@@ -8,7 +19,7 @@ and the gate re-run on the same expert plus the square-footprint fix. **283/288 
 48/48, milk 47/48, bottle 46/48, lemon 46/48; target slots 143/144 and 140/144; replay exact on all 288; determinism 12/12
 in the gate's recheck and 12/12 on the other bin arrangement. Four of the five failures start at radius 0.278–0.283 m, inside
 the reach band the region still admits; beyond 0.285 m, 274/275. Report: [PROPS_P0_RERUN_20261005.md](PROPS_P0_RERUN_20261005.md).
-Next: P1 design ([TODO.md](../TODO.md)).
+Next: P1 training and evaluation design ([TODO.md](../TODO.md)).
 
 ## Props P0 (two-bin scene and scripted expert): no-go, 164/300 = 54.7% — 2026-10-05 (first run, superseded by the re-run above)
 

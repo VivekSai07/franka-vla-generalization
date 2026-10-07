@@ -17,7 +17,7 @@ no `docker system prune`).
 | local tag | image id | what it is | runs |
 |---|---|---|---|
 | `smolvla:rtc-offline` | `sha256:08de1e09…714abc` | the pinned (admission) image, MuJoCo 3.13.0 | everything sealed: collection, training, evaluation — including B3 **training** (`xvla_b3_robosuite`), which needs no simulator |
-| `vla-robosuite:1.5.2-mj3.4.0` | `sha256:54d861aa…ccf27e` | the image above + robosuite 1.5.2, MuJoCo 3.4.0 | everything that builds the robosuite scene: `robosuite_scene`, `robosuite_sim2sim`, `b3_robosuite_data` collection, `xvla_b3_robosuite_eval` rollouts, `props_scene` (props P0: scene, expert, gate) |
+| `vla-robosuite:1.5.2-mj3.4.0` | `sha256:54d861aa…ccf27e` | the image above + robosuite 1.5.2, MuJoCo 3.4.0 | everything that builds the robosuite scene: `robosuite_scene`, `robosuite_sim2sim`, `b3_robosuite_data` collection, `xvla_b3_robosuite_eval` rollouts, `props_scene` (props P0: scene, expert, gate), `props_p1_data` (props P1: sealed instruction-sorting collection) |
 
 Tags are local handles only; commands and contracts use the full digest. Neither image is in a
 registry, so losing one means rebuilding it (the second from
@@ -80,6 +80,15 @@ the pinned image above on MuJoCo 3.13.0.
   than about 30 workers: each worker is a few GB resident and 44 exhausted 125 GB (FAILURES #50). OSMesa rendering is
   multi-threaded, so a CPU-heavy probe slows a running gate. Its tests are run by module name and the printed test
   count must be read (`Ran 0 tests … OK` is possible).
+- Props P1 (`experiments/props_p1_data/`, sealed 2026-10-07, hash-bound — fork, do not edit): same flags plus
+  `--ulimit nofile=65536:65536`, output mounted at `/out` (`outputs/props_p1_data/`:
+  `props_p1_<date>/` is the sealed collection — `dataset/`, `episodes/*.npz` per-episode traces,
+  `journal.jsonl`, `plan.json`, `provenance.json`, `seal.json`, `validation.json`). Collection is one
+  container (`python -m experiments.props_p1_data.record --collect --out /out/<dir>`), true wall-clock
+  about 1.1 min/admitted episode (not the 40 s/attempt the gate alone takes — per-episode video encode
+  and commit adds about 24 s and is not in the per-attempt timing). `--pilot --slots ... `, `--resume`
+  and `--status` are the other modes; never reconstruct the LeRobot dataset object between episodes
+  mid-run (FAILURES #41) — only `--resume` reopens it, once.
 
 ## Standard container flags
 
@@ -277,6 +286,12 @@ before the square-footprint fix), `gate_20261005b/` (164/300, written spec) and 
 `attempts_shard<K>of6.jsonl`, `plan.json`, `recheck.json`, `summary.json`; `probes/` (tuning re-runs, one JSON per
 change), `osc_gate/` (OSC comparison), `contact_sheets/`, `scene_check/`, `diag*.py`/`probe.py`/`reach*.py` scratch and
 `HANDOFF.md`. A few hundred MB; reproducible from `experiments/props_scene/`, nothing sealed.
+
+`outputs/props_p1_data/props_p1_20261006/` (sealed 2026-10-07, fingerprint `86e3aadb…ac53bcf`): the props P1
+instruction-sorting dataset, 540 episodes (480 train, 60 validation), robosuite scene, 3.0 GB
+(`dataset/` 2.9 GB, `episodes/*.npz` 62 MB). First and only collection attempt, no superseded runs. Pilot
+(`pilot_20261006/`, 16 episodes, never sealed) and `STATUS.md` kept alongside. See
+[PROPS_P1_COLLECTION_20261007.md](PROPS_P1_COLLECTION_20261007.md).
 
 Everything else under `outputs/train/` (smolvla_pilot, single_task, fixed_layout, the plain
 `broadworkspace_v1`/`localvaried_v1` runs) is superseded Tier 2-4 work — see

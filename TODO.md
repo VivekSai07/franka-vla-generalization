@@ -15,8 +15,16 @@
   required the centre below the wall (impossible for a tall object standing in the bin) and the start region began
   inside the arm's working envelope. Both are amended (success by lowest point; start x from 0.27; no near-base
   stratum; 288 attempts). Every object at least 95.8%, both slots at least 97.2%, replay exact, determinism 24/24.
-  **Next: P1 design.** Reports: [docs/PROPS_P0_RERUN_20261005.md](docs/PROPS_P0_RERUN_20261005.md) (the pass) and
+  Reports: [docs/PROPS_P0_RERUN_20261005.md](docs/PROPS_P0_RERUN_20261005.md) (the pass) and
   [docs/PROPS_P0_20261005.md](docs/PROPS_P0_20261005.md) (the first run, kept as the record).
+- **Props P1 dataset collected and sealed (2026-10-07): 540/540 episodes, 7 rejections (all lemon), 2
+  substitutions, seal verified independently.** One object, two bins swapping sides,
+  `put the <object> in the <colour> bin`; `milk→blue` and `bread→orange` held out of training (0
+  collected, confirmed). True wall-clock 9h38m — the plan's "~6 h" estimate only timed the scripted
+  attempt, not the per-episode video encode/commit (~24 s/episode more); corrected here for future sizing.
+  Report: [docs/PROPS_P1_COLLECTION_20261007.md](docs/PROPS_P1_COLLECTION_20261007.md). Package
+  `experiments/props_p1_data/` is now hash-bound (sealed) — fork, do not edit. **Next: design P1 training
+  and evaluation.** Branch `feat/props-p0`, not merged.
 - Items from Phases A and B that the closed cube programme made moot are ticked with
   *(closed 2026-10-05, not pursued)* and kept for their reasoning.
 
@@ -362,10 +370,15 @@ Two-phase project. User accepted the one-variable-per-run attribution trade-off:
         every object into either bin from random yaw, ≥ 95% over a few hundred scripted attempts,
         deterministic replay, yaw logged. The controller question is settled here cheaply: switch to
         OSC only if the IK expert cannot reach that rate.
-      - **P1 — instruction sorting, one object, no distractors.** "put the <object> in the <bin> bin";
-        bins swap sides every episode; some object × bin pairs held out. Small dataset, train, evaluate
-        held-out pairs and both bin arrangements. Gate: the policy beats a position-only shortcut on the
-        swapped arrangement.
+      - **P1 — instruction sorting, one object, no distractors. Dataset collected and sealed
+        2026-10-07: 540/540 episodes (480 train, 60 validation), 7 rejections (all lemon), 2
+        substitutions, true wall-clock 9h38m (the "~6 h" estimate only timed the scripted attempt, not
+        the per-episode video encode/commit).** Report: [docs/PROPS_P1_COLLECTION_20261007.md](docs/PROPS_P1_COLLECTION_20261007.md).
+        "put the <object> in the <bin> bin"; bins swap sides every episode; `milk→blue` and
+        `bread→orange` held out of training entirely (0 collected, confirmed). **Next: training and
+        evaluation design** — held-out pairs vs trained, the shortcut check (success by arrangement),
+        wrong-bin rate, checkpoint screen/report/confirm tiers (80 reserved layouts already drawn,
+        not yet screened for expert feasibility).
       - **P2 — instruction sorting with 1–2 distractor objects** (the main dataset, B3-sized). The
         policy must find the named object among others. Strata for the +y near-base corner; random yaw;
         held-out pairs; several checkpoints + an untouched confirmation set. *(P0 found the expert cannot

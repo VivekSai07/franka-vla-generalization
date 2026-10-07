@@ -34,7 +34,10 @@ picks at the region edges. Evaluated on reserved layouts, 160 trials per checkpo
 Report: [docs/B3_XVLA_EVALUATION_20261005.md](docs/B3_XVLA_EVALUATION_20261005.md). Next: real-life
 props in robosuite ([TODO.md](TODO.md)); P0 (scene and scripted expert, no policy) passed its gate on 2026-10-05,
 283/288 against 95%, after two spec errors found by the first run were amended
-([docs/PROPS_P0_RERUN_20261005.md](docs/PROPS_P0_RERUN_20261005.md)); P1 design is next.
+([docs/PROPS_P0_RERUN_20261005.md](docs/PROPS_P0_RERUN_20261005.md)); the P1 instruction-sorting dataset
+(540 episodes, one object, two bins swapping sides) collected and sealed 2026-10-07
+([docs/PROPS_P1_COLLECTION_20261007.md](docs/PROPS_P1_COLLECTION_20261007.md)); P1 training and
+evaluation design is next.
 
 ## The results arc
 
