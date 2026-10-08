@@ -56,6 +56,22 @@ class ClassifyTests(unittest.TestCase):
         trace = dict(prop_z=z, placed_bin=None, final_gripper_open=True)
         self.assertEqual(analysis.classify(trace, 'blue', False), 'dropped_outside')
 
+    def test_unstable_in_target(self):
+        """Resting in the correct bin but never sustaining 30 ticks (e.g. slow finger release) is
+        its own cause, not dropped_outside/timeout_carrying — found by inspection in screen_015
+        (step_126900, bottle->orange): placed_bin == bin_colour, final_gripper_open True, the
+        success streak just never completed. The unfixed classifier reported `dropped_outside`."""
+        z = np.zeros(900)
+        z[400:700] = 0.10
+        trace = dict(prop_z=z, placed_bin='orange', final_gripper_open=True)
+        self.assertEqual(analysis.classify(trace, 'orange', False), 'unstable_in_target')
+
+    def test_unstable_in_target_even_if_gripper_still_closed(self):
+        z = np.zeros(900)
+        z[400:700] = 0.10
+        trace = dict(prop_z=z, placed_bin='blue', final_gripper_open=False)
+        self.assertEqual(analysis.classify(trace, 'blue', False), 'unstable_in_target')
+
 
 class ReadoutsTests(unittest.TestCase):
     def test_overall_by_kind_and_wrong_bin(self):

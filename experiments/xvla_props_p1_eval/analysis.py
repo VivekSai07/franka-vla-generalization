@@ -16,7 +16,7 @@ import numpy as np
 
 LIFT_M = 0.03        # the prop counts as lifted when it is this far above where it started
 SUSTAIN_TICKS = 15   # ... and stays there; a bump is not a lift
-CAUSES = ('success', 'wrong_bin', 'never_lifted', 'timeout_carrying', 'dropped_outside')
+CAUSES = ('success', 'wrong_bin', 'never_lifted', 'unstable_in_target', 'timeout_carrying', 'dropped_outside')
 
 
 def lifted_and_sustained(z_series, threshold_m=LIFT_M, sustain=SUSTAIN_TICKS):
@@ -32,17 +32,24 @@ def lifted_and_sustained(z_series, threshold_m=LIFT_M, sustain=SUSTAIN_TICKS):
 
 
 def classify(trace, bin_colour, success):
-    """First cause of a trial: success, wrong_bin, never_lifted, timeout_carrying, dropped_outside.
+    """First cause of a trial: success, wrong_bin, never_lifted, unstable_in_target,
+    timeout_carrying, dropped_outside.
 
     `trace`: `prop_z` (ticks,), `placed_bin` (str or None — whichever bin it rests in at the end,
     if any), `final_gripper_open` (bool).
+
+    A trial can rest correctly in the target bin (position and height both pass) and still fail
+    `success_streak`'s 30-consecutive-tick requirement — e.g. the fingers take a few ticks longer
+    than the cap to clear contact after release. That is `unstable_in_target`, not a cube-outside
+    failure: checking `placed_bin` before `final_gripper_open` so a correct-bin rest is never
+    reported as `dropped_outside`/`timeout_carrying` just because it ran out of settling ticks.
     """
     if success:
         return 'success'
     if not lifted_and_sustained(trace['prop_z']):
         return 'never_lifted'
-    if trace['placed_bin'] is not None and trace['placed_bin'] != bin_colour:
-        return 'wrong_bin'
+    if trace['placed_bin'] is not None:
+        return 'wrong_bin' if trace['placed_bin'] != bin_colour else 'unstable_in_target'
     if not trace['final_gripper_open']:
         return 'timeout_carrying'
     return 'dropped_outside'
