@@ -16,8 +16,8 @@ no `docker system prune`).
 
 | local tag | image id | what it is | runs |
 |---|---|---|---|
-| `smolvla:rtc-offline` | `sha256:08de1e09…714abc` | the pinned (admission) image, MuJoCo 3.13.0 | everything sealed: collection, training, evaluation — including B3 **training** (`xvla_b3_robosuite`), which needs no simulator |
-| `vla-robosuite:1.5.2-mj3.4.0` | `sha256:54d861aa…ccf27e` | the image above + robosuite 1.5.2, MuJoCo 3.4.0 | everything that builds the robosuite scene: `robosuite_scene`, `robosuite_sim2sim`, `b3_robosuite_data` collection, `xvla_b3_robosuite_eval` rollouts, `props_scene` (props P0: scene, expert, gate), `props_p1_data` (props P1: sealed instruction-sorting collection) |
+| `smolvla:rtc-offline` | `sha256:08de1e09…714abc` | the pinned (admission) image, MuJoCo 3.13.0 | everything sealed: collection, training, evaluation — including B3 **training** (`xvla_b3_robosuite`) and props P1 **training** (`xvla_props_p1`), which need no simulator |
+| `vla-robosuite:1.5.2-mj3.4.0` | `sha256:54d861aa…ccf27e` | the image above + robosuite 1.5.2, MuJoCo 3.4.0 | everything that builds the robosuite scene: `robosuite_scene`, `robosuite_sim2sim`, `b3_robosuite_data` collection, `xvla_b3_robosuite_eval` rollouts, `props_scene` (props P0: scene, expert, gate), `props_p1_data` (props P1: sealed instruction-sorting collection), `xvla_props_p1_eval` (props P1 feasibility + rollouts) |
 
 Tags are local handles only; commands and contracts use the full digest. Neither image is in a
 registry, so losing one means rebuilding it (the second from
@@ -89,6 +89,26 @@ the pinned image above on MuJoCo 3.13.0.
   and commit adds about 24 s and is not in the per-attempt timing). `--pilot --slots ... `, `--resume`
   and `--status` are the other modes; never reconstruct the LeRobot dataset object between episodes
   mid-run (FAILURES #41) — only `--resume` reopens it, once.
+- Props P1 training (`experiments/xvla_props_p1/`, admission image, no simulator): forked from
+  `xvla_b3_robosuite` — same `--check`/`--preflight`/`--resume-proof`/`--train [--resume]` gates, each
+  output subdirectory (`_admission`, `_preflight`, `_resumeproof`, the main output) **must be its own
+  separate bind mount**, not a subdirectory of one shared parent mount — `claim_resume()`'s
+  `is_mountpoint()` check looks for the exact path in `/proc/self/mountinfo`, so a nested subdirectory
+  of a single shared mount silently fails resume/`--resume-proof` with "Resume needs the original
+  bind-mounted output". Disk guard 65 GiB for `--train` (29.7 GB of checkpoints plus a ~31.5 GB
+  three-snapshot peak — a plan estimate of 55 GB missed the transient third snapshot). 126,900 updates
+  at 0.848-0.87 s/update, about 30 h uncontended.
+- Props P1 evaluation (`experiments/xvla_props_p1_eval/`, robosuite image): `feasibility.py` is CPU
+  only (no GPU, ~0.6 s/layout, safe to run alongside anything, including a paused training run) and
+  must be run once before any `evaluate.py` rollout. `evaluate.py --mode smoke/screen/report/confirm
+  --checkpoint N` additionally needs `.cache/xvla_trial` mounted read-only — the saved checkpoint's
+  `policy_preprocessor.json` bakes in an absolute tokenizer path from training time
+  (`/vla/.cache/xvla_trial/bundle/tokenizer`), and without that mount `make_pre_post_processors`
+  fails with an HF repo-id parse error. **Each rollout process is cheap**: ~4.1-4.3 GB GPU memory and
+  ~4.8 CPU cores (inference only, no optimizer/gradients) versus training's ~21 GB — screening or
+  reporting all 6 checkpoints in parallel (one container per checkpoint, each writing its own
+  `<mode>_step_<N>/` output directory, no file collisions) cut screen from an estimated ~3 h
+  sequential to under an hour, confirmed by measurement, not assumed.
 
 ## Standard container flags
 

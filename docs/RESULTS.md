@@ -4,6 +4,49 @@ All benchmark numbers. Protocols differ in difficulty and are **not** comparable
 rows unless stated. Chronological narrative lives in [BENCHMARK_STATUS.md](BENCHMARK_STATUS.md);
 failures and lessons in [FAILURES.md](FAILURES.md).
 
+## Props P1 X-VLA, instruction sorting with bins that swap sides (2026-10-09) — measured, not sealed
+
+One object, two bins named by colour (`put the <object> in the <colour> bin`); 10 trained
+object/bin pairs, 2 held out entirely from training (`milk→blue`, `bread→orange`). X-VLA trained
+126,900 updates (5.0 epochs) on the sealed 540-episode dataset. Robosuite 1.5.2 / MuJoCo 3.4.0,
+**not physics-comparable with the B3 row below.**
+
+| tier | checkpoint | result |
+|---|---|---|
+| screen (20 layouts, 1 seed, all 6 checkpoints) | 50,760 / 76,140 / **88,830** / 101,520 / 114,210 / 126,900 | 35% / 15% / **90%** / 70% / 75% / 70% |
+| report (40 layouts × 2 seeds = 80 trials, all 6 — see caveat) | 88,830 vs **126,900** | 75.0% [63.8, 85.0] vs **75.0% [62.5, 86.3]** — exact tie |
+| confirm (20 untouched layouts, once, winner only) | **126,900** | **20/20 = 100%** [1.0, 1.0] |
+
+- **Headline: 100% (20/20) on the confirm tier, checkpoint 126,900.** The report tier's 75% (60/80)
+  on the same checkpoint is the more statistically informative trained-cell estimate going forward
+  (confirm's interval is degenerate at this sample size).
+- **Zero `wrong_bin` outcomes across all 480 report trials on every checkpoint.** Every failure is a
+  motor/timing problem (never lifted, timed out carrying, dropped outside, correct-bin-but-unstable),
+  never a colour confusion. Held-out pairs perform at or above trained pairs at every checkpoint
+  (report: held-out 77.5% vs trained 72.5% on 126,900) — no held-out collapse anywhere.
+- **Protocol deviation (documented, user-directed):** the plan's tie rule (within 2 successes of the
+  best screen count) selected only 88,830 for report. Report was run on all 6 checkpoints anyway, a
+  deviation from the plan reported here plainly (it reproduces the shape of B3's "report both
+  selected and measured" trap below). The confirm-selection rule — highest report success rate,
+  ties to the later checkpoint — was fixed and written down *before* the 5 extra report runs
+  produced a single trial, so confirm itself still ran exactly once on a pre-committed rule.
+  88,830 and 126,900 came out exactly tied (60/80 each); the tie-break chose 126,900.
+- **Caveat on the confirm winner:** 126,900's arrangement split (blue-left 85% vs blue-right 65%, a
+  20-point gap) is wider than 88,830's (70% vs 80%, a 10-point gap). The spec's interpretation guide
+  reads "within a few points" as the colour-reading signature; 20 points is on the edge of clean.
+- **A classifier bug** (found by watching screen videos, fixed before any report/confirm number was
+  computed): a trial resting correctly in the target bin was mislabelled `dropped_outside` because
+  `classify()` checked gripper state before bin placement. Fixed, regression-tested (confirmed to
+  fail pre-fix), and all 120 screen trials rescanned — exactly the one case found was affected;
+  `task_success` itself was never wrong, only the descriptive cause label.
+- **The 900-tick rollout cap was evidence-checked, not changed**, despite some videos showing the
+  object carried above the bin before timing out: failed trials' final positions are a mixed bag
+  (some near-miss, several genuinely far off-target), not clean evidence that more ticks would
+  convert several failures to successes. Recorded as a limitation and a candidate (separately
+  labelled) follow-up, not a retroactive change to a fixed global constraint.
+Full analysis: [PROPS_P1_EVALUATION_20261009.md](PROPS_P1_EVALUATION_20261009.md). Training:
+[PROPS_P1_TRAINING_20261009.md](PROPS_P1_TRAINING_20261009.md).
+
 ## B3 X-VLA in the robosuite scene (2026-10-05) — measured, not sealed
 
 Reserved layouts the policy never trained on, 160 trials per checkpoint (40 layouts × {control,

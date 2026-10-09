@@ -16,7 +16,9 @@ robosuite-composed scene for B3. Central question: how much and what kind of dat
 generalise? The cube programme closed with B3 (2026-10-05); the next project is real-life props in
 robosuite (P0, the scene and a scripted expert, passed its gate on 2026-10-05; see
 [docs/PROPS_P0_RERUN_20261005.md](docs/PROPS_P0_RERUN_20261005.md); the P1 instruction-sorting dataset,
-540 episodes, collected and sealed 2026-10-07, see [docs/PROPS_P1_COLLECTION_20261007.md](docs/PROPS_P1_COLLECTION_20261007.md)). See [README.md](README.md) for results and
+540 episodes, collected and sealed 2026-10-07, see [docs/PROPS_P1_COLLECTION_20261007.md](docs/PROPS_P1_COLLECTION_20261007.md);
+trained and evaluated 2026-10-09 — confirm 100% (20/20), report 75% (60/80) on checkpoint 126,900,
+see [docs/PROPS_P1_EVALUATION_20261009.md](docs/PROPS_P1_EVALUATION_20261009.md)). See [README.md](README.md) for results and
 [TODO.md](TODO.md) for what is open.
 
 ## Layout
@@ -47,14 +49,15 @@ sha256:08de1e09200539a26f7564bbf095fb846b8104ba07a72564b8232feb58714abc
 ```
 
 Python 3.10, LeRobot 0.4.4, PyTorch 2.7.1+cu128, MuJoCo 3.13.0. Runs every sealed package, B3
-training (`experiments/xvla_b3_robosuite/`, which needs no simulator), and every test that imports no
-simulator.
+training (`experiments/xvla_b3_robosuite/`) and props P1 training (`experiments/xvla_props_p1/`),
+neither of which needs a simulator, and every test that imports no simulator.
 
 Second image, for everything that builds the robosuite scene: `experiments/robosuite_scene/`, the rollout stage of
 `experiments/robosuite_sim2sim/`, B3 collection (`experiments/b3_robosuite_data/`), B3 evaluation
 rollouts (`experiments/xvla_b3_robosuite_eval/`) and the props scene, expert and gate
 (`experiments/props_scene/`, frozen and hashed through the props P1 seal), the props P1 collection
-(`experiments/props_p1_data/`, hash-bound by its own seal — fork, do not edit):
+(`experiments/props_p1_data/`, hash-bound by its own seal — fork, do not edit) and its evaluation
+(`experiments/xvla_props_p1_eval/`, not hash-bound):
 
 ```
 sha256:54d861aac79c1c8ceed09734a00bbc5d8cbf566c427e47ff23089f9bb0ccf27e

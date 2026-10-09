@@ -1,5 +1,21 @@
 # Franka benchmark: start here
 
+## Props P1 trained and evaluated: confirm 100% (20/20), report 75% (60/80) — 2026-10-09
+
+`experiments/xvla_props_p1/` trained X-VLA for 126,900 updates (5.0 epochs) on the sealed P1
+dataset; `experiments/xvla_props_p1_eval/` screened all 6 non-trivial checkpoints (20 layouts
+each), reported all 6 on 80 trials each (a user-directed, documented deviation from the original
+tie-rule-only plan — see the eval report), and confirmed the winner once on 20 untouched layouts.
+**Checkpoint 126,900 won the pre-committed tie-break (exactly tied with 88,830 at 75% on report;
+rule favoured the later checkpoint) and scored 100% (20/20) on confirm.** Zero `wrong_bin` outcomes
+across all 480 report trials on every checkpoint — the policy never confuses the two bin colours;
+every failure is a motor/timing problem. Held-out pairs (`milk→blue`, `bread→orange`) perform at or
+above trained pairs on every checkpoint. One classifier bug found by video inspection and fixed
+before these numbers were final (a correct-bin rest was mislabelled `dropped_outside`); the 900-tick
+rollout cap was evidence-checked and left unchanged (recorded as a limitation, not retroactively
+loosened). Reports: [PROPS_P1_TRAINING_20261009.md](PROPS_P1_TRAINING_20261009.md),
+[PROPS_P1_EVALUATION_20261009.md](PROPS_P1_EVALUATION_20261009.md).
+
 ## Props P1 dataset collected and sealed: 540/540 episodes — 2026-10-07
 
 Not a policy result. `experiments/props_p1_data/` (branch `feat/props-p0`, robosuite image, now hash-bound/sealed)
@@ -8,8 +24,8 @@ collected the instruction-sorting dataset: one object, two bins swapping sides,
 attempts rejected (all lemon, the P0 success gate), 2 start-pose substitutions, seal fingerprint verified
 independently in a second process. `milk→blue` and `bread→orange` held out of training entirely (0 collected).
 True wall-clock 9h38m (the plan's "~6 h" estimate only timed the scripted attempt, not the per-episode video
-encode and commit). Report: [PROPS_P1_COLLECTION_20261007.md](PROPS_P1_COLLECTION_20261007.md). Next: design
-P1 training and evaluation.
+encode and commit). Report: [PROPS_P1_COLLECTION_20261007.md](PROPS_P1_COLLECTION_20261007.md). Trained and
+evaluated 2026-10-09 (above).
 
 ## Props P0 re-run against the amended spec: GO, 283/288 = 98.3% — 2026-10-05
 

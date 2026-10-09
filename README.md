@@ -36,8 +36,9 @@ props in robosuite ([TODO.md](TODO.md)); P0 (scene and scripted expert, no polic
 283/288 against 95%, after two spec errors found by the first run were amended
 ([docs/PROPS_P0_RERUN_20261005.md](docs/PROPS_P0_RERUN_20261005.md)); the P1 instruction-sorting dataset
 (540 episodes, one object, two bins swapping sides) collected and sealed 2026-10-07
-([docs/PROPS_P1_COLLECTION_20261007.md](docs/PROPS_P1_COLLECTION_20261007.md)); P1 training and
-evaluation design is next.
+([docs/PROPS_P1_COLLECTION_20261007.md](docs/PROPS_P1_COLLECTION_20261007.md)); trained and evaluated
+2026-10-09 — **confirm 100% (20/20), report 75% (60/80), checkpoint 126,900, zero wrong-bin outcomes
+across 480 report trials** ([docs/PROPS_P1_EVALUATION_20261009.md](docs/PROPS_P1_EVALUATION_20261009.md)).
 
 ## The results arc
 
@@ -48,6 +49,7 @@ evaluation design is next.
 | 2026-09-30 | B2 distractors, MuJoCo | 91.9% at 50,000 updates; no detectable distractor effect |
 | 2026-10-02 | sim2sim: the B2 policy on the robosuite scene | 3/20 against 19/20 on its own scene |
 | 2026-10-05 | B3, robosuite (four colours, held-out pairs, harder distractors) | ~85% overall at the best checkpoint |
+| 2026-10-09 | Props P1, robosuite (instruction sorting, bins swap sides) | confirm 100% (20/20), report 75% (60/80), checkpoint 126,900 |
 
 Every number with its protocol and caveats: [docs/RESULTS.md](docs/RESULTS.md).
 
