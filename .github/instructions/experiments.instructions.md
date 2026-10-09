@@ -10,7 +10,9 @@ executes, `tests/` covers both. Evaluation lives in a separate `*_eval` package.
 
 ## Hash-bound surfaces
 
-Before editing anything here, determine whether it is bound:
+Before editing anything here, `git worktree list` and `docker ps`. The package may exist only on
+an unmerged worktree, and that worktree may be the one a container has mounted. Do not
+`git checkout` there. Then determine whether the file is bound:
 
 - **`SOURCE_FILES`** in a contract — an explicit tuple. It includes the package's **own README**.
 - **`provenance()`** in a dataset package — `rglob('*.py')` over its own directory, **plus its

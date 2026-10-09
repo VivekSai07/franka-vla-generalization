@@ -7,11 +7,26 @@ hash-bound: datasets carry seals, training runs record bindings over their sourc
 refuses to start if it cannot reproduce what it was built against. Most rules below exist because
 violating them destroyed hours of compute. See [docs/FAILURES.md](../docs/FAILURES.md).
 
+## Orientation
+
+Do not reconstruct history or current numbers from this file. Read [TODO.md](../TODO.md) for where
+things stand, [docs/BENCHMARK_STATUS.md](../docs/BENCHMARK_STATUS.md) newest-first for the log, and
+[docs/RESULTS.md](../docs/RESULTS.md) for every quoted figure. The map of live docs versus immutable
+dated reports is [docs/INDEX.md](../docs/INDEX.md).
+
+`main`'s `experiments/` is not the whole code. Unmerged axes live on their own branches and
+worktrees — `git worktree list` before concluding a package is missing, and `docker ps` before
+editing anything a run might hash. A live container may mount a worktree, not this checkout.
+
 ## Non-negotiable
 
 - **Never edit a hash-bound file while a run is active.** `SOURCE_FILES` and `provenance()` reach
   into package READMEs and shared helpers. A finished 3-hour evaluation has been killed at its
   final gate by a one-line README edit.
+- **Never `git checkout`, `switch`, or `reset` in a directory a container has bind-mounted.**
+  Whether the destination tree matches does not persist to the next command. Use
+  `git worktree add` instead. This crashed a live collection (FAILURES #34). The only copy of the
+  procedure is [skills/branching-for-an-experiment-axis/SKILL.md](skills/branching-for-an-experiment-axis/SKILL.md).
 - **Never delete datasets** or anything under `datasets/`. Deleting the pilot manifest permanently
   broke `local_varied` provenance — it is still unfixable.
 - **Never relax a verification gate to make something pass.** If a gate fails, either the code is

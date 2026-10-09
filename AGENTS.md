@@ -25,6 +25,7 @@ Orientation: [README.md](README.md) · [docs/INDEX.md](docs/INDEX.md) ·
 
 ## The three that matter most
 
-1. Never edit a hash-bound file while a run is live — package READMEs are bound.
+1. Never edit a hash-bound file while a run is live — package READMEs are bound. Never
+   `git checkout` / `switch` / `reset` in a directory a container has mounted; add a worktree.
 2. Never delete datasets, and never weaken a verification gate to make something pass.
 3. Never claim something works without running it and reading the output.
