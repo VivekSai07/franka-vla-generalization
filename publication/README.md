@@ -1,5 +1,10 @@
 # Offline baseline release tooling
 
+Published baseline downloads: [dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-fixed-layout-24),
+[SmolVLA](https://huggingface.co/VivekSai07/smolvla-franka-stacking-fixed-layout) and [X-VLA](https://huggingface.co/VivekSai07/xvla-franka-stacking-fixed-layout).
+Current publication status and other runs: [HF artifact index](../docs/HUGGING_FACE_ARTIFACTS.md).
+This index is separate from the offline tooling described below.
+
 Scope: only portable inference packaging/verification for the two final
 fixed-layout baselines. No credential loading, HTTP, Hub client, upload, commit,
 training, GPU worker, or simulator execution is implemented.

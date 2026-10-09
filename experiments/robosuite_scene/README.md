@@ -1,5 +1,9 @@
 # robosuite_scene
 
+This bring-up is not itself a published fine-tuned model. Later publications using
+the robosuite path are listed in the [HF artifact index](../../docs/HUGGING_FACE_ARTIFACTS.md)
+(B3 cubes and props P1); their datasets/checkpoints are separate from the five-demo proof below.
+
 Bring-up of a scene composed by robosuite 1.5.2 and driven by this repo's scripted expert
 (TODO B3, Phase 1). One layout, red cube stacked on green, the two existing cameras, the existing
 9-state / 8-action LeRobot schema. Result and open issues:

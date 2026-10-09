@@ -21,7 +21,7 @@ Additional context loaded automatically where supported:
 
 Orientation: [README.md](README.md) · [docs/INDEX.md](docs/INDEX.md) ·
 [docs/OPERATIONS.md](docs/OPERATIONS.md) · [docs/FAILURES.md](docs/FAILURES.md) ·
-[TODO.md](TODO.md)
+[TODO.md](TODO.md) · [HF artifacts](docs/HUGGING_FACE_ARTIFACTS.md)
 
 ## The three that matter most
 

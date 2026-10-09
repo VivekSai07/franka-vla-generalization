@@ -1,5 +1,9 @@
 # B2 distractor evaluation
 
+HF: [B2 dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-b2-distractors-200) and [X-VLA root step 50,000](https://huggingface.co/VivekSai07/xvla-franka-b2-distractors-50000).
+The [artifact index](../../docs/HUGGING_FACE_ARTIFACTS.md#b2-distractors) lists earlier checkpoints
+and the incomplete evaluation/training archive; local protocol requirements below still apply.
+
 Fork of `experiments/xvla_b1_language_eval/` — repointed at the B2 training run
 (`xvla_franka_stacking_b2_distractors_v1_20260928`), scored on the **condition** axis (control
 vs distractor-present) instead of instruction.

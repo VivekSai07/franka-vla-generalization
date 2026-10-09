@@ -4,7 +4,11 @@ All benchmark numbers. Protocols differ in difficulty and are **not** comparable
 rows unless stated. Chronological narrative lives in [BENCHMARK_STATUS.md](BENCHMARK_STATUS.md);
 failures and lessons in [FAILURES.md](FAILURES.md).
 
+Download corresponding datasets/checkpoints: [HF artifact index](HUGGING_FACE_ARTIFACTS.md).
+
 ## Props P1 X-VLA, instruction sorting with bins that swap sides (2026-10-09) — measured, not sealed
+
+HF: [dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-props-p1-540); [X-VLA checkpoint 126,900](https://huggingface.co/VivekSai07/xvla-franka-props-p1-126900); [archive details](HUGGING_FACE_ARTIFACTS.md#props-p1-instruction-sorting).
 
 One object, two bins named by colour (`put the <object> in the <colour> bin`); 10 trained
 object/bin pairs, 2 held out entirely from training (`milk→blue`, `bread→orange`). X-VLA trained
@@ -49,6 +53,8 @@ Full analysis: [PROPS_P1_EVALUATION_20261009.md](PROPS_P1_EVALUATION_20261009.md
 
 ## B3 X-VLA in the robosuite scene (2026-10-05) — measured, not sealed
 
+HF: [dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-b3-robosuite-560); [X-VLA checkpoint 124,800](https://huggingface.co/VivekSai07/xvla-franka-b3-robosuite-124800); [archive details](HUGGING_FACE_ARTIFACTS.md#b3-robosuite-cubes).
+
 Reserved layouts the policy never trained on, 160 trials per checkpoint (40 layouts × {control,
 distractor} × 2 seeds), robosuite 1.5.2 / MuJoCo 3.4.0, **not physics-comparable with any row below**.
 Intervals resample layouts.
@@ -85,6 +91,8 @@ Full analysis: [B3_XVLA_EVALUATION_20261005.md](B3_XVLA_EVALUATION_20261005.md).
 
 ## Sim2sim check (2026-10-02) — not a sealed result
 
+Uses the [B2 step-50,000 model](https://huggingface.co/VivekSai07/xvla-franka-b2-distractors-50000); no separate sim2sim-trained checkpoint.
+
 | scene (same policy, starts, seeds, loop; MuJoCo 3.4.0) | B2 step 50,000, 20 control trials |
 |---|---|
 | MuJoCo scene (trained on) | 19/20 |
@@ -96,6 +104,8 @@ the cause among the scene differences is not isolated. Protocol and analysis:
 [ROBOSUITE_SIM2SIM_20261002.md](ROBOSUITE_SIM2SIM_20261002.md).
 
 ## B2 distractors, MuJoCo scene (2026-09-30)
+
+HF: [dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-b2-distractors-200); [X-VLA checkpoint 50,000](https://huggingface.co/VivekSai07/xvla-franka-b2-distractors-50000); [archive details](HUGGING_FACE_ARTIFACTS.md#b2-distractors).
 
 **Headline — B2: distractor cubes had no detectable effect on success; more training helped a lot;
 most failures are release precision, not perception.** X-VLA trained 50,000 updates on
@@ -133,6 +143,8 @@ Open and **unexplained**: failures concentrate in the *familiar* arrangement (11
 relying on it.
 
 ## Prior status (2026-09-26)
+
+HF: [dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-b1-language-200); [X-VLA checkpoint 33,400](https://huggingface.co/VivekSai07/xvla-franka-b1-language); [archive details](HUGGING_FACE_ARTIFACTS.md#b1-language-grounding).
 
 **Headline — B1 shows the trained policy reads the instruction, not the cube's position.** The
 2×2 factorial dataset (instruction × colour/region arrangement) was designed to break the exact
@@ -191,6 +203,8 @@ issues resolved along the way (five single-task assumptions, the red-on-green cu
 infeasible layout, and two inherited resource guards).
 
 ## Prior status (2026-09-24)
+
+HF: [dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-broad-workspace-200); [X-VLA checkpoint 16,700](https://huggingface.co/VivekSai07/xvla-franka-broad-workspace); [archive details](HUGGING_FACE_ARTIFACTS.md#broad-workspace-matched-exposure).
 
 **Headline — matched exposure took X-VLA from 68.1% to 86.1% on the broad holdout.** The 0.50-epoch
 run was undertrained, as suspected. Retraining on the identical sealed data at 1.67 epochs
@@ -457,6 +471,10 @@ local-varied checkpoints score 2.8% on the identical broad holdout.
 ---
 
 ## Datasets & training runs
+
+Fixed-layout downloads: [dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-fixed-layout-24), [SmolVLA](https://huggingface.co/VivekSai07/smolvla-franka-stacking-fixed-layout), [X-VLA](https://huggingface.co/VivekSai07/xvla-franka-stacking-fixed-layout).
+Local-varied downloads: [dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-local-varied-60) and [SmolVLA](https://huggingface.co/VivekSai07/smolvla-franka-stacking-local-varied); no corresponding X-VLA upload was found.
+The broad-workspace HF model is the long/matched-exposure run; the short X-VLA and SmolVLA runs have no confirmed model uploads.
 
 | Package | Purpose | Episodes | Status |
 |---|---|---|---|

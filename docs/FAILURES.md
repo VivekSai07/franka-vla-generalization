@@ -4,6 +4,9 @@ Every failure that cost real time, with the fix and the commit. The actionable
 pre-launch version is the checklist in
 [.github/skills/launching-a-run/SKILL.md](../.github/skills/launching-a-run/SKILL.md).
 
+Published datasets/checkpoints for these experiments: [HF artifact index](HUGGING_FACE_ARTIFACTS.md).
+Hash-bound READMEs and historical reports are linked from that index without changing their bytes.
+
 ## Failures we hit (and what we learned)
 
 1. **Expert failure counted as stop** — first broad_workspace run halted at 52/200 because a failed expert bubbled up as a hard error. Fix: wrap in `ExpertRejection`, bill to rejection budget (`57975c5`).

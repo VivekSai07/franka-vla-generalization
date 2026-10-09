@@ -18,8 +18,9 @@ robosuite (P0, the scene and a scripted expert, passed its gate on 2026-10-05; s
 [docs/PROPS_P0_RERUN_20261005.md](docs/PROPS_P0_RERUN_20261005.md); the P1 instruction-sorting dataset,
 540 episodes, collected and sealed 2026-10-07, see [docs/PROPS_P1_COLLECTION_20261007.md](docs/PROPS_P1_COLLECTION_20261007.md);
 trained and evaluated 2026-10-09 — confirm 100% (20/20), report 75% (60/80) on checkpoint 126,900,
-see [docs/PROPS_P1_EVALUATION_20261009.md](docs/PROPS_P1_EVALUATION_20261009.md)). See [README.md](README.md) for results and
-[TODO.md](TODO.md) for what is open.
+see [docs/PROPS_P1_EVALUATION_20261009.md](docs/PROPS_P1_EVALUATION_20261009.md)). See [README.md](README.md) for results,
+[TODO.md](TODO.md) for what is open, and [HF artifacts](docs/HUGGING_FACE_ARTIFACTS.md)
+for the exact published datasets/checkpoints and re-evaluation dependencies.
 
 ## Layout
 

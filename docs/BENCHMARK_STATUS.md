@@ -1,5 +1,22 @@
 # Franka benchmark: start here
 
+## HF publication and dataset-link update - 2026-10-09
+
+Props P1 is now published from the verified Windows bundle: [dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-props-p1-540) and
+[model (root 126,900; alternate 88,830)](https://huggingface.co/VivekSai07/xvla-franka-props-p1-126900) (both private).
+The model archive includes the runtime/tokenizer, code snapshot, evaluation evidence and
+bundle reconstruction/verifier helpers. Publication verification did not repeat GPU rollouts.
+
+B3 publication completed 2026-10-06: [dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-b3-robosuite-560) and [model](https://huggingface.co/VivekSai07/xvla-franka-b3-robosuite-124800).
+The original B3 portability gaps remain documented; at this check only its model is private.
+B2's 153 missing dataset metadata files and the legacy datasets' empty default branches/cards
+were repaired on 2026-10-09. B2's model evidence archive still has the earlier recorded gaps.
+
+[Current HF artifact map](HUGGING_FACE_ARTIFACTS.md) links all published stages to their
+historical reports, including the fixed-layout and local-varied repositories that now exist
+after the earlier upload blockers. The entries below retain the history at their original dates.
+
+
 ## Props P1 trained and evaluated: confirm 100% (20/20), report 75% (60/80) — 2026-10-09
 
 `experiments/xvla_props_p1/` trained X-VLA for 126,900 updates (5.0 epochs) on the sealed P1

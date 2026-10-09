@@ -1,5 +1,11 @@
 # X-VLA evaluation on the props P1 reserved layouts
 
+Published artifacts: [P1 dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-props-p1-540) and
+[X-VLA root step 126,900](https://huggingface.co/VivekSai07/xvla-franka-props-p1-126900); alternate [88,830](https://huggingface.co/VivekSai07/xvla-franka-props-p1-126900/tree/bfc9e062d71e77a6e9d8358e576f5a0ed4609aef/checkpoints/step_088830).
+Use the [P1 artifact/bundle instructions](../../docs/HUGGING_FACE_ARTIFACTS.md#props-p1-instruction-sorting)
+to reconstruct the HF archive. Bundle re-evaluation uses the supplied wrapper; the
+original evaluator below still requires its original run layout and checks.
+
 Evaluation package for props P1: screen -> report -> confirm a trained checkpoint on the 80
 reserved layouts from `outputs/props_p1_data/props_p1_20261006/plan.json` (never executed by the
 collector). Scene, success rule and object geometry are imported unchanged from the accepted

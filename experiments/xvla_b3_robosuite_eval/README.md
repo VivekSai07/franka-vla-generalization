@@ -1,5 +1,11 @@
 # X-VLA B3 evaluation (robosuite scene)
 
+Published artifacts: [B3 dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-b3-robosuite-560) and
+[X-VLA root step 124,800](https://huggingface.co/VivekSai07/xvla-franka-b3-robosuite-124800); alternate [156,000](https://huggingface.co/VivekSai07/xvla-franka-b3-robosuite-124800/tree/a71a75c988c3915777b8ccaf80482e112881f4d0/checkpoints/step_156000).
+[HF artifact details](../../docs/HUGGING_FACE_ARTIFACTS.md#b3-robosuite-cubes) record publication
+and the tokenizer/evaluator portability gaps. Downloading two checkpoints alone does
+not satisfy this evaluator's original complete-training-run checks.
+
 Measures a B3-trained X-VLA checkpoint in the robosuite scene on the 60 reserved layouts sealed with
 the B3 dataset, and produces the read-outs spec section 4 fixed in advance. Plan:
 [docs/superpowers/plans/2026-10-03-b3-xvla-evaluation.md](../../docs/superpowers/plans/2026-10-03-b3-xvla-evaluation.md).

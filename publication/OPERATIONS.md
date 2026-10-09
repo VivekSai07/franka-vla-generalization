@@ -1,5 +1,11 @@
 # Baseline publication operations
 
+**Current artifact links (2026-10-09):** [fixed-layout dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-fixed-layout-24),
+[SmolVLA model](https://huggingface.co/VivekSai07/smolvla-franka-stacking-fixed-layout), [X-VLA model](https://huggingface.co/VivekSai07/xvla-franka-stacking-fixed-layout).
+These repositories were published separately after the historical HTTP 407 blocker
+described below. The old publisher's `-v1` target allowlist remains unchanged; it is
+not the naming map for today's downloads. See [HF artifacts](../docs/HUGGING_FACE_ARTIFACTS.md).
+
 This is the remote-operations addendum to [README.md](README.md), whose offline
 packager/loader/verification tools remain unchanged. The earlier W&B attempt
 blocked at `personal_identity_check`; the latest attempt passed authentication and

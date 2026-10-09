@@ -1,16 +1,20 @@
 # SmolVLA / X-VLA Franka TODO
 
-## Where things stand (2026-10-05)
+## Where things stand (2026-10-09)
 
 - **The cube programme is closed.** B3 — four colours with two held-out instruction pairs, 0–2
   distractors, edge positions, collected in the robosuite scene — was the last cube experiment
   (user, 2026-10-02). Best checkpoint (step 124,800): about 85% overall and about 75% with
   distractors on reserved layouts; held-out colour pairs as good as trained ones. Results arc:
   [docs/RESULTS.md](docs/RESULTS.md).
-- **B3 published (2026-10-06)** as two private Hugging Face repos (dataset + model, steps 124,800 and
-  156,000); evaluation portability was not covered, see the B3 section.
-- **Props P1 bundle staged (2026-10-09)** at `outputs/downloads_20261009/props_p1/` (self-contained:
-  runtime, code snapshot, re-evaluation script tested in a clean container); transferred to Windows 2026-10-09.
+- **B3 published (2026-10-06)**: [dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-b3-robosuite-560) and
+  [model (steps 124,800 and 156,000)](https://huggingface.co/VivekSai07/xvla-franka-b3-robosuite-124800).
+  Created private; at the 2026-10-09 check the dataset is public and the model private.
+  Evaluation portability was not covered; see the B3 section and [artifact index](docs/HUGGING_FACE_ARTIFACTS.md).
+- **Props P1 published from Windows (2026-10-09)**: [dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-props-p1-540) and
+  [model (root 126,900; alternate 88,830)](https://huggingface.co/VivekSai07/xvla-franka-props-p1-126900) (both private).
+  Staged at `outputs/downloads_20261009/props_p1/`, with runtime, code snapshot and
+  clean-container-tested re-evaluation wrapper; [download/reconstruction details](docs/HUGGING_FACE_ARTIFACTS.md#props-p1-instruction-sorting).
 - **Props P0 is GO (re-run 2026-10-05): 283/288 = 98.3% against 95%** (robosuite image, scripted, branch
   `feat/props-p0`, not merged). The first run failed (164/300) on two errors in the spec, not in the expert: success
   required the centre below the wall (impossible for a tall object standing in the bin) and the start region began
@@ -31,7 +35,7 @@
   *(closed 2026-10-05, not pursued)* and kept for their reasoning.
 
 Live plan is below. The original `docker-compose` + `franka_libero_stacking_v1/v2` work is
-preserved as an archive at the bottom; see [README](README.md) and
+preserved as an archive at the bottom; see [HF artifact links](docs/HUGGING_FACE_ARTIFACTS.md), [README](README.md) and
 [docs/BENCHMARK_STATUS.md](docs/BENCHMARK_STATUS.md) for current status.
 
 ---
@@ -299,8 +303,13 @@ attributable. Options when it gets its own phase, each with different expert imp
       `C:\d drive\RTX trained models\downloads_20261001\b2_distractor`. All six
       `model.safetensors` matched `checkpoint_result.json` `model_sha256`; `seal.json`
       is `b6cfff3f...0c12340`. RTX originals not deleted.
-- [ ] Publish that verified copy to Hugging Face after the go-ahead. The Windows check
-      read `seal.json`; it did not re-derive the dataset fingerprint from `dataset/`.
+- [x] **B2 HF dataset and checkpoint repositories published (verified 2026-10-09):**
+      [dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-b2-distractors-200) and [model (root 50,000)](https://huggingface.co/VivekSai07/xvla-franka-b2-distractors-50000).
+      The dataset's 153 missing metadata files were restored from Windows on 2026-10-09.
+      The original transfer check read `seal.json`; it did not re-derive the dataset fingerprint.
+- [ ] Complete the B2 evaluation/training archive: the 2026-10-06 Windows audit found
+      1,065 missing model-repo files despite all six checkpoint weights matching; this
+      documentation pass has not uploaded them. See [archive gaps](docs/HUGGING_FACE_ARTIFACTS.md#b2-distractors).
 
 **Three spec errors were corrected before implementation** (see the spec's *Corrections* section):
 the floor-colour prerequisite was withdrawn as both a no-op and seal-breaking; "16 episodes per
@@ -360,7 +369,7 @@ Two-phase project. User accepted the one-variable-per-run attribution trade-off:
 - [x] ~~Re-think the B3 axis list before designing Phase 2~~ (user, 2026-10-02) — done in the spec above; kept for the reasoning. The list below was written before Phase 1 and before the sim2sim result. Inputs that change it: the ≤ 1.2 cm gate conflicts with the expert's own jitter (item a); the scene change is itself a large visual axis; the sim2sim result will say how much of B2's capability survives it.
       Idea to evaluate there (user): a larger cube, still within the 8 cm finger opening, to make placement more forgiving. Notes for that discussion: the in-hand offset comes from jitter along the pad surface, which a larger cube does not remove; a wider cube tips later, so the physical tolerance grows with the edge length (B2 measured the cliff at half the 4.2 cm edge); but `stack_metrics`' 2 cm xy window is a fixed constant in shared code, so the scored tolerance does not grow unless a new metric is defined; and a wider cube leaves less finger clearance on approach.
 - Superseded by the 2026-10-03 spec above (kept as the original sketch): **Phase 2 — B3 combined-axis collection**, designed only after Phase 1 passes. Will layer: tighter release precision (expert gate ≤ 1.2 cm), harder distractors (reduced clearance / in the carry path), full colour randomisation, extra demonstrations near the acquisition-weak `054`/`048` pick regions, and a floor/prop change. Horizon likely 75-100 k updates.
-- [x] **Publish B3 steps 124,800 and 156,000** (user, 2026-10-05; done 2026-10-06: copied to Windows byte-identical, published as private HF repos `VivekSai07/franka-panda-cube-stacking-b3-robosuite-560` and `VivekSai07/xvla-franka-b3-robosuite-124800`, 5,010 files hash-verified on the Windows side; tokenizer path and external evaluation code left as documented portability gaps): staged and hash-verified at `outputs/downloads_20261005/b3_robosuite/` (zero extra disk); copy to Windows, verify the two hashes, upload as a private model repo — commands in the staging `README.md`, record in [docs/B3_PUBLICATION_20261005.md](docs/B3_PUBLICATION_20261005.md). Keep all RTX originals.
+- [x] **Publish B3 steps 124,800 and 156,000** (user, 2026-10-05; done 2026-10-06: copied to Windows byte-identical, published as private HF repos [dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-b3-robosuite-560) and [model](https://huggingface.co/VivekSai07/xvla-franka-b3-robosuite-124800), 5,010 files hash-verified on the Windows side; tokenizer path and external evaluation code left as documented portability gaps): staged and hash-verified at `outputs/downloads_20261005/b3_robosuite/` (zero extra disk); copy to Windows, verify the two hashes, upload as a private model repo — commands in the staging `README.md`, record in [docs/B3_PUBLICATION_20261005.md](docs/B3_PUBLICATION_20261005.md). Keep all RTX originals.
 - [ ] **Next project — robosuite's built-in props / real-life objects** (user, 2026-10-02; B3 now has its measured result, so this is next: brainstorm → spec → plan). Move from cubes to robosuite's object library (cans, bottles, boxes, cereal, bread, milk; `robosuite.models.objects`). This is a jump, not an increment: the scripted expert assumes a cube it can grasp top-down at a fixed height and scores a cube-on-cube stack, so it needs new grasp strategies per object, a new task definition and success metric, and instructions that name objects.
 - **Props P1 dataset SEALED (2026-10-07): 540/540 episodes**, fingerprint `86e3aadb…`, 7 rejections of 547 (all lemon), 2 substitutions, 0 held-out pairs collected. Seal, cell balance and reserved tiers independently re-verified. Report: [docs/PROPS_P1_COLLECTION_20261007.md](docs/PROPS_P1_COLLECTION_20261007.md). **Trained and evaluated 2026-10-09: confirm 100% (20/20), report 75% (60/80), checkpoint 126,900 — [docs/PROPS_P1_EVALUATION_20261009.md](docs/PROPS_P1_EVALUATION_20261009.md).**
 - **Props P0 PASSED (2026-10-05): 283/288 = 98.3%** after two spec amendments I had got wrong (success by lowest point, not centre; start region clear of the arm's working envelope). Report: [docs/PROPS_P0_RERUN_20261005.md](docs/PROPS_P0_RERUN_20261005.md). **Next: P1 collection — [docs/superpowers/plans/2026-10-06-props-p1-collection.md](docs/superpowers/plans/2026-10-06-props-p1-collection.md)** (amend region+yaw, re-confirm P0, build the collector, pilot, then 540 episodes ≈ 6 h). Branch `feat/props-p0`, not merged.

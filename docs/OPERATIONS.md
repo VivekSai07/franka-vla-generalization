@@ -8,6 +8,14 @@ Every experiment lives in `experiments/<name>/` as a self-contained package with
 
 ---
 
+## Download published artifacts
+
+Use the [HF artifact index](HUGGING_FACE_ARTIFACTS.md) for exact dataset/model links,
+checkpoint directories and commit-pinned downloads. P1 includes runtime/source and
+bundle reconstruction helpers; B3 and earlier archives retain the documented gaps.
+Fetching a snapshot does not create the original outputs/ directory layout or satisfy
+a source/dataset binding by itself. Follow the linked model card and verify the bundle.
+
 ## Our Docker images on the RTX machine
 
 The machine is shared; about thirty other images on it belong to other people and projects.
@@ -321,14 +329,15 @@ machine — the 2026-09-26 one covers both the minimal tier and the full checkpo
 for B1 and broad-workspace (~50 GB, zero extra disk here); read the `README.md` inside each
 before touching originals. `outputs/downloads_20261005/b3_robosuite/` (2026-10-05) stages B3 steps
 124,800 and 156,000; it was copied to Windows (byte-identical) and published as two **private** Hugging Face
-repos on 2026-10-06 (`VivekSai07/franka-panda-cube-stacking-b3-robosuite-560`, `VivekSai07/xvla-franka-b3-robosuite-124800`;
+repos on 2026-10-06 ([dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-b3-robosuite-560), [model](https://huggingface.co/VivekSai07/xvla-franka-b3-robosuite-124800);
 the publication record is on the Windows side). A Windows audit then found the B3 bundle not portable on its own:
 the checkpoints name the tokenizer by its RTX path and the evaluation code was outside the bundle.
 `outputs/downloads_20261009/props_p1/` (2026-10-09) stages props P1 (checkpoints 126,900 and 88,830)
 and closes those gaps: it carries the base model and tokenizer (`runtime/`), a source snapshot (`code/`),
 `reevaluate/bundle_evaluate.py` and a stdlib-only `reevaluate/verify_bundle.py`. A smoke re-evaluation run
 with only the bundle mounted reproduced the original trials bit for bit. Transferred to Windows on
-2026-10-09 (user). Its
+2026-10-09 (user), then published as [P1 dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-props-p1-540) and
+[P1 model](https://huggingface.co/VivekSai07/xvla-franka-props-p1-126900) (both private). Its
 `evaluation_browse/` and `outputs/xvla_props_p1_eval_browse/` are hardlinked views of the P1 trials,
 split into held-out and trained, with object, bin, side and outcome in the folder names. Browse them
 there, but never rename inside `outputs/xvla_props_p1_eval/`: `evaluate.py` finds trials by

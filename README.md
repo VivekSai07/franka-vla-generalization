@@ -7,6 +7,23 @@ Everything runs inside one of two digest-pinned Docker images — no conda, no h
 
 The central question: **how much and what kind of data does a VLA need to generalise spatially?**
 
+## Published datasets and checkpoints
+
+| Experiment | Dataset | Published checkpoint |
+|---|---|---|
+| Fixed-layout baseline | [24 episodes](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-fixed-layout-24) | [SmolVLA step 5,000](https://huggingface.co/VivekSai07/smolvla-franka-stacking-fixed-layout); [X-VLA step 5,000](https://huggingface.co/VivekSai07/xvla-franka-stacking-fixed-layout) |
+| Local-varied | [60 episodes](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-local-varied-60) | [SmolVLA step 5,000](https://huggingface.co/VivekSai07/smolvla-franka-stacking-local-varied) |
+| Broad-workspace, matched exposure | [200 episodes](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-broad-workspace-200) | [X-VLA step 16,700](https://huggingface.co/VivekSai07/xvla-franka-broad-workspace) |
+| B1 language grounding | [200 episodes](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-b1-language-200) | [X-VLA step 33,400](https://huggingface.co/VivekSai07/xvla-franka-b1-language) |
+| B2 distractors | [200 episodes](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-b2-distractors-200) | [X-VLA step 50,000](https://huggingface.co/VivekSai07/xvla-franka-b2-distractors-50000) |
+| B3 robosuite cubes | [560 episodes](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-b3-robosuite-560) | [X-VLA step 124,800](https://huggingface.co/VivekSai07/xvla-franka-b3-robosuite-124800) |
+| Props P1 instruction sorting | [540 episodes](https://huggingface.co/datasets/VivekSai07/franka-panda-props-p1-540) | [X-VLA step 126,900](https://huggingface.co/VivekSai07/xvla-franka-props-p1-126900) |
+
+The [HF artifact index](docs/HUGGING_FACE_ARTIFACTS.md) lists earlier checkpoint directories,
+exact revision pins, access, historical reports, and re-evaluation prerequisites.
+B3 and P1 models are private; P1 dataset is private. No X-VLA local-varied or SmolVLA
+broad-workspace model publication was found.
+
 ---
 
 ## Latest (2026-10-05): B3 in the robosuite scene — the last cube experiment
@@ -110,6 +127,7 @@ Full numbers, protocols and confidence intervals: **[docs/RESULTS.md](docs/RESUL
 | run training / evaluation | [docs/OPERATIONS.md](docs/OPERATIONS.md) |
 | see the plan and what's next | [TODO.md](TODO.md) |
 | read the chronological log | [docs/BENCHMARK_STATUS.md](docs/BENCHMARK_STATUS.md) |
+| download datasets / model checkpoints | [docs/HUGGING_FACE_ARTIFACTS.md](docs/HUGGING_FACE_ARTIFACTS.md) |
 | find a dated report | [docs/INDEX.md](docs/INDEX.md) |
 | understand dataset design | [DATASET_DESIGN.md](DATASET_DESIGN.md) |
 | work on this as an agent | [AGENTS.md](AGENTS.md) → [.github/copilot-instructions.md](.github/copilot-instructions.md) |

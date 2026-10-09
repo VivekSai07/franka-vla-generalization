@@ -8,6 +8,7 @@ Kept current; read these first.
 |---|---|
 | [../README.md](../README.md) | entry point and navigation |
 | [../TODO.md](../TODO.md) | live plan, known debt (the pre-launch checklist is in `.github/skills/launching-a-run/SKILL.md`) |
+| [HUGGING_FACE_ARTIFACTS.md](HUGGING_FACE_ARTIFACTS.md) | published dataset/model links, checkpoint directories, revision pins, and archive gaps |
 | [RESULTS.md](RESULTS.md) | every benchmark number, with protocols |
 | [FAILURES.md](FAILURES.md) | failures, fixes, meta-lessons |
 | [OPERATIONS.md](OPERATIONS.md) | how to run things now |
@@ -64,3 +65,8 @@ later findings — add a new one and update the live documents.
 `INSTRUCTION_AUDIT_20260917.md` · `CPU_REPORT_ARCHIVE_20260918.md` ·
 `OVERNIGHT_PILOT_20260915.md` · `PILOT_PREPARATION_20260915.md` ·
 `FIXED_LAYOUT_LAUNCH_20260918.md` · `RTC_*.md`
+
+## HF documentation audit
+
+[HF_LINK_AUDIT_20261009.md](HF_LINK_AUDIT_20261009.md) records the reviewed documentation,
+exact link additions, verified HF names, and preserved hash-bound/historical documents.

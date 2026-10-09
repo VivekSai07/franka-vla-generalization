@@ -1,5 +1,9 @@
 # robosuite_sim2sim
 
+HF policy: [B2 X-VLA step 50,000](https://huggingface.co/VivekSai07/xvla-franka-b2-distractors-50000); training data: [B2 dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-b2-distractors-200).
+This protocol reuses B2 weights; no separate robosuite-trained model is implied.
+See [HF artifact details](../../docs/HUGGING_FACE_ARTIFACTS.md#b2-distractors).
+
 Rolls a policy trained on the MuJoCo scene out on the robosuite scene, with the MuJoCo scene as a
 paired control. First use and result: [docs/ROBOSUITE_SIM2SIM_20261002.md](../../docs/ROBOSUITE_SIM2SIM_20261002.md)
 (B2 step 50,000: 19/20 on MuJoCo, 3/20 on robosuite).

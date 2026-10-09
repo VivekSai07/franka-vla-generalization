@@ -1,5 +1,9 @@
 # B2 evaluation analysis
 
+The analyzed policy is [X-VLA B2](https://huggingface.co/VivekSai07/xvla-franka-b2-distractors-50000), trained on the
+[B2 dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-b2-distractors-200). See the [artifact index](../../../docs/HUGGING_FACE_ARTIFACTS.md#b2-distractors)
+for earlier checkpoints and archive gaps; keep the report's selection caveats.
+
 Scripts behind [docs/B2_DISTRACTOR_EVALUATION_20260930.md](../../../docs/B2_DISTRACTOR_EVALUATION_20260930.md),
 in run order. Each reads the evaluation outputs under
 `outputs/train/xvla_franka_stacking_b2_distractors_v1_20260928/` and writes to `/out`.

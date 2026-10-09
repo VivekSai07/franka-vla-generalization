@@ -1,5 +1,11 @@
 # Dataset Design: franka_libero_stacking_v2
 
+**Historical design rationale.** The current archived uploads are
+[v1](https://huggingface.co/datasets/VivekSai07/franka_libero_stacking_v1) and [v2](https://huggingface.co/datasets/VivekSai07/franka_libero_stacking_v2);
+both snapshots contain 50 episodes and one task. The 300-episode, 12-instruction
+changes described below are design intentions, not the verified contents of the
+current v2 upload. See [legacy artifact mapping](docs/HUGGING_FACE_ARTIFACTS.md#legacy-datasets-and-model).
+
 ## What went wrong with v1 — and why
 
 After fine-tuning SmolVLA on `franka_libero_stacking_v1` and running inference,
