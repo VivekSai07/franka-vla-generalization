@@ -33,8 +33,17 @@ them in the admission image.
 `experiments/xvla_b3_robosuite/` (B3 training) is bound by its own `SOURCE_FILES`, like every
 training package; the B3 evaluation imports that contract, so edit neither.
 
+Hash-bound by the props P1 seal (2026-10-07): `experiments/props_p1_data/` (a real `provenance()`:
+every `.py` in the package incl. tests, its README) and, through it, `experiments/props_scene/*.py`
+(the accepted P0 package, frozen for this collection's lifetime), the shared modules it imports,
+`src/`, and the P1 spec and plan. Editing any of them invalidates the seal; fork instead.
+`plan.py` and `contract.py` import no simulator so training can import them in the admission image.
+
 Not hash-bound: `experiments/robosuite_sim2sim/` (sim2sim rollouts), `experiments/xvla_b3_robosuite_eval/`
-(B3 evaluation) and the README of `experiments/robosuite_scene/` (scene bring-up). No contract lists them; the bring-up `seal.json` is
+(B3 evaluation), `experiments/props_scene/` (props P0: scene, expert, 300-attempt gate; robosuite image; not
+hash-bound on its own, but frozen and hashed through the props P1 seal above — treat it as bound too
+while `props_p1_data` exists) and the README of `experiments/robosuite_scene/` (scene bring-up). No
+contract lists `robosuite_scene`; the bring-up `seal.json` is
 a file fingerprint only. `robosuite_scene` runs only in the robosuite image
 (`contract.IMAGE`, MuJoCo 3.4.0) — except `test_r1_image`, `test_seal` and `test_expert_fork`, which
 run in the admission image — and its tests are run by module name, not by `discover`. It imports

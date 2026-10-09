@@ -1,5 +1,55 @@
 # Franka benchmark: start here
 
+## Props P1 trained and evaluated: confirm 100% (20/20), report 75% (60/80) — 2026-10-09
+
+`experiments/xvla_props_p1/` trained X-VLA for 126,900 updates (5.0 epochs) on the sealed P1
+dataset; `experiments/xvla_props_p1_eval/` screened all 6 non-trivial checkpoints (20 layouts
+each), reported all 6 on 80 trials each (a user-directed, documented deviation from the original
+tie-rule-only plan — see the eval report), and confirmed the winner once on 20 untouched layouts.
+**Checkpoint 126,900 won the pre-committed tie-break (exactly tied with 88,830 at 75% on report;
+rule favoured the later checkpoint) and scored 100% (20/20) on confirm.** Zero `wrong_bin` outcomes
+across all 480 report trials on every checkpoint — the policy never confuses the two bin colours;
+every failure is a motor/timing problem. Held-out pairs (`milk→blue`, `bread→orange`) perform at or
+above trained pairs on every checkpoint. One classifier bug found by video inspection and fixed
+before these numbers were final (a correct-bin rest was mislabelled `dropped_outside`); the 900-tick
+rollout cap was evidence-checked and left unchanged (recorded as a limitation, not retroactively
+loosened). Reports: [PROPS_P1_TRAINING_20261009.md](PROPS_P1_TRAINING_20261009.md),
+[PROPS_P1_EVALUATION_20261009.md](PROPS_P1_EVALUATION_20261009.md).
+
+## Props P1 dataset collected and sealed: 540/540 episodes — 2026-10-07
+
+Not a policy result. `experiments/props_p1_data/` (branch `feat/props-p0`, robosuite image, now hash-bound/sealed)
+collected the instruction-sorting dataset: one object, two bins swapping sides,
+`put the <object> in the <colour> bin`. **540/540 episodes admitted** (480 train, 60 validation), 7 of 547
+attempts rejected (all lemon, the P0 success gate), 2 start-pose substitutions, seal fingerprint verified
+independently in a second process. `milk→blue` and `bread→orange` held out of training entirely (0 collected).
+True wall-clock 9h38m (the plan's "~6 h" estimate only timed the scripted attempt, not the per-episode video
+encode and commit). Report: [PROPS_P1_COLLECTION_20261007.md](PROPS_P1_COLLECTION_20261007.md). Trained and
+evaluated 2026-10-09 (above).
+
+## Props P0 re-run against the amended spec: GO, 283/288 = 98.3% — 2026-10-05
+
+Not a policy result. The first run (below) failed because of two errors in the spec; both were amended
+(success by the object's lowest point below the wall top; start region x ≥ 0.27, no near-base stratum, 288 attempts)
+and the gate re-run on the same expert plus the square-footprint fix. **283/288 (98.3%)** against 95%: can, bread, cereal
+48/48, milk 47/48, bottle 46/48, lemon 46/48; target slots 143/144 and 140/144; replay exact on all 288; determinism 12/12
+in the gate's recheck and 12/12 on the other bin arrangement. Four of the five failures start at radius 0.278–0.283 m, inside
+the reach band the region still admits; beyond 0.285 m, 274/275. Report: [PROPS_P0_RERUN_20261005.md](PROPS_P0_RERUN_20261005.md).
+Next: P1 training and evaluation design ([TODO.md](../TODO.md)).
+
+## Props P0 (two-bin scene and scripted expert): no-go, 164/300 = 54.7% — 2026-10-05 (first run, superseded by the re-run above)
+
+Not a policy result. `experiments/props_scene/` (branch `feat/props-p0`, robosuite image, no contract, not merged)
+builds the two-bin scene with six robosuite objects and a scripted expert that sorts any of them into either bin.
+300 scripted attempts against the 95% gate: **164 (54.7%)**; can 45/50, bread 45, lemon 39, milk 20, bottle 14,
+cereal 1; target slots 85/150 and 79/150; every replay exact; 12 of 12 re-executions byte-equal. Two causes the
+plan's tuning list cannot reach: the written success definition (centre below the 7 cm wall) cannot be met by a
+tall object standing in the bin (77 of 136 failures), and the start region within 0.285 m of the base is not
+reached along the expert's straight-line approach (58). Outside the verdict, 241/300 end resting in the bin and 198 of
+the 199 attempts starting 0.285 m or more from the base do. No tuning change was adopted; robosuite's OSC scored
+148/300 on the same attempts. Report: [PROPS_P0_20261005.md](PROPS_P0_20261005.md); the two causes were then
+resolved by amending the spec (above).
+
 ## Cube programme closed; B3 reviewed, merged and staged for publication — 2026-10-05
 
 An independent check of the B3 evaluation reproduced every headline figure from the raw results and

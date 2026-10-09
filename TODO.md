@@ -10,6 +10,22 @@
 - **Open now:** publish B3 steps 124,800 and 156,000 (staged; Windows transfer and the Hugging Face
   upload are the user's, see the B3 section); then the **props project** and its controller
   decision (end of the B3 section).
+- **Props P0 is GO (re-run 2026-10-05): 283/288 = 98.3% against 95%** (robosuite image, scripted, branch
+  `feat/props-p0`, not merged). The first run failed (164/300) on two errors in the spec, not in the expert: success
+  required the centre below the wall (impossible for a tall object standing in the bin) and the start region began
+  inside the arm's working envelope. Both are amended (success by lowest point; start x from 0.27; no near-base
+  stratum; 288 attempts). Every object at least 95.8%, both slots at least 97.2%, replay exact, determinism 24/24.
+  Reports: [docs/PROPS_P0_RERUN_20261005.md](docs/PROPS_P0_RERUN_20261005.md) (the pass) and
+  [docs/PROPS_P0_20261005.md](docs/PROPS_P0_20261005.md) (the first run, kept as the record).
+- **Props P1 trained and evaluated (2026-10-09): confirm 100% (20/20), report 75% (60/80) on checkpoint 126,900** (the final checkpoint; tied with 88,830 on report, later checkpoint wins the pre-committed tie-break). Zero wrong-bin outcomes across 480 report trials on all 6 checkpoints; held-out pairs perform at or above trained pairs throughout. Report: [docs/PROPS_P1_EVALUATION_20261009.md](docs/PROPS_P1_EVALUATION_20261009.md), training: [docs/PROPS_P1_TRAINING_20261009.md](docs/PROPS_P1_TRAINING_20261009.md). Branch `feat/props-p0`.
+- **Props P1 dataset collected and sealed (2026-10-07): 540/540 episodes, 7 rejections (all lemon), 2
+  substitutions, seal verified independently.** One object, two bins swapping sides,
+  `put the <object> in the <colour> bin`; `milk→blue` and `bread→orange` held out of training (0
+  collected, confirmed). True wall-clock 9h38m — the plan's "~6 h" estimate only timed the scripted
+  attempt, not the per-episode video encode/commit (~24 s/episode more); corrected here for future sizing.
+  Report: [docs/PROPS_P1_COLLECTION_20261007.md](docs/PROPS_P1_COLLECTION_20261007.md). Package
+  `experiments/props_p1_data/` is now hash-bound (sealed) — fork, do not edit. **Next: design P1 training
+  and evaluation.** Branch `feat/props-p0`, not merged.
 - Items from Phases A and B that the closed cube programme made moot are ticked with
   *(closed 2026-10-05, not pursued)* and kept for their reasoning.
 
@@ -345,27 +361,41 @@ Two-phase project. User accepted the one-variable-per-run attribution trade-off:
 - Superseded by the 2026-10-03 spec above (kept as the original sketch): **Phase 2 — B3 combined-axis collection**, designed only after Phase 1 passes. Will layer: tighter release precision (expert gate ≤ 1.2 cm), harder distractors (reduced clearance / in the carry path), full colour randomisation, extra demonstrations near the acquisition-weak `054`/`048` pick regions, and a floor/prop change. Horizon likely 75-100 k updates.
 - [ ] **Publish B3 steps 124,800 and 156,000** (user, 2026-10-05): staged and hash-verified at `outputs/downloads_20261005/b3_robosuite/` (zero extra disk); copy to Windows, verify the two hashes, upload as a private model repo — commands in the staging `README.md`, record in [docs/B3_PUBLICATION_20261005.md](docs/B3_PUBLICATION_20261005.md). Keep all RTX originals.
 - [ ] **Next project — robosuite's built-in props / real-life objects** (user, 2026-10-02; B3 now has its measured result, so this is next: brainstorm → spec → plan). Move from cubes to robosuite's object library (cans, bottles, boxes, cereal, bread, milk; `robosuite.models.objects`). This is a jump, not an increment: the scripted expert assumes a cube it can grasp top-down at a fixed height and scores a cube-on-cube stack, so it needs new grasp strategies per object, a new task definition and success metric, and instructions that name objects.
-- **Props P1 dataset SEALED (2026-10-07): 540/540 episodes**, fingerprint `86e3aadb…`, 7 rejections of 547 (all lemon), 2 substitutions, 0 held-out pairs collected. Seal, cell balance and reserved tiers independently re-verified. Report: [docs/PROPS_P1_COLLECTION_20261007.md](docs/PROPS_P1_COLLECTION_20261007.md). **Next: training + evaluation — [docs/superpowers/plans/2026-10-07-props-p1-training-eval.md](docs/superpowers/plans/2026-10-07-props-p1-training-eval.md)** (126,900 updates ≈ 30 h, then screen/report/confirm ≈ 6 h).
+- **Props P1 dataset SEALED (2026-10-07): 540/540 episodes**, fingerprint `86e3aadb…`, 7 rejections of 547 (all lemon), 2 substitutions, 0 held-out pairs collected. Seal, cell balance and reserved tiers independently re-verified. Report: [docs/PROPS_P1_COLLECTION_20261007.md](docs/PROPS_P1_COLLECTION_20261007.md). **Trained and evaluated 2026-10-09: confirm 100% (20/20), report 75% (60/80), checkpoint 126,900 — [docs/PROPS_P1_EVALUATION_20261009.md](docs/PROPS_P1_EVALUATION_20261009.md).**
 - **Props P0 PASSED (2026-10-05): 283/288 = 98.3%** after two spec amendments I had got wrong (success by lowest point, not centre; start region clear of the arm's working envelope). Report: [docs/PROPS_P0_RERUN_20261005.md](docs/PROPS_P0_RERUN_20261005.md). **Next: P1 collection — [docs/superpowers/plans/2026-10-06-props-p1-collection.md](docs/superpowers/plans/2026-10-06-props-p1-collection.md)** (amend region+yaw, re-confirm P0, build the collector, pilot, then 540 episodes ≈ 6 h). Branch `feat/props-p0`, not merged.
 - **Props roadmap (agreed direction, user 2026-10-05; each phase gets its own spec → plan → go/no-go):**
       Spec: [docs/superpowers/specs/2026-10-05-props-sorting-design.md](docs/superpowers/specs/2026-10-05-props-sorting-design.md). P0 plan: [docs/superpowers/plans/2026-10-05-props-p0-scene-expert.md](docs/superpowers/plans/2026-10-05-props-p0-scene-expert.md) (ends with a report and a handoff prompt). P1 bins are told apart by colour (blue / orange), not by side; they swap sides.
-      - **P0 — scene and expert bring-up (no policy).** Two-bin scene composed like `robosuite_scene`
+      - **P0 — scene and expert bring-up (no policy). GO 2026-10-05: 283/288 = 98.3%** after the spec amendments below (first run 164/300, no-go). Two-bin scene composed like `robosuite_scene`
         (table at z = 0, our two cameras), 4–6 robosuite objects with explicit masses, our joint-target
         IK expert extended with per-object grasp height and yaw-aligned grasps. Gate: the expert drops
         every object into either bin from random yaw, ≥ 95% over a few hundred scripted attempts,
         deterministic replay, yaw logged. The controller question is settled here cheaply: switch to
         OSC only if the IK expert cannot reach that rate.
-      - **P1 — instruction sorting, one object, no distractors.** "put the <object> in the <bin> bin";
-        bins swap sides every episode; some object × bin pairs held out. Small dataset, train, evaluate
-        held-out pairs and both bin arrangements. Gate: the policy beats a position-only shortcut on the
-        swapped arrangement.
+      - **P1 — instruction sorting, one object, no distractors. Dataset collected and sealed
+        2026-10-07: 540/540 episodes (480 train, 60 validation), 7 rejections (all lemon), 2
+        substitutions, true wall-clock 9h38m (the "~6 h" estimate only timed the scripted attempt, not
+        the per-episode video encode/commit).** Report: [docs/PROPS_P1_COLLECTION_20261007.md](docs/PROPS_P1_COLLECTION_20261007.md).
+        "put the <object> in the <bin> bin"; bins swap sides every episode; `milk→blue` and
+        `bread→orange` held out of training entirely (0 collected, confirmed). **Next: training and
+        evaluation design** — held-out pairs vs trained, the shortcut check (success by arrangement),
+        wrong-bin rate, checkpoint screen/report/confirm tiers (80 reserved layouts already drawn,
+        not yet screened for expert feasibility).
       - **P2 — instruction sorting with 1–2 distractor objects** (the main dataset, B3-sized). The
         policy must find the named object among others. Strata for the +y near-base corner; random yaw;
-        held-out pairs; several checkpoints + an untouched confirmation set.
+        held-out pairs; several checkpoints + an untouched confirmation set. *(P0 found the expert cannot
+        reach starts closer than about 0.285 m to the base; unless the approach path is rebuilt, P2's
+        layouts start at x ≥ 0.27 and the near-base corner is not tested.)*
       - **P3 — rule-based Food vs Drinks**, two visually distinct containers. First one object per
         episode with a fixed prompt; then held-out objects as a stretch test (zero-shot category from
         six objects is a long shot and is read as exploratory). Multi-object sequential sorting only
         after that.
+- **Props P0 result and its resolution (2026-10-05)** — package `experiments/props_scene/` on `feat/props-p0`
+  (robosuite image, no contract, not merged). First run, written spec: 164/300 = 54.7% no-go ([docs/PROPS_P0_20261005.md](docs/PROPS_P0_20261005.md)).
+  Decisions taken by the owner of the plan the same day, and what they gave ([docs/PROPS_P0_RERUN_20261005.md](docs/PROPS_P0_RERUN_20261005.md)):
+      1. **Success** is now: centre inside the bin in x and y, **lowest point** below the wall top, gripper open and clear, 30 ticks. Re-run: milk 47/48, bottle 46/48, cereal 48/48.
+      2. **Start region** is x ≥ 0.27 (was 0.22), no near-base stratum, 288 attempts. 4 of the 5 remaining failures start at radius 0.278–0.283 m, inside the reach band the region still admits (5.9% of its area); beyond 0.285 m: 274/275.
+      3. The square-footprint fix is accepted; centre = centre of mass; the cube's contact parameters are kept; OSC is dropped as a gate input (148/300 on the first run's attempts) and kept as evidence.
+      Open from the re-run: a lemon at y ≈ −0.12, yaw ≈ 80° fails repeatably with joint 4 not saturated (cause unknown); the gate's built-in determinism recheck only lands on one bin arrangement.
 - **Inputs for the props project, collected 2026-10-05** (read before its brainstorm):
       - *Carried over from B3, as questions to design in, not as more cube work:* (1) the +y side near
         the robot base is the policy's weak corner in both B2 and B3 — put a stratum of layouts there

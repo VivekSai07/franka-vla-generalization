@@ -1,0 +1,93 @@
+# props_scene
+
+Scene, scripted expert and gate for the props project (P0): robosuite's real-life objects sorted into
+two bins by our joint-target IK expert. No policy and no LeRobot dataset yet; the per-tick frames and
+actions use the repo's dataset schema (state 9 floats, action 8 floats, `front_cam` / `gripper_cam`
+512 x 512) so P1 can record with this expert unchanged.
+
+**Image:** robosuite 1.5.2 / MuJoCo 3.4.0 (`sha256:54d861aa...`) for everything that builds the scene.
+`test_constants.py`, `test_success.py` and `test_benchmark.py` import no robosuite and also run in the
+admission image. Numbers are not comparable with the sealed MuJoCo 3.13.0 pipeline.
+
+**Not hash-bound.** No contract, no seal, no `provenance()`. It imports sealed code read-only
+(`experiments/robosuite_scene`, `experiments/paired_demonstrations`, `experiments/pose_snapshot_v2`,
+`data_collection`, `src`) and edits none of it. Give it a contract before a result is reported as final.
+
+## Scene
+
+`scene.build_model(objects, blue_slot) -> (env, model)`, cached per prop set and arrangement. robosuite
+composes the table, Panda on the minimal mount, the props and `BinsTableArena`; `env.reset()` runs once,
+`xml_contract.apply_props_contract` rewrites the compiled XML to the repo's robot contract, and plain
+MuJoCo drives it (`env.step` raises). Two open bins, inner 0.22 x 0.22 m, walls 0.07 m high and
+0.01 m thick, floor 0.01 m, centred at (0.32, +/-0.33). `blue` is rgba `0.15 0.35 0.85`, `orange`
+`0.95 0.55 0.10`; either can occupy either slot (`blue_slot`). **Left is y > 0, from the robot's point of
+view; in `front_cam` +y is image-right**, so the `left` slot shows on the right of the picture.
+
+Props (`prop_<name>` bodies): can, bread, lemon, milk, bottle, cereal, with masses set explicitly
+(0.15, 0.05, 0.08, 0.20, 0.20, 0.15 kg) and the cube's contact parameters (`friction 1.2 0.005 0.0001`,
+`solref 0.002 1`, `solimp 0.9 0.95 0.001`, `margin 0.001`). `scene.reset(model, poses, home_jitter_deg)`
+puts them upright at (x, y, yaw), the arm at `Q_HOME` plus jitter, settles 0.2 s, draws no random numbers.
+
+## Expert
+
+`expert.PropsExpert(objects, blue_slot).run(initial_state, episode, sink, render=True)`. Phases, in
+seconds: approach 2.0, descend 1.5, close 1.0, lift 1.5, move 2.5, lower 1.5, open 1.0, retract 1.5,
+home 2.5. The hand yaw closes the fingers across the object's narrower horizontal side (round and
+square footprints keep the home yaw); the grasp point is `min(0.03, height/2)` below the top; the hand
+sits 0.105 m above it. The carry clears the wall top by 0.05 m, the release is with the object's bottom
+0.02 m over the wall top, and both targets are measured from the object in the hand. Jitter: home pose
++/-1 deg, targets 5 mm (seeded). The recorded float32 action is the command the simulator receives, so
+replaying actions is exact.
+
+## Success
+
+`metrics.in_bin` (amended 2026-10-05, [report](../../docs/PROPS_P0_RERUN_20261005.md)): the prop's centre (its body
+origin, the centre of mass) is inside the target bin's inner box in x and y, its **lowest point is below the wall
+top**, the gripper is open (`ctrl > 127`) and no finger touches it, for 30 consecutive ticks, and it still holds
+at the last tick of the episode (the end of the home phase). 900 ticks is the cap; an episode is about 450.
+The first rule required the centre below the wall top, which a 15 cm box standing in a 7 cm bin cannot meet.
+
+`metrics.placement` adds tilt, top height and floor contact as a diagnostic; it never enters the verdict.
+
+## Gate
+
+```bash
+python -m experiments.props_scene.benchmark --out /out/gate_<date> --shard K/6 [--resume]   # 6 containers
+python -m experiments.props_scene.benchmark --out /out/gate_<date> --recheck 12            # determinism
+python -m experiments.props_scene.benchmark --out /out/gate_<date> --summary
+```
+
+288 attempts: 6 objects x 2 target bins x 2 arrangements x 12 seeds, start x 0.27-0.40, |y| <= 0.12 (amended
+from 0.22: below about 0.285 m radius the expert's approach saturates joint 4; there is no near-base stratum).
+Start pose and yaw, home jitter and the expert seed derive from
+`sha256("props_p0_v1:20261005:<identity>")`. Go requires: overall >= 95%, every object >= 90%, both
+target slots >= 93%, every replay within 1e-3 of the recorded states and prop poses, and 12 re-executed
+attempts byte-equal in a second process. About 34 s an attempt with rendering (median over the first gate),
+so about 25 minutes on 6 shards. Results are one JSON line per attempt in `attempts_shard<K>of<N>.jsonl`.
+
+## Evidence tools (not part of the gate)
+
+All run in the robosuite image against a finished gate directory and never change the worktree.
+
+- `tuning_probe.py` re-runs attempts without rendering, in parallel, with constants overridden
+  (`GRASP_BELOW_TOP_M`, `LIFT_CLEARANCE_M`, `RELEASE_ABOVE_WALL_M`, `PHASE_DURATION_S`, `PROP_FRICTION`,
+  `APPROACH_HEIGHT_M`). With no override it reproduces the gate outcome for outcome (300 of 300 equal).
+  Use at most 30 workers: each holds a few GB.
+- `diagnose_attempt.py` replays one attempt and prints hand, target and joint-limit margin per phase.
+- `reach_study.py` is a numerical-IK study of how close a vertical hand can get at a given height.
+- `osc_comparison.py` drives the same attempts with robosuite's OSC_POSE controller (`env.step`, its own
+  physics): the plan's fallback comparison. It is not the expert and not a gate.
+- `contact_sheet.py` renders both cameras at the start of every phase for chosen attempts.
+
+Results and what they mean: [docs/PROPS_P0_RERUN_20261005.md](../../docs/PROPS_P0_RERUN_20261005.md) (the gate of
+record) and [docs/PROPS_P0_20261005.md](../../docs/PROPS_P0_20261005.md) (the first run, before the amendments).
+
+## Tests
+
+```bash
+run $NEW -m unittest experiments.props_scene.tests.test_scene      # also _geometry, _expert, _replay, _osc_comparison
+run $OLD -m unittest experiments.props_scene.tests.test_constants  # also _success, _benchmark
+```
+
+By module name, not `discover`. Check the printed test count: a run started right after a file was
+written has printed `Ran 0 tests ... OK`.

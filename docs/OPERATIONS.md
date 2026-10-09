@@ -16,8 +16,8 @@ no `docker system prune`).
 
 | local tag | image id | what it is | runs |
 |---|---|---|---|
-| `smolvla:rtc-offline` | `sha256:08de1e09…714abc` | the pinned (admission) image, MuJoCo 3.13.0 | everything sealed: collection, training, evaluation — including B3 **training** (`xvla_b3_robosuite`), which needs no simulator |
-| `vla-robosuite:1.5.2-mj3.4.0` | `sha256:54d861aa…ccf27e` | the image above + robosuite 1.5.2, MuJoCo 3.4.0 | everything that builds the robosuite scene: `robosuite_scene`, `robosuite_sim2sim`, `b3_robosuite_data` collection, `xvla_b3_robosuite_eval` rollouts |
+| `smolvla:rtc-offline` | `sha256:08de1e09…714abc` | the pinned (admission) image, MuJoCo 3.13.0 | everything sealed: collection, training, evaluation — including B3 **training** (`xvla_b3_robosuite`) and props P1 **training** (`xvla_props_p1`), which need no simulator |
+| `vla-robosuite:1.5.2-mj3.4.0` | `sha256:54d861aa…ccf27e` | the image above + robosuite 1.5.2, MuJoCo 3.4.0 | everything that builds the robosuite scene: `robosuite_scene`, `robosuite_sim2sim`, `b3_robosuite_data` collection, `xvla_b3_robosuite_eval` rollouts, `props_scene` (props P0: scene, expert, gate), `props_p1_data` (props P1: sealed instruction-sorting collection), `xvla_props_p1_eval` (props P1 feasibility + rollouts) |
 
 Tags are local handles only; commands and contracts use the full digest. Neither image is in a
 registry, so losing one means rebuilding it (the second from
@@ -72,6 +72,43 @@ the pinned image above on MuJoCo 3.13.0.
 - Run helper, test order and collector: `experiments/robosuite_scene/README.md`. Its tests are run
   by module name (`-m unittest experiments.robosuite_scene.tests.<module>`), three of them in the
   admission image.
+- Props P0 (`experiments/props_scene/`, no contract, not hash-bound): same flags with `--tmpfs /tmp:rw,size=16g` and
+  an output folder mounted at `/out` (`outputs/props_p0/`: `gate_20261005*/` per-attempt JSON lines, `probes/`,
+  `contact_sheets/`, `osc_gate/`, `HANDOFF.md`). The gate is six detached containers
+  (`python -m experiments.props_scene.benchmark --out /out/<dir> --shard K/6`), about 25 minutes, about 34 s an
+  attempt with rendering; poll with `docker ps` and `wc -l`. Never run a parallel job over its models with more
+  than about 30 workers: each worker is a few GB resident and 44 exhausted 125 GB (FAILURES #50). OSMesa rendering is
+  multi-threaded, so a CPU-heavy probe slows a running gate. Its tests are run by module name and the printed test
+  count must be read (`Ran 0 tests … OK` is possible).
+- Props P1 (`experiments/props_p1_data/`, sealed 2026-10-07, hash-bound — fork, do not edit): same flags plus
+  `--ulimit nofile=65536:65536`, output mounted at `/out` (`outputs/props_p1_data/`:
+  `props_p1_<date>/` is the sealed collection — `dataset/`, `episodes/*.npz` per-episode traces,
+  `journal.jsonl`, `plan.json`, `provenance.json`, `seal.json`, `validation.json`). Collection is one
+  container (`python -m experiments.props_p1_data.record --collect --out /out/<dir>`), true wall-clock
+  about 1.1 min/admitted episode (not the 40 s/attempt the gate alone takes — per-episode video encode
+  and commit adds about 24 s and is not in the per-attempt timing). `--pilot --slots ... `, `--resume`
+  and `--status` are the other modes; never reconstruct the LeRobot dataset object between episodes
+  mid-run (FAILURES #41) — only `--resume` reopens it, once.
+- Props P1 training (`experiments/xvla_props_p1/`, admission image, no simulator): forked from
+  `xvla_b3_robosuite` — same `--check`/`--preflight`/`--resume-proof`/`--train [--resume]` gates, each
+  output subdirectory (`_admission`, `_preflight`, `_resumeproof`, the main output) **must be its own
+  separate bind mount**, not a subdirectory of one shared parent mount — `claim_resume()`'s
+  `is_mountpoint()` check looks for the exact path in `/proc/self/mountinfo`, so a nested subdirectory
+  of a single shared mount silently fails resume/`--resume-proof` with "Resume needs the original
+  bind-mounted output". Disk guard 65 GiB for `--train` (29.7 GB of checkpoints plus a ~31.5 GB
+  three-snapshot peak — a plan estimate of 55 GB missed the transient third snapshot). 126,900 updates
+  at 0.848-0.87 s/update, about 30 h uncontended.
+- Props P1 evaluation (`experiments/xvla_props_p1_eval/`, robosuite image): `feasibility.py` is CPU
+  only (no GPU, ~0.6 s/layout, safe to run alongside anything, including a paused training run) and
+  must be run once before any `evaluate.py` rollout. `evaluate.py --mode smoke/screen/report/confirm
+  --checkpoint N` additionally needs `.cache/xvla_trial` mounted read-only — the saved checkpoint's
+  `policy_preprocessor.json` bakes in an absolute tokenizer path from training time
+  (`/vla/.cache/xvla_trial/bundle/tokenizer`), and without that mount `make_pre_post_processors`
+  fails with an HF repo-id parse error. **Each rollout process is cheap**: ~4.1-4.3 GB GPU memory and
+  ~4.8 CPU cores (inference only, no optimizer/gradients) versus training's ~21 GB — screening or
+  reporting all 6 checkpoints in parallel (one container per checkpoint, each writing its own
+  `<mode>_step_<N>/` output directory, no file collisions) cut screen from an estimated ~3 h
+  sequential to under an hour, confirmed by measurement, not assumed.
 
 ## Standard container flags
 
@@ -262,6 +299,19 @@ B3 superseded runs, kept until you decide otherwise: `…_b3_robosuite_v1_failed
 (3.3 GB, died at update ~220), `…_v1_superseded_20261003` (3.3 GB, stopped at ~1,900 for the resumable
 v2), and the v1/v2 `_preflight` / `_resumeproof` scratch (~60 GB together). B3 evaluation outputs:
 `outputs/xvla_b3_robosuite_eval/` (1.2 GB, all trials with videos).
+
+`outputs/props_p0/` (2026-10-05; props P0, scripted, no dataset and no model): `gate_20261005/` (first gate, 165/300,
+before the square-footprint fix), `gate_20261005b/` (164/300, written spec) and `gate_20261005c/` (the amended spec,
+283/288, the gate of record) each hold six
+`attempts_shard<K>of6.jsonl`, `plan.json`, `recheck.json`, `summary.json`; `probes/` (tuning re-runs, one JSON per
+change), `osc_gate/` (OSC comparison), `contact_sheets/`, `scene_check/`, `diag*.py`/`probe.py`/`reach*.py` scratch and
+`HANDOFF.md`. A few hundred MB; reproducible from `experiments/props_scene/`, nothing sealed.
+
+`outputs/props_p1_data/props_p1_20261006/` (sealed 2026-10-07, fingerprint `86e3aadb…ac53bcf`): the props P1
+instruction-sorting dataset, 540 episodes (480 train, 60 validation), robosuite scene, 3.0 GB
+(`dataset/` 2.9 GB, `episodes/*.npz` 62 MB). First and only collection attempt, no superseded runs. Pilot
+(`pilot_20261006/`, 16 episodes, never sealed) and `STATUS.md` kept alongside. See
+[PROPS_P1_COLLECTION_20261007.md](PROPS_P1_COLLECTION_20261007.md).
 
 Everything else under `outputs/train/` (smolvla_pilot, single_task, fixed_layout, the plain
 `broadworkspace_v1`/`localvaried_v1` runs) is superseded Tier 2-4 work — see

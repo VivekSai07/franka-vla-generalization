@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Apply the three region/yaw amendments, re-confirm P0, then build `experiments/props_p1_data/` and collect and seal 540 scripted episodes of one-object instruction sorting, with 96 reserved evaluation layouts.
+**Goal:** Apply the three region/yaw amendments, re-confirm P0, then build `experiments/props_p1_data/` and collect and seal 540 scripted episodes of one-object instruction sorting, with 80 reserved evaluation layouts.
 
 **Architecture:** A new collection package on top of the accepted `experiments/props_scene/` (imported, not copied): the scene, the expert, the success rule and the replay check are P0's. New here are the plan (cells, held-out pairs, reserved layouts), the LeRobot recording, admission, the journal and the seal — the shape B3's collector proved.
 
@@ -129,6 +129,6 @@ As B3's: slots in plan order; 3 attempts per layout then up to 3 deterministic r
 
 ## Self-review
 
-- Spec P1 coverage: cells and held-out pairs (Task 2), the bins-swap shortcut design (Tasks 2–3 and Review Focus 1, 3), 480 + 60 episodes (Task 2, 6), 96 reserved layouts in three tiers (Task 2), admission (Task 4), seal and resumable collection (Tasks 4–5), the region and yaw amendments with a P0 re-confirmation before any data (Task 1).
+- Spec P1 coverage: cells and held-out pairs (Task 2), the bins-swap shortcut design (Tasks 2–3 and Review Focus 1, 3), 480 + 60 episodes (Task 2, 6), 80 reserved layouts in three tiers (Task 2), admission (Task 4), seal and resumable collection (Tasks 4–5), the region and yaw amendments with a P0 re-confirmation before any data (Task 1).
 - B3 carry-overs: object pose in the trace (P0's expert already records it), the classifier is P1-evaluation work not collection, resumable collection, `--ulimit`, large `/tmp`, no per-episode reopen.
 - Not known until it runs: the admitted rate on the amended region (P0 predicts ≈ 98%), and whether any reserved layout is infeasible — the evaluation plan checks that before using them.

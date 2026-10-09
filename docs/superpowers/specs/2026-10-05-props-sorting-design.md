@@ -145,7 +145,7 @@ held-out pair can only be solved by combining the object word with the colour wo
 
 ### Reserved evaluation layouts (never collected)
 
-**96 layouts**, drawn in the same plan and never executed by the collector:
+**80 layouts**, drawn in the same plan and never executed by the collector:
 
 | tier | layouts | composition |
 |---|---|---|
@@ -179,78 +179,6 @@ deterministically, as in B3.
 
 Distractors (P2), categories (P3), the near-base corner (outside the start region), multi-object
 scenes. No claim about an individual layout: seeds per layout are few.
-
-## P1 training and evaluation
-
-**Status:** designed 2026-10-07 from the sealed dataset's measured size. Plan:
-`docs/superpowers/plans/2026-10-07-props-p1-training-eval.md`.
-
-### The dataset, as sealed
-
-540 episodes, **452 frames each** (not 528 as in B3), 244,080 frames, 10 task strings, fingerprint
-`86e3aadb…`. Training is episodes in the 480 train slots; 60 validation episodes are for the loss
-curve only. With chunk 30, the training split gives **203,040 complete chunk starts**, so at the
-repo's effective batch of 8, **one epoch = 25,380 updates**.
-
-### Training
-
-A new package `experiments/xvla_props_p1/`, forked from `experiments/xvla_b3_robosuite/`: same
-recipe (effective batch 8, chunk 30, `n_action_steps` 10, peak LR 1e-4 with 500 warm-up updates and
-cosine decay to 1e-5, FP32 weights with bf16 autocast, from the base checkpoint, no resume of a prior
-run), resumable from snapshots from the start, and the same `--check` / `--preflight` / `--train`
-gates in the admission image.
-
-**Horizon: 5 epochs = 126,900 updates**, about **30 hours** at B3's measured 0.848 s per update.
-
-**Checkpoint schedule, chosen from this repo's own evidence rather than round numbers.** Where the
-best checkpoint has fallen, as a fraction of each run's horizon: B1 at 3.35 epochs (its end), B2 at
-5.0 (its end), **B3 at 4.0, with 5.0 its worst by 22 points**. The peak is somewhere in 3–5 epochs
-and B3 shows it can be passed, so checkpoints are dense from epoch 3:
-
-| update | epoch | why |
-|---|---|---|
-| 1 | — | checkpoint machinery sanity |
-| 50,760 | 2.0 | early reference |
-| 76,140 | 3.0 | B1's peak lies here |
-| 88,830 | 3.5 | between |
-| 101,520 | 4.0 | B3's peak |
-| 114,210 | 4.5 | between |
-| 126,900 | 5.0 | B2's peak, and B3's collapse |
-
-Seven checkpoints: six at ~3.3 GB plus a final ~9.9 GB with optimizer state, about 30 GB, plus two
-rolling resume snapshots of ~10.5 GB. Budget about **51 GB** against the 91 GB free on 2026-10-07.
-
-### Evaluation
-
-A new package `experiments/xvla_props_p1_eval/`, robosuite image, GPU. Rollout cap **900 ticks**
-(the expert needs 452), success exactly the P0 rule.
-
-1. **Feasibility first, on CPU, while training runs.** The scripted expert runs all 80 reserved
-   layouts. B3's reserved layouts were never expert-verified (FAILURES #14); this costs nothing
-   because it uses a core the GPU is not using. A layout the expert cannot solve is excluded and
-   reported before any policy number is read.
-2. **Screen:** the six non-trivial checkpoints on the 20 screen layouts, one seed: 120 rollouts.
-   A tie is a tie — every candidate within 2 successes of the best goes to the report.
-3. **Report:** each carried candidate on the 40 report layouts (20 trained pairs, 20 held-out), two
-   seeds: 80 rollouts per candidate.
-4. **Confirm:** the winner only, once, on the 20 untouched confirm layouts. This is the number that
-   is quoted, because the report both selected and measured (the B3 lesson).
-
-Budget at about 1.5 minutes per rollout: screen ≈ 3 h, report ≈ 2 h per candidate, confirm ≈ 0.5 h.
-**About 5–6 hours of GPU** after training, plus about 1 hour of CPU for feasibility during it.
-
-### Read-outs (fixed before any rollout, as the P1 section already states)
-
-Overall success with layout-clustered intervals; **held-out pairs vs trained pairs**; the
-**arrangement shortcut check** (the two bin arrangements must be within a few points — a policy using
-position rather than colour collapses on one of them); the **wrong-bin rate** (placed correctly and
-stably in the *other* bin, the clean signature of a colour that was not read); and failure causes
-from a classifier written before the first rollout.
-
-**What a result will mean**, fixed now: held-out within 10 points of trained, wrong-bin under 5% and
-the two arrangements within 5 points of each other reads as *the policy follows the colour word*. A
-large arrangement gap reads as *a position shortcut* regardless of the headline. A held-out drop with
-a low wrong-bin rate reads as *grounding holds, execution on unseen combinations is weaker*.
 
 ## P2 — instruction sorting with 1–2 distractor objects (roadmap level)
 

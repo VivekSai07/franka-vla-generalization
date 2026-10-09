@@ -1,6 +1,6 @@
 ---
 name: working-on-the-robosuite-path
-description: "Use when running, testing, collecting, rolling out or debugging anything under experiments/robosuite_*, when deciding which of the two Docker images a command belongs in, when a robosuite import, reset or render misbehaves, or when moving a scene, checkpoint or layout between the MuJoCo pipeline and the robosuite scene."
+description: "Use when running, testing, collecting, rolling out or debugging anything under experiments/robosuite_* or experiments/props_scene, when deciding which of the two Docker images a command belongs in, when a robosuite import, reset or render misbehaves, or when moving a scene, checkpoint or layout between the MuJoCo pipeline and the robosuite scene."
 ---
 
 # Working on the robosuite path
@@ -51,6 +51,12 @@ so next to any number it produces, and give it a contract before a result is rep
 | "The dataset fingerprint changed" | Two collections differ in `meta/stats.json` key order only. Robosuite datasets are not byte-reproducible yet. |
 | Side-by-side images look different between the scenes | Check both sides were put in the same state first (arm, **fingers**, cubes) before blaming the simulator. |
 | A long collection dies with `No space left on device` while the disk is nearly empty | `HF_HOME` is on the container's `/tmp` tmpfs and every dataset reopen writes a whole-dataset arrow cache (31 MB at 541 episodes). Size `/tmp` for the sum, or do not reopen per episode (FAILURES #41). `--resume` needs the journal and dataset episode counts to agree. |
+| A scene with objects other than cubes (props) | `experiments/props_scene/` is the pattern: own arena subclass, own XML contract (the robot half copied, tested against the current scene), props renamed `prop_<name>`, masses set on the collision geom. Put the success definition and a placement diagnostic side by side and run the physically ideal outcome of the largest object through the definition before sizing a gate (FAILURES #46). |
+| A grasp planner that works for the cube fails near the robot base | Check reach along the path, not only at the grasp pose: a straight line from home to a hover point can cross a region the arm cannot hold a vertical hand in (joint 4 saturates), while the grasp pose itself is reachable (FAILURES #49). The Panda limits in the robosuite model are the real ones (joint 4 −3.0718 to −0.0698), narrower than the URDF's. |
+| Replaying recorded float32 actions drifts a prop but not the arm | Apply the float32 value you record; compare object poses in replay, not only the robot's state (FAILURES #48). |
+| A parallel job over many models, or a probe next to a running gate | Each worker holds a few GB (44 workers exhausted 125 GB); use at most about 30 and contiguous chunks per model. OSMesa rendering is multi-threaded and slows a running gate. A killed command may leave its launching shell loop running (FAILURES #50). |
+| `Ran 0 tests ... OK` | A run started right after a file was written saw it empty. Read the test count. |
+| A `ManipulationEnv` subclass used with `env.step` (OSC) | It needs a `reward()`; `experiments/props_scene/osc_comparison.py` subclasses and returns 0 without touching the scene module. Robosuite's two gripper joints have opposite signs: opening is the finger gap, not the sum. |
 
 ## Names in the robosuite-built model (before the contract renames them)
 
