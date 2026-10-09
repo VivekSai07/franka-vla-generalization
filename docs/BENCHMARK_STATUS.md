@@ -1,16 +1,35 @@
 # Franka benchmark: start here
 
+## Repository visibility, archive repair, and RTX disk reclaim - 2026-10-09
+
+All seven dataset repositories and all eight published model repositories were switched from
+private to public (owner action, verified via the Hub API). B2's documented 1,065-file model-repo
+gap was closed: a repair pass run directly from RTX via the Hub API added the 1,565 missing
+evaluation/training files a fresh local-vs-HF diff found, matching the audit's figure. The same
+pass added `runtime/` (base model + tokenizer, X-VLA or SmolVLA as appropriate) and `code/`
+(repository snapshot) portability sections — the gap the props P1 bundle closed — to B1,
+broad-workspace, B3 and local-varied's SmolVLA model repositories; B3's and local-varied's
+evaluation evidence were already complete, B1 and broad-workspace had smaller missing-evidence
+gaps also closed in the same pass. None of these five repairs re-ran a from-scratch clean-container
+re-evaluation (unlike props P1); see each repository's `PORTABILITY_REPAIR_20261009.md`.
+
+Separately, ~111 GB of RTX disk was reclaimed: finished-run preflight/resumeproof gate directories
+and resume snapshots for props P1 and B3 (neither referenced by their published bundles), the
+raw per-attempt collection audit trail for local-varied and fixed-layout (both HF-published,
+payload untouched), the earliest 2026-09-15 SmolVLA validation directory, and 138 stopped Docker
+containers. See [HF artifact map](HUGGING_FACE_ARTIFACTS.md) for updated access/revision pins.
+
 ## HF publication and dataset-link update - 2026-10-09
 
 Props P1 is now published from the verified Windows bundle: [dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-props-p1-540) and
-[model (root 126,900; alternate 88,830)](https://huggingface.co/VivekSai07/xvla-franka-props-p1-126900) (both private).
+[model (root 126,900; alternate 88,830)](https://huggingface.co/VivekSai07/xvla-franka-props-p1-126900) (both switched to public later on 2026-10-09; see the entry above).
 The model archive includes the runtime/tokenizer, code snapshot, evaluation evidence and
 bundle reconstruction/verifier helpers. Publication verification did not repeat GPU rollouts.
 
 B3 publication completed 2026-10-06: [dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-b3-robosuite-560) and [model](https://huggingface.co/VivekSai07/xvla-franka-b3-robosuite-124800).
-The original B3 portability gaps remain documented; at this check only its model is private.
-B2's 153 missing dataset metadata files and the legacy datasets' empty default branches/cards
-were repaired on 2026-10-09. B2's model evidence archive still has the earlier recorded gaps.
+The original B3 portability gaps were closed later the same day; see the entry above. B2's 153
+missing dataset metadata files were repaired on 2026-10-09; its model evidence archive gap was
+also closed later the same day (see above).
 
 [Current HF artifact map](HUGGING_FACE_ARTIFACTS.md) links all published stages to their
 historical reports, including the fixed-layout and local-varied repositories that now exist

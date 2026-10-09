@@ -14,7 +14,7 @@ Current artifact map, checked against the authenticated Hub API on **2026-10-09*
 
 All seven dataset repositories contain `meta/info.json` and a `v3.0` branch. The local-varied X-VLA model, broad-workspace SmolVLA model, and original 5,000-update broad-workspace X-VLA model are **not present in the account inventory**. Their measured results remain in [RESULTS.md](RESULTS.md), but the 16,700-update model must not be used as a download link for the 5,000-update result.
 
-Dataset links open dataset cards; model links open the winning/root checkpoint cards. **A model repo root is a particular checkpoint, not necessarily the last training update**: B3 places step 124,800 at root and keeps 156,000 in a subdirectory. Private repositories require access through a signed-in account or token. At this check, B3 dataset is public and B3 model private; both P1 repositories are private. Older cards may still say PRIVATE after visibility changed; the API-verified access table below records this check.
+Dataset links open dataset cards; model links open the winning/root checkpoint cards. **A model repo root is a particular checkpoint, not necessarily the last training update**: B3 places step 124,800 at root and keeps 156,000 in a subdirectory. All seven dataset repositories and all published model repositories were switched to public on 2026-10-09 (verified via the Hub API the same day); the access table below records that check. Older cards may still say PRIVATE in their text after visibility changed.
 
 ## Additional checkpoint directories
 
@@ -55,7 +55,7 @@ Records: [LOCAL_VARIED_COLLECTION_20260919.md](LOCAL_VARIED_COLLECTION_20260919.
 
 [Visualize episode 0](https://huggingface.co/spaces/lerobot/visualize_dataset?path=/VivekSai07/franka-panda-cube-stacking-local-varied-60/episode_0).
 
-The later collection seal and the original SmolVLA run have documented provenance differences; publication does not repair them. See the dated publication report and [FAILURES.md](FAILURES.md) #2/#17. No X-VLA local-varied publication was found.
+The later collection seal and the original SmolVLA run have documented provenance differences; publication does not repair them. See the dated publication report and [FAILURES.md](FAILURES.md) #2/#17. No X-VLA local-varied publication was found. A 2026-10-09 repair pass added missing `evaluation_broad_holdout*` evidence plus `runtime/smolvla_base_bundle/` (`lerobot/smolvla_base` + `HuggingFaceTB/SmolVLM2-500M-Video-Instruct`) and `code/` portability sections to the SmolVLA model repository.
 
 ### Broad-workspace, matched exposure
 
@@ -67,7 +67,7 @@ Records: [B1_AND_BROADWORKSPACE_PUBLICATION_20260926.md](B1_AND_BROADWORKSPACE_P
 
 [Visualize episode 0](https://huggingface.co/spaces/lerobot/visualize_dataset?path=/VivekSai07/franka-panda-cube-stacking-broad-workspace-200/episode_0).
 
-This model is the matched-exposure run (16,700 updates, 62/72 on the broad holdout). The earlier 5,000-update X-VLA result (49/72) and the SmolVLA result (23/72) are different runs without confirmed model repositories here.
+This model is the matched-exposure run (16,700 updates, 62/72 on the broad holdout). The earlier 5,000-update X-VLA result (49/72) and the SmolVLA result (23/72) are different runs without confirmed model repositories here. A 2026-10-09 repair pass added missing `evaluation_{placement_modes,step_004000,step_008000,step_012000}` evidence plus `runtime/` and `code/` portability sections.
 
 ### B1 language grounding
 
@@ -79,6 +79,10 @@ Records: [B1_AND_BROADWORKSPACE_PUBLICATION_20260926.md](B1_AND_BROADWORKSPACE_P
 
 [Visualize episode 0](https://huggingface.co/spaces/lerobot/visualize_dataset?path=/VivekSai07/franka-panda-cube-stacking-b1-language-200/episode_0).
 
+A 2026-10-09 repair pass added missing `evaluation_{report_step_033400,screen_step_016700,
+screen_step_025000,screen_step_033400,smoke_step_016700}` evidence plus `runtime/` and `code/`
+portability sections.
+
 ### B2 distractors
 
 Dataset: [franka-panda-cube-stacking-b2-distractors-200](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-b2-distractors-200). Model: [xvla-franka-b2-distractors-50000 (root step 50,000)](https://huggingface.co/VivekSai07/xvla-franka-b2-distractors-50000).
@@ -89,7 +93,7 @@ Records: [B2_DISTRACTOR_EVALUATION_20260930.md](B2_DISTRACTOR_EVALUATION_2026093
 
 [Visualize episode 0](https://huggingface.co/spaces/lerobot/visualize_dataset?path=/VivekSai07/franka-panda-cube-stacking-b2-distractors-200/episode_0).
 
-Sim2sim reuses this B2 step-50,000 policy; it is not a separate model trained in robosuite. The dataset metadata repair on 2026-10-09 restored all 803 original dataset files. The 2026-10-06 Windows audit found 1,065 evaluation/training files missing from the B2 model archive; this documentation pass has not repaired that archive. Six checkpoint weight files are present.
+Sim2sim reuses this B2 step-50,000 policy; it is not a separate model trained in robosuite. The dataset metadata repair on 2026-10-09 restored all 803 original dataset files. The 2026-10-06 Windows audit found 1,065 evaluation/training files missing from the B2 model archive; a repair pass later on 2026-10-09, run directly from the RTX machine via the Hub API, added the 1,565 missing evaluation/training files found by a fresh local-vs-HF diff, plus `runtime/` (the X-VLA base model and tokenizer this run trained from) and `code/` (a repository snapshot). See `PORTABILITY_REPAIR_20261009.md` in the model repository for the exact file list and what this does not establish.
 
 ### B3 robosuite cubes
 
@@ -101,7 +105,7 @@ Records: [B3_ROBOSUITE_COLLECTION_20261003.md](B3_ROBOSUITE_COLLECTION_20261003.
 
 [Visualize episode 0](https://huggingface.co/spaces/lerobot/visualize_dataset?path=/VivekSai07/franka-panda-cube-stacking-b3-robosuite-560/episode_0).
 
-Windows publication completed 2026-10-06, after the dated staging report. Both kept checkpoints and recorded evaluation evidence are downloadable. The original bundle lacks the training-time tokenizer/base bundle and evaluator/scene code, so downloading the model repo alone does not establish fresh-machine re-evaluation.
+Windows publication completed 2026-10-06, after the dated staging report. Both kept checkpoints and recorded evaluation evidence are downloadable. The original bundle lacked the training-time tokenizer/base bundle and evaluator/scene code; a repair pass on 2026-10-09, run directly from the RTX machine via the Hub API, added `runtime/xvla_base_bundle/` and `code/` (repository snapshot) to close that gap. See `PORTABILITY_REPAIR_20261009.md` in the model repository. A from-scratch clean-container re-evaluation from this repository alone has still not been independently run (unlike props P1, below).
 
 ### Props P1 instruction sorting
 
@@ -149,18 +153,18 @@ Use these immutable commits when downloading for reproduction. Visibility is a d
 | Dataset | [franka-panda-cube-stacking-broad-workspace-200](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-broad-workspace-200) | [56c42c0e89230f041512ff9229daa1b1bccd89e4](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-broad-workspace-200/tree/56c42c0e89230f041512ff9229daa1b1bccd89e4) | Public |
 | Dataset | [franka-panda-cube-stacking-fixed-layout-24](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-fixed-layout-24) | [aeb84bb0683914473c8932d4334f9ce18a4c2fce](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-fixed-layout-24/tree/aeb84bb0683914473c8932d4334f9ce18a4c2fce) | Public |
 | Dataset | [franka-panda-cube-stacking-local-varied-60](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-local-varied-60) | [8e0000fd692172370bb2481774cd2d251bc6aaf2](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-local-varied-60/tree/8e0000fd692172370bb2481774cd2d251bc6aaf2) | Public |
-| Dataset | [franka-panda-props-p1-540](https://huggingface.co/datasets/VivekSai07/franka-panda-props-p1-540) | [95ffafc45feb84f4c5832ec3f703fb5f30b64f1c](https://huggingface.co/datasets/VivekSai07/franka-panda-props-p1-540/tree/95ffafc45feb84f4c5832ec3f703fb5f30b64f1c) | Private |
+| Dataset | [franka-panda-props-p1-540](https://huggingface.co/datasets/VivekSai07/franka-panda-props-p1-540) | [95ffafc45feb84f4c5832ec3f703fb5f30b64f1c](https://huggingface.co/datasets/VivekSai07/franka-panda-props-p1-540/tree/95ffafc45feb84f4c5832ec3f703fb5f30b64f1c) | Public (switched 2026-10-09) |
 | Dataset | [franka_libero_stacking_v1](https://huggingface.co/datasets/VivekSai07/franka_libero_stacking_v1) | [7857a63fe6752bd78c21319c8838514f7954ceaa](https://huggingface.co/datasets/VivekSai07/franka_libero_stacking_v1/tree/7857a63fe6752bd78c21319c8838514f7954ceaa) | Public |
 | Dataset | [franka_libero_stacking_v2](https://huggingface.co/datasets/VivekSai07/franka_libero_stacking_v2) | [a9addfec8cf52adc8bc322938e740b81f2b74fdd](https://huggingface.co/datasets/VivekSai07/franka_libero_stacking_v2/tree/a9addfec8cf52adc8bc322938e740b81f2b74fdd) | Public |
 | Dataset | [franka_stacking_50](https://huggingface.co/datasets/VivekSai07/franka_stacking_50) | [fc3931acd6e54649700f9f83b31ba899cff74914](https://huggingface.co/datasets/VivekSai07/franka_stacking_50/tree/fc3931acd6e54649700f9f83b31ba899cff74914) | Public |
 | Model | [smolvla-franka-stacking-fixed-layout](https://huggingface.co/VivekSai07/smolvla-franka-stacking-fixed-layout) | [ec591c0ef196b8868cd85cad2291f5417f9bc392](https://huggingface.co/VivekSai07/smolvla-franka-stacking-fixed-layout/tree/ec591c0ef196b8868cd85cad2291f5417f9bc392) | Public |
-| Model | [smolvla-franka-stacking-local-varied](https://huggingface.co/VivekSai07/smolvla-franka-stacking-local-varied) | [5c7a8a46d12f5abeb1be86708b8be9b68fb430e7](https://huggingface.co/VivekSai07/smolvla-franka-stacking-local-varied/tree/5c7a8a46d12f5abeb1be86708b8be9b68fb430e7) | Public |
+| Model | [smolvla-franka-stacking-local-varied](https://huggingface.co/VivekSai07/smolvla-franka-stacking-local-varied) | [0db4be898a4230b4795862c63e7e045dbaa52c88](https://huggingface.co/VivekSai07/smolvla-franka-stacking-local-varied/tree/0db4be898a4230b4795862c63e7e045dbaa52c88) (portability repair 2026-10-09) | Public |
 | Model | [smolvla_franka_libero_stacking_finetuned_b32_s80k](https://huggingface.co/VivekSai07/smolvla_franka_libero_stacking_finetuned_b32_s80k) | [787aaa55bf9400e3cc0fc30e2d318813ab7c1a7f](https://huggingface.co/VivekSai07/smolvla_franka_libero_stacking_finetuned_b32_s80k/tree/787aaa55bf9400e3cc0fc30e2d318813ab7c1a7f) | Public |
-| Model | [xvla-franka-b1-language](https://huggingface.co/VivekSai07/xvla-franka-b1-language) | [cf38e2efa8cc6318ed1260adb9be3af390e73558](https://huggingface.co/VivekSai07/xvla-franka-b1-language/tree/cf38e2efa8cc6318ed1260adb9be3af390e73558) | Public |
-| Model | [xvla-franka-b2-distractors-50000](https://huggingface.co/VivekSai07/xvla-franka-b2-distractors-50000) | [2f7c6fa26b67076ec1879b02c47c370f5b038e37](https://huggingface.co/VivekSai07/xvla-franka-b2-distractors-50000/tree/2f7c6fa26b67076ec1879b02c47c370f5b038e37) | Public |
-| Model | [xvla-franka-b3-robosuite-124800](https://huggingface.co/VivekSai07/xvla-franka-b3-robosuite-124800) | [a71a75c988c3915777b8ccaf80482e112881f4d0](https://huggingface.co/VivekSai07/xvla-franka-b3-robosuite-124800/tree/a71a75c988c3915777b8ccaf80482e112881f4d0) | Private |
-| Model | [xvla-franka-broad-workspace](https://huggingface.co/VivekSai07/xvla-franka-broad-workspace) | [988a69eb72044b3a4d115e7a75f9b5be98f8514c](https://huggingface.co/VivekSai07/xvla-franka-broad-workspace/tree/988a69eb72044b3a4d115e7a75f9b5be98f8514c) | Public |
-| Model | [xvla-franka-props-p1-126900](https://huggingface.co/VivekSai07/xvla-franka-props-p1-126900) | [bfc9e062d71e77a6e9d8358e576f5a0ed4609aef](https://huggingface.co/VivekSai07/xvla-franka-props-p1-126900/tree/bfc9e062d71e77a6e9d8358e576f5a0ed4609aef) | Private |
+| Model | [xvla-franka-b1-language](https://huggingface.co/VivekSai07/xvla-franka-b1-language) | [244acc0374947a162f9f0835e4ada95e70885ef6](https://huggingface.co/VivekSai07/xvla-franka-b1-language/tree/244acc0374947a162f9f0835e4ada95e70885ef6) (portability repair 2026-10-09) | Public |
+| Model | [xvla-franka-b2-distractors-50000](https://huggingface.co/VivekSai07/xvla-franka-b2-distractors-50000) | [7d8a0edbcb44bb137d674601bf8730398b901895](https://huggingface.co/VivekSai07/xvla-franka-b2-distractors-50000/tree/7d8a0edbcb44bb137d674601bf8730398b901895) (completeness + portability repair 2026-10-09) | Public |
+| Model | [xvla-franka-b3-robosuite-124800](https://huggingface.co/VivekSai07/xvla-franka-b3-robosuite-124800) | [31976a43d72958a835200b8a99466877299d8469](https://huggingface.co/VivekSai07/xvla-franka-b3-robosuite-124800/tree/31976a43d72958a835200b8a99466877299d8469) (portability repair 2026-10-09) | Public |
+| Model | [xvla-franka-broad-workspace](https://huggingface.co/VivekSai07/xvla-franka-broad-workspace) | [1ba739ee95b473d3936664ec36b4aa1af96523ee](https://huggingface.co/VivekSai07/xvla-franka-broad-workspace/tree/1ba739ee95b473d3936664ec36b4aa1af96523ee) (portability repair 2026-10-09) | Public |
+| Model | [xvla-franka-props-p1-126900](https://huggingface.co/VivekSai07/xvla-franka-props-p1-126900) | [bfc9e062d71e77a6e9d8358e576f5a0ed4609aef](https://huggingface.co/VivekSai07/xvla-franka-props-p1-126900/tree/bfc9e062d71e77a6e9d8358e576f5a0ed4609aef) | Public (switched 2026-10-09) |
 | Model | [xvla-franka-stacking-fixed-layout](https://huggingface.co/VivekSai07/xvla-franka-stacking-fixed-layout) | [65d1d5651f6f1f8f258b83db6b7c00f84f91af6a](https://huggingface.co/VivekSai07/xvla-franka-stacking-fixed-layout/tree/65d1d5651f6f1f8f258b83db6b7c00f84f91af6a) | Public |
 
 ## Download the complete snapshot

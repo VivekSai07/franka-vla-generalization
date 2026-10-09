@@ -21,12 +21,44 @@ The central question: **how much and what kind of data does a VLA need to genera
 
 The [HF artifact index](docs/HUGGING_FACE_ARTIFACTS.md) lists earlier checkpoint directories,
 exact revision pins, access, historical reports, and re-evaluation prerequisites.
-B3 and P1 models are private; P1 dataset is private. No X-VLA local-varied or SmolVLA
-broad-workspace model publication was found.
+All seven dataset repositories and all published models are public as of 2026-10-09. No X-VLA
+local-varied or SmolVLA broad-workspace model publication was found.
 
 ---
 
-## Latest (2026-10-05): B3 in the robosuite scene — the last cube experiment
+## Latest (2026-10-09): Props P1 — instruction sorting in the robosuite scene
+
+X-VLA trained 126,900 updates (5 epochs) on 540 scripted episodes: one object, two bins that swap
+left/right sides across layouts. Evaluated on reserved layouts, all 6 non-trivial checkpoints
+screened and taken to the 80-trial report tier (protocol deviation, stated plainly in the report):
+
+| checkpoint | report overall (80 trials) | trained | held-out | blue_slot L | blue_slot R | wrong_bin |
+|---|---|---|---|---|---|---|
+| 50,760 | 51.2% (41/80) | 42.5% | 60.0% | 40.0% | 62.5% | 0/80 |
+| 76,140 | 43.8% (35/80) | 42.5% | 45.0% | 42.5% | 45.0% | 0/80 |
+| 88,830 | 75.0% (60/80) | 70.0% | 80.0% | 70.0% | 80.0% | 0/80 |
+| 101,520 | 62.5% (50/80) | 62.5% | 62.5% | 70.0% | 55.0% | 0/80 |
+| 114,210 | 70.0% (56/80) | 65.0% | 75.0% | 75.0% | 65.0% | 0/80 |
+| **126,900** | **75.0% (60/80)** | 72.5% | 77.5% | 85.0% | 65.0% | 0/80 |
+
+- **Headline: 100% (20/20) on the confirm tier, checkpoint 126,900** — fixed by a pre-committed
+  rule (highest report-tier rate, ties toward the later checkpoint) before the tying data existed
+  (88,830 and 126,900 both 75.0%/60/80). Read alongside the report's own 75% (60/80) on the same
+  checkpoint; the confirm tier is a smaller, one-shot check, not a second independent estimate.
+- **Zero `wrong_bin` outcomes across all 480 report trials and all six checkpoints** — every failure
+  is a motor/timing problem (never lifted, timed out carrying, dropped outside, unstable in
+  target), never a colour/bin confusion. Held-out pairs perform at or above trained pairs on every
+  checkpoint.
+- A classifier bug (found by inspecting screen videos, not by a failing number) mislabelled one
+  correctly-placed trial as `dropped_outside`; fixed and all 120 screen trials rescanned, exactly
+  one affected.
+- Robosuite 1.5.2 / MuJoCo 3.4.0 — not comparable with the MuJoCo-scene numbers below.
+
+Report: [docs/PROPS_P1_EVALUATION_20261009.md](docs/PROPS_P1_EVALUATION_20261009.md). Training:
+[docs/PROPS_P1_TRAINING_20261009.md](docs/PROPS_P1_TRAINING_20261009.md). Published to Hugging Face
+2026-10-09 (dataset and model, [docs/HUGGING_FACE_ARTIFACTS.md](docs/HUGGING_FACE_ARTIFACTS.md)).
+
+## Previous headline (2026-10-05, robosuite scene): B3, the last cube experiment
 
 X-VLA trained 156,000 updates (5 epochs) on 560 scripted episodes collected in the robosuite scene:
 four cube colours with two of the twelve instruction pairs never collected, 0–2 distractors, extra
@@ -46,16 +78,8 @@ picks at the region edges. Evaluated on reserved layouts, 160 trials per checkpo
 - **The final checkpoint is the worst**, almost entirely on one side of the workspace, while the
   training loss kept falling. The persistent failures sit where B2's did: picks close to the robot
   base on the +y side.
-- Robosuite 1.5.2 / MuJoCo 3.4.0 — not comparable with the MuJoCo-scene numbers below.
 
-Report: [docs/B3_XVLA_EVALUATION_20261005.md](docs/B3_XVLA_EVALUATION_20261005.md). Next: real-life
-props in robosuite ([TODO.md](TODO.md)); P0 (scene and scripted expert, no policy) passed its gate on 2026-10-05,
-283/288 against 95%, after two spec errors found by the first run were amended
-([docs/PROPS_P0_RERUN_20261005.md](docs/PROPS_P0_RERUN_20261005.md)); the P1 instruction-sorting dataset
-(540 episodes, one object, two bins swapping sides) collected and sealed 2026-10-07
-([docs/PROPS_P1_COLLECTION_20261007.md](docs/PROPS_P1_COLLECTION_20261007.md)); trained and evaluated
-2026-10-09 — **confirm 100% (20/20), report 75% (60/80), checkpoint 126,900, zero wrong-bin outcomes
-across 480 report trials** ([docs/PROPS_P1_EVALUATION_20261009.md](docs/PROPS_P1_EVALUATION_20261009.md)).
+Report: [docs/B3_XVLA_EVALUATION_20261005.md](docs/B3_XVLA_EVALUATION_20261005.md).
 
 ## The results arc
 

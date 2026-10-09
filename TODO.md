@@ -307,9 +307,12 @@ attributable. Options when it gets its own phase, each with different expert imp
       [dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-b2-distractors-200) and [model (root 50,000)](https://huggingface.co/VivekSai07/xvla-franka-b2-distractors-50000).
       The dataset's 153 missing metadata files were restored from Windows on 2026-10-09.
       The original transfer check read `seal.json`; it did not re-derive the dataset fingerprint.
-- [ ] Complete the B2 evaluation/training archive: the 2026-10-06 Windows audit found
-      1,065 missing model-repo files despite all six checkpoint weights matching; this
-      documentation pass has not uploaded them. See [archive gaps](docs/HUGGING_FACE_ARTIFACTS.md#b2-distractors).
+- [x] Complete the B2 evaluation/training archive: the 2026-10-06 Windows audit found
+      1,065 missing model-repo files despite all six checkpoint weights matching; a repair
+      pass on 2026-10-09, run directly from RTX via the Hub API, added the 1,565 files a
+      fresh local-vs-HF diff found missing, plus `runtime/` and `code/` portability sections
+      (also added to B1, broad-workspace, B3 and local-varied's SmolVLA model). See
+      [archive gaps](docs/HUGGING_FACE_ARTIFACTS.md#b2-distractors).
 
 **Three spec errors were corrected before implementation** (see the spec's *Corrections* section):
 the floor-colour prerequisite was withdrawn as both a no-op and seal-breaking; "16 episodes per
