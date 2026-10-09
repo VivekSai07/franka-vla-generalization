@@ -31,9 +31,28 @@ outputs/downloads_<YYYYMMDD>/<axis>/
 │                         traces and per-trial JSON, plus the
 │                         reserved-scene bank                        → re-evaluate
 ├── training/             result, metrics, stats, initial config     → read the recipe
+├── runtime/              base model + tokenizer bundle, pip freeze   → load the checkpoint anywhere
+├── code/                 `git archive HEAD` + COMMIT                 → the evaluator and scene code
+├── reevaluate/           bundle-only evaluation entry + verifier     → re-evaluate, verify by hash
 ├── hf_upload/            the upload layout + model card (a view)    → publish
 └── README.md             inventory, hashes, retrain / re-eval / upload recipes
 ```
+
+**"Re-evaluate" means from the bundle alone, on a fresh machine.** The B3 bundle (2026-10-05)
+passed every hash check and was still not re-evaluable off RTX (Windows audit, 2026-10-06): every
+checkpoint's `config.json` and `policy_preprocessor.json` name the tokenizer by its RTX path
+`/vla/.cache/xvla_trial/bundle/tokenizer`, and the evaluator and scene code lived only in the repo.
+So a bundle also carries `runtime/xvla_base_bundle/` (hardlink of `.cache/xvla_trial/bundle/`,
+mounted back at that path, which leaves the checkpoint files unedited), `code/` (with an empty
+`code/.cache/xvla_trial/bundle/` as the mount point, because the code mount is read-only), and a
+re-evaluation entry point. The repo's evaluators verify the whole training run and the sealed
+root directory, which a bundle does not hold in that form. So the entry point replaces only those two
+checks: weights against `checkpoint_result.json`, and the seal recomputed over the bundle's
+sections. Everything else stays the repo's code. **Run it in a container that mounts only
+the bundle** (`--network none`, plus `-e CUBLAS_WORKSPACE_CONFIG=:4096:8`; deterministic evaluators
+stop without it) and compare its trials with the originals. Worked example and recipe:
+`outputs/downloads_20261009/props_p1/` (smoke reproduced bit for bit). The Docker images are not
+bundled (about 20 GB each); the README gives the `docker save` command.
 
 Omit a section only when it does not exist for that axis (e.g. no `dataset_episodes/` when the
 collector wrote none) — say so in the README rather than leaving a silent gap, and fold any small
@@ -50,7 +69,13 @@ The README's hash table lists every `model.safetensors` in the bundle with its s
 is what the Windows side re-checks after the transfer.
 
 Worked examples: `outputs/downloads_20261001/b2_distractor/`,
-`outputs/downloads_20261005/b3_robosuite/`.
+`outputs/downloads_20261005/b3_robosuite/` (no `runtime/` or `code/`, so not portable),
+`outputs/downloads_20261009/props_p1/` (complete).
+
+**Never rename trial folders in an evaluation output** to make them easier to browse: the
+evaluators find trials by `trial_NNN_<layout_id>` for `--resume` and re-analysis. Build a
+hardlinked view next to it instead (`outputs/xvla_props_p1_eval_browse/`: held-out vs trained,
+object, bin, side and outcome in the name).
 
 ### Build it
 

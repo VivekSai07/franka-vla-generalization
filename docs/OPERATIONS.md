@@ -320,8 +320,19 @@ Everything else under `outputs/train/` (smolvla_pilot, single_task, fixed_layout
 machine — the 2026-09-26 one covers both the minimal tier and the full checkpoint-ablation tier
 for B1 and broad-workspace (~50 GB, zero extra disk here); read the `README.md` inside each
 before touching originals. `outputs/downloads_20261005/b3_robosuite/` (2026-10-05) stages B3 steps
-124,800 and 156,000 for Windows and Hugging Face, laid out as the model repo; its `README.md` has the
-transfer, verify and upload commands (not yet transferred). `outputs/downloads_20261001/b2_distractor/` was copied to Windows on
+124,800 and 156,000; it was copied to Windows (byte-identical) and published as two **private** Hugging Face
+repos on 2026-10-06 (`VivekSai07/franka-panda-cube-stacking-b3-robosuite-560`, `VivekSai07/xvla-franka-b3-robosuite-124800`;
+the publication record is on the Windows side). A Windows audit then found the B3 bundle not portable on its own:
+the checkpoints name the tokenizer by its RTX path and the evaluation code was outside the bundle.
+`outputs/downloads_20261009/props_p1/` (2026-10-09) stages props P1 (checkpoints 126,900 and 88,830)
+and closes those gaps: it carries the base model and tokenizer (`runtime/`), a source snapshot (`code/`),
+`reevaluate/bundle_evaluate.py` and a stdlib-only `reevaluate/verify_bundle.py`. A smoke re-evaluation run
+with only the bundle mounted reproduced the original trials bit for bit. Transferred to Windows on
+2026-10-09 (user). Its
+`evaluation_browse/` and `outputs/xvla_props_p1_eval_browse/` are hardlinked views of the P1 trials,
+split into held-out and trained, with object, bin, side and outcome in the folder names. Browse them
+there, but never rename inside `outputs/xvla_props_p1_eval/`: `evaluate.py` finds trials by
+`trial_NNN_<layout_id>`. `outputs/downloads_20261001/b2_distractor/` was copied to Windows on
 2026-10-01; all six `model.safetensors` matched `model_sha256` and `seal.json` is
 `b6cfff3f...0c12340`. The Windows check did not re-derive the dataset fingerprint. Do not delete
 the RTX originals without a separate go-ahead. Full file lists and rationale:
