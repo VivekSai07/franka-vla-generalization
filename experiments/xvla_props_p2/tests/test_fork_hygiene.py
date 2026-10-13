@@ -66,6 +66,14 @@ class UndefinedNameTests(unittest.TestCase):
             for needle in RESIDUE:
                 self.assertNotIn(needle, source, f'{path.relative_to(PACKAGE)} still names {needle!r}')
 
+    def test_readme_describes_this_package(self):
+        # An absence-only residue check passes on an empty README; this one does not.
+        readme = (PACKAGE / 'README.md').read_text()
+        c = importlib.import_module('experiments.xvla_props_p2.contract')
+        for needle in (c.SEAL_RECORD['fingerprint'], 'props_p2_20261013', '--equivalence', '--stop-at',
+                       'xvla_props_p2_v1', 'SOURCE_FILES'):
+            self.assertIn(needle, readme)
+
 
 class ScheduleContractTests(unittest.TestCase):
     def setUp(self):
