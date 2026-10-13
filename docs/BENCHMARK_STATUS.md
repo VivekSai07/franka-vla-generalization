@@ -1,5 +1,16 @@
 # Franka benchmark: start here
 
+## Props P2 training package: every gate passed, 39% faster per update - 2026-10-13
+
+`experiments/xvla_props_p2/` (branch `feat/props-p2`): P1's recipe unchanged on the P2 seal. Gates in
+the admission image: `--check` passed (fingerprint recomputed); `--preflight` passed (exact FP32 reload,
+snapshot 10.6 GB in 15 s); `--resume-proof` byte-equal; `--equivalence` byte-equal metrics, weights and
+Adam moments over 30 updates between P1's loop and the new one (fused finiteness checks, background
+decoding) — **0.524 s/update against 0.858 s** on the same GPU, projecting ~18.5 h for 126,900 updates.
+The new loop has not yet run a full session; the night reports record the real pace. Training is split
+into two nights by `--stop-at`, which pauses at a snapshot; a thermal guard sleeps at 83 °C. The package
+README was first committed empty and every test passed; caught before `--check` (FAILURES #56).
+
 ## Props P2 dataset sealed: 540 episodes in 54 minutes - 2026-10-13
 
 Instruction sorting with 1–2 distractor objects (`experiments/props_p2_data/`, branch `feat/props-p2`):

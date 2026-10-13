@@ -5,8 +5,12 @@
 - **Now: props P2 (instruction sorting with 1–2 distractors). Dataset sealed 2026-10-13** — 540/540,
   0 rejected, 0 distractors touched, fingerprint `b1d642b3…f4d898`, collected by 12 parallel shards in
   54 min. Report: [docs/PROPS_P2_COLLECTION_20261013.md](docs/PROPS_P2_COLLECTION_20261013.md). Branch
-  `feat/props-p2`, not merged. **Next: P2 training and evaluation plan** (P1's recipe from the X-VLA base;
-  training in user-scheduled overnight batches; success criteria pre-registered in the P2 spec).
+  `feat/props-p2`, not merged. **Training package `experiments/xvla_props_p2/` built and all gates passed
+  2026-10-13** (check, preflight, resume-proof, equivalence: the faster loop is byte-equal to P1's over 30
+  updates, 0.524 vs 0.858 s/update). **Next: training in two user-scheduled nights** (Wed 14 and Thu 15
+  Oct, 19:00 to ~06:00, `--stop-at` pause at a snapshot; plan
+  [docs/superpowers/plans/2026-10-13-props-p2-training.md](docs/superpowers/plans/2026-10-13-props-p2-training.md)),
+  then the evaluation package (success criteria pre-registered in the P2 spec).
 - **Props P1 trained and evaluated (2026-10-09): confirm 100% (20/20), report 75% (60/80) on checkpoint
   126,900**; zero wrong-bin outcomes in 480 report trials. Reports:
   [evaluation](docs/PROPS_P1_EVALUATION_20261009.md), [training](docs/PROPS_P1_TRAINING_20261009.md),
@@ -391,8 +395,10 @@ Two-phase project. User accepted the one-variable-per-run attribution trade-off:
         process; 12 parallel shards, 54 min wall-clock (10.8 h of serial work).** Report:
         [docs/PROPS_P2_COLLECTION_20261013.md](docs/PROPS_P2_COLLECTION_20261013.md). Spec (now bound):
         [docs/superpowers/specs/2026-10-13-props-p2-distractors-design.md](docs/superpowers/specs/2026-10-13-props-p2-distractors-design.md).
-        Branch `feat/props-p2`, not merged. **Next: training and evaluation plan** (fork of P1's packages,
-        base X-VLA, P1's recipe; `wrong_object` cause decided by what is lifted — an untouched lemon drifts
+        Branch `feat/props-p2`, not merged. Training package `experiments/xvla_props_p2/` (P1's recipe,
+        byte-equal faster loop, overnight pause, thermal guard) passed every gate 2026-10-13; training runs
+        in two user-scheduled nights. **Next after training: the evaluation package** (fork of P1's,
+        `wrong_object` cause decided by what is lifted — an untouched lemon drifts
         up to 18 mm / 51°; expert-feasibility check of the 120 reserved layouts first; success criteria
         pre-registered in the spec). The original roadmap line follows.
       - *(roadmap)* **P2 — instruction sorting with 1–2 distractor objects** (the main dataset, B3-sized). The
