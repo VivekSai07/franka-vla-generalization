@@ -394,10 +394,24 @@ Two-phase project. User accepted the one-variable-per-run attribution trade-off:
         wrong-bin rate, checkpoint screen/report/confirm tiers (80 reserved layouts already drawn,
         not yet screened for expert feasibility).
       - **P2 — instruction sorting with 1–2 distractor objects** (the main dataset, B3-sized). The
-        policy must find the named object among others. Strata for the +y near-base corner; random yaw;
-        held-out pairs; several checkpoints + an untouched confirmation set. *(P0 found the expert cannot
-        reach starts closer than about 0.285 m to the base; unless the approach path is rebuilt, P2's
-        layouts start at x ≥ 0.27 and the near-base corner is not tested.)*
+        policy must find the named object among others. Random yaw; held-out pairs; several
+        checkpoints + an untouched confirmation set. **No near-base stratum** (spec decision
+        2026-10-06): P0 found the expert cannot reach starts closer than about 0.285 m to the base,
+        so P2's layouts start at x ≥ 0.27 and the near-base corner is not tested unless the approach
+        path is rebuilt. **Collection runs as parallel CPU-rendered shards (user decision 2026-10-13,
+        option A):** contiguous slot blocks per worker, merged in slot order, OSMesa kept so pixels and
+        byte-determinism match P1. Measured on one P1 episode: physics 0.6 s, OSMesa rendering ~37 s,
+        frame write + AV1 encode 22.9 s; P1 ran all of it serially (9 h 38 m).
+      - [ ] **GPU (EGL) rendering — deferred, do at a phase boundary with its own side-by-side check,
+        never mixed into a phase's other changes** (user, 2026-10-13). Measured 2026-10-13 on one P1
+        episode (probe scripts in gitignored `outputs/p2_speed_probe/`): EGL 2.2 s vs OSMesa 37.8 s per
+        attempt (~17×), same expert outcome. Three things to settle first: (1) the robosuite image lacks
+        `libEGL.so.1` (Ubuntu `libegl1`; the NVIDIA EGL driver is injected by the runtime) — adding it
+        means a new image digest; (2) EGL is not byte-deterministic: across 3 identical runs 4–6 of 904
+        images differed, each by 1 pixel by 1 level — the P0/P1 byte-equal determinism gate would need
+        an explicit tolerance decided before data; (3) EGL vs OSMesa differ on 72% of pixels (mean 1.2,
+        max 105 levels), so training data and evaluation rollouts must use the same renderer, and the
+        switch must not coincide with another variable. Also worth it for evaluation, which renders too.
       - **P3 — rule-based Food vs Drinks**, two visually distinct containers. First one object per
         episode with a fixed prompt; then held-out objects as a stretch test (zero-shot category from
         six objects is a long shot and is read as exploratory). Multi-object sequential sorting only
