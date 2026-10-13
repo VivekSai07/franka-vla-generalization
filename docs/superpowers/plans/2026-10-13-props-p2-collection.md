@@ -29,8 +29,8 @@ scheduler, a verified shard merge and the seal.
 - Counts: 480 train (20 cells × 24: 12 one-distractor, 12 two), 60 validation (20 × 3; 30/30), 540
   admitted; reserved 120 = screen 20 + report 60 + control 20 + confirm 20.
 - Seeds `sha256("props_p2_v1:20261013:<identity>")[:4]` big-endian; balance by shuffled decks.
-- Carry 0.19 m; spacing `r_a + r_b + 0.03`, target–distractor ≥ `0.065 + r_d`; distractor gate 0.01 m /
-  5°. Success rule and P1 gates never weakened.
+- Carry 0.19 m; spacing `max(r_a + r_b + 0.03, 0.065 + max(r_a, r_b))` (symmetric); distractor gate =
+  no contact with anything but the table (spec amendment 2026-10-13). Success rule and P1 gates never weakened.
 - Commits: user identity, no trailers, short messages; never commit `outputs/`; do not push.
 - Output root: `outputs/props_p2_data/props_p2_<YYYYMMDD>/` (shards under `shards/`).
 

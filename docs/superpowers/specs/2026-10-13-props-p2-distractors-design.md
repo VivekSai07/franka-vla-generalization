@@ -45,10 +45,16 @@ trained?
 - Instruction `put the <object> in the <colour> bin`; the bins swap slots between episodes.
 - Held out of training entirely: `milk → blue` and `bread → orange` (as targets). Every object still
   appears as a distractor.
-- Spacing: every pair of objects at least `r_a + r_b + 0.03 m` apart (centre to centre, `r` the
-  footprint half-diagonal above, rounded up to the mm); additionally every distractor at least
-  `0.065 m + r_d` from the target, so the open fingers (8 cm gap plus pads) clear it. Layouts are
-  drawn by rejection; the rejection count is recorded in the plan.
+- Spacing: every pair of objects at least `max(r_a + r_b + 0.03, 0.065 + max(r_a, r_b))` apart (centre
+  to centre, `r` the footprint half-diagonal above, rounded up to the mm). The second term keeps the open
+  fingers (8 cm gap plus pads) clear of a neighbour. *(Amended 2026-10-13, before any data: the first
+  draft applied the finger term only around the target, which would give the target systematically more
+  room than the distractors have between themselves — a cue that the isolated object is the target. The
+  rule is now symmetric, so spacing carries no information about which object is named.)* Layouts are
+  drawn by rejection; each records its `layout_draws` (median 5, two-distractor acceptance ≈ 2%).
+- Inherent imbalance, recorded rather than hidden: milk and bread are targets in half as many trained
+  cells (their held-out pairs), so when either is on the table it is a distractor 74% of the time,
+  against ~55% for the other four. Distractor appearances per object stay within ±13% of the mean.
 
 ## Expert
 
@@ -60,8 +66,14 @@ unchanged, so episodes stay 452 frames.
 ## Admission of one episode
 
 P1's gates unchanged (expert success with 30 stable ticks, 452 frames, replay < 1e-3 on the arm
-**and every prop**, labels, schema), plus **`distractors`**: every distractor ends within 0.01 m (xy)
-of where it started after settling and tilts less than 5°. A rejected attempt retries the same slot;
+**and every prop**, labels, schema), plus **`distractors`**: no distractor is touched by anything but
+the table at any physics substep (the recorded actions are re-run substep by substep; every tick must
+equal the recorded trace exactly). Displacement and tilt of each distractor are journaled as diagnostics.
+*(Amended 2026-10-13, before any data: the approved draft used a pose threshold — ≤ 0.01 m and < 5°.
+Measured with the arm parked and nothing near it, the lemon rocks on its own after reset, up to 13° and
+4.6 mm in 15 s and still moving; every other prop stays within 0.3° and 0.2 mm. In P2 episode 0 an
+untouched lemon ended at 22°. A pose threshold therefore measures the lemon, not the robot; contact is
+what the task requires — "untouched".)* A rejected attempt retries the same slot;
 after 3 attempts the layout is resampled (target and distractors), up to 3 substitutions; rejection
 budget 150, as P1.
 
@@ -104,7 +116,7 @@ All 120 are checked for expert feasibility before any policy rollout.
 
 1. **Expert re-test:** 288 scripted attempts (24 cells incl. held-out × counts {1, 2} × 6), run
    without rendering (rendering does not feed back into physics). Bars: ≥ 95% admitted overall, every
-   object ≥ 90% as target, both bin slots ≥ 93%, distractor-undisturbed counted inside admission. Plus
+   object ≥ 90% as target, both bin slots ≥ 93%, distractor contact counted inside admission. Plus
    12 rendered attempts re-run in a second process: byte-equal traces and images.
 2. **Pilot:** 2 shards × 6 episodes through collect → merge → validate on a scratch root; watched.
 
