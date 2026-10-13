@@ -95,10 +95,29 @@ class ReviewFocusTests(unittest.TestCase):
                 self.assertTrue(p.START_Y_M[0] <= y <= p.START_Y_M[1], layout["layout_id"])
                 self.assertGreaterEqual(math.hypot(x, y), p.START_RADIUS_MIN_M - 1e-12)
                 self.assertLessEqual(abs(yaw), p.YAW_MAX_DEG_BY_OBJECT[name] + 1e-12)
+            self.assertTrue(p.spaced([n for n, _ in poses], [q for _, q in poses]), layout["layout_id"])
             for i, (a, pa) in enumerate(poses):
                 for b, pb in poses[i + 1:]:
                     self.assertGreaterEqual(math.hypot(pa[0] - pb[0], pa[1] - pb[1]),
                                             p.min_distance(a, b) - 1e-12, layout["layout_id"])
+                    self.assertTrue(p.hand_clear(a, pa, b, pb) and p.hand_clear(b, pb, a, pa), layout["layout_id"])
+
+    def test_hand_clearance_rejects_the_measured_gate_clash_geometry(self):
+        # Gate 2026-10-13: a can target with milk beside it along the finger axis was clipped by the housing.
+        self.assertFalse(p.hand_clear("can", [0.33, 0.0, 0.0], "milk", [0.33, 0.09, 0.0]))
+        self.assertTrue(p.hand_clear("can", [0.33, 0.0, 0.0], "milk", [0.33 + 0.09, 0.0, 0.0]))
+        # A neighbour lower than the housing's underside is never in the way.
+        self.assertTrue(p.hand_clear("milk", [0.33, 0.0, 0.0], "bread", [0.33, 0.09, 0.0]))
+        # The square milk is checked on both candidate axes.
+        self.assertEqual(len(p.finger_axes_deg("milk", 10.0)), 2)
+        self.assertEqual(p.finger_axes_deg("cereal", 10.0), [100.0])
+        self.assertEqual(p.finger_axes_deg("can", 10.0), [90.0])
+
+    def test_spaced_is_symmetric_in_object_order(self):
+        for layout in _layouts()[:200]:
+            poses = _poses(layout)
+            names, qs = [n for n, _ in poses], [q for _, q in poses]
+            self.assertEqual(p.spaced(names, qs), p.spaced(names[::-1], qs[::-1]))
 
     def test_spacing_rule_is_symmetric_so_it_cannot_mark_the_target(self):
         for a in p.OBJECTS:
@@ -118,9 +137,7 @@ class ReviewFocusTests(unittest.TestCase):
                 self.assertNotEqual(resampled["start"], episode["start"])
                 self.assertEqual(resampled["layout_id"], f"{episode['layout_id']}_r{r}")
                 poses = _poses(resampled)
-                for i, (a, pa) in enumerate(poses):
-                    for b, pb in poses[i + 1:]:
-                        self.assertGreaterEqual(math.hypot(pa[0] - pb[0], pa[1] - pb[1]), p.min_distance(a, b) - 1e-12)
+                self.assertTrue(p.spaced([n for n, _ in poses], [q for _, q in poses]))
 
     def test_no_reserved_layout_coincides_with_a_collected_one(self):
         collected = {tuple(e["start"]) for e in PLAN["episodes"]}

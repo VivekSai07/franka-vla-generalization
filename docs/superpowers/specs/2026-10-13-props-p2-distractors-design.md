@@ -52,6 +52,18 @@ trained?
   room than the distractors have between themselves — a cue that the isolated object is the target. The
   rule is now symmetric, so spacing carries no information about which object is named.)* Layouts are
   drawn by rejection; each records its `layout_draws` (median 5, two-distractor acceptance ≈ 2%).
+- **Hand clearance** *(amended 2026-10-13 after the first expert re-test, before any collection)*:
+  grasping any object of the layout, no hand part may come down onto another. Measured on the compiled
+  scene in the finger-axis frame: the hand housing spans ±0.104 m along the finger axis and ±0.032 m
+  across, its underside 0.042 m above the grasp point; link 7 spans ±0.088 / ±0.044 m, underside 0.108 m.
+  A neighbour taller than a part's underside (grasp height + underside − 0.01 m) must lie outside that
+  part's rectangle grown by its footprint radius + 0.01 m, on the finger axis the expert will use
+  (round can/bottle: 90°; bread/lemon/cereal: 90° + yaw; square milk: both candidate axes — checked
+  against `PropsExpert.plan_grasp`). Checked for every ordered pair, so it is symmetric. Evidence: the
+  first re-test (`outputs/props_p2_data/gate_20261013/`) admitted 261/288 = 90.6%, below the 95% bar;
+  20 of the 27 rejections were a tall neighbour struck by the hand housing during descend (ticks
+  81–134) while grasping a short target, one by link 7. The bar was not changed. With the rule, layout
+  draws: median 11, worst 9,915.
 - Inherent imbalance, recorded rather than hidden: milk and bread are targets in half as many trained
   cells (their held-out pairs), so when either is on the table it is a distractor 74% of the time,
   against ~55% for the other four. Distractor appearances per object stay within ±13% of the mean.

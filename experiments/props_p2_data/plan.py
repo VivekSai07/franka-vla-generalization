@@ -49,6 +49,14 @@ HEIGHT_M = {"can": 0.080, "bread": 0.048, "lemon": 0.040, "milk": 0.144, "bottle
 PAIR_GAP_M = 0.03
 FINGER_REACH_M = 0.065   # open finger gap 0.08 / 2 plus pad, from the target's centre
 CARRY_BOTTOM_M = 0.19    # tallest prop plus 3 cm
+# Hand parts that come down beside the grasp (measured 2026-10-13 on the compiled scene, finger-axis frame):
+# (half-length along the finger axis, half-width across it, underside height above the grasp point).
+# The first draft spaced only the fingers; the gate then found the housing clipping tall neighbours (20/288).
+HAND_PARTS_M = {"housing": (0.104, 0.032, 0.042), "link7": (0.088, 0.044, 0.108)}
+HAND_MARGIN_M = 0.01
+GRASP_BELOW_TOP_M = psc.GRASP_BELOW_TOP_M
+ROUND_PROPS = ("can", "bottle")   # the expert's finger axis is fixed at 90 deg for these
+SQUARE_PROPS = ("milk",)          # the expert picks either face; both axes are checked
 
 EXPECTED_EPISODE_FRAMES = 452
 ATTEMPTS_PER_LAYOUT = 3
@@ -85,6 +93,41 @@ def min_distance(a, b):
     return max(ra + rb + PAIR_GAP_M, FINGER_REACH_M + max(ra, rb))
 
 
+def finger_axes_deg(obj, yaw_deg):
+    """World yaw(s) of the finger axis the expert will use (measured against `PropsExpert.plan_grasp`)."""
+    if obj in ROUND_PROPS:
+        return [90.0]
+    if obj in SQUARE_PROPS:
+        return [90.0 + yaw_deg, yaw_deg]
+    return [90.0 + yaw_deg]
+
+
+def hand_clear(a, pose_a, b, pose_b):
+    """True if, grasping `a`, no hand part comes down onto `b`."""
+    grasp_z = HEIGHT_M[a] - min(GRASP_BELOW_TOP_M, HEIGHT_M[a] / 2)
+    dx, dy, rb = pose_b[0] - pose_a[0], pose_b[1] - pose_a[1], FOOTPRINT_RADIUS_M[b]
+    for half_along, half_across, underside in HAND_PARTS_M.values():
+        if HEIGHT_M[b] <= grasp_z + underside - HAND_MARGIN_M:
+            continue
+        for axis in finger_axes_deg(a, pose_a[2]):
+            c, s = math.cos(math.radians(axis)), math.sin(math.radians(axis))
+            along, across = dx * c + dy * s, -dx * s + dy * c
+            if abs(along) <= half_along + rb + HAND_MARGIN_M and abs(across) <= half_across + rb + HAND_MARGIN_M:
+                return False
+    return True
+
+
+def spaced(names, poses):
+    """Every pair far enough apart, and every object graspable without the hand touching another."""
+    for i in range(len(names)):
+        for j in range(i + 1, len(names)):
+            a, b, pa, pb = names[i], names[j], poses[i], poses[j]
+            if (math.hypot(pa[0] - pb[0], pa[1] - pb[1]) < min_distance(a, b)
+                    or not hand_clear(a, pa, b, pb) or not hand_clear(b, pb, a, pa)):
+                return False
+    return True
+
+
 def _draw_pose(stream, obj):
     while True:
         x, y = _uniform(stream, *START_X_M), _uniform(stream, *START_Y_M)
@@ -99,8 +142,7 @@ def _draw_layout(target, distractors, identity, seeds=None):
     names = [target, *distractors]
     for draws in range(1, LAYOUT_DRAW_LIMIT + 1):
         poses = [_draw_pose(stream, name) for name in names]
-        if all(math.hypot(poses[i][0] - poses[j][0], poses[i][1] - poses[j][1]) >= min_distance(names[i], names[j])
-               for i in range(len(names)) for j in range(i + 1, len(names))):
+        if spaced(names, poses):
             return {"start": poses[0], "distractors": [{"object": n, "pose": q} for n, q in zip(distractors, poses[1:])],
                     "layout_draws": draws}
     raise RuntimeError(f"no spaced layout for {names} in {LAYOUT_DRAW_LIMIT} draws")
@@ -245,7 +287,8 @@ def make_plan() -> dict:
         trained_cells=[list(c) for c in TRAINED_CELLS], held_out_cells=[list(c) for c in HELD_OUT_CELLS],
         start_region=dict(x=list(START_X_M), y=list(START_Y_M), radius_min_m=START_RADIUS_MIN_M,
                           yaw_max_deg_by_object=YAW_MAX_DEG_BY_OBJECT),
-        spacing=dict(footprint_radius_m=FOOTPRINT_RADIUS_M, pair_gap_m=PAIR_GAP_M, finger_reach_m=FINGER_REACH_M),
+        spacing=dict(footprint_radius_m=FOOTPRINT_RADIUS_M, pair_gap_m=PAIR_GAP_M, finger_reach_m=FINGER_REACH_M,
+                     hand_parts_m=HAND_PARTS_M, hand_margin_m=HAND_MARGIN_M, height_m=HEIGHT_M),
         carry_bottom_m=CARRY_BOTTOM_M, episodes=episodes, train_ids=list(range(TRAIN_COUNT)),
         validation_ids=list(range(TRAIN_COUNT, ADMIT_COUNT)), evaluation_holdout=holdout,
         **{f"evaluation_{tier}_ids": sorted(k for k, v in holdout.items() if v["tier"] == tier)
