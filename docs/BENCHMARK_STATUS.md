@@ -1,5 +1,17 @@
 # Franka benchmark: start here
 
+## Props P2 dataset sealed: 540 episodes in 54 minutes - 2026-10-13
+
+Instruction sorting with 1–2 distractor objects (`experiments/props_p2_data/`, branch `feat/props-p2`):
+540/540 admitted, 0 rejected, 0 substitutions, 0 distractors touched; 480 train / 60 validation, 270
+one-distractor / 270 two-distractor; held-out pairs `milk→blue`, `bread→orange` never collected.
+Fingerprint `b1d642b3…f4d898`, re-verified in a second process. Collected by 12 parallel CPU-rendered
+shards (user decision; GPU rendering deferred, see TODO) and merged with every episode verified
+against its shard: 54 min against P1's 9 h 38 m for the same budget. The first expert re-test failed
+(261/288, hand housing clipping tall neighbours); a symmetric hand-clearance rule passed it
+(284/288 = 98.6%) without changing the bar. Report:
+[PROPS_P2_COLLECTION_20261013.md](PROPS_P2_COLLECTION_20261013.md); lessons FAILURES #54–55.
+
 ## Repository visibility, archive repair, and RTX disk reclaim - 2026-10-09
 
 All seven dataset repositories and all eight published model repositories were switched from

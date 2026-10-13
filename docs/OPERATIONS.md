@@ -97,6 +97,14 @@ the pinned image above on MuJoCo 3.13.0.
   and commit adds about 24 s and is not in the per-attempt timing). `--pilot --slots ... `, `--resume`
   and `--status` are the other modes; never reconstruct the LeRobot dataset object between episodes
   mid-run (FAILURES #41) — only `--resume` reopens it, once.
+- Props P2 (`experiments/props_p2_data/`, sealed 2026-10-13, hash-bound — fork, do not edit): **12 parallel
+  shard containers**, one per `--collect /out/<run>_shards --shard K` (K = 0..11, 45 contiguous slots each, own
+  journal and dataset, resumable alone), `-e LP_NUM_THREADS=4` each (proven pixel-neutral), same flags as P1 and a
+  16 GB `/tmp`. ~4 GB RAM per worker (scene models capped at 4). Then `--merge /out/<run>_shards --out /out/<run>`
+  aggregates, verifies every episode against its shard, validates and seals (about 1 min). 540 episodes took
+  54 min (10.8 h of serial work). `--status /out/<run>_shards` while it runs. Expert re-test: `--gate` per shard
+  (unrendered), `--determinism --tag` twice, `--gate-summary`. Report:
+  [PROPS_P2_COLLECTION_20261013.md](PROPS_P2_COLLECTION_20261013.md).
 - Props P1 training (`experiments/xvla_props_p1/`, admission image, no simulator): forked from
   `xvla_b3_robosuite` — same `--check`/`--preflight`/`--resume-proof`/`--train [--resume]` gates, each
   output subdirectory (`_admission`, `_preflight`, `_resumeproof`, the main output) **must be its own

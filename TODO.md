@@ -393,7 +393,17 @@ Two-phase project. User accepted the one-variable-per-run attribution trade-off:
         evaluation design** — held-out pairs vs trained, the shortcut check (success by arrangement),
         wrong-bin rate, checkpoint screen/report/confirm tiers (80 reserved layouts already drawn,
         not yet screened for expert feasibility).
-      - **P2 — instruction sorting with 1–2 distractor objects** (the main dataset, B3-sized). The
+      - **P2 — instruction sorting with 1–2 distractor objects. Dataset collected and sealed 2026-10-13:
+        540/540 episodes (480 train, 60 validation; 270 one-distractor, 270 two-distractor), 0 rejected,
+        0 substitutions, 0 distractors touched, fingerprint `b1d642b3…f4d898`, re-verified in a second
+        process; 12 parallel shards, 54 min wall-clock (10.8 h of serial work).** Report:
+        [docs/PROPS_P2_COLLECTION_20261013.md](docs/PROPS_P2_COLLECTION_20261013.md). Spec (now bound):
+        [docs/superpowers/specs/2026-10-13-props-p2-distractors-design.md](docs/superpowers/specs/2026-10-13-props-p2-distractors-design.md).
+        Branch `feat/props-p2`, not merged. **Next: training and evaluation plan** (fork of P1's packages,
+        base X-VLA, P1's recipe; `wrong_object` cause decided by what is lifted — an untouched lemon drifts
+        up to 18 mm / 51°; expert-feasibility check of the 120 reserved layouts first; success criteria
+        pre-registered in the spec). The original roadmap line follows.
+      - *(roadmap)* **P2 — instruction sorting with 1–2 distractor objects** (the main dataset, B3-sized). The
         policy must find the named object among others. Random yaw; held-out pairs; several
         checkpoints + an untouched confirmation set. **No near-base stratum** (spec decision
         2026-10-06): P0 found the expert cannot reach starts closer than about 0.285 m to the base,
