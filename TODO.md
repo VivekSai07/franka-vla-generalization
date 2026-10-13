@@ -1,36 +1,29 @@
 # SmolVLA / X-VLA Franka TODO
 
-## Where things stand (2026-10-09)
+## Where things stand (2026-10-13)
 
-- **The cube programme is closed.** B3 — four colours with two held-out instruction pairs, 0–2
-  distractors, edge positions, collected in the robosuite scene — was the last cube experiment
-  (user, 2026-10-02). Best checkpoint (step 124,800): about 85% overall and about 75% with
-  distractors on reserved layouts; held-out colour pairs as good as trained ones. Results arc:
-  [docs/RESULTS.md](docs/RESULTS.md).
-- **B3 published (2026-10-06)**: [dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-b3-robosuite-560) and
-  [model (steps 124,800 and 156,000)](https://huggingface.co/VivekSai07/xvla-franka-b3-robosuite-124800).
-  Created private; at the 2026-10-09 check the dataset is public and the model private.
-  Evaluation portability was not covered; see the B3 section and [artifact index](docs/HUGGING_FACE_ARTIFACTS.md).
-- **Props P1 published from Windows (2026-10-09)**: [dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-props-p1-540) and
-  [model (root 126,900; alternate 88,830)](https://huggingface.co/VivekSai07/xvla-franka-props-p1-126900) (both private).
-  Staged at `outputs/downloads_20261009/props_p1/`, with runtime, code snapshot and
-  clean-container-tested re-evaluation wrapper; [download/reconstruction details](docs/HUGGING_FACE_ARTIFACTS.md#props-p1-instruction-sorting).
-- **Props P0 is GO (re-run 2026-10-05): 283/288 = 98.3% against 95%** (robosuite image, scripted, branch
-  `feat/props-p0`, not merged). The first run failed (164/300) on two errors in the spec, not in the expert: success
-  required the centre below the wall (impossible for a tall object standing in the bin) and the start region began
-  inside the arm's working envelope. Both are amended (success by lowest point; start x from 0.27; no near-base
-  stratum; 288 attempts). Every object at least 95.8%, both slots at least 97.2%, replay exact, determinism 24/24.
-  Reports: [docs/PROPS_P0_RERUN_20261005.md](docs/PROPS_P0_RERUN_20261005.md) (the pass) and
-  [docs/PROPS_P0_20261005.md](docs/PROPS_P0_20261005.md) (the first run, kept as the record).
-- **Props P1 trained and evaluated (2026-10-09): confirm 100% (20/20), report 75% (60/80) on checkpoint 126,900** (the final checkpoint; tied with 88,830 on report, later checkpoint wins the pre-committed tie-break). Zero wrong-bin outcomes across 480 report trials on all 6 checkpoints; held-out pairs perform at or above trained pairs throughout. Report: [docs/PROPS_P1_EVALUATION_20261009.md](docs/PROPS_P1_EVALUATION_20261009.md), training: [docs/PROPS_P1_TRAINING_20261009.md](docs/PROPS_P1_TRAINING_20261009.md). Branch `feat/props-p0`.
-- **Props P1 dataset collected and sealed (2026-10-07): 540/540 episodes, 7 rejections (all lemon), 2
-  substitutions, seal verified independently.** One object, two bins swapping sides,
-  `put the <object> in the <colour> bin`; `milk→blue` and `bread→orange` held out of training (0
-  collected, confirmed). True wall-clock 9h38m — the plan's "~6 h" estimate only timed the scripted
-  attempt, not the per-episode video encode/commit (~24 s/episode more); corrected here for future sizing.
-  Report: [docs/PROPS_P1_COLLECTION_20261007.md](docs/PROPS_P1_COLLECTION_20261007.md). Package
-  `experiments/props_p1_data/` is now hash-bound (sealed) — fork, do not edit. **Next: design P1 training
-  and evaluation.** Branch `feat/props-p0`, not merged.
+- **Now: props P2 (instruction sorting with 1–2 distractors). Dataset sealed 2026-10-13** — 540/540,
+  0 rejected, 0 distractors touched, fingerprint `b1d642b3…f4d898`, collected by 12 parallel shards in
+  54 min. Report: [docs/PROPS_P2_COLLECTION_20261013.md](docs/PROPS_P2_COLLECTION_20261013.md). Branch
+  `feat/props-p2`, not merged. **Next: P2 training and evaluation plan** (P1's recipe from the X-VLA base;
+  training in user-scheduled overnight batches; success criteria pre-registered in the P2 spec).
+- **Props P1 trained and evaluated (2026-10-09): confirm 100% (20/20), report 75% (60/80) on checkpoint
+  126,900**; zero wrong-bin outcomes in 480 report trials. Reports:
+  [evaluation](docs/PROPS_P1_EVALUATION_20261009.md), [training](docs/PROPS_P1_TRAINING_20261009.md),
+  [collection](docs/PROPS_P1_COLLECTION_20261007.md) (540/540, sealed 2026-10-07, 9 h 38 m serial). P0 and P1
+  (`feat/props-p0`) were merged into `main` by PR #1 (`582b107`).
+- **Props P0 is GO (re-run 2026-10-05): 283/288 = 98.3%** after two spec amendments (success by lowest
+  point; start region clear of the arm's working envelope). Reports:
+  [docs/PROPS_P0_RERUN_20261005.md](docs/PROPS_P0_RERUN_20261005.md), first run
+  [docs/PROPS_P0_20261005.md](docs/PROPS_P0_20261005.md).
+- **The cube programme is closed.** B3 (four colours, two held-out pairs, 0–2 distractors, robosuite scene)
+  was the last cube experiment: step 124,800 about 85% overall and about 75% with distractors; held-out
+  pairs as good as trained ones. Results arc: [docs/RESULTS.md](docs/RESULTS.md).
+- **Everything published is public** (switched 2026-10-09, verified via the Hub API): seven datasets
+  and the published models, including B3 and props P1. A 2026-10-09 repair pass closed B2's
+  missing-archive gap and added `runtime/` + `code/` portability sections to B1, broad-workspace, B2, B3
+  and local-varied's SmolVLA model (clean-container re-evaluation from those five not yet run; props P1's
+  was). Map, pins and caveats: [docs/HUGGING_FACE_ARTIFACTS.md](docs/HUGGING_FACE_ARTIFACTS.md).
 - Items from Phases A and B that the closed cube programme made moot are ticked with
   *(closed 2026-10-05, not pursued)* and kept for their reasoning.
 
@@ -372,10 +365,10 @@ Two-phase project. User accepted the one-variable-per-run attribution trade-off:
 - [x] ~~Re-think the B3 axis list before designing Phase 2~~ (user, 2026-10-02) — done in the spec above; kept for the reasoning. The list below was written before Phase 1 and before the sim2sim result. Inputs that change it: the ≤ 1.2 cm gate conflicts with the expert's own jitter (item a); the scene change is itself a large visual axis; the sim2sim result will say how much of B2's capability survives it.
       Idea to evaluate there (user): a larger cube, still within the 8 cm finger opening, to make placement more forgiving. Notes for that discussion: the in-hand offset comes from jitter along the pad surface, which a larger cube does not remove; a wider cube tips later, so the physical tolerance grows with the edge length (B2 measured the cliff at half the 4.2 cm edge); but `stack_metrics`' 2 cm xy window is a fixed constant in shared code, so the scored tolerance does not grow unless a new metric is defined; and a wider cube leaves less finger clearance on approach.
 - Superseded by the 2026-10-03 spec above (kept as the original sketch): **Phase 2 — B3 combined-axis collection**, designed only after Phase 1 passes. Will layer: tighter release precision (expert gate ≤ 1.2 cm), harder distractors (reduced clearance / in the carry path), full colour randomisation, extra demonstrations near the acquisition-weak `054`/`048` pick regions, and a floor/prop change. Horizon likely 75-100 k updates.
-- [x] **Publish B3 steps 124,800 and 156,000** (user, 2026-10-05; done 2026-10-06: copied to Windows byte-identical, published as private HF repos [dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-b3-robosuite-560) and [model](https://huggingface.co/VivekSai07/xvla-franka-b3-robosuite-124800), 5,010 files hash-verified on the Windows side; tokenizer path and external evaluation code left as documented portability gaps): staged and hash-verified at `outputs/downloads_20261005/b3_robosuite/` (zero extra disk); copy to Windows, verify the two hashes, upload as a private model repo — commands in the staging `README.md`, record in [docs/B3_PUBLICATION_20261005.md](docs/B3_PUBLICATION_20261005.md). Keep all RTX originals.
-- [ ] **Next project — robosuite's built-in props / real-life objects** (user, 2026-10-02; B3 now has its measured result, so this is next: brainstorm → spec → plan). Move from cubes to robosuite's object library (cans, bottles, boxes, cereal, bread, milk; `robosuite.models.objects`). This is a jump, not an increment: the scripted expert assumes a cube it can grasp top-down at a fixed height and scores a cube-on-cube stack, so it needs new grasp strategies per object, a new task definition and success metric, and instructions that name objects.
+- [x] **Publish B3 steps 124,800 and 156,000** (user, 2026-10-05; done 2026-10-06: copied to Windows byte-identical, published as private HF repos (both switched to public 2026-10-09; the missing tokenizer/runtime and evaluation code were added by the 2026-10-09 portability repair) [dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-b3-robosuite-560) and [model](https://huggingface.co/VivekSai07/xvla-franka-b3-robosuite-124800), 5,010 files hash-verified on the Windows side; tokenizer path and external evaluation code left as documented portability gaps): staged and hash-verified at `outputs/downloads_20261005/b3_robosuite/` (zero extra disk); copy to Windows, verify the two hashes, upload as a private model repo — commands in the staging `README.md`, record in [docs/B3_PUBLICATION_20261005.md](docs/B3_PUBLICATION_20261005.md). Keep all RTX originals.
+- [x] **Next project — robosuite's built-in props / real-life objects** (user, 2026-10-02) — *underway*: P0 (scene + expert) GO 2026-10-05, P1 trained and evaluated 2026-10-09, P2 dataset sealed 2026-10-13; roadmap below. Original note: move from cubes to robosuite's object library (cans, bottles, boxes, cereal, bread, milk; `robosuite.models.objects`). This is a jump, not an increment: the scripted expert assumes a cube it can grasp top-down at a fixed height and scores a cube-on-cube stack, so it needs new grasp strategies per object, a new task definition and success metric, and instructions that name objects.
 - **Props P1 dataset SEALED (2026-10-07): 540/540 episodes**, fingerprint `86e3aadb…`, 7 rejections of 547 (all lemon), 2 substitutions, 0 held-out pairs collected. Seal, cell balance and reserved tiers independently re-verified. Report: [docs/PROPS_P1_COLLECTION_20261007.md](docs/PROPS_P1_COLLECTION_20261007.md). **Trained and evaluated 2026-10-09: confirm 100% (20/20), report 75% (60/80), checkpoint 126,900 — [docs/PROPS_P1_EVALUATION_20261009.md](docs/PROPS_P1_EVALUATION_20261009.md).**
-- **Props P0 PASSED (2026-10-05): 283/288 = 98.3%** after two spec amendments I had got wrong (success by lowest point, not centre; start region clear of the arm's working envelope). Report: [docs/PROPS_P0_RERUN_20261005.md](docs/PROPS_P0_RERUN_20261005.md). **Next: P1 collection — [docs/superpowers/plans/2026-10-06-props-p1-collection.md](docs/superpowers/plans/2026-10-06-props-p1-collection.md)** (amend region+yaw, re-confirm P0, build the collector, pilot, then 540 episodes ≈ 6 h). Branch `feat/props-p0`, not merged.
+- **Props P0 PASSED (2026-10-05): 283/288 = 98.3%** after two spec amendments I had got wrong (success by lowest point, not centre; start region clear of the arm's working envelope). Report: [docs/PROPS_P0_RERUN_20261005.md](docs/PROPS_P0_RERUN_20261005.md). ~~Next: P1 collection~~ — done 2026-10-07 (plan: [docs/superpowers/plans/2026-10-06-props-p1-collection.md](docs/superpowers/plans/2026-10-06-props-p1-collection.md)). Branch `feat/props-p0`, merged into `main` by PR #1.
 - **Props roadmap (agreed direction, user 2026-10-05; each phase gets its own spec → plan → go/no-go):**
       Spec: [docs/superpowers/specs/2026-10-05-props-sorting-design.md](docs/superpowers/specs/2026-10-05-props-sorting-design.md). P0 plan: [docs/superpowers/plans/2026-10-05-props-p0-scene-expert.md](docs/superpowers/plans/2026-10-05-props-p0-scene-expert.md) (ends with a report and a handoff prompt). P1 bins are told apart by colour (blue / orange), not by side; they swap sides.
       - **P0 — scene and expert bring-up (no policy). GO 2026-10-05: 283/288 = 98.3%** after the spec amendments below (first run 164/300, no-go). Two-bin scene composed like `robosuite_scene`
@@ -389,10 +382,9 @@ Two-phase project. User accepted the one-variable-per-run attribution trade-off:
         substitutions, true wall-clock 9h38m (the "~6 h" estimate only timed the scripted attempt, not
         the per-episode video encode/commit).** Report: [docs/PROPS_P1_COLLECTION_20261007.md](docs/PROPS_P1_COLLECTION_20261007.md).
         "put the <object> in the <bin> bin"; bins swap sides every episode; `milk→blue` and
-        `bread→orange` held out of training entirely (0 collected, confirmed). **Next: training and
-        evaluation design** — held-out pairs vs trained, the shortcut check (success by arrangement),
-        wrong-bin rate, checkpoint screen/report/confirm tiers (80 reserved layouts already drawn,
-        not yet screened for expert feasibility).
+        `bread→orange` held out of training entirely (0 collected, confirmed). **Trained and evaluated
+        2026-10-09** (confirm 20/20, report 60/80 on 126,900; 80 reserved layouts expert-feasible 80/80):
+        [docs/PROPS_P1_EVALUATION_20261009.md](docs/PROPS_P1_EVALUATION_20261009.md).
       - **P2 — instruction sorting with 1–2 distractor objects. Dataset collected and sealed 2026-10-13:
         540/540 episodes (480 train, 60 validation; 270 one-distractor, 270 two-distractor), 0 rejected,
         0 substitutions, 0 distractors touched, fingerprint `b1d642b3…f4d898`, re-verified in a second
@@ -426,8 +418,8 @@ Two-phase project. User accepted the one-variable-per-run attribution trade-off:
         episode with a fixed prompt; then held-out objects as a stretch test (zero-shot category from
         six objects is a long shot and is read as exploratory). Multi-object sequential sorting only
         after that.
-- **Props P0 result and its resolution (2026-10-05)** — package `experiments/props_scene/` on `feat/props-p0`
-  (robosuite image, no contract, not merged). First run, written spec: 164/300 = 54.7% no-go ([docs/PROPS_P0_20261005.md](docs/PROPS_P0_20261005.md)).
+- **Props P0 result and its resolution (2026-10-05)** — package `experiments/props_scene/` (robosuite image,
+  no contract of its own; frozen through the P1 and P2 seals; merged into `main` by PR #1). First run, written spec: 164/300 = 54.7% no-go ([docs/PROPS_P0_20261005.md](docs/PROPS_P0_20261005.md)).
   Decisions taken by the owner of the plan the same day, and what they gave ([docs/PROPS_P0_RERUN_20261005.md](docs/PROPS_P0_RERUN_20261005.md)):
       1. **Success** is now: centre inside the bin in x and y, **lowest point** below the wall top, gripper open and clear, 30 ticks. Re-run: milk 47/48, bottle 46/48, cereal 48/48.
       2. **Start region** is x ≥ 0.27 (was 0.22), no near-base stratum, 288 attempts. 4 of the 5 remaining failures start at radius 0.278–0.283 m, inside the reach band the region still admits (5.9% of its area); beyond 0.285 m: 274/275.
@@ -468,7 +460,7 @@ Two-phase project. User accepted the one-variable-per-run attribution trade-off:
         FAILURES #27); hold out some object × bin combinations, as B3 held out colour pairs; how many
         objects per scene and whether the rest act as distractors; random yaw as an axis; and the
         controller decision below.
-- [ ] **Decide the controller and action space for the props project: our joint-target IK or robosuite's OSC_POSE** (user, 2026-10-02). Plan time for this before any props data is collected, because the choice fixes the dataset's action format. What to weigh:
+- [x] **Decide the controller and action space for the props project: our joint-target IK or robosuite's OSC_POSE** (user, 2026-10-02). *Settled at P0 (2026-10-05): our joint-target IK expert passed the gate (283/288); OSC was dropped as a gate input (148/300 on the first run's attempts) and kept as evidence. P1 and P2 use 7 absolute joint targets + gripper.* Original considerations:
       - *Ours* (pinocchio IK → 7 absolute joint targets + gripper, 30 Hz): every existing dataset and checkpoint uses it, so old policies can still be rolled out and sim2sim stays possible; robosuite's runtime is not needed (`env.step` is never called). Note from the sim2sim result: the old checkpoints roll out on the robosuite scene but score 3/20, so "existing checkpoints stay usable" is a weak reason to keep this action space.
       - *OSC_POSE* (robosuite built-in: 6 end-effector deltas + gripper): the format public robosuite / robomimic / LIBERO data uses, and compliant in contact (the SmolVLA checkpoint this repo started from, `smolvla_libero`, is LIBERO-finetuned). Costs: a new action space (no reuse of existing checkpoints or datasets), a scripted expert rewritten to emit deltas, `env.step` and robosuite's control loop in the collection path, and re-proving determinism and replay.
       - Questions to answer in the brainstorm: do the props need contact-rich or tilted grasps that joint targets handle badly? Do we want to mix in public data or compare against public baselines? Is rolling out the cube-trained checkpoints on the props scene still wanted?

@@ -345,7 +345,10 @@ and closes those gaps: it carries the base model and tokenizer (`runtime/`), a s
 `reevaluate/bundle_evaluate.py` and a stdlib-only `reevaluate/verify_bundle.py`. A smoke re-evaluation run
 with only the bundle mounted reproduced the original trials bit for bit. Transferred to Windows on
 2026-10-09 (user), then published as [P1 dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-props-p1-540) and
-[P1 model](https://huggingface.co/VivekSai07/xvla-franka-props-p1-126900) (both private). Its
+[P1 model](https://huggingface.co/VivekSai07/xvla-franka-props-p1-126900) (published private; both
+public since 2026-10-09). The B3, B2, B1, broad-workspace and local-varied (SmolVLA) bundles gained
+`runtime/`, `code/` and a hash-manifest `reevaluate/verify_bundle.py` in a 2026-10-09 repair, uploaded
+straight from RTX (no clean-container re-evaluation from those five). Its
 `evaluation_browse/` and `outputs/xvla_props_p1_eval_browse/` are hardlinked views of the P1 trials,
 split into held-out and trained, with object, bin, side and outcome in the folder names. Browse them
 there, but never rename inside `outputs/xvla_props_p1_eval/`: `evaluate.py` finds trials by

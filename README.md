@@ -58,6 +58,10 @@ Report: [docs/PROPS_P1_EVALUATION_20261009.md](docs/PROPS_P1_EVALUATION_20261009
 [docs/PROPS_P1_TRAINING_20261009.md](docs/PROPS_P1_TRAINING_20261009.md). Published to Hugging Face
 2026-10-09 (dataset and model, [docs/HUGGING_FACE_ARTIFACTS.md](docs/HUGGING_FACE_ARTIFACTS.md)).
 
+**In progress — props P2 (1–2 distractor objects):** dataset sealed 2026-10-13, 540 episodes, collected by
+12 parallel shards in 54 minutes ([docs/PROPS_P2_COLLECTION_20261013.md](docs/PROPS_P2_COLLECTION_20261013.md));
+training and evaluation not yet run.
+
 ## Previous headline (2026-10-05, robosuite scene): B3, the last cube experiment
 
 X-VLA trained 156,000 updates (5 epochs) on 560 scripted episodes collected in the robosuite scene:

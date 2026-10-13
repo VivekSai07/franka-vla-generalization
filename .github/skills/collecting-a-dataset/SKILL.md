@@ -1,6 +1,6 @@
 ---
 name: collecting-a-dataset
-description: "Use when launching, resuming, or debugging a data-collection run (--preflight/--collect) — covers the rejection budget, resume/rollback, hash-bound package files, and why a pilot must precede the full run."
+description: "Use when launching, resuming, speeding up or debugging a data-collection run (--preflight/--collect, --gate, --pilot, --merge) — covers the rejection budget, resume/rollback, hash-bound package files, parallel shard collection, distractor/expert gates, and why a pilot must precede the full run."
 ---
 
 # Collecting a dataset
@@ -72,6 +72,51 @@ Same caveat as training: `docker wait` does not reliably notify. Poll `--status`
 `docker logs <container> | tail`) actively, especially in the first few minutes — a slot that
 exhausts its rejection budget costs the same wall-clock whether it happens at slot 1 or slot 197,
 and only a resumable run makes that recoverable rather than a total loss.
+
+## 6. Making a collection fast: parallel shards (props P2: 540 episodes in 54 min, P1 took 9 h 38 m)
+
+**Profile one episode before choosing a speed-up.** Time each stage in the image you will run:
+props P1 was physics 0.6 s, OSMesa rendering ~37 s, frame write + AV1 encode 23 s. Rendering and
+encoding are per-episode CPU work with nothing shared between episodes, so the win is running
+episodes side by side, not a faster renderer. GPU (EGL) rendering was 17× faster per attempt but
+needs an image change, is not byte-deterministic (1-pixel differences run to run) and renders
+differently from OSMesa — deferred (TODO) because it adds variables a sealed dataset cannot carry.
+
+The pattern (`experiments/props_p2_data/`, copy it):
+
+| piece | rule |
+|---|---|
+| shards | one container per shard, a **contiguous** block of plan slots (`plan.shard_slots(k, n)`), its own journal, LeRobot dataset and `--resume`; rejections retry inside the shard, so slot order holds |
+| workers | 12 on 48 cores with `-e LP_NUM_THREADS=4` (OSMesa threads); prove the thread cap is pixel-neutral (two determinism runs, capped vs default, byte-equal). Never more than ~30 workers (FAILURES #50) |
+| memory | robosuite scene models are ~390 MB each and `props_scene` caches them forever; cap the cache per worker and clear it when full. Prove a rebuild is bit-identical first (compare every compiled `MjModel` array) |
+| merge | `lerobot.datasets.aggregate.aggregate_datasets(..., data_files_size_in_mb=0, video_files_size_in_mb=0)` copies videos byte for byte and rewrites data with shifted indices. Verify every merged episode against its shard (lengths, tasks, data columns, video sha256, timestamps) **before** validating and sealing; seal the merged root |
+| gate | the expert re-test runs unrendered (rendering does not feed physics), sharded: 288 attempts in ~1 min; determinism is checked separately on a dozen rendered attempts in two processes |
+| pilot | 2 shards × 6 slots through collect → merge → verify → `LeRobotDataset` load, before the full launch |
+| launch | `docker run -d --name <run>-collect-K ...` per shard; poll `--status` and `docker stats` (flat memory per worker is the sign the cache cap works) |
+
+Size the estimate from the pilot's attempt **and** commit seconds under full load (attempts slowed from
+41 s to 47 s with 12 workers), not from one episode alone (FAILURES #51).
+
+## 7. Gates that measured the wrong thing (caught before data, P2)
+
+- **"Distractor undisturbed" by pose threshold.** The lemon rocks on its own after reset (up to 13°
+  untouched; 51° and 18 mm over a full episode). Gate on *contact* with anything but the table, from a
+  substep re-run that must equal the recorded trace. Run the scene with nothing acting on it first and
+  see how much each object moves by itself (FAILURES #54).
+- **Spacing that models the fingers only.** The hand housing (±0.104 m along the finger axis, underside
+  0.042 m above the grasp point) clipped tall neighbours of short targets: expert re-test 90.6%. Measure
+  the collision geometry of every robot part that comes down near an object (FAILURES #55).
+- **Asymmetric spacing marks the target.** A clearance applied only around the target makes "the
+  isolated object" a learnable cue. Every spacing rule must be symmetric in the objects.
+- When the expert re-test fails its bar, find the cause in the journal (partner body, tick, target) and fix
+  the layouts or the expert; never move the bar.
+
+## 8. Container traps on the collection path
+
+- `--read-only` containers need `-e XDG_CACHE_HOME=/tmp/cache` even for a probe: robosuite's numba cache
+  otherwise fails at import (`cannot cache function ... no locator available`).
+- A run binds its spec and plan through `provenance()`: from the first `--collect` until the seal, and
+  after it, do not edit them (FAILURES #52). Put later design in new files.
 
 ## See also
 
