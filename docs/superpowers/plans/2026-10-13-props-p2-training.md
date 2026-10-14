@@ -63,7 +63,14 @@ P1 loop, byte-equal weights and equal losses) -> `--train --stop-at <epoch>` (ni
 - [x] **7. Gates on the GPU** tonight (no office load): check, preflight, resume-proof, equivalence.
   *All passed 2026-10-13: check (fingerprint recomputed); preflight (exact FP32 reload, snapshot 10.6 GB in
   15 s, telemetry read in-container: 66 C, 129 W); resume-proof byte-equal; equivalence byte-equal metrics,
-  weights and Adam over 30 updates.* Launch: `outputs/train/xvla_props_p2_night.sh fresh|resume "<stop time>"`
-  (local, gitignored; mounts all four gate directories read-only, `timeout` backstop 45 min after the
-  deadline).
+  weights and Adam over 30 updates.* Launch: `scripts/xvla_props_p2_night.sh fresh|resume "<stop time>"`
+  (committed; outside the package so `SOURCE_FILES` and every seal are unaffected; mounts all four gate
+  directories read-only, `timeout` backstop 45 min after the deadline; refuses a second container, a fresh
+  run over an existing claim, a resume with nothing to resume, < 70 GiB free or a deadline < 1 h away).
+  `check "<stop time>"` runs every test and prints the command without launching; `status` is the morning read
+  (updates, pace, remaining hours, max GPU temperature and power, cool-down pauses).
+- [x] **7b. Package prep finished 2026-10-14 (no launch, per user).** Re-verified: the source binding still equals
+  the passed admission; equivalence 30 updates byte-equal at 0.524 vs 0.858 s/update (1.64x; P2 ≈ 18.5 h,
+  two nights); telemetry rows present (66 C, 129-151 W of 300 W, no slowdown). Launcher checked in
+  `check` mode, its refusal paths and its status reader on the preflight output.
 - [ ] **8. Night launches** with the deadline; report per night (completed updates, s/update, max temperature).

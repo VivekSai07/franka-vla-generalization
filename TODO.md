@@ -7,8 +7,9 @@
   54 min. Report: [docs/PROPS_P2_COLLECTION_20261013.md](docs/PROPS_P2_COLLECTION_20261013.md). Branch
   `feat/props-p2`, not merged. **Training package `experiments/xvla_props_p2/` built and all gates passed
   2026-10-13** (check, preflight, resume-proof, equivalence: the faster loop is byte-equal to P1's over 30
-  updates, 0.524 vs 0.858 s/update). **Next: training in two user-scheduled nights** (Wed 14 and Thu 15
-  Oct, 19:00 to ~06:00, `--stop-at` pause at a snapshot; plan
+  updates, 0.524 vs 0.858 s/update). **Next: training in two user-scheduled nights, launch times set by the
+  user** (window about 19:00 to ~06:00; `scripts/xvla_props_p2_night.sh fresh|resume "<stop time>"`, which
+  pauses at a snapshot before the deadline; morning read: `scripts/xvla_props_p2_night.sh status`; plan
   [docs/superpowers/plans/2026-10-13-props-p2-training.md](docs/superpowers/plans/2026-10-13-props-p2-training.md)),
   then the evaluation package (success criteria pre-registered in the P2 spec).
 - **Props P1 trained and evaluated (2026-10-09): confirm 100% (20/20), report 75% (60/80) on checkpoint
