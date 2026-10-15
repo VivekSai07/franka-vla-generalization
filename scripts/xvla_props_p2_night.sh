@@ -43,8 +43,10 @@ now=$(date +%s)
 (( stop_at > now + 3600 )) || { echo "deadline less than 1 h away: $(date -d @$stop_at)"; exit 1; }
 backstop=$(( stop_at - now + 2700 ))
 case $mode in
-  fresh|check) args=(--train --stop-at "$stop_at") ;;
-  resume)      args=(--train --resume --stop-at "$stop_at") ;;
+  fresh)  args=(--train --stop-at "$stop_at") ;;
+  resume) args=(--train --resume --stop-at "$stop_at") ;;
+  check)  if [[ -e $OUT/run_claim.json ]]; then mode=check-resume; args=(--train --resume --stop-at "$stop_at")
+          else args=(--train --stop-at "$stop_at"); fi ;;
   *) echo "mode must be fresh, resume, check or status"; exit 1 ;;
 esac
 name=xvla-props-p2-train-$(date +%m%d-%H%M)
@@ -52,10 +54,11 @@ for g in admission preflight resumeproof equivalence; do
   [[ -s ${OUT}_$g/result.json ]] || { echo "missing gate ${OUT}_$g"; exit 1; }
 done
 [[ -z $(docker ps -q --filter name=xvla-props-p2-train) ]] || { echo "a P2 training container is already running"; exit 1; }
-if [[ $mode == resume ]]; then
+if [[ $mode == resume || $mode == check-resume ]]; then
   [[ -s $OUT/run_claim.json ]] || { echo "nothing to resume at $OUT"; exit 1; }
   status=$(python3 -c "import json; print(json.load(open('$OUT/result.json'))['status'])")
   [[ $status != complete ]] || { echo "training already complete"; exit 1; }
+  ls -d "$OUT"/resume/snap_* >/dev/null 2>&1 || { echo "no resume snapshot in $OUT/resume"; exit 1; }
 elif [[ -e $OUT/run_claim.json ]]; then
   echo "$OUT already holds a run; use resume"; exit 1
 fi
@@ -74,7 +77,7 @@ cmd=(docker run -d --name "$name" --runtime nvidia --gpus all --network none --r
   -w /vla --entrypoint timeout "$IMAGE"
   --signal=TERM "$backstop" python -m experiments.xvla_props_p2.runner "${args[@]}")
 echo "mode=$mode stop_at=$(date -d @$stop_at) backstop=${backstop}s free=${free_gib}GiB head=$(git log --oneline -1)"
-if [[ $mode == check ]]; then
+if [[ $mode == check || $mode == check-resume ]]; then
   printf '%q ' "${cmd[@]}"; echo; echo "check only: nothing launched"; exit 0
 fi
 mkdir -p "$OUT"
