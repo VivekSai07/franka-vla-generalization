@@ -33,9 +33,13 @@ cpu() {
   return "${PIPESTATUS[0]}"
 }
 
-launch() { # mode policy candidates shard shards
+CORES=5   # dedicated cores per worker: 8 unpinned workers each saw 48 cores, spawned ~48 threads each and
+          # thrashed (load 142 on 48 cores, no trial finished in 6 min); pinned, thread pools size to CORES.
+launch() { # mode policy candidates shard shards slot
+  local first=$(( $6 * CORES ))
   docker run -d --name "p2eval_${1}_${2}_${4}" --runtime nvidia --gpus all -e CUBLAS_WORKSPACE_CONFIG=:4096:8 \
-    -e MUJOCO_GL=osmesa -e LP_NUM_THREADS=4 --tmpfs /tmp:rw,size=16g "${common[@]}" "$ROBO" \
+    --cpuset-cpus "${first}-$((first + CORES - 1))" -e OMP_NUM_THREADS=$CORES -e MKL_NUM_THREADS=$CORES \
+    -e MUJOCO_GL=osmesa -e LP_NUM_THREADS=$CORES --tmpfs /tmp:rw,size=16g "${common[@]}" "$ROBO" \
     -m experiments.xvla_props_p2_eval.evaluate worker --mode "$1" --policy "$2" --candidates "$3" --shard "$4" --shards "$5" >/dev/null
 }
 
@@ -43,10 +47,10 @@ launch() { # mode policy candidates shard shards
 stage() {
   local specs=("$@") spec attempt
   for attempt in 1 2; do
-    local names=()
+    local names=() slot=0
     for spec in "${specs[@]}"; do
       IFS=: read -r mode policy cands workers <<<"$spec"
-      for ((k = 0; k < workers; k++)); do launch "$mode" "$policy" "$cands" "$k" "$workers" && names+=("p2eval_${mode}_${policy}_${k}"); done
+      for ((k = 0; k < workers; k++)); do launch "$mode" "$policy" "$cands" "$k" "$workers" "$slot" && names+=("p2eval_${mode}_${policy}_${k}"); slot=$((slot + 1)); done
     done
     log "stage attempt $attempt: ${specs[*]} -> ${#names[@]} workers"
     while [ -n "$(docker ps -q -f name=p2eval_)" ]; do

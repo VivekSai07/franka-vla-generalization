@@ -1,17 +1,18 @@
 # SmolVLA / X-VLA Franka TODO
 
-## Where things stand (2026-10-13)
+## Where things stand (2026-10-16)
 
-- **Now: props P2 (instruction sorting with 1–2 distractors). Dataset sealed 2026-10-13** — 540/540,
-  0 rejected, 0 distractors touched, fingerprint `b1d642b3…f4d898`, collected by 12 parallel shards in
-  54 min. Report: [docs/PROPS_P2_COLLECTION_20261013.md](docs/PROPS_P2_COLLECTION_20261013.md). Branch
-  `feat/props-p2`, not merged. **Training package `experiments/xvla_props_p2/` built and all gates passed
-  2026-10-13** (check, preflight, resume-proof, equivalence: the faster loop is byte-equal to P1's over 30
-  updates, 0.524 vs 0.858 s/update). **Next: training in two user-scheduled nights, launch times set by the
-  user** (window about 19:00 to ~06:00; `scripts/xvla_props_p2_night.sh fresh|resume "<stop time>"`, which
-  pauses at a snapshot before the deadline; morning read: `scripts/xvla_props_p2_night.sh status`; plan
-  [docs/superpowers/plans/2026-10-13-props-p2-training.md](docs/superpowers/plans/2026-10-13-props-p2-training.md)),
-  then the evaluation package (success criteria pre-registered in the P2 spec).
+- **Now: props P2 (instruction sorting with 1–2 distractors) trained and evaluated 2026-10-16: two of the four
+  pre-registered criteria met.** Dataset sealed 2026-10-13 (540/540, fingerprint `b1d642b3…f4d898`), trained 126,900
+  updates. Winner by the fixed rule, checkpoint 101,520, report tier 90/120 = **75.0%** [65.0, 84.2]: overall ≥70%
+  **pass**, beats P1 126,900 (**0/120**) **pass**, wrong-object ≤5% **fail** (7/120 = 5.8%, one trial over),
+  trained-vs-held-out gap ≤10 points **fail** (trained 85.0%, held-out 55.0%; `milk→blue` 7/20). Confirm (touched
+  once) 16/20 = 80%; no-distractor control 17/20 (P1: 14/20); 0 wrong-bin in 120. 101,520 and 126,900 (83/120) are
+  not distinguishable (McNemar p = 0.21). Report:
+  [docs/PROPS_P2_EVALUATION_20261016.md](docs/PROPS_P2_EVALUATION_20261016.md). Branch `feat/props-p2`, not merged.
+  **Open:** whether the held-out gap is "unseen pair" or "hard object" (milk is weak even when trained; a follow-up
+  holding milk out in the other bin separates them), why 12 trials never lift anything, and whether to merge/publish
+  P2 (user decision).
 - **Props P1 trained and evaluated (2026-10-09): confirm 100% (20/20), report 75% (60/80) on checkpoint
   126,900**; zero wrong-bin outcomes in 480 report trials. Reports:
   [evaluation](docs/PROPS_P1_EVALUATION_20261009.md), [training](docs/PROPS_P1_TRAINING_20261009.md),
@@ -397,11 +398,12 @@ Two-phase project. User accepted the one-variable-per-run attribution trade-off:
         [docs/PROPS_P2_COLLECTION_20261013.md](docs/PROPS_P2_COLLECTION_20261013.md). Spec (now bound):
         [docs/superpowers/specs/2026-10-13-props-p2-distractors-design.md](docs/superpowers/specs/2026-10-13-props-p2-distractors-design.md).
         Branch `feat/props-p2`, not merged. Training package `experiments/xvla_props_p2/` (P1's recipe,
-        byte-equal faster loop, overnight pause, thermal guard) passed every gate 2026-10-13; training runs
-        in two user-scheduled nights. **Next after training: the evaluation package** (fork of P1's,
-        `wrong_object` cause decided by what is lifted — an untouched lemon drifts
-        up to 18 mm / 51°; expert-feasibility check of the 120 reserved layouts first; success criteria
-        pre-registered in the spec). The original roadmap line follows.
+        byte-equal faster loop, overnight pause, thermal guard) passed every gate 2026-10-13 and trained
+        126,900 updates. **Evaluated 2026-10-16** with `experiments/xvla_props_p2_eval/` (parallel workers,
+        `wrong_object` decided by what is lifted, 120/120 layouts expert-feasible): winner 101,520, report
+        75.0% (90/120), confirm 16/20; two of four pre-registered criteria met (wrong-object 5.8% against 5%,
+        held-out gap 30 points against 10):
+        [docs/PROPS_P2_EVALUATION_20261016.md](docs/PROPS_P2_EVALUATION_20261016.md). The original roadmap line follows.
       - *(roadmap)* **P2 — instruction sorting with 1–2 distractor objects** (the main dataset, B3-sized). The
         policy must find the named object among others. Random yaw; held-out pairs; several
         checkpoints + an untouched confirmation set. **No near-base stratum** (spec decision

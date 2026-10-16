@@ -1,5 +1,17 @@
 # Franka benchmark: start here
 
+## Props P2 trained and evaluated: 75.0% report, two of four criteria met - 2026-10-16
+
+X-VLA trained 126,900 updates on the P2 seal, then evaluated with `experiments/xvla_props_p2_eval/` (parallel workers:
+540 rollouts in about 3 h instead of ~12 h serial). All 120 reserved layouts were expert-feasible. Screen picked
+101,520 (19/20) and 126,900 (18/20); the report tier chose **101,520: 90/120 = 75.0%** [65.0, 84.2] over 83/120 (not
+distinguishable, p = 0.21); the same P1 checkpoint scored **0/120** on those trials (14/20 on its own task in the
+no-distractor control), confirm 16/20. Criteria: overall pass, beats-P1 pass, **wrong-object 5.8% against 5% fail,
+held-out gap 30 points against 10 fail**; no wrong-bin outcome in 120. The weak spot is `milk→blue` (7/20), a held-out
+cell on an object that is also the weakest when trained, so pair and object are confounded. Eight unpinned workers
+thrashed the CPU (load 142) and one died of GPU out of memory mid-screen; the first was stopped and the second
+absorbed by the driver's resume (FAILURES #57). Report: [PROPS_P2_EVALUATION_20261016.md](PROPS_P2_EVALUATION_20261016.md).
+
 ## Props P2 training package: every gate passed, 39% faster per update - 2026-10-13
 
 `experiments/xvla_props_p2/` (branch `feat/props-p2`): P1's recipe unchanged on the P2 seal. Gates in

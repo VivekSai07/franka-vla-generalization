@@ -98,6 +98,16 @@ Hash-bound READMEs and historical reports are linked from that index without cha
 
 56. **A hash-bound README was committed empty, and the residue test passed it.** Forking `xvla_props_p2` (2026-10-13), the rewritten README was written through the editor and immediately `mv`'d into place by a shell command; the editor's write had not reached disk, so an empty file was moved, tested and committed. All 70 tests passed: the fork-hygiene test only asserted that P1 strings were *absent*, which an empty file satisfies. Caught by the commit stat (`README.md | 0`) before `--check`, which would otherwise have bound an empty README into the run. A positive test (the README must name the P2 seal, root, gates and output) was added and shown to fail on the empty file. **Lessons:** (a) confirm a file's size on disk before moving, testing, committing or hashing it; (b) an absence-only check needs a presence check beside it.
 
+57. **A two-worker smoke measurement did not predict eight workers: CPU thrash, then a GPU out-of-memory death.** The
+P2 evaluation driver (2026-10-16) was sized from a smoke run of two workers (~4 cores, ~4.1 GB GPU each). With eight
+workers every container saw all 48 cores and spawned a thread pool for each (load average 142, no trial finished in
+6 minutes); it was stopped and each worker pinned to 5 cores with `OMP_NUM_THREADS=5`. In the relaunch one worker died of
+CUDA out of memory mid-screen: four workers held 7.3 GiB each after switching checkpoint and the 47 GB GPU was full. The
+driver's resume completed the missing trials (each reseeds itself, so they equal uninterrupted ones) and nothing was
+lost, but only because resume existed. Fix: pin cores per worker, size the pool by the peak (post-switch) memory rather than
+the first-load figure, and treat a measured per-worker cost as valid only at the concurrency it was measured at. The cause
+of the memory growth after a switch was not isolated.
+
 Broader lessons — every "just increment a counter" or "just leave state alone on retry" assumption in the fixed-layout pipeline broke under broad_workspace retries. Rejections need explicit cleanup for every piece of shared state (LeRobot buffer + PNG dir + attempts dir semantics + admit-count invariant). And a result is only interpretable once you know what the *absence* of the treatment scores on the same protocol.
 
 **Recurring meta-lesson — a green test suite is not evidence.** Six separate times (#10, #15, #20, #24, and twice while porting eval packages) the tests passed while the thing that actually runs was broken, because the tests exercised a *fixture*, a *constant*, the *wrong module*, or every path *except* the one the job takes. When adding a regression test, confirm it fails against the unfixed code. When forking a package, run the `symtable` undefined-name check from #24 before spending GPU time.

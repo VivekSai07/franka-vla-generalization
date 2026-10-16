@@ -54,9 +54,9 @@ All four are required. Also reported, not gated: success by distractor count (0 
 
 ## Tasks
 
-- [ ] 1. Package fork + rewritten tests (`protocol`, `scenes`, `analysis`, `rollout`, `feasibility`, `evaluate`).
-- [ ] 2. Feasibility of 120 layouts; classifier validated on the 540 sealed expert traces (all first-lifted =
+- [x] 1. Package fork + rewritten tests (`protocol`, `scenes`, `analysis`, `rollout`, `feasibility`, `evaluate`).
+- [x] 2. Feasibility of 120 layouts; classifier validated on the 540 sealed expert traces (all first-lifted =
   target; 0 distractor lifts) and on constructed wrong-object traces.
-- [ ] 3. `--prepare`, smoke (P2 and P1), measure workers' GPU/CPU, then the stages above via
+- [x] 3. `--prepare`, smoke (P2 and P1), measure workers' GPU/CPU, then the stages above via
   `scripts/xvla_props_p2_eval.sh`.
-- [ ] 4. Report `docs/PROPS_P2_EVALUATION_<date>.md`, docs pass, FAILURES if anything recurs.
+- [x] 4. Report `docs/PROPS_P2_EVALUATION_<date>.md`, docs pass, FAILURES if anything recurs.

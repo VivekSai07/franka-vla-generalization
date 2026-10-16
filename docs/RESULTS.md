@@ -6,6 +6,28 @@ failures and lessons in [FAILURES.md](FAILURES.md).
 
 Download corresponding datasets/checkpoints: [HF artifact index](HUGGING_FACE_ARTIFACTS.md).
 
+## Props P2 X-VLA, instruction sorting with 1–2 distractors (2026-10-16) — measured, not sealed
+
+Dataset: [P2 collection](PROPS_P2_COLLECTION_20261013.md) (540 episodes, seal `b1d642b3…f4d898`, not yet published).
+Reserved layouts the policy never trained on, robosuite 1.5.2 / MuJoCo 3.4.0, **same scene as P1 below but with
+distractors; not comparable with any non-props row**. Intervals resample layouts. Report tier: 60 layouts × 2 seeds =
+120 trials; screen/confirm/control 20 trials each.
+
+| checkpoint (tier) | success | notes |
+|---|---|---|
+| screen 50,760 / 76,140 / 88,830 / **101,520** / 114,210 / 126,900 (/20) | 11 / 10 / 16 / **19** / 16 / **18** | survivors: 101,520, 126,900 |
+| **101,520 report (winner)** | **90/120 = 75.0%** [65.0, 84.2] | trained 68/80 = 85.0%, held-out 22/40 = 55.0%; 1 distractor 80%, 2 distractors 70%; wrong-object 7; **wrong-bin 0** |
+| 126,900 report | 83/120 = 69.2% | trained 76.3%, held-out 55.0%; wrong-object 2 |
+| P1 126,900 on the same 120 trials | **0/120** | 110 never lifted anything |
+| 101,520 confirm (touched once) | 16/20 = 80% [60, 95] | wrong-object 0 |
+| control, no distractor: 101,520 / P1 126,900 | 17/20 / 14/20 | no cost on the old task visible at n = 20 |
+
+Pre-registered criteria for 101,520: overall ≥70% **pass** (75.0%); wrong-object ≤5% **fail** (7/120 = 5.8%, [1.7, 11.7]);
+trained-vs-held-out gap ≤10 points **fail** (30 points); beats P1 with non-overlapping intervals **pass** (McNemar
+p = 1.6e-27). 101,520 vs 126,900: 15 vs 8 discordant trials, p = 0.21. Held-out cells: `bread→orange` 15/20,
+`milk→blue` 7/20 (milk is also weak when trained, so object difficulty and unseen pair are confounded).
+Full analysis: [PROPS_P2_EVALUATION_20261016.md](PROPS_P2_EVALUATION_20261016.md).
+
 ## Props P1 X-VLA, instruction sorting with bins that swap sides (2026-10-09) — measured, not sealed
 
 HF: [dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-props-p1-540); [X-VLA checkpoint 126,900](https://huggingface.co/VivekSai07/xvla-franka-props-p1-126900); [archive details](HUGGING_FACE_ARTIFACTS.md#props-p1-instruction-sorting).

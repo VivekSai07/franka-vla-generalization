@@ -105,6 +105,12 @@ the pinned image above on MuJoCo 3.13.0.
   54 min (10.8 h of serial work). `--status /out/<run>_shards` while it runs. Expert re-test: `--gate` per shard
   (unrendered), `--determinism --tag` twice, `--gate-summary`. Report:
   [PROPS_P2_COLLECTION_20261013.md](PROPS_P2_COLLECTION_20261013.md).
+- Props P2 evaluation (`experiments/xvla_props_p2_eval/`, robosuite image + GPU, not hash-bound): `evaluate.py prepare`
+  once (admission image, mounts `outputs/train`, both parents, `.cache`), then `scripts/xvla_props_p2_eval.sh smoke|all N`
+  runs N parallel workers, each pinned to 5 cores (`--cpuset-cpus`, `OMP_NUM_THREADS=5`), ~4 GB GPU at first load and
+  ~7.3 GB after a checkpoint switch, so keep N at 8 or below on the 47 GB GPU. A stage is resumable; a dead worker
+  leaves missing trial folders and the driver resumes once. 540 rollouts took about 3 h. Feasibility of 120 layouts,
+  unrendered, takes under a minute in 12 shards. Report: [PROPS_P2_EVALUATION_20261016.md](PROPS_P2_EVALUATION_20261016.md).
 - Props P1 training (`experiments/xvla_props_p1/`, admission image, no simulator): forked from
   `xvla_b3_robosuite` — same `--check`/`--preflight`/`--resume-proof`/`--train [--resume]` gates, each
   output subdirectory (`_admission`, `_preflight`, `_resumeproof`, the main output) **must be its own
