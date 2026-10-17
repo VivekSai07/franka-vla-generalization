@@ -129,6 +129,46 @@ Not measured, so not claimed:
 - Whether the 900-tick cap converts any of the 7 `timeout_carrying` trials (as for P1, not changed).
 - Whether 101,520 beats 126,900 in general. They are tied on this evidence.
 
+## Addendum 2026-10-17: every trial by set and checkpoint, and a post-hoc threshold view
+
+Added on request; the verdict above is unchanged. Per-trial CSV (540 rows, gitignored):
+`outputs/xvla_props_p2_eval/trial_distribution.csv`.
+
+| set | policy | checkpoint | n | success | fail | never_lifted | wrong_object | wrong_bin | unstable | timeout_carrying | dropped_outside |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| screen | P2 | 50,760 | 20 | 11 | 9 | 6 | 0 | 0 | 0 | 2 | 1 |
+| screen | P2 | 76,140 | 20 | 10 | 10 | 3 | 1 | 0 | 1 | 4 | 1 |
+| screen | P2 | 88,830 | 20 | 16 | 4 | 2 | 0 | 0 | 0 | 2 | 0 |
+| screen | P2 | 101,520 | 20 | 19 | 1 | 1 | 0 | 0 | 0 | 0 | 0 |
+| screen | P2 | 114,210 | 20 | 16 | 4 | 2 | 0 | 0 | 0 | 2 | 0 |
+| screen | P2 | 126,900 | 20 | 18 | 2 | 2 | 0 | 0 | 0 | 0 | 0 |
+| report | P2 | 101,520 | 120 | 90 | 30 | 12 | 7 | 0 | 1 | 7 | 3 |
+| report | P2 | 126,900 | 120 | 83 | 37 | 24 | 2 | 0 | 0 | 10 | 1 |
+| report | P1 | 126,900 | 120 | 0 | 120 | 110 | 5 | 0 | 0 | 3 | 2 |
+| confirm | P2 | 101,520 | 20 | 16 | 4 | 3 | 0 | 0 | 0 | 1 | 0 |
+| control | P2 | 101,520 | 20 | 17 | 3 | 0 | 0 | 1 | 0 | 2 | 0 |
+| control | P1 | 126,900 | 20 | 14 | 6 | 2 | 0 | 0 | 0 | 4 | 0 |
+
+Only the screen survivors (101,520 and 126,900) advanced; the other four checkpoints are screen-only.
+Successes by condition (1 distractor / 2 distractors; trained / held-out cells): screen 50,760 6/10, 5/10; 76,140 4/10,
+6/10; 88,830 9/10, 7/10; 101,520 10/10, 9/10; 114,210 8/10, 8/10; 126,900 10/10, 8/10 (screen is trained-only). Report
+101,520: 48/60, 42/60; 68/80, 22/40. Report 126,900: 46/60, 37/60; 61/80, 22/40. Report P1: 0 in every cell.
+Confirm 101,520: 8/10, 8/10, trained-only.
+
+**Post-hoc threshold view (exploratory; not a verdict, and not independent evidence).** What each criterion measured, and the
+threshold at which it would have passed. The thresholds were fixed before any rollout and were not changed; every reserved
+layout has now been scored, so a re-check against looser thresholds on the same trials is not a new test.
+
+| criterion | 101,520 (winner) | 126,900 |
+|---|---|---|
+| 1. overall at least 70% | 75.0% (pass) | 69.2% (passes at 69%) |
+| 2. wrong-object at most 5% | 5.8% (passes at 6%) | 1.7% (pass) |
+| 3. trained-vs-held-out gap at most 10 points | 30 points | 21 points |
+| 4. beats P1, non-overlapping intervals | pass | pass |
+
+Criterion 2 is a one-trial near miss. Criterion 3 is the substantive one: a threshold loose enough to pass it would no longer
+test generalisation to held-out pairs.
+
 ## Operations
 
 - **Machine health.** GPU peaked at 84 °C; trials were paused before starting while at or above 83 °C until 75 °C,
