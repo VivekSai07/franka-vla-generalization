@@ -97,6 +97,21 @@ the pinned image above on MuJoCo 3.13.0.
   and commit adds about 24 s and is not in the per-attempt timing). `--pilot --slots ... `, `--resume`
   and `--status` are the other modes; never reconstruct the LeRobot dataset object between episodes
   mid-run (FAILURES #41) — only `--resume` reopens it, once.
+- Props P2 (`experiments/props_p2_data/`, sealed 2026-10-13, hash-bound — fork, do not edit): **12 parallel
+  shard containers**, one per `--collect /out/<run>_shards --shard K` (K = 0..11, 45 contiguous slots each, own
+  journal and dataset, resumable alone), `-e LP_NUM_THREADS=4` each (proven pixel-neutral), same flags as P1 and a
+  16 GB `/tmp`. ~4 GB RAM per worker (scene models capped at 4). Then `--merge /out/<run>_shards --out /out/<run>`
+  aggregates, verifies every episode against its shard, validates and seals (about 1 min). 540 episodes took
+  54 min (10.8 h of serial work). `--status /out/<run>_shards` while it runs. Expert re-test: `--gate` per shard
+  (unrendered), `--determinism --tag` twice, `--gate-summary`. Report:
+  [PROPS_P2_COLLECTION_20261013.md](PROPS_P2_COLLECTION_20261013.md).
+- Props P2 evaluation (`experiments/xvla_props_p2_eval/`, robosuite image + GPU, not hash-bound): `evaluate.py prepare`
+  once (admission image, mounts `outputs/train`, both parents, `.cache`), then `scripts/xvla_props_p2_eval.sh smoke|all N`
+  runs N parallel workers, each pinned to 5 cores (`--cpuset-cpus`, `OMP_NUM_THREADS=5`), ~4 GB GPU at first load and
+  ~7.3 GB after a checkpoint switch, so keep N at 8 or below on the 47 GB GPU. A stage is resumable; a dead worker
+  leaves missing trial folders and the driver resumes once. 540 rollouts took about 3 h. Feasibility of 120 layouts,
+  unrendered, takes under a minute in 12 shards. Report: [PROPS_P2_EVALUATION_20261016.md](PROPS_P2_EVALUATION_20261016.md).
+  Archive bundle (hardlinks, 14 GB, re-evaluable and retrainable off RTX): `outputs/downloads_20261017/props_p2/`, README inside.
 - Props P1 training (`experiments/xvla_props_p1/`, admission image, no simulator): forked from
   `xvla_b3_robosuite` — same `--check`/`--preflight`/`--resume-proof`/`--train [--resume]` gates, each
   output subdirectory (`_admission`, `_preflight`, `_resumeproof`, the main output) **must be its own
@@ -275,7 +290,25 @@ listed in a report to exist. Control cost via the checkpoint *schedule* before l
 
 `outputs/downloads_*` are hardlinks to files under `outputs/train/` — deleting them frees nothing.
 
-**Disk.** As of 2026-10-05: 879 GB total, ~96 GB free (89% full). Check `df -h .` before
+**Reclaimed 2026-10-17 (user-approved, ~158 GB):** props P2 `resume/` snapshots and the heavy parts of `_preflight/` and
+`_resumeproof/` (`checkpoints/`, `resume/`; every `result.json` kept; 70.4 GB); six unused VS Code server versions (~3.7 GB);
+and, because the user had copied and verified them on Windows, the bundles `downloads_20260920/` (SmolVLA local-varied),
+`downloads_20260926/{b1_language,broadworkspace,smolvla_local_varied}` and `downloads_20261001/b2_distractor`, together with
+the checkpoints of `xvla_..._b1_language_v1`, `xvla_..._broadworkspace_long_v1`, `smolvla_..._localvaried_v1` and
+`xvla_..._b2_distractors_v1` (83.8 GB; B2's `step_050000/training_state.pt` was kept). Those runs now exist only on Windows and
+the Hub, so their repo evaluators' `verify_checkpoints` cannot pass here. Sealed datasets, `datasets/` and the preflight
+results were not touched. After the user hash-verified the P2 bundle's two weights on Windows (both matched `model_sha256`), the P1 and P2 intermediate
+checkpoints and `training_state.pt` were removed too: each of those runs now keeps only its two bundled checkpoints (P1 88,830 and
+126,900; P2 101,520 and 126,900), so `verify_checkpoints` and `evaluate.py prepare` cannot pass in the repo for P1 or P2; re-evaluate
+from the bundle with `reevaluate/bundle_evaluate.py`. The removed weights existed in no bundle and no other copy. The same day, on the
+user's go-ahead, the rest went too: B3's four unbundled intermediate checkpoints (steps 1, 31,200, 62,400, 93,600; 62,400 and
+93,600 had been evaluated in the B3 report, so those weights now exist nowhere), the `training_state.pt` of B2 and B3, and the whole
+checkpoints directory of the superseded `xvla_..._localvaried_v1` run (21 GB plus 7 GB). B3 keeps steps 124,800 and 156,000 (bundled);
+B2 keeps no checkpoint on RTX. `outputs/` went from 292 GB to 53 GB over the day.
+
+**Disk.** As of 2026-10-17: 879 GB total, **248 GB free (71% full)** after the reclaim below (it was 59 GB, 94%; 203 GB before the
+P1/P2 intermediates went).
+As of 2026-10-05: 879 GB total, ~96 GB free (89% full). Check `df -h .` before
 any new collection or training launch; the checkpoint schedule alone can need 20-30 GB. See
 Storage census below for what is safe to reclaim.
 
@@ -324,8 +357,8 @@ instruction-sorting dataset, 540 episodes (480 train, 60 validation), robosuite 
 Everything else under `outputs/train/` (smolvla_pilot, single_task, fixed_layout, the plain
 `broadworkspace_v1`/`localvaried_v1` runs) is superseded Tier 2-4 work — see
 [BENCHMARK_STATUS.md](BENCHMARK_STATUS.md) for the chronology. `outputs/downloads_20260920/` and
-`outputs/downloads_20260926/` are pre-staged, hardlinked download bundles for the user's Windows
-machine — the 2026-09-26 one covers both the minimal tier and the full checkpoint-ablation tier
+`outputs/downloads_20260926/` were pre-staged, hardlinked download bundles for the user's Windows
+machine (deleted from RTX 2026-10-17, see the reclaim note above) — the 2026-09-26 one covers both the minimal tier and the full checkpoint-ablation tier
 for B1 and broad-workspace (~50 GB, zero extra disk here); read the `README.md` inside each
 before touching originals. `outputs/downloads_20261005/b3_robosuite/` (2026-10-05) stages B3 steps
 124,800 and 156,000; it was copied to Windows (byte-identical) and published as two **private** Hugging Face
@@ -337,11 +370,14 @@ and closes those gaps: it carries the base model and tokenizer (`runtime/`), a s
 `reevaluate/bundle_evaluate.py` and a stdlib-only `reevaluate/verify_bundle.py`. A smoke re-evaluation run
 with only the bundle mounted reproduced the original trials bit for bit. Transferred to Windows on
 2026-10-09 (user), then published as [P1 dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-props-p1-540) and
-[P1 model](https://huggingface.co/VivekSai07/xvla-franka-props-p1-126900) (both private). Its
+[P1 model](https://huggingface.co/VivekSai07/xvla-franka-props-p1-126900) (published private; both
+public since 2026-10-09). The B3, B2, B1, broad-workspace and local-varied (SmolVLA) bundles gained
+`runtime/`, `code/` and a hash-manifest `reevaluate/verify_bundle.py` in a 2026-10-09 repair, uploaded
+straight from RTX (no clean-container re-evaluation from those five). Its
 `evaluation_browse/` and `outputs/xvla_props_p1_eval_browse/` are hardlinked views of the P1 trials,
 split into held-out and trained, with object, bin, side and outcome in the folder names. Browse them
 there, but never rename inside `outputs/xvla_props_p1_eval/`: `evaluate.py` finds trials by
-`trial_NNN_<layout_id>`. `outputs/downloads_20261001/b2_distractor/` was copied to Windows on
+`trial_NNN_<layout_id>`. `outputs/downloads_20261001/b2_distractor/` (deleted from RTX 2026-10-17) was copied to Windows on
 2026-10-01; all six `model.safetensors` matched `model_sha256` and `seal.json` is
 `b6cfff3f...0c12340`. The Windows check did not re-derive the dataset fingerprint. Do not delete
 the RTX originals without a separate go-ahead. Full file lists and rationale:

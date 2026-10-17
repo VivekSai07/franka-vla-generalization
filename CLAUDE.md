@@ -18,7 +18,11 @@ robosuite (P0, the scene and a scripted expert, passed its gate on 2026-10-05; s
 [docs/PROPS_P0_RERUN_20261005.md](docs/PROPS_P0_RERUN_20261005.md); the P1 instruction-sorting dataset,
 540 episodes, collected and sealed 2026-10-07, see [docs/PROPS_P1_COLLECTION_20261007.md](docs/PROPS_P1_COLLECTION_20261007.md);
 trained and evaluated 2026-10-09 — confirm 100% (20/20), report 75% (60/80) on checkpoint 126,900,
-see [docs/PROPS_P1_EVALUATION_20261009.md](docs/PROPS_P1_EVALUATION_20261009.md)). See [README.md](README.md) for results,
+see [docs/PROPS_P1_EVALUATION_20261009.md](docs/PROPS_P1_EVALUATION_20261009.md); the P2 distractor dataset,
+540 episodes collected in parallel shards and sealed 2026-10-13, see
+[docs/PROPS_P2_COLLECTION_20261013.md](docs/PROPS_P2_COLLECTION_20261013.md); trained and evaluated 2026-10-16 — report
+75.0% (90/120) on checkpoint 101,520, two of four pre-registered criteria met, see
+[docs/PROPS_P2_EVALUATION_20261016.md](docs/PROPS_P2_EVALUATION_20261016.md)). See [README.md](README.md) for results,
 [TODO.md](TODO.md) for what is open, and [HF artifacts](docs/HUGGING_FACE_ARTIFACTS.md)
 for the exact published datasets/checkpoints and re-evaluation dependencies.
 
@@ -126,6 +130,10 @@ results. Do not edit them even to fix a stale statement:
 - `experiments/props_p1_data/` (every `.py` including tests, and its README), and
   `experiments/props_scene/*.py`, the props spec and the P1 collection plan: the props P1 seal's
   `provenance()` hashes them (sealed 2026-10-07)
+- `experiments/props_p2_data/` (every `.py` including tests, and its README), and through it
+  `experiments/props_scene/*.py`, `experiments/robosuite_scene/*.py`, the P2 spec
+  (`docs/superpowers/specs/2026-10-13-props-p2-distractors-design.md`) and the P2 collection plan:
+  the props P2 seal's `provenance()` hashes them (sealed 2026-10-13)
 
 Before editing anything under `experiments/`, check whether it is in `SOURCE_FILES` or reachable
 from `provenance()`. Package READMEs are always in both, except in `experiments/robosuite_sim2sim/`

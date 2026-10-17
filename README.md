@@ -58,6 +58,14 @@ Report: [docs/PROPS_P1_EVALUATION_20261009.md](docs/PROPS_P1_EVALUATION_20261009
 [docs/PROPS_P1_TRAINING_20261009.md](docs/PROPS_P1_TRAINING_20261009.md). Published to Hugging Face
 2026-10-09 (dataset and model, [docs/HUGGING_FACE_ARTIFACTS.md](docs/HUGGING_FACE_ARTIFACTS.md)).
 
+**Props P2 (1–2 distractor objects), evaluated 2026-10-16:** dataset sealed 2026-10-13, 540 episodes, collected by
+12 parallel shards in 54 minutes ([docs/PROPS_P2_COLLECTION_20261013.md](docs/PROPS_P2_COLLECTION_20261013.md)).
+X-VLA trained 126,900 updates; on the reserved layouts the pre-registered winner (checkpoint 101,520) scores
+**75.0% (90/120)** [65.0, 84.2] against **0/120** for the P1 checkpoint on the same trials, confirm 16/20, with no
+wrong-bin outcome in 120. Two of four pre-registered criteria are met: wrong-object is 5.8% against a 5% limit, and
+held-out cells score 55% against 85% on trained cells (a 30-point gap against 10). Report:
+[docs/PROPS_P2_EVALUATION_20261016.md](docs/PROPS_P2_EVALUATION_20261016.md).
+
 ## Previous headline (2026-10-05, robosuite scene): B3, the last cube experiment
 
 X-VLA trained 156,000 updates (5 epochs) on 560 scripted episodes collected in the robosuite scene:
