@@ -300,9 +300,11 @@ the Hub, so their repo evaluators' `verify_checkpoints` cannot pass here. Sealed
 results were not touched. After the user hash-verified the P2 bundle's two weights on Windows (both matched `model_sha256`), the P1 and P2 intermediate
 checkpoints and `training_state.pt` were removed too: each of those runs now keeps only its two bundled checkpoints (P1 88,830 and
 126,900; P2 101,520 and 126,900), so `verify_checkpoints` and `evaluate.py prepare` cannot pass in the repo for P1 or P2; re-evaluate
-from the bundle with `reevaluate/bundle_evaluate.py`. The removed weights existed in no bundle and no other copy. Still on disk,
-not approved for removal: B3's four unbundled intermediate checkpoints (13 GB), the `training_state.pt` of B2, B3 and the superseded
-`xvla_..._localvaried_v1` run (7 GB each), and that run's checkpoints (21 GB).
+from the bundle with `reevaluate/bundle_evaluate.py`. The removed weights existed in no bundle and no other copy. The same day, on the
+user's go-ahead, the rest went too: B3's four unbundled intermediate checkpoints (steps 1, 31,200, 62,400, 93,600; 62,400 and
+93,600 had been evaluated in the B3 report, so those weights now exist nowhere), the `training_state.pt` of B2 and B3, and the whole
+checkpoints directory of the superseded `xvla_..._localvaried_v1` run (21 GB plus 7 GB). B3 keeps steps 124,800 and 156,000 (bundled);
+B2 keeps no checkpoint on RTX. `outputs/` went from 292 GB to 53 GB over the day.
 
 **Disk.** As of 2026-10-17: 879 GB total, **248 GB free (71% full)** after the reclaim below (it was 59 GB, 94%; 203 GB before the
 P1/P2 intermediates went).
