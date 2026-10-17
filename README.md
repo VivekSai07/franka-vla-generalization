@@ -18,13 +18,13 @@ The central question: **how much and what kind of data does a VLA need to genera
 | B2 distractors | [200 episodes](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-b2-distractors-200) | [X-VLA step 50,000](https://huggingface.co/VivekSai07/xvla-franka-b2-distractors-50000) |
 | B3 robosuite cubes | [560 episodes](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-b3-robosuite-560) | [X-VLA step 124,800](https://huggingface.co/VivekSai07/xvla-franka-b3-robosuite-124800) |
 | Props P1 instruction sorting | [540 episodes](https://huggingface.co/datasets/VivekSai07/franka-panda-props-p1-540) | [X-VLA step 126,900](https://huggingface.co/VivekSai07/xvla-franka-props-p1-126900) |
-| Props P2 instruction sorting + distractors | 540 episodes (not yet published) | X-VLA step 101,520 (not yet published) |
+| Props P2 instruction sorting + distractors | [540 episodes](https://huggingface.co/datasets/VivekSai07/franka-panda-props-p2-540) | [X-VLA step 101,520](https://huggingface.co/VivekSai07/xvla-franka-props-p2-101520) |
 
 The [HF artifact index](docs/HUGGING_FACE_ARTIFACTS.md) lists earlier checkpoint directories,
 exact revision pins, access, historical reports, and re-evaluation prerequisites.
-All seven dataset repositories and all published models are public as of 2026-10-09. No X-VLA
-local-varied or SmolVLA broad-workspace model publication was found.
-Props P2 bundle was hash-verified on Windows 2026-10-17 but not yet uploaded to Hugging Face.
+The seven earlier dataset repositories and their published models are public as of 2026-10-09.
+Props P2 was published **private** on 2026-10-17 after full bundle, reconstruction, and remote
+manifest verification. No X-VLA local-varied or SmolVLA broad-workspace model publication was found.
 
 ---
 
@@ -68,7 +68,10 @@ Pre-registered criteria — 2 of 4 met:
 
 Report: [docs/PROPS_P2_EVALUATION_20261016.md](docs/PROPS_P2_EVALUATION_20261016.md). Collection:
 [docs/PROPS_P2_COLLECTION_20261013.md](docs/PROPS_P2_COLLECTION_20261013.md).
-Bundle hash-verified on Windows 2026-10-17; not yet published to Hugging Face.
+Bundle hash-verified on Windows and published private on 2026-10-17:
+[dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-props-p2-540) and
+[model](https://huggingface.co/VivekSai07/xvla-franka-props-p2-101520). The model card contains the
+two-repository reconstruction and verification recipe.
 
 ## Previous headline (2026-10-09): Props P1 — instruction sorting in the robosuite scene
 
