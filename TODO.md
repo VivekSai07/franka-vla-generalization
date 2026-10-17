@@ -302,7 +302,8 @@ attributable. Options when it gets its own phase, each with different expert imp
       trained run: **fork, do not edit** (`experiments/b2_distractor_data/**`,
       `experiments/xvla_b2_distractors/**`, the B2 spec and plan).
 - [x] **Transferred to Windows (2026-10-01).** Staged at
-      `outputs/downloads_20261001/b2_distractor/` and copied to
+      `outputs/downloads_20261001/b2_distractor/` (**deleted from RTX 2026-10-17**, with its checkpoint originals; the
+      Windows copy and the Hub are the archive) and copied to
       `C:\d drive\RTX trained models\downloads_20261001\b2_distractor`. All six
       `model.safetensors` matched `checkpoint_result.json` `model_sha256`; `seal.json`
       is `b6cfff3f...0c12340`. RTX originals not deleted.

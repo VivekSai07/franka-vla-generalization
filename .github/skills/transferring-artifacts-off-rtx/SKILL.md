@@ -68,7 +68,8 @@ and `docs/RESULTS.md`, never re-derived.
 The README's hash table lists every `model.safetensors` in the bundle with its sha256, because that
 is what the Windows side re-checks after the transfer.
 
-Worked examples: `outputs/downloads_20261001/b2_distractor/`,
+Worked examples (`b2_distractor` was deleted from RTX on 2026-10-17 after the Windows copy was verified; the layout is in the
+Windows copy): `outputs/downloads_20261001/b2_distractor/`,
 `outputs/downloads_20261005/b3_robosuite/` (no `runtime/` or `code/`, so not portable),
 `outputs/downloads_20261009/props_p1/` (complete),
 `outputs/downloads_20261017/props_p2/` (complete; adds `reevaluate/infer_example.py`, a one-observation inference

@@ -290,7 +290,18 @@ listed in a report to exist. Control cost via the checkpoint *schedule* before l
 
 `outputs/downloads_*` are hardlinks to files under `outputs/train/` — deleting them frees nothing.
 
-**Disk.** As of 2026-10-05: 879 GB total, ~96 GB free (89% full). Check `df -h .` before
+**Reclaimed 2026-10-17 (user-approved, ~158 GB):** props P2 `resume/` snapshots and the heavy parts of `_preflight/` and
+`_resumeproof/` (`checkpoints/`, `resume/`; every `result.json` kept; 70.4 GB); six unused VS Code server versions (~3.7 GB);
+and, because the user had copied and verified them on Windows, the bundles `downloads_20260920/` (SmolVLA local-varied),
+`downloads_20260926/{b1_language,broadworkspace,smolvla_local_varied}` and `downloads_20261001/b2_distractor`, together with
+the checkpoints of `xvla_..._b1_language_v1`, `xvla_..._broadworkspace_long_v1`, `smolvla_..._localvaried_v1` and
+`xvla_..._b2_distractors_v1` (83.8 GB; B2's `step_050000/training_state.pt` was kept). Those runs now exist only on Windows and
+the Hub, so their repo evaluators' `verify_checkpoints` cannot pass here. Sealed datasets, `datasets/` and the preflight
+results were not touched. Still on disk and not approved for removal: the un-bundled P1/P2/B3 intermediate checkpoints, the
+`training_state.pt` of P1/P2/B2/B3, and the superseded `xvla_..._localvaried_v1` run (28 GB).
+
+**Disk.** As of 2026-10-17: 879 GB total, **203 GB free (76% full)** after the reclaim below (it was 59 GB, 94%).
+As of 2026-10-05: 879 GB total, ~96 GB free (89% full). Check `df -h .` before
 any new collection or training launch; the checkpoint schedule alone can need 20-30 GB. See
 Storage census below for what is safe to reclaim.
 
@@ -339,8 +350,8 @@ instruction-sorting dataset, 540 episodes (480 train, 60 validation), robosuite 
 Everything else under `outputs/train/` (smolvla_pilot, single_task, fixed_layout, the plain
 `broadworkspace_v1`/`localvaried_v1` runs) is superseded Tier 2-4 work — see
 [BENCHMARK_STATUS.md](BENCHMARK_STATUS.md) for the chronology. `outputs/downloads_20260920/` and
-`outputs/downloads_20260926/` are pre-staged, hardlinked download bundles for the user's Windows
-machine — the 2026-09-26 one covers both the minimal tier and the full checkpoint-ablation tier
+`outputs/downloads_20260926/` were pre-staged, hardlinked download bundles for the user's Windows
+machine (deleted from RTX 2026-10-17, see the reclaim note above) — the 2026-09-26 one covers both the minimal tier and the full checkpoint-ablation tier
 for B1 and broad-workspace (~50 GB, zero extra disk here); read the `README.md` inside each
 before touching originals. `outputs/downloads_20261005/b3_robosuite/` (2026-10-05) stages B3 steps
 124,800 and 156,000; it was copied to Windows (byte-identical) and published as two **private** Hugging Face
@@ -359,7 +370,7 @@ straight from RTX (no clean-container re-evaluation from those five). Its
 `evaluation_browse/` and `outputs/xvla_props_p1_eval_browse/` are hardlinked views of the P1 trials,
 split into held-out and trained, with object, bin, side and outcome in the folder names. Browse them
 there, but never rename inside `outputs/xvla_props_p1_eval/`: `evaluate.py` finds trials by
-`trial_NNN_<layout_id>`. `outputs/downloads_20261001/b2_distractor/` was copied to Windows on
+`trial_NNN_<layout_id>`. `outputs/downloads_20261001/b2_distractor/` (deleted from RTX 2026-10-17) was copied to Windows on
 2026-10-01; all six `model.safetensors` matched `model_sha256` and `seal.json` is
 `b6cfff3f...0c12340`. The Windows check did not re-derive the dataset fingerprint. Do not delete
 the RTX originals without a separate go-ahead. Full file lists and rationale:

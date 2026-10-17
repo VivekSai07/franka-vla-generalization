@@ -1,5 +1,15 @@
 # Franka benchmark: start here
 
+## Disk reclaim: 59 GB to 203 GB free - 2026-10-17
+
+User-approved. Props P2 resume snapshots and the heavy preflight / resume-proof scratch (70.4 GB, every `result.json`
+kept), six unused VS Code server versions, and, after the user confirmed the Windows copies were verified, the B1,
+broad-workspace, SmolVLA local-varied and B2 bundles together with their checkpoints (83.8 GB). The P2 bundle
+(`outputs/downloads_20261017/props_p2/`) was left in place and still passes `verify_bundle.py`; its Windows transfer has not been
+verified yet. Hardlink accounting mattered: the SmolVLA local-varied weights were linked from a second older bundle, so removing
+one bundle would have freed nothing. A safety assertion also fired once on a substring match against bundled source code
+(`local_varied_data/`) before any deletion and was tightened. Details: [OPERATIONS.md](OPERATIONS.md) Storage.
+
 ## Props P2 trained and evaluated: 75.0% report, two of four criteria met - 2026-10-16
 
 X-VLA trained 126,900 updates on the P2 seal, then evaluated with `experiments/xvla_props_p2_eval/` (parallel workers:
