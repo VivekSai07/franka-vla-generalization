@@ -18,15 +18,59 @@ The central question: **how much and what kind of data does a VLA need to genera
 | B2 distractors | [200 episodes](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-b2-distractors-200) | [X-VLA step 50,000](https://huggingface.co/VivekSai07/xvla-franka-b2-distractors-50000) |
 | B3 robosuite cubes | [560 episodes](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-b3-robosuite-560) | [X-VLA step 124,800](https://huggingface.co/VivekSai07/xvla-franka-b3-robosuite-124800) |
 | Props P1 instruction sorting | [540 episodes](https://huggingface.co/datasets/VivekSai07/franka-panda-props-p1-540) | [X-VLA step 126,900](https://huggingface.co/VivekSai07/xvla-franka-props-p1-126900) |
+| Props P2 instruction sorting + distractors | 540 episodes (not yet published) | X-VLA step 101,520 (not yet published) |
 
 The [HF artifact index](docs/HUGGING_FACE_ARTIFACTS.md) lists earlier checkpoint directories,
 exact revision pins, access, historical reports, and re-evaluation prerequisites.
 All seven dataset repositories and all published models are public as of 2026-10-09. No X-VLA
 local-varied or SmolVLA broad-workspace model publication was found.
+Props P2 bundle was hash-verified on Windows 2026-10-17 but not yet uploaded to Hugging Face.
 
 ---
 
-## Latest (2026-10-09): Props P1 — instruction sorting in the robosuite scene
+## Latest (2026-10-16): Props P2 — instruction sorting with 1–2 distractors
+
+P1's task (sort one object into a colour-designated bin, bins swap sides across layouts) repeated
+with 1–2 distractor objects present. Dataset sealed 2026-10-13, 540 episodes, collected in 54
+minutes by 12 parallel shards
+([docs/PROPS_P2_COLLECTION_20261013.md](docs/PROPS_P2_COLLECTION_20261013.md)).
+X-VLA trained 126,900 updates (P1's recipe unchanged).
+Evaluated 2026-10-16 on reserved layouts, 120 report trials and a 20-trial confirm:
+
+| checkpoint | overall (120 trials) | trained (80) | held-out (40) | wrong-object | wrong-bin |
+|---|---|---|---|---|---|
+| 50,760 | — (screen) | — | — | — | — |
+| 76,140 | — (screen) | — | — | — | — |
+| 88,830 | — (screen) | — | — | — | — |
+| **101,520** | **75.0% (90/120)** [65.0, 84.2] | 85.0% (68/80) | 55.0% (22/40) | 7 | **0** |
+| 114,210 | — (screen) | — | — | — | — |
+| 126,900 | 69.2% (83/120) | — | — | 2 | 0 |
+
+Confirm (101,520, 20 trials, touched once): **80% (16/20)**, 0 wrong-object.
+P1's 126,900 checkpoint on the identical trials: **0/120**.
+
+Pre-registered criteria — 2 of 4 met:
+
+| # | criterion | result |
+|---|---|---|
+| 1 | overall ≥ 70% | **pass** — 75.0% [65.0, 84.2] |
+| 2 | wrong-object ≤ 5% | **fail** — 5.8% (7/120; 6/120 = 5.0% would pass) |
+| 3 | trained vs held-out gap ≤ 10 points | **fail** — 30-point gap (85% vs 55%) |
+| 4 | beats P1 with non-overlapping CIs | **pass** — P1 0/120 vs P2 90/120, McNemar p = 1.6e-27 |
+
+- **Zero wrong-bin outcomes in 120 trials** — bin colour generalises to held-out cells.
+- **Object selection is largely solved, not fully** — 7 wrong-object in 120; bread and milk
+  objects show lower pick rates than props in P1.
+- The wide trained/held-out gap (30 points) and the wrong-object overshoot are the open issues
+  for P3.
+- 101,520 and 126,900 are statistically tied (McNemar p = 0.21); the pre-registered rule picked
+  101,520 as the earlier of the two.
+
+Report: [docs/PROPS_P2_EVALUATION_20261016.md](docs/PROPS_P2_EVALUATION_20261016.md). Collection:
+[docs/PROPS_P2_COLLECTION_20261013.md](docs/PROPS_P2_COLLECTION_20261013.md).
+Bundle hash-verified on Windows 2026-10-17; not yet published to Hugging Face.
+
+## Previous headline (2026-10-09): Props P1 — instruction sorting in the robosuite scene
 
 X-VLA trained 126,900 updates (5 epochs) on 540 scripted episodes: one object, two bins that swap
 left/right sides across layouts. Evaluated on reserved layouts, all 6 non-trivial checkpoints
@@ -42,29 +86,14 @@ screened and taken to the 80-trial report tier (protocol deviation, stated plain
 | **126,900** | **75.0% (60/80)** | 72.5% | 77.5% | 85.0% | 65.0% | 0/80 |
 
 - **Headline: 100% (20/20) on the confirm tier, checkpoint 126,900** — fixed by a pre-committed
-  rule (highest report-tier rate, ties toward the later checkpoint) before the tying data existed
-  (88,830 and 126,900 both 75.0%/60/80). Read alongside the report's own 75% (60/80) on the same
-  checkpoint; the confirm tier is a smaller, one-shot check, not a second independent estimate.
-- **Zero `wrong_bin` outcomes across all 480 report trials and all six checkpoints** — every failure
-  is a motor/timing problem (never lifted, timed out carrying, dropped outside, unstable in
-  target), never a colour/bin confusion. Held-out pairs perform at or above trained pairs on every
-  checkpoint.
-- A classifier bug (found by inspecting screen videos, not by a failing number) mislabelled one
-  correctly-placed trial as `dropped_outside`; fixed and all 120 screen trials rescanned, exactly
-  one affected.
+  rule before the tying data existed (88,830 and 126,900 both 75.0%/60/80).
+- **Zero `wrong_bin` outcomes across all 480 report trials** — every failure is motor/timing,
+  never a colour/bin confusion. Held-out pairs at or above trained pairs on every checkpoint.
 - Robosuite 1.5.2 / MuJoCo 3.4.0 — not comparable with the MuJoCo-scene numbers below.
 
 Report: [docs/PROPS_P1_EVALUATION_20261009.md](docs/PROPS_P1_EVALUATION_20261009.md). Training:
 [docs/PROPS_P1_TRAINING_20261009.md](docs/PROPS_P1_TRAINING_20261009.md). Published to Hugging Face
 2026-10-09 (dataset and model, [docs/HUGGING_FACE_ARTIFACTS.md](docs/HUGGING_FACE_ARTIFACTS.md)).
-
-**Props P2 (1–2 distractor objects), evaluated 2026-10-16:** dataset sealed 2026-10-13, 540 episodes, collected by
-12 parallel shards in 54 minutes ([docs/PROPS_P2_COLLECTION_20261013.md](docs/PROPS_P2_COLLECTION_20261013.md)).
-X-VLA trained 126,900 updates; on the reserved layouts the pre-registered winner (checkpoint 101,520) scores
-**75.0% (90/120)** [65.0, 84.2] against **0/120** for the P1 checkpoint on the same trials, confirm 16/20, with no
-wrong-bin outcome in 120. Two of four pre-registered criteria are met: wrong-object is 5.8% against a 5% limit, and
-held-out cells score 55% against 85% on trained cells (a 30-point gap against 10). Report:
-[docs/PROPS_P2_EVALUATION_20261016.md](docs/PROPS_P2_EVALUATION_20261016.md).
 
 ## Previous headline (2026-10-05, robosuite scene): B3, the last cube experiment
 
@@ -99,6 +128,7 @@ Report: [docs/B3_XVLA_EVALUATION_20261005.md](docs/B3_XVLA_EVALUATION_20261005.m
 | 2026-10-02 | sim2sim: the B2 policy on the robosuite scene | 3/20 against 19/20 on its own scene |
 | 2026-10-05 | B3, robosuite (four colours, held-out pairs, harder distractors) | ~85% overall at the best checkpoint |
 | 2026-10-09 | Props P1, robosuite (instruction sorting, bins swap sides) | confirm 100% (20/20), report 75% (60/80), checkpoint 126,900 |
+| 2026-10-16 | Props P2, robosuite (instruction sorting + 1–2 distractors) | report 75.0% (90/120), confirm 80% (16/20), 2/4 criteria met, 0 wrong-bin |
 
 Every number with its protocol and caveats: [docs/RESULTS.md](docs/RESULTS.md).
 
