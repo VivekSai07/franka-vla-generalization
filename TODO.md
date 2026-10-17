@@ -13,7 +13,7 @@
   criteria were not loosened. Complete archive bundle `outputs/downloads_20261017/props_p2/` (14 GB: dataset, both kept
   checkpoints 101,520 and 126,900, all 540 trials, runtime, code snapshot; weights, seal and 540/540 trials hash-verified;
   smoke re-evaluation from the bundle alone in a clean offline container reproduced both trials bit for bit). Branch
-  `feat/props-p2`: local commits ready, push and pull request pending (no GitHub credentials on the RTX machine), not merged.
+  `feat/props-p2`: pushed to origin (2026-10-17; the RTX machine has no GitHub credentials, so the push and the pull request are made from elsewhere); pull request and merge are the user's step, not merged.
   **Open:** whether the held-out gap is "unseen pair" or "hard object" (milk is weak even when trained; a follow-up
   holding milk out in the other bin separates them), why 12 trials never lift anything, and whether to merge/publish
   P2 (user decision).
