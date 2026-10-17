@@ -111,6 +111,7 @@ the pinned image above on MuJoCo 3.13.0.
   ~7.3 GB after a checkpoint switch, so keep N at 8 or below on the 47 GB GPU. A stage is resumable; a dead worker
   leaves missing trial folders and the driver resumes once. 540 rollouts took about 3 h. Feasibility of 120 layouts,
   unrendered, takes under a minute in 12 shards. Report: [PROPS_P2_EVALUATION_20261016.md](PROPS_P2_EVALUATION_20261016.md).
+  Archive bundle (hardlinks, 14 GB, re-evaluable and retrainable off RTX): `outputs/downloads_20261017/props_p2/`, README inside.
 - Props P1 training (`experiments/xvla_props_p1/`, admission image, no simulator): forked from
   `xvla_b3_robosuite` — same `--check`/`--preflight`/`--resume-proof`/`--train [--resume]` gates, each
   output subdirectory (`_admission`, `_preflight`, `_resumeproof`, the main output) **must be its own

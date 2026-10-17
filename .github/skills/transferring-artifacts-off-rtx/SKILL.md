@@ -70,7 +70,10 @@ is what the Windows side re-checks after the transfer.
 
 Worked examples: `outputs/downloads_20261001/b2_distractor/`,
 `outputs/downloads_20261005/b3_robosuite/` (no `runtime/` or `code/`, so not portable),
-`outputs/downloads_20261009/props_p1/` (complete).
+`outputs/downloads_20261009/props_p1/` (complete),
+`outputs/downloads_20261017/props_p2/` (complete; adds `reevaluate/infer_example.py`, a one-observation inference
+check, and `bundle_evaluate.py --shard/--shards/--collect-only` for a parallel re-evaluation. Its smoke re-run in a clean
+container, run alone, matched originals that had run in 8-way parallel workers bit for bit).
 
 **Never rename trial folders in an evaluation output** to make them easier to browse: the
 evaluators find trials by `trial_NNN_<layout_id>` for `--resume` and re-analysis. Build a

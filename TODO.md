@@ -8,8 +8,12 @@
   **pass**, beats P1 126,900 (**0/120**) **pass**, wrong-object ≤5% **fail** (7/120 = 5.8%, one trial over),
   trained-vs-held-out gap ≤10 points **fail** (trained 85.0%, held-out 55.0%; `milk→blue` 7/20). Confirm (touched
   once) 16/20 = 80%; no-distractor control 17/20 (P1: 14/20); 0 wrong-bin in 120. 101,520 and 126,900 (83/120) are
-  not distinguishable (McNemar p = 0.21). Report:
-  [docs/PROPS_P2_EVALUATION_20261016.md](docs/PROPS_P2_EVALUATION_20261016.md). Branch `feat/props-p2`, not merged.
+  not distinguishable (McNemar p = 0.21). Report (with every trial by set and checkpoint):
+  [docs/PROPS_P2_EVALUATION_20261016.md](docs/PROPS_P2_EVALUATION_20261016.md). **P2 is closed (user, 2026-10-17):** the
+  criteria were not loosened. Complete archive bundle `outputs/downloads_20261017/props_p2/` (14 GB: dataset, both kept
+  checkpoints 101,520 and 126,900, all 540 trials, runtime, code snapshot; weights, seal and 540/540 trials hash-verified;
+  smoke re-evaluation from the bundle alone in a clean offline container reproduced both trials bit for bit). Branch
+  `feat/props-p2`, pull request raised, not merged.
   **Open:** whether the held-out gap is "unseen pair" or "hard object" (milk is weak even when trained; a follow-up
   holding milk out in the other bin separates them), why 12 trials never lift anything, and whether to merge/publish
   P2 (user decision).
