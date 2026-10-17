@@ -5,8 +5,9 @@
 User-approved. Props P2 resume snapshots and the heavy preflight / resume-proof scratch (70.4 GB, every `result.json`
 kept), six unused VS Code server versions, and, after the user confirmed the Windows copies were verified, the B1,
 broad-workspace, SmolVLA local-varied and B2 bundles together with their checkpoints (83.8 GB). The P2 bundle
-(`outputs/downloads_20261017/props_p2/`) was left in place and still passes `verify_bundle.py`; its Windows transfer has not been
-verified yet. Hardlink accounting mattered: the SmolVLA local-varied weights were linked from a second older bundle, so removing
+(`outputs/downloads_20261017/props_p2/`) was left in place and still passes `verify_bundle.py`; the user then hash-verified its two
+weights on Windows (both matched), after which the P1 and P2 intermediate checkpoints and optimizer states were removed as well
+(248 GB free, 71% full; those weights now exist nowhere, and `verify_checkpoints` cannot pass here for P1 or P2). Hardlink accounting mattered: the SmolVLA local-varied weights were linked from a second older bundle, so removing
 one bundle would have freed nothing. A safety assertion also fired once on a substring match against bundled source code
 (`local_varied_data/`) before any deletion and was tightened. Details: [OPERATIONS.md](OPERATIONS.md) Storage.
 

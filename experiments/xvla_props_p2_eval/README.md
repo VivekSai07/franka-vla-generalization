@@ -6,6 +6,9 @@ layouts of the sealed P2 plan, against P1's 126,900 checkpoint on the same trial
 were fixed and committed before any rollout:
 [docs/superpowers/plans/2026-10-16-props-p2-evaluation.md](../../docs/superpowers/plans/2026-10-16-props-p2-evaluation.md).
 
+After the 2026-10-17 disk reclaim only P1 88,830 / 126,900 and P2 101,520 / 126,900 remain on RTX, so `prepare` (which verifies every
+checkpoint of both runs) can no longer pass in the repo; re-evaluate from the archive bundle with `reevaluate/bundle_evaluate.py`.
+
 Robosuite image (MuJoCo 3.4.0) with a GPU for rollouts; everything else (`prepare`, `collect`, `decide`, `final`,
 the pure tests) runs in the admission image.
 

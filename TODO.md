@@ -11,7 +11,7 @@
   not distinguishable (McNemar p = 0.21). Report (with every trial by set and checkpoint):
   [docs/PROPS_P2_EVALUATION_20261016.md](docs/PROPS_P2_EVALUATION_20261016.md). **P2 is closed (user, 2026-10-17):** the
   criteria were not loosened. Complete archive bundle `outputs/downloads_20261017/props_p2/` (14 GB: dataset, both kept
-  checkpoints 101,520 and 126,900, all 540 trials, runtime, code snapshot; weights, seal and 540/540 trials hash-verified;
+  checkpoints 101,520 and 126,900, all 540 trials, runtime, code snapshot; weights, seal and 540/540 trials hash-verified, and both weights hash-verified on Windows 2026-10-17;
   smoke re-evaluation from the bundle alone in a clean offline container reproduced both trials bit for bit). Branch
   `feat/props-p2`: pushed to origin (2026-10-17; the RTX machine has no GitHub credentials, so the push and the pull request are made from elsewhere); pull request and merge are the user's step, not merged.
   **Open:** whether the held-out gap is "unseen pair" or "hard object" (milk is weak even when trained; a follow-up

@@ -297,10 +297,15 @@ and, because the user had copied and verified them on Windows, the bundles `down
 the checkpoints of `xvla_..._b1_language_v1`, `xvla_..._broadworkspace_long_v1`, `smolvla_..._localvaried_v1` and
 `xvla_..._b2_distractors_v1` (83.8 GB; B2's `step_050000/training_state.pt` was kept). Those runs now exist only on Windows and
 the Hub, so their repo evaluators' `verify_checkpoints` cannot pass here. Sealed datasets, `datasets/` and the preflight
-results were not touched. Still on disk and not approved for removal: the un-bundled P1/P2/B3 intermediate checkpoints, the
-`training_state.pt` of P1/P2/B2/B3, and the superseded `xvla_..._localvaried_v1` run (28 GB).
+results were not touched. After the user hash-verified the P2 bundle's two weights on Windows (both matched `model_sha256`), the P1 and P2 intermediate
+checkpoints and `training_state.pt` were removed too: each of those runs now keeps only its two bundled checkpoints (P1 88,830 and
+126,900; P2 101,520 and 126,900), so `verify_checkpoints` and `evaluate.py prepare` cannot pass in the repo for P1 or P2; re-evaluate
+from the bundle with `reevaluate/bundle_evaluate.py`. The removed weights existed in no bundle and no other copy. Still on disk,
+not approved for removal: B3's four unbundled intermediate checkpoints (13 GB), the `training_state.pt` of B2, B3 and the superseded
+`xvla_..._localvaried_v1` run (7 GB each), and that run's checkpoints (21 GB).
 
-**Disk.** As of 2026-10-17: 879 GB total, **203 GB free (76% full)** after the reclaim below (it was 59 GB, 94%).
+**Disk.** As of 2026-10-17: 879 GB total, **248 GB free (71% full)** after the reclaim below (it was 59 GB, 94%; 203 GB before the
+P1/P2 intermediates went).
 As of 2026-10-05: 879 GB total, ~96 GB free (89% full). Check `df -h .` before
 any new collection or training launch; the checkpoint schedule alone can need 20-30 GB. See
 Storage census below for what is safe to reclaim.
