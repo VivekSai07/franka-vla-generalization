@@ -418,8 +418,14 @@ Two-phase project. User accepted the one-variable-per-run attribution trade-off:
         option A):** contiguous slot blocks per worker, merged in slot order, OSMesa kept so pixels and
         byte-determinism match P1. Measured on one P1 episode: physics 0.6 s, OSMesa rendering ~37 s,
         frame write + AV1 encode 22.9 s; P1 ran all of it serially (9 h 38 m).
-      - [ ] **GPU (EGL) rendering — deferred, do at a phase boundary with its own side-by-side check,
-        never mixed into a phase's other changes** (user, 2026-10-13). Measured 2026-10-13 on one P1
+      - [x] **GPU (EGL) image built and checked 2026-10-19 (branch `feat/egl-rendering`, not merged):** one P1 attempt,
+        five runs: OSMesa in the new image is byte-identical to the base image, physics and recorded data are bit-identical
+        across all runs, EGL repeats differ by 1 to 2 pixels of 904 images (1 level), 7.7× faster (4.7 s against 36.5 s).
+        New image `sha256:fec83621…ade5`. **Still not adopted:** EGL and OSMesa frames differ on 50% of pixels, so a phase must
+        use one renderer end to end, the P2 checkpoints must not be evaluated under EGL without a paired test, and the
+        byte-equal determinism gate must be replaced for that phase.
+        [docs/EGL_RENDERING_CHECK_20261019.md](docs/EGL_RENDERING_CHECK_20261019.md). Original deferral (user, 2026-10-13), kept:
+        **do it at a phase boundary with its own side-by-side check, never mixed into a phase's other changes**. Measured 2026-10-13 on one P1
         episode (probe scripts in gitignored `outputs/p2_speed_probe/`): EGL 2.2 s vs OSMesa 37.8 s per
         attempt (~17×), same expert outcome. Three things to settle first: (1) the robosuite image lacks
         `libEGL.so.1` (Ubuntu `libegl1`; the NVIDIA EGL driver is injected by the runtime) — adding it

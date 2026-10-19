@@ -26,8 +26,6 @@ def require_renderer(requested, env):
         raise SystemExit(f"renderer must be one of {RENDERERS}, not {requested!r}")
     if env.get("MUJOCO_GL") != requested:
         raise SystemExit(f"--renderer {requested} but MUJOCO_GL={env.get('MUJOCO_GL')!r}")
-    if requested == "egl" and env.get("PYOPENGL_PLATFORM") != "egl":
-        raise SystemExit("EGL needs PYOPENGL_PLATFORM=egl as well (PyOpenGL binds to another platform otherwise)")
 
 
 def verdict(osmesa_pair, physics_differences, egl_pairs, layers_added):
@@ -70,11 +68,13 @@ def run(renderer, label, out, slot=0):
     np.save(out / f"{label}_images.npy", stack)
     np.savez(out / f"{label}_physics.npz", **arrays)
     gl = None
-    try:                                           # the driver string, to see that EGL ran on the GPU and OSMesa on llvmpipe
+    try:        # the driver string, to see that EGL ran on the GPU and OSMesa on llvmpipe (a context must be current)
         import OpenGL.GL as gl_api
-        gl = str(gl_api.glGetString(gl_api.GL_RENDERER))
-    except Exception:
-        pass
+        probe = mujoco.Renderer(mujoco.MjModel.from_xml_string("<mujoco/>"), 8, 8)
+        gl = gl_api.glGetString(gl_api.GL_RENDERER).decode()
+        probe.close()
+    except Exception as exc:
+        gl = f"unavailable: {type(exc).__name__}"
     info = dict(label=label, renderer=renderer, slot=slot, wall_seconds=wall, ticks=len(images), images=stack.shape[0] * stack.shape[1],
                 mujoco=mujoco.__version__, gl_renderer=gl, success=result.get("success"), reason=result.get("reason"),
                 image_id=os.environ.get("IMAGE_ID"), lp_num_threads=os.environ.get("LP_NUM_THREADS"))

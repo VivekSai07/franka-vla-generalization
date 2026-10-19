@@ -21,10 +21,9 @@ class RendererGuardTests(unittest.TestCase):
         with self.assertRaises(SystemExit):
             check.require_renderer('osmesa', {})
 
-    def test_egl_without_pyopengl_platform_is_refused(self):
-        # PyOpenGL imported before this is set binds to GLX/OSMesa and raises at teardown (seen 2026-10-19)
-        with self.assertRaises(SystemExit):
-            check.require_renderer('egl', {'MUJOCO_GL': 'egl'})
+    def test_pyopengl_platform_is_not_required(self):
+        # measured 2026-10-19: rendering and Renderer.close() work with and without it; only the label must match
+        check.require_renderer('egl', {'MUJOCO_GL': 'egl'})
 
     def test_unknown_renderer_name_is_refused(self):
         with self.assertRaises(SystemExit):

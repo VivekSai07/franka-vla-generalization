@@ -30,7 +30,9 @@ the CPU while the GPU idles. Three things were left open then, and are the conte
 `sha256:54d861aac79c1c8ceed09734a00bbc5d8cbf566c427e47ff23089f9bb0ccf27e`, then `apt-get install --no-install-recommends
 libegl1`. The package comes from the Ubuntu archive through the host's proxy, passed as build arguments (not stored). The
 NVIDIA EGL driver is injected at run time (`--runtime nvidia --gpus all`, `NVIDIA_DRIVER_CAPABILITIES` including
-`graphics`) and `PYOPENGL_PLATFORM=egl` must be set along with `MUJOCO_GL=egl`.
+`graphics`) and `MUJOCO_GL=egl` is set. (An earlier draft of this spec also said `PYOPENGL_PLATFORM=egl` must be set; that
+was wrong. Rendering works with and without it; the `EGLError` printed at interpreter exit comes from not calling
+`Renderer.close()` explicitly. The check's runs set it anyway; recorded in the report.)
 
 ## Measurements (one P1 attempt, plan slot 0, expert draw 0, 904 images; unmodified `props_p1_data.episode`)
 
