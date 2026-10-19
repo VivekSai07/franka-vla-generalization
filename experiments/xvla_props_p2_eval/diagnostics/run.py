@@ -1,8 +1,11 @@
 """Per-trial measures, Gates 0 and 1, and the diagnostics CLI. Robosuite image (MuJoCo 3.4.0).
 
     run reference                              expert envelope -> outputs/xvla_props_p2_eval/diagnostics/reference.json
-    run measure --shard K --shards N           replay every trial of RUNS; one measures file per trial
-    run analyze                                Gate 0, Gate 1, then the tables of the spec
+    run measure --shard K --shards N           replay every trial of RUNS; one raw measures file per trial
+    run analyze                                Gate 0, Gate 1 (success envelopes, both directions), then the tables
+
+Measures hold raw hand-frame samples; judging against an envelope (`judge`) happens at analysis time, so no replay is
+repeated when an envelope changes. Envelope definition: the 2026-10-19 amendment of the spec.
 
 Definitions are the spec's (docs/superpowers/specs/2026-10-19-props-p2-diagnostics-design.md). The finger midpoint is the
 mean of the `left_finger` and `right_finger` body positions.
@@ -20,7 +23,8 @@ from experiments.xvla_props_p2_eval.diagnostics import grasp, taxonomy
 OUT = protocol.EVAL_ROOT/'diagnostics'
 EPISODES = protocol.PARENT/'episodes'
 RUNS = (('screen', 'p2', 101520), ('report', 'p2', 101520), ('control', 'p2', 101520), ('confirm', 'p2', 101520),
-        ('report', 'p2', 126900), ('report', 'p1', 126900))
+        ('screen', 'p2', 126900), ('report', 'p2', 126900), ('report', 'p1', 126900))
+MIN_SUCCESSES = 10   # per object, to define a success envelope
 GATE1_MIN = 0.80
 
 
@@ -32,26 +36,50 @@ def gate0_ok(measures):
     return bool(measures) and all(m['gate0'] for m in measures)
 
 
-def gate1_fraction(rows):
-    """Fraction of successful trials whose grasp closure lies inside the target's expert envelope. A success without a
-    grasp closure counts as outside (a success always closes the gripper first, so that would be an anomaly)."""
+def success_envelope(rows, minimum=MIN_SUCCESSES):
+    """{object: {lo, hi, n}}: p1 to p99 per component of the grasp-closure sample over the successful trials in `rows`
+    (merged evaluation rows and measures). An object with fewer than `minimum` successes stops the analysis."""
+    samples = {}
+    for r in rows:
+        if r['task_success'] and r.get('grasp_sample') is not None:
+            samples.setdefault(r['object'], []).append(r['grasp_sample'])
+    out = {}
+    for name in sorted({r['object'] for r in rows}):
+        got = samples.get(name, [])
+        if len(got) < minimum:
+            raise ValueError(f'{name}: {len(got)} successes, fewer than the {minimum} needed for a success envelope')
+        env = grasp.envelope(np.array(got))
+        out[name] = dict(lo=env['lo'].tolist(), hi=env['hi'].tolist(), n=env['n'])
+    return out
+
+
+def gate1_fraction(rows, envelope):
+    """Fraction of the successful trials in `rows` whose grasp closure lies inside `envelope` for their object (a
+    success without a grasp sample counts as outside)."""
     wins = [r for r in rows if r['task_success']]
-    return sum(1 for r in wins if r['grasp_inside']) / len(wins) if wins else float('nan')
+    if not wins:
+        return float('nan')
+    inside = 0
+    for r in wins:
+        if r.get('grasp_sample') is not None and grasp.inside(_env(envelope, r['object']), r['grasp_sample']).all():
+            inside += 1
+    return inside / len(wins)
 
 
-def gate1_passes(fraction):
-    return fraction >= GATE1_MIN
+def gate1_passes(forward, backward):
+    """Both directions reach the minimum: 101,520 inside the 126,900-success envelope and the reverse."""
+    return forward >= GATE1_MIN and backward >= GATE1_MIN
 
 
 def _env(ref, name):
     if name not in ref:
-        raise ValueError(f'No expert envelope for {name!r}')
+        raise ValueError(f'No envelope for {name!r}')
     return dict(lo=np.asarray(ref[name]['lo'], dtype=float), hi=np.asarray(ref[name]['hi'], dtype=float))
 
 
-def measures_from_replay(row, rep, ref):
-    """Reduce one replay to the compact measures of the spec. Pure: `rep` is what `replay.replay_trial` returns and
-    `row` the evaluation's own record of the trial (it supplies `cause` and `task_success`)."""
+def measures_from_replay(rep):
+    """Reduce one replay to raw measures: ticks, hand-frame samples and held/contact facts. Pure; no envelope involved.
+    A sample is [x, y, z, yaw error] of a prop in the hand frame at a tick (the pre-action state of that tick)."""
     names, command = rep['names'], rep['command']
     z = rep['props_xyz'][:, :, 2]
     lift = analysis.lift_tick(z[:, 0])
@@ -60,34 +88,38 @@ def measures_from_replay(row, rep, ref):
     def sample(tick, i):
         pos = grasp.to_hand_frame(rep['hand_pos'][tick], rep['hand_rot'][tick], rep['props_xyz'][tick, i])
         axis = rep['right_pos'][tick] - rep['left_pos'][tick]
-        return np.array([*pos, grasp.yaw_error_deg(axis[:2], rep['props_yaw_deg'][tick, i])])
+        return [*map(float, pos), grasp.yaw_error_deg(axis[:2], rep['props_yaw_deg'][tick, i])]
 
-    envelopes = [_env(ref, name) for name in names]
     closed = closure is not None
-    m = dict(gate0=bool(rep['gate0']), first_mismatch=rep['first_mismatch'], lifted=lift is not None, lift_tick=lift,
-             closed=closed, first_closure=closure, grasp_closure=gclosure, names=list(names),
-             first_lifted=analysis.first_lifted(z, names))
-    m['grasp_inside'] = bool(grasp.inside(envelopes[0], sample(gclosure, 0)).all()) if gclosure is not None else None
-    m['target_in_env'] = bool(grasp.inside(envelopes[0], sample(closure, 0)).all()) if closed else False
-    m['distractor_in_env'] = ([bool(grasp.inside(envelopes[i], sample(closure, i)).all()) for i in range(1, len(names))]
-                              if closed else [])
-    m['held'] = bool(closed and grasp.held_ticks(rep['left_touch'][:, 0], rep['right_touch'][:, 0], closure))
     mid = (rep['left_pos'] + rep['right_pos'])/2
-    m['closest_approach_m'] = float(np.linalg.norm(mid - rep['props_xyz'][:, 0], axis=1).min())
-    if closed:
-        at = sample(closure, 0)
-        m['target_in_hand_at_closure'], m['yaw_error_deg'] = at[:3].tolist(), float(at[3])
-    m['touched_distractors'] = [names[i] for i in range(1, len(names)) if rep['touched'][:, i].any()]
-    m['class'] = taxonomy.classify(row, m)
-    return m
+    return dict(gate0=bool(rep['gate0']), first_mismatch=rep['first_mismatch'], names=list(names), lifted=lift is not None,
+                lift_tick=lift, closed=closed, first_closure=closure, grasp_closure=gclosure,
+                grasp_sample=sample(gclosure, 0) if gclosure is not None else None,
+                closure_samples=[sample(closure, i) for i in range(len(names))] if closed else None,
+                held=bool(closed and grasp.held_ticks(rep['left_touch'][:, 0], rep['right_touch'][:, 0], closure)),
+                closest_approach_m=float(np.linalg.norm(mid - rep['props_xyz'][:, 0], axis=1).min()),
+                first_lifted=analysis.first_lifted(z, names),
+                touched_distractors=[names[i] for i in range(1, len(names)) if rep['touched'][:, i].any()])
 
 
-def measure_trial(folder, ref):
-    """Replay one recorded trial and reduce it."""
+def judge(row, m, ref):
+    """Apply an envelope per object to raw measures and classify the trial (the spec's taxonomy). Pure."""
+    names = m['names']
+    envs = [_env(ref, name) for name in names]
+    out = dict(m)
+    closed = m['closed']
+    out['grasp_inside'] = (bool(grasp.inside(envs[0], m['grasp_sample']).all()) if m['grasp_sample'] is not None else None)
+    out['target_in_env'] = bool(grasp.inside(envs[0], m['closure_samples'][0]).all()) if closed else False
+    out['distractor_in_env'] = ([bool(grasp.inside(envs[i], m['closure_samples'][i]).all()) for i in range(1, len(names))]
+                                if closed else [])
+    out['class'] = taxonomy.classify(row, out)
+    return out
+
+
+def measure_trial(folder):
+    """Replay one recorded trial and reduce it to raw measures."""
     from experiments.xvla_props_p2_eval.diagnostics import replay
-    folder = Path(folder)
-    row = json.loads((folder/'episode.json').read_text())
-    return measures_from_replay(row, replay.replay_trial(folder), ref)
+    return measures_from_replay(replay.replay_trial(Path(folder)))
 
 
 def measures_path(mode, policy, candidate, trial_name):
@@ -106,7 +138,6 @@ def do_reference():
 
 
 def do_measure(shard, shards):
-    ref = load_reference()
     jobs = []
     for mode, policy, candidate in RUNS:
         directory = protocol.output_dir(mode, policy, candidate)
@@ -117,10 +148,10 @@ def do_measure(shard, shards):
         target = measures_path(mode, policy, candidate, folder.name)
         if target.exists():
             continue
-        m = measure_trial(folder, ref)
+        m = measure_trial(folder)
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(json.dumps(m, indent=2) + '\n')
-        print('MEASURE', run_name(mode, policy, candidate), folder.name, m['class'], m['gate0'], flush=True)
+        print('MEASURE', run_name(mode, policy, candidate), folder.name, m['gate0'], flush=True)
     print('MEASURE_SHARD_DONE', shard, shards, len(mine), flush=True)
 
 
@@ -138,6 +169,11 @@ def load_measures():
     return out
 
 
+W, V = run_name('report', 'p2', 101520), run_name('report', 'p2', 126900)
+P101 = [run_name(m, 'p2', 101520) for m in ('screen', 'report', 'control', 'confirm')]
+P126 = [run_name(m, 'p2', 126900) for m in ('screen', 'report')]
+
+
 def do_analyze():
     from experiments.xvla_props_p2_eval.diagnostics import tables
     data = load_measures()
@@ -146,14 +182,27 @@ def do_analyze():
     if not gate0_ok(every):
         print('GATE0 FAILED: no analysis on a replay that does not reproduce its own data', flush=True)
         return 1
-    fraction = gate1_fraction(data[run_name('report', 'p2', 101520)] + data[run_name('screen', 'p2', 101520)]
-                              + data[run_name('control', 'p2', 101520)] + data[run_name('confirm', 'p2', 101520)])
-    print(f'GATE1 {fraction:.3f} of 101,520 successes have the grasp closure inside the expert envelope '
-          f'(minimum {GATE1_MIN})', flush=True)
-    if not gate1_passes(fraction):
-        print('GATE1 FAILED: the envelope does not describe this policy\'s grasps; stop and ask the user', flush=True)
+    rows101 = [r for n in P101 for r in data[n]]
+    rows126 = [r for n in P126 for r in data[n]]
+    try:
+        env_from_126, env_from_101 = success_envelope(rows126), success_envelope(rows101)
+    except ValueError as exc:
+        print(f'GATE1 STOPPED: {exc}', flush=True)
         return 2
-    result = tables.build(data)
+    forward, backward = gate1_fraction(rows101, env_from_126), gate1_fraction(rows126, env_from_101)
+    print(f'GATE1 forward {forward:.3f} (101,520 successes inside the 126,900-success envelope), backward {backward:.3f} '
+          f'(126,900 successes inside the 101,520-success envelope); minimum {GATE1_MIN} each', flush=True)
+    if not gate1_passes(forward, backward):
+        print('GATE1 FAILED under the amended definition: no further redefinition (spec stop rule); the failure taxonomy '
+              'is not produced', flush=True)
+        return 2
+    judged = {}
+    for name, rows in data.items():       # 101,520 and P1 are judged by 126,900's successes, 126,900 by 101,520's
+        env = env_from_101 if name in P126 else env_from_126
+        judged[name] = [judge(r, r, env) for r in rows]
+    result = tables.build(judged)
+    result['gate1'] = dict(forward=forward, backward=backward, envelope_from_126900=env_from_126,
+                           envelope_from_101520=env_from_101)
     (OUT/'analysis.json').write_text(json.dumps(result, indent=2, default=float) + '\n')
     print(tables.render(result), flush=True)
     return 0
