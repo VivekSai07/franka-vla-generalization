@@ -35,15 +35,21 @@ reproduced two trials bit for bit; this checks all of them.)
 reference distribution of every grasp quantity below, by forward kinematics only (set `qpos`, `mj_forward`; no
 stepping). Quantities are defined once, from the expert, **before** any policy failure is looked at.
 
-**Every measure is validated on the successes first.** A measure that does not separate the policy's own successes
-from its failures, and does not agree with the expert on successes, is noise and is dropped.
+**Every measure is validated on the successes first (Gate 1).** The fraction of 101,520's successful trials whose grasp
+closure lies inside the target's expert envelope (position and yaw) is reported before any failure is read. If it is below
+0.80 the envelope is not describing this policy's grasps; the analysis stops and the definition is reconsidered with the
+user. A measure that does not agree with the expert on successes is noise and is dropped.
 
 ## Definitions (fixed before any failure is examined)
 
 - **Hand frame.** The robot hand body `robot0_right_hand`, axes as MuJoCo reports them. Target pose is taken in this
   frame. Finger axis yaw is the yaw of the vector between `left_finger` and `right_finger`.
-- **First closure.** The first tick whose gripper command (`applied_action[7]`) is 0. 255 is open
-  (`props_scene.constants`, `GRIPPER_OPEN_CTRL`).
+- **Closed run.** At least 5 consecutive ticks whose applied gripper command is below 127.5 (0 closed, 255 open; the
+  evaluator thresholds at 127). A single closed tick is chatter, not a grasp.
+- **First closure.** The first tick of the first closed run.
+- **Grasp closure.** For a trial in which the target was lifted, the first tick of the closed run that contains the lift
+  tick; otherwise the first closure. All hand-frame grasp quantities are taken at this tick, before that tick's action is
+  applied.
 - **Expert envelope, per object.** At the expert's first closure, the target centre in the hand frame, per axis, from
   the 1st to the 99th percentile over that object's expert episodes; plus the finger-axis-to-object yaw error modulo
   90 degrees, same percentiles.
@@ -51,25 +57,29 @@ from its failures, and does not agree with the expert on successes, is noise and
   (`analysis.lift_tick`). **Held.** Both fingers in contact with the object on at least 10 consecutive ticks after the
   first closure.
 
-## Taxonomy of a failed trial (first cause, mutually exclusive, in this order)
+## Taxonomy of a failed trial (first cause, mutually exclusive)
 
-| class | condition |
-|---|---|
-| `never_closed` | the gripper command is never 0 |
-| `closed_on_distractor` | at first closure a distractor is inside its own envelope and the target is not |
-| `closed_off_target` | at first closure the target is outside its envelope on at least one axis (approach error) |
-| `closed_not_held` | the target is inside its envelope at first closure and is never held (grasp execution) |
-| `held_not_lifted` | held, but never lifted (lift or carry failure) |
-| `lifted_then_failed` | lifted; the failure is then the evaluation's own cause (`timeout_carrying`, `dropped_outside`, `unstable_in_target`, `wrong_bin`) |
-| `wrong_object` | the evaluation's own label: first lifted object is not the target; kept as is |
+The evaluation's own label decides the first three rows; the grasp chain applies only to `never_lifted` trials, where the
+target was never lifted and a grasp closure is the thing to explain.
 
-`never_lifted` trials fall into the first five rows. For every `never_lifted` trial the hand's closest approach
-(minimum fingertip-midpoint-to-target-centre distance) is also reported, to separate hovering from wandering.
+| order | class | condition |
+|---|---|---|
+| 1 | `wrong_object` | the evaluation's label (the first object lifted is not the target); kept as is |
+| 2 | `lifted_then_failed` | the target was lifted and the evaluation's cause is `timeout_carrying`, `dropped_outside`, `unstable_in_target` or `wrong_bin` |
+| 3 | `never_closed` | `never_lifted` and the gripper has no closed run |
+| 4 | `closed_on_distractor` | `never_lifted`; at the first closure a distractor is inside its own object's envelope and the target is not |
+| 5 | `closed_off_target` | `never_lifted`; at the first closure the target is outside its envelope on at least one axis or in yaw (approach error) |
+| 6 | `closed_not_held` | `never_lifted`; the target is inside its envelope at the first closure and is never held (grasp execution) |
+| 7 | `held_not_lifted` | `never_lifted`; held, but never lifted |
+
+For every `never_lifted` trial the hand's closest approach (minimum fingertip-midpoint-to-target-centre distance over the
+trial) is also reported, to separate hovering from wandering. For `wrong_object` trials the descriptive report adds which
+distractor was lifted and whether the hand closed on it inside its envelope.
 
 ## Analyses
 
 1. **Never lifted (question 1).** The taxonomy table for all 16 never-lifted trials of 101,520 (report tier reported
-   separately: 12), and for 126,900 (24 report trials) as a contrast. Layout concentration: the sum of squared
+   separately: 12), and for 126,900 (24 report trials) and P1 (110 report trials) as contrasts. Layout concentration: the sum of squared
    per-layout failure counts against 10,000 permutations of the failure labels over trials with the two seeds of a
    layout kept together (the B2 diagnosis procedure). Which layouts fail at both checkpoints.
 2. **Wrong object (question 2).** Layout is the unit (60 report layouts): a layout is positive if any of its trials is
@@ -77,7 +87,8 @@ from its failures, and does not agree with the expert on successes, is noise and
    negative. Descriptive: which distractor was lifted (object and its distance to the target and to the hand's
    starting pose), 126,900 and P1 alongside. Seven events: **exploratory**.
 3. **Milk (question 3).** All 34 milk trials of 101,520 (20 failures, 14 successes) through the taxonomy, split by cell,
-   with the hand-frame target position at first closure and the yaw error against the milk expert envelope. Expert
+   with the hand-frame target position at the grasp closure and the yaw error against the milk expert envelope. A milk
+   trial that lifted and then failed is a carry or placement failure; its grasp quantities are still reported. Expert
    milk episodes are the comparison. The 20 `milk→blue` trials are all report-tier, so cell and tier are one factor.
 4. **Video check.** Before the taxonomy is written up, the cases that land in each class are checked on
    `cameras.mp4`; at least the two oddest per class. Wrong labels are fixed in the definition, not in the table.
