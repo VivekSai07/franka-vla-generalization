@@ -22,7 +22,8 @@ see [docs/PROPS_P1_EVALUATION_20261009.md](docs/PROPS_P1_EVALUATION_20261009.md)
 540 episodes collected in parallel shards and sealed 2026-10-13, see
 [docs/PROPS_P2_COLLECTION_20261013.md](docs/PROPS_P2_COLLECTION_20261013.md); trained and evaluated 2026-10-16 — report
 75.0% (90/120) on checkpoint 101,520, two of four pre-registered criteria met, see
-[docs/PROPS_P2_EVALUATION_20261016.md](docs/PROPS_P2_EVALUATION_20261016.md)). See [README.md](README.md) for results,
+[docs/PROPS_P2_EVALUATION_20261016.md](docs/PROPS_P2_EVALUATION_20261016.md); replay diagnostics of its failures
+2026-10-19, [docs/PROPS_P2_DIAGNOSTICS_20261019.md](docs/PROPS_P2_DIAGNOSTICS_20261019.md)). See [README.md](README.md) for results,
 [TODO.md](TODO.md) for what is open, and [HF artifacts](docs/HUGGING_FACE_ARTIFACTS.md)
 for the exact published datasets/checkpoints and re-evaluation dependencies.
 

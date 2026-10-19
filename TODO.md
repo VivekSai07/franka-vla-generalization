@@ -14,9 +14,14 @@
   checkpoints 101,520 and 126,900, all 540 trials, runtime, code snapshot; weights, seal and 540/540 trials hash-verified, and both weights hash-verified on Windows 2026-10-17;
   smoke re-evaluation from the bundle alone in a clean offline container reproduced both trials bit for bit). Branch
   `feat/props-p2`: pushed to origin (2026-10-17; the RTX machine has no GitHub credentials, so the push and the pull request are made from elsewhere); pull request and merge are the user's step, not merged.
-  **Open:** whether the held-out gap is "unseen pair" or "hard object" (milk is weak even when trained; a follow-up
-  holding milk out in the other bin separates them), why 12 trials never lift anything, and whether to merge/publish
-  P2 (user decision).
+  **Diagnostics 2026-10-19** ([report](docs/PROPS_P2_DIAGNOSTICS_20261019.md), replay only): the pre-registered failure
+  taxonomy was not produced (replay exact, 440/440; the validation gate failed twice and its 0.80 threshold was
+  unattainable, FAILURES #58). What it did show, descriptive and untested: all 12 never-lifted report trials of 101,520
+  closed the gripper, 9 held the target without lifting it; milk (7 of the 12) fails at the hold, not the approach;
+  no layout concentration for 101,520; wrong-object association not supported (p = 0.17).
+  **Open:** whether the held-out gap is "unseen pair" or "hard object" (milk is weak even when trained; a fresh-layout
+  re-test that holds milk out in the other bin separates them), why a closed, holding gripper does not lift, and whether
+  to publish P2 (the P2 branch was merged to `main` by the user).
 - **Props P1 trained and evaluated (2026-10-09): confirm 100% (20/20), report 75% (60/80) on checkpoint
   126,900**; zero wrong-bin outcomes in 480 report trials. Reports:
   [evaluation](docs/PROPS_P1_EVALUATION_20261009.md), [training](docs/PROPS_P1_TRAINING_20261009.md),

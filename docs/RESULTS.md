@@ -28,6 +28,17 @@ p = 1.6e-27). 101,520 vs 126,900: 15 vs 8 discordant trials, p = 0.21. Held-out 
 `milk→blue` 7/20 (milk is also weak when trained, so object difficulty and unseen pair are confounded).
 Full analysis: [PROPS_P2_EVALUATION_20261016.md](PROPS_P2_EVALUATION_20261016.md).
 
+**Diagnostics of those failures (2026-10-19, replay only,
+[PROPS_P2_DIAGNOSTICS_20261019.md](PROPS_P2_DIAGNOSTICS_20261019.md)).** The pre-registered failure taxonomy was **not
+produced**: replay is exact (440/440 trials), but its validation gate failed twice (0.225 with the expert envelope;
+0.486 / 0.634 against 0.80 with a cross-checkpoint success envelope, where identical policies would score only 0.605 /
+0.696 — the 0.80 was unattainable), and the spec's stop rule forbids a third definition. Envelope-free, descriptive,
+not pre-registered: of 101,520's 12 report never-lifted trials, all 12 closed the gripper and 9 held the target
+without lifting it (9 of 12 hands rose >2 cm after closing; 126,900: 7 of 24); never-lifted trials are not
+concentrated in layouts for 101,520 (p = 0.45) but are for 126,900 (p = 0.0001); wrong-object vs nearest-distractor
+distance is not supported at layout level (p = 0.17, 5 layouts); milk is 7 of the 12 never-lifted trials and fails at
+the hold, not the approach (closest approach and grasp position match its successes).
+
 ## Props P1 X-VLA, instruction sorting with bins that swap sides (2026-10-09) — measured, not sealed
 
 HF: [dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-props-p1-540); [X-VLA checkpoint 126,900](https://huggingface.co/VivekSai07/xvla-franka-props-p1-126900); [archive details](HUGGING_FACE_ARTIFACTS.md#props-p1-instruction-sorting).

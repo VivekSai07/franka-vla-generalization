@@ -108,6 +108,22 @@ lost, but only because resume existed. Fix: pin cores per worker, size the pool 
 the first-load figure, and treat a measured per-worker cost as valid only at the concurrency it was measured at. The cause
 of the memory growth after a switch was not isolated.
 
+58. **A validation threshold was fixed without computing what the sample sizes permit, and the validated measure was then
+redefined once without that check.** P2 diagnostics (2026-10-19) defined Gate 1 as "at least 0.80 of the successes' grasps lie
+inside the envelope" before looking at any failure. With the expert's envelope it read 0.225: the scripted expert grasps
+far more precisely than a success needs (yaw within about ±3° for box objects against policy successes at −15° to −2°). I
+amended the envelope to the other checkpoint's successes and kept 0.80; it read 0.486 / 0.634. Only then did I measure
+the null: two *identical* policies, resampled to the same sizes, score 0.605 / 0.696, so 0.80 could not have been met by
+any measure at these sample sizes. The stop rule I had written forbade a third definition, so no failure was classified. The
+protocol did what it was meant to (no failure was read through a measure that failed validation), but twice I spent the
+amendment on the wrong thing. **Lessons:** (a) simulate the statistic under "nothing differs" before fixing its threshold;
+(b) an envelope built from the scripted expert describes the expert, not a success region; (c) a pooled comparison (closest
+approach, never-lifted against successes) must be re-read per object before it is believed: the first pooled gap
+(0.106 m against 0.066 m) was object mix, since milk and bottle sit 0.105–0.12 m from the finger midpoint even when they succeed;
+(d) a reading of rendered frames is not evidence where the trace disagrees: I read "carried off the table" in frames
+where the target never rose more than 1.2 cm; (e) test the branch the real data does not reach: the passing-gate path crashed on
+an object that appears only as a distractor and was found only because it was given a test.
+
 Broader lessons — every "just increment a counter" or "just leave state alone on retry" assumption in the fixed-layout pipeline broke under broad_workspace retries. Rejections need explicit cleanup for every piece of shared state (LeRobot buffer + PNG dir + attempts dir semantics + admit-count invariant). And a result is only interpretable once you know what the *absence* of the treatment scores on the same protocol.
 
 **Recurring meta-lesson — a green test suite is not evidence.** Six separate times (#10, #15, #20, #24, and twice while porting eval packages) the tests passed while the thing that actually runs was broken, because the tests exercised a *fixture*, a *constant*, the *wrong module*, or every path *except* the one the job takes. When adding a regression test, confirm it fails against the unfixed code. When forking a package, run the `symtable` undefined-name check from #24 before spending GPU time.

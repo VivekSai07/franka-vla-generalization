@@ -67,7 +67,9 @@ Pre-registered criteria — 2 of 4 met:
   101,520 as the earlier of the two.
 
 Report: [docs/PROPS_P2_EVALUATION_20261016.md](docs/PROPS_P2_EVALUATION_20261016.md). Collection:
-[docs/PROPS_P2_COLLECTION_20261013.md](docs/PROPS_P2_COLLECTION_20261013.md).
+[docs/PROPS_P2_COLLECTION_20261013.md](docs/PROPS_P2_COLLECTION_20261013.md). Failure diagnostics (replay, no new
+rollouts; the pre-registered taxonomy could not be validated and was not produced):
+[docs/PROPS_P2_DIAGNOSTICS_20261019.md](docs/PROPS_P2_DIAGNOSTICS_20261019.md).
 Bundle hash-verified on Windows and published private on 2026-10-17:
 [dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-props-p2-540) and
 [model](https://huggingface.co/VivekSai07/xvla-franka-props-p2-101520). The model card contains the

@@ -1,5 +1,16 @@
 # Franka benchmark: start here
 
+## Props P2 failure diagnostics: replay is exact, the pre-registered taxonomy was not produced - 2026-10-19
+
+Replay-only analysis of the 440 recorded P2/P1 trials (`experiments/xvla_props_p2_eval/diagnostics/`, branch
+`feat/props-p2-followup`). Gate 0 passed (440/440 exact). Gate 1, the check that a grasp measure agrees with the
+successes before any failure is read through it, failed twice (expert envelope 0.225; cross-checkpoint success
+envelope 0.486 / 0.634 against 0.80), and the 0.80 turned out to be unattainable (two identical policies score 0.605 /
+0.696 on it, FAILURES #58), so the stop rule applied and no failure was classified. Envelope-free findings: all 12
+never-lifted report trials of 101,520 closed the gripper and 9 held the target without lifting; milk fails at the
+hold, not the approach; never-lifted trials are not layout-concentrated for 101,520; the wrong-object association is
+not supported (p = 0.17). Report: [PROPS_P2_DIAGNOSTICS_20261019.md](PROPS_P2_DIAGNOSTICS_20261019.md).
+
 ## Disk reclaim: 59 GB to 203 GB free - 2026-10-17
 
 User-approved. Props P2 resume snapshots and the heavy preflight / resume-proof scratch (70.4 GB, every `result.json`
