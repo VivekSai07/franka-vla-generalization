@@ -76,3 +76,34 @@ def mann_whitney_p(pos, neg, n=20_000, seed=0):
         if abs(ranks[rng.permutation(total)[:k]].sum() - expected) >= observed - 1e-9:
             hits += 1
     return (hits + 1) / (n + 1)
+
+
+def inside_fraction(samples, envelope):
+    """Fraction of the rows of `samples` (N x k) lying inside `envelope` (`lo`, `hi` arrays) on every column."""
+    samples = np.asarray(samples, dtype=float)
+    return float(np.mean(np.all((samples >= envelope['lo']) & (samples <= envelope['hi']), axis=1)))
+
+
+def percentile_envelope(x, low=1, high=99):
+    """p1 to p99 of each column of `x`: the success-envelope bounds of the spec (the same rule as `grasp.envelope`)."""
+    x = np.asarray(x, dtype=float)
+    return dict(lo=np.percentile(x, low, axis=0), hi=np.percentile(x, high, axis=0))
+
+
+def gate1_null(a, b, n=2000, seed=0, envelope=percentile_envelope):
+    """What Gate 1 would read if two policies grasped identically.
+
+    The samples of `a` and `b` are pooled and re-split at random into groups of the same sizes; each group's envelope
+    (`percentile_envelope` unless another is injected) is applied to the other group. Returns the mean fraction inside in
+    each direction. A threshold above this expectation cannot be met by sampling alone, which is what an envelope from a
+    small sample implies.
+    """
+    a, b = np.asarray(a, dtype=float), np.asarray(b, dtype=float)
+    pool, rng = np.vstack([a, b]), np.random.default_rng(seed)
+    forward, backward = [], []
+    for _ in range(n):
+        order = rng.permutation(len(pool))
+        x, y = pool[order[:len(a)]], pool[order[len(a):]]
+        forward.append(inside_fraction(x, envelope(y)))
+        backward.append(inside_fraction(y, envelope(x)))
+    return dict(forward=float(np.mean(forward)), backward=float(np.mean(backward)))
