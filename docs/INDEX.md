@@ -23,6 +23,7 @@ Kept current; read these first.
 | point-in-time report | `TOPIC_YYYYMMDD.md` | `LOCAL_VARIED_COLLECTION_20260919.md` |
 | design spec | `superpowers/specs/YYYY-MM-DD-topic-design.md` | |
 | implementation plan | `superpowers/plans/YYYY-MM-DD-topic.md` | |
+| handoff to a new session | `superpowers/handoffs/YYYY-MM-DD-topic-handoff.md` | `superpowers/handoffs/2026-10-19-props-p3-handoff.md` |
 | superseded material | `archive/<topic>.md` | `archive/docker-compose-pipeline.md` |
 
 Dated reports are immutable records of what was true on that date. Do not edit them to reflect

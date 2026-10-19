@@ -433,7 +433,12 @@ Two-phase project. User accepted the one-variable-per-run attribution trade-off:
         an explicit tolerance decided before data; (3) EGL vs OSMesa differ on 72% of pixels (mean 1.2,
         max 105 levels), so training data and evaluation rollouts must use the same renderer, and the
         switch must not coincide with another variable. Also worth it for evaluation, which renders too.
-      - **P3 — rule-based Food vs Drinks**, two visually distinct containers. First one object per
+      - **P3 — rule-based Food vs Drinks — spec and plan DRAFTED 2026-10-19, nothing confirmed or built**
+        ([spec](docs/superpowers/specs/2026-10-19-props-p3-food-drinks-design.md),
+        [collection plan](docs/superpowers/plans/2026-10-19-props-p3-collection.md),
+        [handoff to a new session](docs/superpowers/handoffs/2026-10-19-props-p3-handoff.md)): fixed prompt, one object, P0's
+        blue/orange bins (drinks orange, food blue), bottle and cereal held out; decisions D1–D7 await the user. Original
+        roadmap text: two visually distinct containers. First one object per
         episode with a fixed prompt; then held-out objects as a stretch test (zero-shot category from
         six objects is a long shot and is read as exploratory). Multi-object sequential sorting only
         after that.
