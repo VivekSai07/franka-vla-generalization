@@ -12,9 +12,11 @@ except ImportError:  # admission image: no simulator
     MUJOCO = False
 
 EPISODES = Path('/vla/outputs/props_p2_data/props_p2_20261013/episodes')
+from experiments.xvla_props_p2_eval import protocol
+from experiments.xvla_props_p2_eval.diagnostics import run  # imports no simulator at module level
+
 if MUJOCO:
-    from experiments.xvla_props_p2_eval import protocol
-    from experiments.xvla_props_p2_eval.diagnostics import reference, run
+    from experiments.xvla_props_p2_eval.diagnostics import reference
     AVAILABLE = EPISODES.is_dir() and (protocol.EVAL_ROOT/'report_p2_step_101520').is_dir()
 else:
     AVAILABLE = False
@@ -65,6 +67,112 @@ class MeasureTests(unittest.TestCase):
 
     def test_measure_is_deterministic(self):
         self.assertEqual(self.measure('never_lifted'), self.measure('never_lifted'))
+
+
+def synthetic(ticks=100, closed=(20, 60), lift_at=40, target_off=0.0, distractor_off=0.2, touch=(25, 60)):
+    """A hand-built replay: identity hand at the origin, target on the hand axis, one distractor beside it."""
+    import numpy as np
+    rep = dict(names=['can', 'milk'], gate0=True, first_mismatch=None)
+    rep['hand_pos'] = np.zeros((ticks, 3))
+    rep['hand_rot'] = np.tile(np.eye(3).ravel(), (ticks, 1))
+    rep['left_pos'] = np.tile([-0.04, 0, 0.05], (ticks, 1))
+    rep['right_pos'] = np.tile([0.04, 0, 0.05], (ticks, 1))
+    props = np.zeros((ticks, 2, 3))
+    props[:, 0] = [target_off, 0, 0.15]
+    props[:, 1] = [distractor_off, 0, 0.15]
+    if lift_at is not None:
+        props[lift_at:, 0, 2] += 0.05
+    rep['props_xyz'] = props
+    rep['props_yaw_deg'] = np.zeros((ticks, 2))
+    command = np.full(ticks, 255.0)
+    if closed is not None:
+        command[closed[0]:closed[1]] = 0.0
+    rep['command'] = command
+    for key in ('left_touch', 'right_touch', 'touched'):
+        rep[key] = np.zeros((ticks, 2), bool)
+    if touch is not None:
+        rep['left_touch'][touch[0]:touch[1], 0] = rep['right_touch'][touch[0]:touch[1], 0] = True
+    return rep
+
+
+REF = {'can': dict(lo=[-0.02, -0.02, 0.10, -20], hi=[0.02, 0.02, 0.20, 20], n=10),
+       'milk': dict(lo=[-0.02, -0.02, 0.10, -20], hi=[0.02, 0.02, 0.20, 20], n=10)}
+
+
+def fake_row(cause='never_lifted', success=False):
+    return dict(cause=cause, task_success=success)
+
+
+class ReduceTests(unittest.TestCase):
+    """Every field of the reduction on synthetic replays with known answers (no simulator needed)."""
+
+    def test_a_clean_grasp(self):
+        m = run.measures_from_replay(fake_row('success', True), synthetic(), REF)
+        self.assertEqual((m['first_closure'], m['grasp_closure'], m['lift_tick']), (20, 20, 40))
+        self.assertTrue(m['closed'] and m['lifted'] and m['target_in_env'] and m['grasp_inside'] and m['held'])
+        self.assertEqual(m['distractor_in_env'], [False])
+        self.assertEqual(m['class'], 'success')
+        self.assertAlmostEqual(m['closest_approach_m'], 0.10, places=6)
+
+    def test_target_off_the_envelope_is_an_approach_error(self):
+        m = run.measures_from_replay(fake_row(), synthetic(target_off=0.1, lift_at=None), REF)
+        self.assertFalse(m['target_in_env'])
+        self.assertEqual(m['class'], 'closed_off_target')
+
+    def test_gripper_closed_on_the_distractor(self):
+        m = run.measures_from_replay(fake_row(), synthetic(target_off=0.1, distractor_off=0.0, lift_at=None), REF)
+        self.assertEqual(m['distractor_in_env'], [True])
+        self.assertEqual(m['class'], 'closed_on_distractor')
+
+    def test_never_closed(self):
+        m = run.measures_from_replay(fake_row(), synthetic(closed=None, lift_at=None, touch=None), REF)
+        self.assertFalse(m['closed'])
+        self.assertIsNone(m['grasp_closure'])
+        self.assertEqual(m['class'], 'never_closed')
+
+    def test_chatter_is_not_a_closure(self):
+        m = run.measures_from_replay(fake_row(), synthetic(closed=(30, 33), lift_at=None, touch=None), REF)
+        self.assertFalse(m['closed'])
+
+    def test_closed_in_envelope_but_not_held(self):
+        m = run.measures_from_replay(fake_row(), synthetic(lift_at=None, touch=(25, 30)), REF)
+        self.assertTrue(m['target_in_env'] and not m['held'])
+        self.assertEqual(m['class'], 'closed_not_held')
+
+    def test_held_but_not_lifted(self):
+        m = run.measures_from_replay(fake_row(), synthetic(lift_at=None), REF)
+        self.assertTrue(m['held'])
+        self.assertEqual(m['class'], 'held_not_lifted')
+
+    def test_held_is_measured_after_the_closure_not_before(self):
+        m = run.measures_from_replay(fake_row(), synthetic(lift_at=None, touch=(2, 12)), REF)
+        self.assertFalse(m['held'], 'contact before the first closure is not a hold')
+
+    def test_grasp_closure_follows_the_run_that_lifts(self):
+        rep = synthetic(closed=(20, 25), lift_at=None)
+        rep['command'][50:90] = 0.0
+        rep['props_xyz'][70:, 0, 2] += 0.05
+        m = run.measures_from_replay(fake_row('timeout_carrying'), rep, REF)
+        self.assertEqual((m['first_closure'], m['grasp_closure']), (20, 50))
+        self.assertEqual(m['class'], 'lifted_then_failed')
+
+    def test_a_distractor_is_judged_against_its_own_objects_envelope(self):
+        # The milk is gripped 0.03 m off the hand axis: outside the can's envelope, inside the milk's own.
+        ref = {'can': REF['can'], 'milk': dict(lo=[-0.05, -0.02, 0.10, -20], hi=[0.05, 0.02, 0.20, 20], n=10)}
+        rep = synthetic(target_off=0.1, distractor_off=0.03, lift_at=None)
+        m = run.measures_from_replay(fake_row(), rep, ref)
+        self.assertEqual(m['distractor_in_env'], [True])
+        self.assertEqual(m['class'], 'closed_on_distractor')
+        self.assertEqual(run.measures_from_replay(fake_row(), rep, REF)['distractor_in_env'], [False])
+
+    def test_touched_distractors_are_listed(self):
+        rep = synthetic()
+        rep['touched'][30:40, 1] = True
+        self.assertEqual(run.measures_from_replay(fake_row('success', True), rep, REF)['touched_distractors'], ['milk'])
+
+    def test_missing_object_envelope_is_refused(self):
+        with self.assertRaises(ValueError):
+            run.measures_from_replay(fake_row(), synthetic(), {'can': REF['can']})
 
 
 class GateTests(unittest.TestCase):

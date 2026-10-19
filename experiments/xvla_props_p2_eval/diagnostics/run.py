@@ -49,12 +49,9 @@ def _env(ref, name):
     return dict(lo=np.asarray(ref[name]['lo'], dtype=float), hi=np.asarray(ref[name]['hi'], dtype=float))
 
 
-def measure_trial(folder, ref):
-    """Replay one recorded trial and reduce it to the compact measures of the spec."""
-    from experiments.xvla_props_p2_eval.diagnostics import replay
-    folder = Path(folder)
-    row = json.loads((folder/'episode.json').read_text())
-    rep = replay.replay_trial(folder)
+def measures_from_replay(row, rep, ref):
+    """Reduce one replay to the compact measures of the spec. Pure: `rep` is what `replay.replay_trial` returns and
+    `row` the evaluation's own record of the trial (it supplies `cause` and `task_success`)."""
     names, command = rep['names'], rep['command']
     z = rep['props_xyz'][:, :, 2]
     lift = analysis.lift_tick(z[:, 0])
@@ -65,14 +62,15 @@ def measure_trial(folder, ref):
         axis = rep['right_pos'][tick] - rep['left_pos'][tick]
         return np.array([*pos, grasp.yaw_error_deg(axis[:2], rep['props_yaw_deg'][tick, i])])
 
+    envelopes = [_env(ref, name) for name in names]
     closed = closure is not None
     m = dict(gate0=bool(rep['gate0']), first_mismatch=rep['first_mismatch'], lifted=lift is not None, lift_tick=lift,
              closed=closed, first_closure=closure, grasp_closure=gclosure, names=list(names),
              first_lifted=analysis.first_lifted(z, names))
-    target_env = _env(ref, names[0])
-    m['grasp_inside'] = bool(grasp.inside(target_env, sample(gclosure, 0)).all()) if gclosure is not None else None
-    m['target_in_env'] = bool(grasp.inside(target_env, sample(closure, 0)).all()) if closed else False
-    m['distractor_in_env'] = [bool(grasp.inside(_env(ref, names[i]), sample(closure, i)).all()) for i in range(1, len(names))] if closed else []
+    m['grasp_inside'] = bool(grasp.inside(envelopes[0], sample(gclosure, 0)).all()) if gclosure is not None else None
+    m['target_in_env'] = bool(grasp.inside(envelopes[0], sample(closure, 0)).all()) if closed else False
+    m['distractor_in_env'] = ([bool(grasp.inside(envelopes[i], sample(closure, i)).all()) for i in range(1, len(names))]
+                              if closed else [])
     m['held'] = bool(closed and grasp.held_ticks(rep['left_touch'][:, 0], rep['right_touch'][:, 0], closure))
     mid = (rep['left_pos'] + rep['right_pos'])/2
     m['closest_approach_m'] = float(np.linalg.norm(mid - rep['props_xyz'][:, 0], axis=1).min())
@@ -82,6 +80,14 @@ def measure_trial(folder, ref):
     m['touched_distractors'] = [names[i] for i in range(1, len(names)) if rep['touched'][:, i].any()]
     m['class'] = taxonomy.classify(row, m)
     return m
+
+
+def measure_trial(folder, ref):
+    """Replay one recorded trial and reduce it."""
+    from experiments.xvla_props_p2_eval.diagnostics import replay
+    folder = Path(folder)
+    row = json.loads((folder/'episode.json').read_text())
+    return measures_from_replay(row, replay.replay_trial(folder), ref)
 
 
 def measures_path(mode, policy, candidate, trial_name):
