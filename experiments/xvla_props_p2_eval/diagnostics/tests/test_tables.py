@@ -67,12 +67,13 @@ class MilkTests(unittest.TestCase):
 
 
 def raw(layout, cause, success=False, closed=True, held=False, approach=0.05, obj='can', kind='trained', cell_bin='blue',
-        first_closure=100, touched=(), sample=(0.0, 0.0, 0.12, 0.0), distance=0.15, first_lifted=None):
+        first_closure=100, touched=(), sample=(0.0, 0.0, 0.12, 0.0), distance=0.15, first_lifted=None, rise=0.0):
     """A merged evaluation row plus RAW measures (no envelope, no class): what analyze has when Gate 1 fails."""
     return dict(layout_id=layout, cause='success' if success else cause, task_success=success, closed=closed, held=held,
                 closest_approach_m=approach, object=obj, kind=kind, bin=cell_bin, first_closure=first_closure if closed else None,
                 touched_distractors=list(touched), grasp_sample=list(sample) if closed else None,
-                min_distractor_distance_m=distance, first_lifted=first_lifted, names=[obj, 'milk'], lifted=success)
+                min_distractor_distance_m=distance, first_lifted=first_lifted, names=[obj, 'milk'], lifted=success,
+                hand_rise_after_closure_m=rise if closed else None)
 
 
 class DescriptiveTests(unittest.TestCase):
@@ -91,6 +92,30 @@ class DescriptiveTests(unittest.TestCase):
         self.assertAlmostEqual(out['never_lifted_median_m'], 0.15)
         self.assertAlmostEqual(out['success_median_m'], 0.02)
         self.assertEqual((out['never_lifted_n'], out['success_n']), (2, 2))
+
+    def test_closest_approach_by_object_never_mixes_objects(self):
+        # bread: successes 0.05/0.07, never-lifted 0.13; milk: successes 0.11, never-lifted 0.10/0.12, other failure 0.09
+        rows = [raw('a', 'success', success=True, obj='bread', approach=0.05), raw('b', 'success', success=True, obj='bread', approach=0.07),
+                raw('c', 'never_lifted', obj='bread', approach=0.13),
+                raw('d', 'success', success=True, obj='milk', approach=0.11), raw('e', 'never_lifted', obj='milk', approach=0.10),
+                raw('f', 'never_lifted', obj='milk', approach=0.12), raw('g', 'timeout_carrying', obj='milk', approach=0.09)]
+        out = tables.closest_approach_by_object(rows)
+        self.assertEqual(sorted(out), ['bread', 'milk'])
+        self.assertEqual({k: (v['n'], None if v['median_m'] is None else round(v['median_m'], 3)) for k, v in out['bread'].items()},
+                         {'success': (2, 0.06), 'never_lifted': (1, 0.13), 'other_failure': (0, None)})
+        self.assertEqual({k: (v['n'], round(v['median_m'], 3)) for k, v in out['milk'].items()},
+                         {'success': (1, 0.11), 'never_lifted': (2, 0.11), 'other_failure': (1, 0.09)})
+
+    def test_hand_rise_after_closure_covers_only_never_lifted_trials_that_closed(self):
+        rows = [raw('a', 'never_lifted', rise=0.00), raw('b', 'never_lifted', rise=0.06), raw('c', 'never_lifted', rise=0.30),
+                raw('c2', 'never_lifted', rise=0.02),      # exactly the lift height: not 'more than', as in analysis.lift_tick
+                raw('d', 'never_lifted', closed=False, rise=0.9),       # never closed: no rise defined
+                raw('e', 'timeout_carrying', rise=0.5), raw('f', 'success', success=True, rise=0.7)]
+        out = tables.hand_rise_summary(rows)
+        self.assertEqual(out['n'], 4)
+        self.assertEqual(out['values_m'], [0.0, 0.02, 0.06, 0.3])
+        self.assertAlmostEqual(out['median_m'], 0.04)
+        self.assertEqual(out['more_than_lift_height'], 2, 'strictly more than 0.02 m, like analysis.lift_tick: 0.06 and 0.30')
 
     def test_wrong_object_test_works_on_raw_rows_through_the_evaluations_cause(self):
         rows = [raw('p', 'wrong_object', distance=0.12), raw('p', 'success', success=True, distance=0.30),
@@ -125,6 +150,8 @@ class DescriptiveTests(unittest.TestCase):
         self.assertIn('| report_p2_step_101520 | 1 | 1 | 0 | 0 |', text)
         self.assertIn('| 101,520 all four tiers | 4 | 4 | 0 | 0 |', text)
         self.assertNotIn('closed_off_target', text, 'the envelope taxonomy must not appear')
+        self.assertIn('Closest approach by object', text)
+        self.assertIn('Hand rise after closure', text)
 
 
 class RenderTests(unittest.TestCase):

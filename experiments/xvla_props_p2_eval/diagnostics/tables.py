@@ -153,6 +153,28 @@ def closest_approach_summary(rows):
                 never_lifted_max_m=float(max(nl)) if nl else math.nan)
 
 
+def closest_approach_by_object(rows):
+    """Closest approach (finger midpoint to target) per target object, split into successes, `never_lifted` and every
+    other failure. The pooled figure of `closest_approach_summary` mixes objects whose grasps sit at different distances
+    (a milk carton is held 0.105 m from the finger midpoint even when it succeeds), so only a within-object comparison
+    says anything about the approach."""
+    out = {}
+    for r in rows:
+        group = 'success' if r['task_success'] else 'never_lifted' if r['cause'] == 'never_lifted' else 'other_failure'
+        out.setdefault(r['object'], {g: [] for g in ('success', 'never_lifted', 'other_failure')})[group].append(r['closest_approach_m'])
+    return {obj: {g: dict(n=len(v), median_m=float(np.median(v)) if v else None) for g, v in groups.items()}
+            for obj, groups in sorted(out.items())}
+
+
+def hand_rise_summary(rows, lift_m=0.02):
+    """How far the hand rose after the gripper closed, over the `never_lifted` trials that did close. A hand that rose at
+    more than `lift_m` (the evaluation's strict lift threshold) and still left the target down means the object slipped; a hand that
+    never rose means the policy never tried to lift."""
+    values = sorted(r['hand_rise_after_closure_m'] for r in rows if r['cause'] == 'never_lifted' and r['closed'])
+    return dict(n=len(values), values_m=values, median_m=float(np.median(values)) if values else None,
+                more_than_lift_height=sum(1 for v in values if v > lift_m))
+
+
 def milk_raw_table(rows):
     """Milk trials by cell: successes, failures, and for each failure the raw hand-frame grasp sample (None if the gripper
     never closed). No inside/outside label: that needs an envelope."""
@@ -179,6 +201,8 @@ def build_descriptive(data):
         never_lifted_detail={name: never_lifted_detail(data[name]) for name in runs if name in data},
         never_lifted_detail_all_tiers_101520=never_lifted_detail(every_winner),
         closest_approach={name: closest_approach_summary(data[name]) for name in runs if name in data},
+        closest_approach_by_object={name: closest_approach_by_object(data[name]) for name in runs if name in data},
+        hand_rise={name: hand_rise_summary(data[name]) for name in runs if name in data},
         never_lifted_concentration={name: never_lifted_concentration(data[name]) for name in runs if name in data},
         never_lifted_in_every_run=layouts_failing_at_every_run({k: data[k] for k in (WINNER, CONTRASTS[0]) if k in data}),
         wrong_object_layout_test=wrong_object_layout_test(winner),
@@ -198,6 +222,17 @@ def render_descriptive(result):
     for name, v in result['closest_approach'].items():
         lines.append(f"- {name}: never-lifted median {v['never_lifted_median_m']:.3f} m (n={v['never_lifted_n']}, max "
                      f"{v['never_lifted_max_m']:.3f}), successes median {v['success_median_m']:.3f} m (n={v['success_n']})")
+    lines += ['', '### Closest approach by object (median m, n): success / never lifted / other failure', '']
+    for name, objs in result['closest_approach_by_object'].items():
+        lines.append(f'- {name}')
+        for obj, groups in objs.items():
+            cell = lambda g: 'none' if g['median_m'] is None else f"{g['median_m']:.3f} (n={g['n']})"
+            lines.append(f"  - {obj}: {cell(groups['success'])} / {cell(groups['never_lifted'])} / {cell(groups['other_failure'])}")
+    lines += ['', '### Hand rise after closure, never-lifted trials where the gripper closed', '']
+    for name, v in result['hand_rise'].items():
+        median = 'none' if v['median_m'] is None else f"{v['median_m']:.3f} m"
+        lines.append(f"- {name}: n={v['n']}, median {median}, {v['more_than_lift_height']} of {v['n']} rose more than 0.02 m "
+                     f"(values: {', '.join(f'{x:.3f}' for x in v['values_m'])})")
     lines += ['', '### Never-lifted layout concentration', '']
     for name, v in result['never_lifted_concentration'].items():
         lines.append(f"- {name}: {v['failed_trials']} trials in {v['layouts_with_failures']} of {v['layouts']} layouts, "

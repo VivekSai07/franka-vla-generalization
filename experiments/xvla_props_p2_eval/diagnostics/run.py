@@ -98,6 +98,8 @@ def measures_from_replay(rep):
                 closure_samples=[sample(closure, i) for i in range(len(names))] if closed else None,
                 held=bool(closed and grasp.held_ticks(rep['left_touch'][:, 0], rep['right_touch'][:, 0], closure)),
                 closest_approach_m=float(np.linalg.norm(mid - rep['props_xyz'][:, 0], axis=1).min()),
+                hand_rise_after_closure_m=(float(rep['hand_pos'][closure:, 2].max() - rep['hand_pos'][closure, 2])
+                                           if closed else None),
                 first_lifted=analysis.first_lifted(z, names),
                 touched_distractors=[names[i] for i in range(1, len(names)) if rep['touched'][:, i].any()])
 

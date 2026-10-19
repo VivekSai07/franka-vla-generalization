@@ -65,11 +65,13 @@ class MeasureTests(unittest.TestCase):
         self.assertEqual(self.measure('never_lifted'), self.measure('never_lifted'))
 
 
-def synthetic(ticks=100, closed=(20, 60), lift_at=40, target_off=0.0, distractor_off=0.2, touch=(25, 60)):
+def synthetic(ticks=100, closed=(20, 60), lift_at=40, target_off=0.0, distractor_off=0.2, touch=(25, 60), hand_rise=None):
     """A hand-built replay: identity hand at the origin, target on the hand axis, one distractor beside it."""
     import numpy as np
     rep = dict(names=['can', 'milk'], gate0=True, first_mismatch=None)
     rep['hand_pos'] = np.zeros((ticks, 3))
+    for tick, z in ([hand_rise] if isinstance(hand_rise, tuple) else (hand_rise or [])):   # (tick, height) steps
+        rep['hand_pos'][tick:, 2] = z
     rep['hand_rot'] = np.tile(np.eye(3).ravel(), (ticks, 1))
     rep['left_pos'] = np.tile([-0.04, 0, 0.05], (ticks, 1))
     rep['right_pos'] = np.tile([0.04, 0, 0.05], (ticks, 1))
@@ -117,6 +119,22 @@ class ReduceTests(unittest.TestCase):
         self.assertTrue(j['target_in_env'] and j['grasp_inside'])
         self.assertEqual(j['distractor_in_env'], [False])
         self.assertEqual(j['class'], 'success')
+
+    def test_hand_rise_after_closure_counts_only_what_happens_after_the_grasp(self):
+        self.assertAlmostEqual(run.measures_from_replay(synthetic(hand_rise=(50, 0.08)))['hand_rise_after_closure_m'], 0.08, places=6)
+        self.assertAlmostEqual(run.measures_from_replay(synthetic())['hand_rise_after_closure_m'], 0.0, places=6)
+        # the hand is already 0.08 m high when the gripper closes at tick 20 and goes no higher: no rise after the grasp
+        before = run.measures_from_replay(synthetic(hand_rise=(5, 0.08)))
+        self.assertAlmostEqual(before['hand_rise_after_closure_m'], 0.0, places=6)
+
+    def test_hand_rise_is_the_peak_after_closure_not_the_final_height_nor_the_pre_closure_peak(self):
+        # high before the grasp (tick 5-14), back down at closure (tick 20), up 0.05 (tick 40-59), down again at the end
+        steps = [(5, 0.30), (15, 0.0), (40, 0.05), (60, 0.01)]
+        self.assertAlmostEqual(run.measures_from_replay(synthetic(hand_rise=steps))['hand_rise_after_closure_m'], 0.05, places=6)
+
+    def test_hand_rise_is_none_when_the_gripper_never_closed(self):
+        m = run.measures_from_replay(synthetic(closed=None, lift_at=None, touch=None, hand_rise=(50, 0.08)))
+        self.assertIsNone(m['hand_rise_after_closure_m'])
 
     def test_target_off_the_envelope_is_an_approach_error(self):
         j = judged(fake_row(), synthetic(target_off=0.1, lift_at=None), REF)
@@ -283,6 +301,7 @@ class AnalyzeFlowTests(unittest.TestCase):
                      closed=r.get('closed', True), first_closure=20, grasp_closure=20, held=r.get('held', r['success']),
                      grasp_sample=r.get('sample', [0.0, 0.0, 0.15, 0.0]) if r.get('closed', True) else None,
                      closure_samples=[[0.0, 0.0, 0.15, 0.0], [0.2, 0.0, 0.15, 0.0]], closest_approach_m=0.05,
+                     hand_rise_after_closure_m=0.0 if r.get('closed', True) else None,
                      first_lifted=r['object'] if r['success'] else None, touched_distractors=[])
             path = run.measures_path(mode, policy, step, folder.name)
             path.parent.mkdir(parents=True, exist_ok=True)
