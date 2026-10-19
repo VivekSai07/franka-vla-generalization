@@ -46,6 +46,14 @@ class ReferenceTests(unittest.TestCase):
             self.assertLess(check['drift_m'], 0.01, f'{name}: target moves {check["drift_m"]:.3f} m in the hand after closing')
             self.assertGreater(check['rise_m'], 0.10, f'{name}: target rises only {check["rise_m"]:.3f} m after closing')
 
+    def test_building_over_many_layouts_keeps_the_compiled_model_cache_bounded(self):
+        # Each compiled scene is ~390 MB; the 540 episodes use many object combinations.
+        from experiments.props_scene import scene as props_scene
+        from experiments.xvla_props_p2_eval import scenes
+        files = sorted(EPISODES.glob('episode_*.npz'))[:40]
+        reference.build_reference(files)
+        self.assertLessEqual(props_scene._built.cache_info().currsize, scenes.MAX_CACHED_MODELS)
+
     def test_build_reference_counts_and_orders(self):
         files = sorted(EPISODES.glob('episode_*.npz'))[:24]
         ref = reference.build_reference(files)

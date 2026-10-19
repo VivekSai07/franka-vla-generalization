@@ -12,7 +12,7 @@ from pathlib import Path
 import mujoco
 import numpy as np
 
-from experiments.props_scene.scene import build_model
+from experiments.xvla_props_p2_eval import scenes
 from experiments.xvla_props_p2_eval.diagnostics import grasp
 
 HAND = 'robot0_right_hand'
@@ -23,7 +23,7 @@ def _closure_state(path):
     z = np.load(path, allow_pickle=True)
     target = str(z['object'])
     names = [target, *[str(d) for d in z['distractors']]]
-    _, model = build_model(names, str(z['blue_slot']))
+    model = scenes._model(names, str(z['blue_slot']))  # bounded cache: a compiled scene is ~390 MB
     tick = grasp.first_closure(z['ctrl'][:, 7])
     if tick is None:
         raise ValueError(f'{path}: the expert never closes the gripper')
