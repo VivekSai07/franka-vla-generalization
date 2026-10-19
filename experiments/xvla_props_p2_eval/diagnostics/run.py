@@ -174,6 +174,22 @@ P101 = [run_name(m, 'p2', 101520) for m in ('screen', 'report', 'control', 'conf
 P126 = [run_name(m, 'p2', 126900) for m in ('screen', 'report')]
 
 
+def gate1_null_by_object(rows_a, rows_b, n=2000, seed=0):
+    """`stats.gate1_null` per object over the successes' grasp samples, weighted by the number of `rows_a` successes
+    (forward) and `rows_b` successes (backward), i.e. what Gate 1 reads when the two policies do not differ."""
+    from experiments.xvla_props_p2_eval.diagnostics import stats
+    forward = backward = wa = wb = 0.0
+    for name in sorted({r['object'] for r in rows_a}):
+        a = [r['grasp_sample'] for r in rows_a if r['object'] == name and r['task_success'] and r.get('grasp_sample') is not None]
+        b = [r['grasp_sample'] for r in rows_b if r['object'] == name and r['task_success'] and r.get('grasp_sample') is not None]
+        out = stats.gate1_null(a, b, n=n, seed=seed)
+        forward += out['forward']*len(a)
+        wa += len(a)
+        backward += out['backward']*len(b)
+        wb += len(b)
+    return dict(forward=forward/wa, backward=backward/wb)
+
+
 def do_analyze():
     from experiments.xvla_props_p2_eval.diagnostics import tables
     data = load_measures()
@@ -192,6 +208,9 @@ def do_analyze():
     forward, backward = gate1_fraction(rows101, env_from_126), gate1_fraction(rows126, env_from_101)
     print(f'GATE1 forward {forward:.3f} (101,520 successes inside the 126,900-success envelope), backward {backward:.3f} '
           f'(126,900 successes inside the 101,520-success envelope); minimum {GATE1_MIN} each', flush=True)
+    null = gate1_null_by_object(rows101, rows126)
+    print(f'GATE1 NULL (two policies drawn from one pooled distribution, same sample sizes, object-weighted): forward '
+          f'{null["forward"]:.3f}, backward {null["backward"]:.3f}', flush=True)
     if not gate1_passes(forward, backward):
         print('GATE1 FAILED under the amended definition: no further redefinition (spec stop rule); the failure taxonomy '
               'is not produced', flush=True)

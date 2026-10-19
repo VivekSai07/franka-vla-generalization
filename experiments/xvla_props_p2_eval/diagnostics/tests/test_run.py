@@ -224,6 +224,37 @@ class SuccessEnvelopeTests(unittest.TestCase):
         self.assertEqual(run.gate1_fraction(rows, env), 0.95)
 
 
+class NullByObjectTests(unittest.TestCase):
+    def rows(self, obj, samples, success=True):
+        return [dict(object=obj, task_success=success, grasp_sample=list(x)) for x in samples]
+
+    def test_it_is_weighted_by_the_number_of_successes_per_object(self):
+        import numpy as np
+        from experiments.xvla_props_p2_eval.diagnostics import stats
+        rng = np.random.default_rng(0)
+        can_a, can_b = np.zeros((10, 4)), np.zeros((10, 4))
+        milk_a, milk_b = rng.normal(size=(30, 4)), rng.normal(size=(30, 4))
+        both = run.gate1_null_by_object(self.rows('can', can_a) + self.rows('milk', milk_a),
+                                        self.rows('can', can_b) + self.rows('milk', milk_b), n=200)
+        # The expectation comes from stats.gate1_null directly (not from the function under test): a null of 1.0 for the
+        # 10 identical can samples, 0.6968 for the 30 milk samples, weighted 10 : 30; backward the same with b's counts.
+        can = stats.gate1_null(can_a, can_b, n=200)
+        milk = stats.gate1_null(milk_a, milk_b, n=200)
+        self.assertEqual(can, dict(forward=1.0, backward=1.0))
+        self.assertAlmostEqual(both['forward'], (can['forward']*10 + milk['forward']*30)/40, places=9)
+        self.assertAlmostEqual(both['backward'], (can['backward']*10 + milk['backward']*30)/40, places=9)
+        self.assertNotAlmostEqual(both['forward'], (can['forward'] + milk['forward'])/2, places=3)
+
+    def test_failures_and_missing_samples_are_not_part_of_the_null(self):
+        import numpy as np
+        rng = np.random.default_rng(1)
+        a, b = rng.normal(size=(20, 4)), rng.normal(size=(20, 4))
+        clean = run.gate1_null_by_object(self.rows('can', a), self.rows('can', b), n=100)
+        noisy = run.gate1_null_by_object(self.rows('can', a) + self.rows('can', 50 + a, success=False),
+                                         self.rows('can', b) + [dict(object='can', task_success=True, grasp_sample=None)], n=100)
+        self.assertEqual(clean, noisy)
+
+
 class GateTests(unittest.TestCase):
     def test_gate1_needs_both_directions(self):
         self.assertTrue(run.gate1_passes(0.8, 0.95))
