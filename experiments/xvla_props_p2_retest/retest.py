@@ -90,6 +90,18 @@ def merge_feasibility(out):
     return summary
 
 
+def load_feasibility(out):
+    """The merged feasibility summary, checked against the re-test plan's own layouts (the evaluator's loader insists on P2's 120)."""
+    path = Path(out)/'feasibility'/'feasibility.json'
+    if not path.is_file():
+        raise RuntimeError(f'Run the feasibility pass first: {path} is missing')
+    summary = json.loads(path.read_text())
+    keys = set(json.loads((Path(out)/'plan.json').read_text())['evaluation_holdout'])
+    if set(summary['results']) != keys:
+        raise ValueError('Feasibility pass does not cover exactly the re-test plan layouts')
+    return summary
+
+
 def _bundle_module():
     bundle = Path(os.environ.get('BUNDLE', '/bundle'))
     spec = importlib.util.spec_from_file_location('bundle_evaluate', bundle/'reevaluate'/'bundle_evaluate.py')
@@ -110,7 +122,7 @@ def prepare(out, candidate):
         raise ValueError('Bundle dataset fingerprint differs from the seal')
     facts = b.verify_checkpoint(candidate)
     with bind(out):
-        feas = evaluate.load_feasibility()
+        feas = load_feasibility(out)
         evaluate.write_json(evaluate.PREPARED, dict(
             excluded_layouts=sorted(feas['failed_layouts']), feasibility_succeeded=feas['succeeded'],
             p2=dict(seal=seal['fingerprint'], parent_fingerprint=fingerprint, candidates={str(candidate): facts}),

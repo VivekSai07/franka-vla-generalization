@@ -66,6 +66,40 @@ class PlanFileTests(unittest.TestCase):
             retest.write_plan(tmp)
 
 
+class LoadFeasibilityTests(unittest.TestCase):
+    """The P2 evaluator's own loader insists on 120 layouts (a P2 constant) and must stay unedited; the re-test checks the
+    count against its own plan."""
+
+    def write(self, tmp, keys):
+        (tmp/'feasibility').mkdir(exist_ok=True)
+        results = {k: dict(success=True, reason='success', frames=452, stable_ticks=30, seconds=1.0) for k in keys}
+        (tmp/'feasibility'/'feasibility.json').write_text(json.dumps(feasibility.summarize(results)))
+
+    def test_accepts_a_summary_covering_exactly_the_retest_plan(self):
+        tmp = Path(tempfile.mkdtemp())
+        retest.write_plan(tmp)
+        self.write(tmp, sorted(rt_plan.make_plan()['evaluation_holdout']))
+        self.assertEqual(retest.load_feasibility(tmp)['keys'], 480)
+
+    def test_refuses_a_summary_that_covers_a_different_set(self):
+        tmp = Path(tempfile.mkdtemp())
+        retest.write_plan(tmp)
+        keys = sorted(rt_plan.make_plan()['evaluation_holdout'])
+        self.write(tmp, keys[:-1])
+        with self.assertRaises(ValueError):
+            retest.load_feasibility(tmp)
+        (tmp/'feasibility'/'feasibility.json').unlink()
+        self.write(tmp, keys + ['not_a_plan_layout'])                 # a true superset: every plan layout plus one more
+        with self.assertRaises(ValueError):
+            retest.load_feasibility(tmp)
+
+    def test_missing_file_is_an_error(self):
+        tmp = Path(tempfile.mkdtemp())
+        retest.write_plan(tmp)
+        with self.assertRaises(RuntimeError):
+            retest.load_feasibility(tmp)
+
+
 class FeasibilityMergeTests(unittest.TestCase):
     def shard(self, out, k, keys, failed=()):
         (out/'feasibility').mkdir(exist_ok=True)
