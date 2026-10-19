@@ -255,6 +255,102 @@ class NullByObjectTests(unittest.TestCase):
         self.assertEqual(clean, noisy)
 
 
+class AnalyzeFlowTests(unittest.TestCase):
+    """`do_analyze` end to end on synthetic measures written to a temporary evaluation root."""
+
+    def setUp(self):
+        import tempfile
+        from unittest import mock
+        self.tmp = Path(tempfile.mkdtemp())
+        self.patches = [mock.patch.object(run.protocol, 'EVAL_ROOT', self.tmp), mock.patch.object(run, 'OUT', self.tmp/'diagnostics')]
+        for p in self.patches:
+            p.start()
+            self.addCleanup(p.stop)
+
+    def write(self, name, rows):
+        mode, policy, step = name.split('_')[0], name.split('_')[1], int(name.split('_')[-1])
+        directory = run.protocol.output_dir(mode, policy, step)
+        directory.mkdir(parents=True, exist_ok=True)
+        episodes = []
+        for i, r in enumerate(rows, start=1):
+            trial = dict(ordinal=i, layout_id=f'{mode}_{i:03d}', object=r['object'], bin='blue', kind='trained',
+                         task_success=r['success'], cause='success' if r['success'] else r.get('cause', 'never_lifted'),
+                         blue_slot='left', distractor_count=1, names=[r['object'], 'milk'],
+                         start=[0.3, 0.0, 0.0], distractors=[dict(object='milk', pose=[0.45, 0.0, 0.0])])
+            episodes.append(trial)
+            folder = run.protocol.trial_folder(directory, trial)
+            m = dict(gate0=True, first_mismatch=None, names=trial['names'], lifted=r['success'], lift_tick=40 if r['success'] else None,
+                     closed=r.get('closed', True), first_closure=20, grasp_closure=20, held=r.get('held', r['success']),
+                     grasp_sample=r.get('sample', [0.0, 0.0, 0.15, 0.0]) if r.get('closed', True) else None,
+                     closure_samples=[[0.0, 0.0, 0.15, 0.0], [0.2, 0.0, 0.15, 0.0]], closest_approach_m=0.05,
+                     first_lifted=r['object'] if r['success'] else None, touched_distractors=[])
+            path = run.measures_path(mode, policy, step, folder.name)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(m))
+        (directory/'result.json').write_text(json.dumps(dict(episodes=episodes)))
+
+    def populate(self, offset_126=0.0, with_milk=False):
+        good = lambda n, off=0.0, obj='can': [dict(object=obj, success=True, sample=[off + 0.001*i, 0.0, 0.15, float(i)]) for i in range(n)]
+        extra = (lambda off=0.0: good(12, off, 'milk')) if with_milk else (lambda off=0.0: [])
+        for name in run.P101 + ['report_p2_step_126900']:
+            self.write(name, good(40) + extra() + [dict(object='can', success=False)])
+        self.write('screen_p2_step_126900', good(15, offset_126) + extra(offset_126))
+        self.write('report_p1_step_126900', [dict(object='can', success=False)]*5)
+
+    def test_a_failing_gate1_writes_only_the_envelope_free_tables(self):
+        self.populate(offset_126=5.0, with_milk=True)           # 126,900's grasps are nowhere near 101,520's: Gate 1 must fail
+        code = run.do_analyze()
+        self.assertEqual(code, 2)
+        out = json.loads((self.tmp/'diagnostics'/'analysis_descriptive.json').read_text())
+        self.assertIn('never_lifted_detail', out)
+        self.assertFalse((self.tmp/'diagnostics'/'analysis.json').exists(), 'the envelope taxonomy must not be written')
+        self.assertNotIn('taxonomy', out)
+
+    def test_a_distractor_object_without_an_envelope_stops_with_a_clear_message(self):
+        self.populate(offset_126=0.0)           # 'milk' appears only as a distractor: it has no success as a target
+        code = run.do_analyze()
+        self.assertEqual(code, 3)
+        self.assertFalse((self.tmp/'diagnostics'/'analysis.json').exists())
+        self.assertTrue((self.tmp/'diagnostics'/'analysis_descriptive.json').exists(),
+                        'the envelope-free tables are still written')
+
+    def test_an_object_missing_in_only_one_direction_also_stops(self):
+        # 'milk' has 12 successes for 101,520 (enough) but none for 126,900: the 101,520 trials would be judged by an
+        # envelope that does not exist.
+        good = lambda n, obj: [dict(object=obj, success=True, sample=[0.001*i, 0.0, 0.15, float(i)]) for i in range(n)]
+        for name in run.P101:
+            self.write(name, good(40, 'can') + good(12, 'milk') + [dict(object='can', success=False)])
+        for name in ('screen_p2_step_126900', 'report_p2_step_126900'):
+            self.write(name, good(40, 'can') + [dict(object='can', success=False)])
+        self.write('report_p1_step_126900', [dict(object='can', success=False)]*5)
+        self.assertEqual(run.do_analyze(), 3)
+
+    def test_an_object_missing_from_the_101520_envelope_only_also_stops(self):
+        good = lambda n, obj: [dict(object=obj, success=True, sample=[0.001*i, 0.0, 0.15, float(i)]) for i in range(n)]
+        for name in run.P101:
+            self.write(name, good(40, 'can') + [dict(object='can', success=False)])
+        for name in ('screen_p2_step_126900', 'report_p2_step_126900'):
+            self.write(name, good(40, 'can') + good(12, 'milk') + [dict(object='can', success=False)])
+        self.write('report_p1_step_126900', [dict(object='can', success=False)]*5)
+        self.assertEqual(run.do_analyze(), 3)
+
+    def test_a_passing_gate1_writes_the_envelope_taxonomy_and_exits_zero(self):
+        self.populate(offset_126=0.0, with_milk=True)   # same grasp distribution for both checkpoints
+        code = run.do_analyze()
+        self.assertEqual(code, 0)
+        out = json.loads((self.tmp/'diagnostics'/'analysis.json').read_text())
+        self.assertIn('taxonomy', out)
+        self.assertGreaterEqual(out['gate1']['forward'], 0.8)
+        self.assertFalse((self.tmp/'diagnostics'/'analysis_descriptive.json').exists())
+
+    def test_gate0_failure_writes_nothing(self):
+        self.populate()
+        path = next((self.tmp/'diagnostics'/'measures'/'report_p2_step_101520').glob('*.json'))
+        m = json.loads(path.read_text()); m['gate0'] = False; path.write_text(json.dumps(m))
+        self.assertEqual(run.do_analyze(), 1)
+        self.assertFalse((self.tmp/'diagnostics'/'analysis_descriptive.json').exists())
+
+
 class GateTests(unittest.TestCase):
     def test_gate1_needs_both_directions(self):
         self.assertTrue(run.gate1_passes(0.8, 0.95))

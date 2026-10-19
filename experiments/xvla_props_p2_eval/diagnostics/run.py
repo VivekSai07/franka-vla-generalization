@@ -190,6 +190,16 @@ def gate1_null_by_object(rows_a, rows_b, n=2000, seed=0):
     return dict(forward=forward/wa, backward=backward/wb)
 
 
+def _write_descriptive(data, code, **gate1):
+    """The analyses that need no envelope, written when the taxonomy cannot be produced; returns the exit `code`."""
+    from experiments.xvla_props_p2_eval.diagnostics import tables
+    result = tables.build_descriptive(data)
+    result['gate1'] = gate1
+    (OUT/'analysis_descriptive.json').write_text(json.dumps(result, indent=2, default=float) + '\n')
+    print(tables.render_descriptive(result), flush=True)
+    return code
+
+
 def do_analyze():
     from experiments.xvla_props_p2_eval.diagnostics import tables
     data = load_measures()
@@ -203,8 +213,14 @@ def do_analyze():
     try:
         env_from_126, env_from_101 = success_envelope(rows126), success_envelope(rows101)
     except ValueError as exc:
-        print(f'GATE1 STOPPED: {exc}', flush=True)
-        return 2
+        print(f'GATE1 STOPPED: {exc}; the analyses that need no envelope are still written', flush=True)
+        return _write_descriptive(data, 2, stopped=str(exc))
+    objects = {n for rows in data.values() for r in rows for n in r['names']}
+    missing = sorted((objects - set(env_from_126)) | (objects - set(env_from_101)))
+    if missing:       # an object that appears in any trial but has no envelope in either direction stops the analysis
+        print(f'ENVELOPE MISSING for {missing} (too few successes as the target): Gate 1 and the failure taxonomy stop; '
+              f'the analyses that need no envelope are still written', flush=True)
+        return _write_descriptive(data, 3, missing_envelope=missing)
     forward, backward = gate1_fraction(rows101, env_from_126), gate1_fraction(rows126, env_from_101)
     print(f'GATE1 forward {forward:.3f} (101,520 successes inside the 126,900-success envelope), backward {backward:.3f} '
           f'(126,900 successes inside the 101,520-success envelope); minimum {GATE1_MIN} each', flush=True)
@@ -213,8 +229,9 @@ def do_analyze():
           f'{null["forward"]:.3f}, backward {null["backward"]:.3f}', flush=True)
     if not gate1_passes(forward, backward):
         print('GATE1 FAILED under the amended definition: no further redefinition (spec stop rule); the failure taxonomy '
-              'is not produced', flush=True)
-        return 2
+              'is not produced. Writing the analyses that need no envelope.', flush=True)
+        return _write_descriptive(data, 2, forward=forward, backward=backward, null=null, minimum=GATE1_MIN,
+                                  envelope_from_126900=env_from_126, envelope_from_101520=env_from_101)
     judged = {}
     for name, rows in data.items():       # 101,520 and P1 are judged by 126,900's successes, 126,900 by 101,520's
         env = env_from_101 if name in P126 else env_from_126

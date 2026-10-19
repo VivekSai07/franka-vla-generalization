@@ -66,6 +66,67 @@ class MilkTests(unittest.TestCase):
         self.assertEqual(sum(v['n'] for v in out.values()), 3, 'the can trial must not be counted')
 
 
+def raw(layout, cause, success=False, closed=True, held=False, approach=0.05, obj='can', kind='trained', cell_bin='blue',
+        first_closure=100, touched=(), sample=(0.0, 0.0, 0.12, 0.0), distance=0.15, first_lifted=None):
+    """A merged evaluation row plus RAW measures (no envelope, no class): what analyze has when Gate 1 fails."""
+    return dict(layout_id=layout, cause='success' if success else cause, task_success=success, closed=closed, held=held,
+                closest_approach_m=approach, object=obj, kind=kind, bin=cell_bin, first_closure=first_closure if closed else None,
+                touched_distractors=list(touched), grasp_sample=list(sample) if closed else None,
+                min_distractor_distance_m=distance, first_lifted=first_lifted, names=[obj, 'milk'], lifted=success)
+
+
+class DescriptiveTests(unittest.TestCase):
+    def test_never_lifted_detail_splits_by_what_the_gripper_did(self):
+        rows = [raw('a', 'never_lifted', closed=False), raw('b', 'never_lifted', closed=True, held=False),
+                raw('c', 'never_lifted', closed=True, held=True), raw('d', 'never_lifted', closed=False),
+                raw('e', 'success', success=True), raw('f', 'timeout_carrying')]
+        out = tables.never_lifted_detail(rows)
+        self.assertEqual((out['n'], out['never_closed'], out['closed_not_held'], out['held']), (4, 2, 1, 1))
+
+    def test_closest_approach_summary_compares_with_successes(self):
+        rows = [raw('a', 'never_lifted', approach=0.20), raw('b', 'never_lifted', approach=0.10),
+                raw('c', 'success', success=True, approach=0.01), raw('d', 'success', success=True, approach=0.03),
+                raw('e', 'timeout_carrying', approach=0.0), raw('f', 'wrong_object', approach=0.0)]  # not never-lifted
+        out = tables.closest_approach_summary(rows)
+        self.assertAlmostEqual(out['never_lifted_median_m'], 0.15)
+        self.assertAlmostEqual(out['success_median_m'], 0.02)
+        self.assertEqual((out['never_lifted_n'], out['success_n']), (2, 2))
+
+    def test_wrong_object_test_works_on_raw_rows_through_the_evaluations_cause(self):
+        rows = [raw('p', 'wrong_object', distance=0.12), raw('p', 'success', success=True, distance=0.30),
+                raw('q', 'success', success=True, distance=0.20), raw('r', 'success', success=True, distance=0.22),
+                raw('s', 'success', success=True, distance=0.19)]
+        out = tables.wrong_object_layout_test(rows)
+        self.assertEqual((out['positive_layouts'], out['negative_layouts']), (1, 3))
+        self.assertAlmostEqual(out['positive_median_m'], 0.12)
+        cases = tables.wrong_object_cases(rows)
+        self.assertEqual(len(cases), 1)
+
+    def test_milk_raw_table_has_samples_and_no_inside_outside_label(self):
+        rows = [raw('a', 'never_lifted', obj='milk', kind='held_out', cell_bin='blue', sample=(0.01, 0.0, 0.17, -3.0)),
+                raw('b', 'success', success=True, obj='milk', kind='held_out', cell_bin='blue'),
+                raw('c', 'never_lifted', obj='milk', kind='trained', cell_bin='orange', closed=False),
+                raw('d', 'success', success=True, obj='can')]
+        out = tables.milk_raw_table(rows)
+        self.assertEqual(sorted(out), ['milk->blue (held_out)', 'milk->orange (trained)'])
+        blue = out['milk->blue (held_out)']
+        self.assertEqual((blue['n'], blue['success'], blue['failed']), (2, 1, 1))
+        self.assertEqual(blue['failures'][0]['grasp_sample'], [0.01, 0.0, 0.17, -3.0])
+        self.assertNotIn('inside', ' '.join(blue['failures'][0]))
+        self.assertIsNone(out['milk->orange (trained)']['failures'][0]['grasp_sample'])
+
+    def test_build_descriptive_and_render(self):
+        data = {n: [raw('a', 'never_lifted', closed=False), raw('b', 'success', success=True)]
+                for n in ('screen_p2_step_101520', 'report_p2_step_101520', 'control_p2_step_101520',
+                          'confirm_p2_step_101520', 'report_p2_step_126900', 'report_p1_step_126900')}
+        result = tables.build_descriptive(data)
+        text = tables.render_descriptive(result)
+        self.assertIn('| run | never lifted | never closed | closed, never held | held, not lifted |', text)
+        self.assertIn('| report_p2_step_101520 | 1 | 1 | 0 | 0 |', text)
+        self.assertIn('| 101,520 all four tiers | 4 | 4 | 0 | 0 |', text)
+        self.assertNotIn('closed_off_target', text, 'the envelope taxonomy must not appear')
+
+
 class RenderTests(unittest.TestCase):
     def test_build_and_render_produce_markdown_with_the_run_names(self):
         data = {'report_p2_step_101520': [trial('a', 'success'), trial('b', 'never_closed', kind='held_out', obj='milk')],

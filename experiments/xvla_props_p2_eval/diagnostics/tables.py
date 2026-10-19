@@ -63,7 +63,7 @@ def wrong_object_layout_test(rows):
     pos, neg = [], []
     for trials in by.values():
         value = min(min_distractor_distance(r) for r in trials)
-        (pos if any(r['class'] == 'wrong_object' for r in trials) else neg).append(value)
+        (pos if any(r['cause'] == 'wrong_object' for r in trials) else neg).append(value)
     return dict(positive_layouts=len(pos), negative_layouts=len(neg),
                 positive_median_m=float(np.median(pos)) if pos else math.nan,
                 negative_median_m=float(np.median(neg)) if neg else math.nan,
@@ -72,8 +72,8 @@ def wrong_object_layout_test(rows):
 
 def wrong_object_cases(rows):
     return [dict(layout=r['layout_id'], target=r['object'], lifted=r['first_lifted'], distractors=[d['object'] for d in r.get('distractors', [])],
-                 min_distractor_distance_m=min_distractor_distance(r), closed_on_distractor=any(r.get('distractor_in_env', [])),
-                 target_in_env=r.get('target_in_env')) for r in rows if r['class'] == 'wrong_object']
+                 min_distractor_distance_m=min_distractor_distance(r), touched_distractors=r.get('touched_distractors', []),
+                 target_in_env=r.get('target_in_env')) for r in rows if r['cause'] == 'wrong_object']
 
 
 def milk_table(rows):
@@ -130,4 +130,91 @@ def render(result):
     lines += ['', '### Milk (101,520, all tiers)', '', _row(['cell', 'n', *ORDER[:0], *[c for c in ORDER]]), _row(['---'] * (len(ORDER) + 2))]
     for cell, v in result['milk'].items():
         lines.append(_row([cell, v['n'], *[v[c] for c in ORDER]]))
+    return '\n'.join(lines)
+
+
+# --- envelope-free analyses: what remains when Gate 1 does not pass --------------------------------------------------
+
+def never_lifted_detail(rows):
+    """What the gripper did on the `never_lifted` trials: never closed, closed without ever holding the target, or held
+    it and still did not lift. Uses only the gripper command and finger contacts, no envelope."""
+    nl = [r for r in rows if r['cause'] == 'never_lifted']
+    return dict(n=len(nl), never_closed=sum(1 for r in nl if not r['closed']),
+                closed_not_held=sum(1 for r in nl if r['closed'] and not r['held']), held=sum(1 for r in nl if r['held']))
+
+
+def closest_approach_summary(rows):
+    """Median closest approach of the finger midpoint to the target, `never_lifted` trials against successes."""
+    nl = [r['closest_approach_m'] for r in rows if r['cause'] == 'never_lifted']
+    ok = [r['closest_approach_m'] for r in rows if r['task_success']]
+    return dict(never_lifted_n=len(nl), success_n=len(ok),
+                never_lifted_median_m=float(np.median(nl)) if nl else math.nan,
+                success_median_m=float(np.median(ok)) if ok else math.nan,
+                never_lifted_max_m=float(max(nl)) if nl else math.nan)
+
+
+def milk_raw_table(rows):
+    """Milk trials by cell: successes, failures, and for each failure the raw hand-frame grasp sample (None if the gripper
+    never closed). No inside/outside label: that needs an envelope."""
+    out = {}
+    for r in rows:
+        if r['object'] != 'milk':
+            continue
+        cell = out.setdefault(f"milk->{r['bin']} ({r['kind']})", dict(n=0, success=0, failed=0, failures=[]))
+        cell['n'] += 1
+        if r['task_success']:
+            cell['success'] += 1
+            continue
+        cell['failed'] += 1
+        cell['failures'].append(dict(layout=r['layout_id'], cause=r['cause'], closed=r['closed'], held=r['held'],
+                                     grasp_sample=r.get('grasp_sample'), closest_approach_m=r['closest_approach_m']))
+    return out
+
+
+def build_descriptive(data):
+    winner = data[WINNER]
+    every_winner = [r for name in WINNER_ALL for r in data.get(name, [])]
+    runs = (WINNER, *CONTRASTS)
+    return dict(
+        never_lifted_detail={name: never_lifted_detail(data[name]) for name in runs if name in data},
+        never_lifted_detail_all_tiers_101520=never_lifted_detail(every_winner),
+        closest_approach={name: closest_approach_summary(data[name]) for name in runs if name in data},
+        never_lifted_concentration={name: never_lifted_concentration(data[name]) for name in runs if name in data},
+        never_lifted_in_every_run=layouts_failing_at_every_run({k: data[k] for k in (WINNER, CONTRASTS[0]) if k in data}),
+        wrong_object_layout_test=wrong_object_layout_test(winner),
+        wrong_object_cases={name: wrong_object_cases(data[name]) for name in runs if name in data},
+        milk=milk_raw_table(every_winner),
+        tests_run=['never_lifted_concentration (one per run listed, 3)', 'wrong_object_layout_test (1)'])
+
+
+def render_descriptive(result):
+    lines = ['### What the gripper did on never-lifted trials (no envelope)', '',
+             _row(['run', 'never lifted', 'never closed', 'closed, never held', 'held, not lifted']), _row(['---'] * 5)]
+    for name, v in result['never_lifted_detail'].items():
+        lines.append(_row([name, v['n'], v['never_closed'], v['closed_not_held'], v['held']]))
+    v = result['never_lifted_detail_all_tiers_101520']
+    lines.append(_row(['101,520 all four tiers', v['n'], v['never_closed'], v['closed_not_held'], v['held']]))
+    lines += ['', '### Closest approach of the finger midpoint to the target', '']
+    for name, v in result['closest_approach'].items():
+        lines.append(f"- {name}: never-lifted median {v['never_lifted_median_m']:.3f} m (n={v['never_lifted_n']}, max "
+                     f"{v['never_lifted_max_m']:.3f}), successes median {v['success_median_m']:.3f} m (n={v['success_n']})")
+    lines += ['', '### Never-lifted layout concentration', '']
+    for name, v in result['never_lifted_concentration'].items():
+        lines.append(f"- {name}: {v['failed_trials']} trials in {v['layouts_with_failures']} of {v['layouts']} layouts, "
+                     f"statistic {v['statistic']}, permutation p = {v['p']:.4f}")
+    lines.append(f"- layouts never solved in both 101,520 and 126,900 report runs: {result['never_lifted_in_every_run']}")
+    w = result['wrong_object_layout_test']
+    lines += ['', '### Wrong object (exploratory)', '',
+              f"- layouts with a wrong-object trial: {w['positive_layouts']}, without: {w['negative_layouts']}; median nearest "
+              f"target-distractor distance {w['positive_median_m']:.3f} m against {w['negative_median_m']:.3f} m; "
+              f"exact/permutation p = {w['p']:.4f}"]
+    for name, cases in result['wrong_object_cases'].items():
+        lines.append(f'- {name}: {len(cases)} trials: ' + '; '.join(
+            f"{c['layout']} lifted {c['lifted']} (target {c['target']}, gap {c['min_distractor_distance_m']:.3f} m)" for c in cases))
+    lines += ['', '### Milk (101,520, all tiers): raw grasp samples of the failures', '']
+    for cell, v in result['milk'].items():
+        lines.append(f"- {cell}: {v['success']} of {v['n']} succeeded")
+        for f in v['failures']:
+            sample = 'never closed' if f['grasp_sample'] is None else 'grasp (x,y,z,yaw) = ' + ', '.join(f'{x:.3f}' for x in f['grasp_sample'])
+            lines.append(f"  - {f['layout']} {f['cause']}: {sample}; closest approach {f['closest_approach_m']:.3f} m")
     return '\n'.join(lines)
