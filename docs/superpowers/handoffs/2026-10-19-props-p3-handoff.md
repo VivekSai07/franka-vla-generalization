@@ -55,7 +55,7 @@ checkpoint scores 0/120 on the same trials. P2 is closed; the user merged `feat/
    `sha256:fec83621c46bdae862a60dbfa32607226f8e4afb7610f3b85acf1094a757ade5` (robosuite image + `libegl1`, built through the host
    proxy as build args). OSMesa unchanged byte for byte; physics bit-identical across renderers; EGL repeats differ by 1 to 2
    pixels of 904 images; 7.7× faster; **but EGL and OSMesa frames differ on half the pixels.** Check-only: **not adopted for any
-   run**, and **the P2 checkpoints must not be evaluated under EGL.** ([report](../../EGL_RENDERING_CHECK_20261019.md))
+   run**, and **the P2 checkpoints must not be evaluated under EGL.** (`docs/EGL_RENDERING_CHECK_20261019.md` (on branch `feat/egl-rendering` until merged))
 3. **P3 spec and plan** (drafts, this commit).
 
 **Not started: sub-project B**, a fresh-layout re-test of checkpoint 101,520 on milk. The user decided: milk-focused, fresh
