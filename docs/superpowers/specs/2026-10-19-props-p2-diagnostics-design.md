@@ -93,6 +93,33 @@ distractor was lifted and whether the hand closed on it inside its envelope.
 4. **Video check.** Before the taxonomy is written up, the cases that land in each class are checked on
    `cameras.mp4`; at least the two oddest per class. Wrong labels are fixed in the definition, not in the table.
 
+## Amendment 2026-10-19 (after Gate 1): the envelope is a success envelope, not the expert's
+
+**What happened.** Gate 0 passed (420/420 replays reproduce their trial exactly). Gate 1 failed: 0.225 of 101,520's
+successful grasps lie inside the expert envelope defined above (minimum 0.80). Reading only the 142 successes, per object
+and component: the policy succeeds with finger-axis yaw errors the expert never makes (median -15 degrees for bread, -7
+lemon, -2 cereal, -0.6 milk, against expert p1 to p99 of about +/-0.1 to 2 degrees for the boxes) and with a grasp depth a
+few millimetres shallower than the expert's for tall objects (milk 0.173 m against an expert upper bound of 0.168). The
+expert envelope measures how precisely the scripted expert grasps, not what is enough to succeed, so "outside it" does not
+mean "a bad grasp". No failure trial had been read when this was decided.
+
+**New definition** (user decision 2026-10-19; it replaces the "Expert envelope" and the Gate 1 envelope above).
+
+- **Success envelope, per object.** p1 to p99, per component (hand-frame x, y, z and the yaw error, all at the *grasp
+  closure*), over the successful trials of a *different* checkpoint: 101,520 and P1 trials are judged against the successes of
+  126,900 (report and screen tiers), and 126,900 trials against the successes of 101,520 (all four tiers). An object with
+  fewer than 10 such successes has no envelope and the analysis stops for it.
+- **Gate 1 (amended).** Both directions must reach 0.80: the fraction of 101,520's successes inside the 126,900-success
+  envelope, and the fraction of 126,900's successes inside the 101,520-success envelope. Neither judges a policy against its
+  own successes, so the gate is a real test and not true by construction.
+- **Stop rule, fixed now.** If the amended Gate 1 fails, there is no further redefinition: Gate 1 is reported as the finding
+  and the failure taxonomy is not produced.
+- **The expert envelope stays, as a description.** The report gives, on the successes, how far the policy's grasp is from the
+  expert's per object (median and p1 to p99 of each component), since "the expert over-specifies yaw" is itself a result.
+- **Implementation consequence.** Per-trial measures store the raw hand-frame samples (at the first closure for every prop,
+  at the grasp closure for the target); judging against an envelope happens at analysis time, so no replay is repeated when an
+  envelope changes. The replay needs `screen` of 126,900 added to the runs.
+
 ## Counting tests
 
 At most six tests, stated here: the layout-concentration permutation (1), the layout-level Mann–Whitney (1), the
