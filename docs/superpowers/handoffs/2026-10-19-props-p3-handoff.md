@@ -14,7 +14,8 @@ history**, and a number copied here may have gone stale. Verify against [TODO.md
 > `docs/superpowers/handoffs/2026-10-19-props-p3-handoff.md` (this file), the P3 spec
 > `docs/superpowers/specs/2026-10-19-props-p3-food-drinks-design.md` and plan
 > `docs/superpowers/plans/2026-10-19-props-p3-collection.md`, and the reports
-> `docs/PROPS_P2_EVALUATION_20261016.md`, `docs/PROPS_P2_DIAGNOSTICS_20261019.md`, `docs/EGL_RENDERING_CHECK_20261019.md`.
+> `docs/PROPS_P2_EVALUATION_20261016.md`, `docs/PROPS_P2_DIAGNOSTICS_20261019.md`, `docs/EGL_RENDERING_CHECK_20261019.md` (if it is not in your tree yet it lives on branch
+> `feat/egl-rendering`: read it with `git show feat/egl-rendering:docs/EGL_RENDERING_CHECK_20261019.md`; do not check the branch out).
 > Load the skills under `.github/skills/` when their topic comes up. **Your first job is not to write code:** run the state
 > checks in the handoff, then go through the spec's decisions D1–D7 with the user and ask what is unclear. The P3 spec and plan
 > are drafts written without running anything; treat every assumption in them as unverified. Hold yourself to the repo's rules:
