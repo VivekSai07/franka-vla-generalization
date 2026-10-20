@@ -45,7 +45,8 @@ python -m experiments.props_p3_data.record --status /out/<run>_shards
 python -m experiments.props_p3_data.record --merge /out/<run>_shards --out /out/<run>
 ```
 
-One container per shard (16 shards of 34 slots), each journalling every attempt, writing frames only on admission,
+One container per shard (16 shards of 34 slots, each pinned to 3 cores with `LP_NUM_THREADS=3`, proven pixel-neutral
+against default threads), each journalling every attempt, writing frames only on admission,
 finalizing per episode without reopening (FAILURES #41) and resuming alone. The merge copies videos byte for byte,
 then `merge.verify` checks every merged episode against its shard before validation and the seal.
 
