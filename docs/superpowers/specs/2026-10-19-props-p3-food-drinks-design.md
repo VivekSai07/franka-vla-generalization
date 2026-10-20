@@ -1,10 +1,6 @@
 # Props P3 — Food vs Drinks — design
 
-**Date:** 2026-10-19. **Status: DRAFT, nothing in "Decisions" has been confirmed by the user.** Written at the end of a session
-that finished the P2 failure diagnostics and the EGL check, to be confirmed and executed in a new session
-([handoff](../handoffs/2026-10-19-props-p3-handoff.md)). The roadmap level text is in
-[2026-10-05-props-sorting-design.md](2026-10-05-props-sorting-design.md) ("P3 — Food vs Drinks"); this document replaces it
-with a designed phase. Follows [P2](../../PROPS_P2_EVALUATION_20261016.md) and its
+**Date:** 2026-10-19. **Status: revised 2026-10-20.** The user accepted the recommended revisions (below) after the P2 diagnostics and re-test, and said to go with them; D1–D7 stand as proposed and are otherwise unconfirmed, so a new session should still walk through them. Written to be executed in a new session ([handoff](../handoffs/2026-10-19-props-p3-handoff.md)); the roadmap level text is in [2026-10-05-props-sorting-design.md](2026-10-05-props-sorting-design.md) ("P3 — Food vs Drinks"), which this document replaces. Follows [P2](../../PROPS_P2_EVALUATION_20261016.md) and its
 [diagnostics](../../PROPS_P2_DIAGNOSTICS_20261019.md). No code or data exists yet.
 
 ## Question
@@ -64,15 +60,21 @@ clearance, no distractor gate, the P0/P1 expert unchanged. The recorded `task` i
 (`props_scene.expert.task_text`, "put the X in the Y bin") must never reach the dataset, so it is replaced in the episode
 sink and a test must fail if it ever appears.
 
-## Reserved evaluation layouts (never collected): 128
+## Reserved evaluation layouts (never collected): 288
 
 | tier | layouts | composition |
 |---|---|---|
 | screen | 24 | 3 per trained cell |
-| report | 80 | 40 trained (5 per trained cell) + 40 held-out (10 per held-out cell), balanced like P1 |
+| report | 240 | **80 trained** (10 per trained cell) + **160 held-out** (40 per held-out cell: 80 per held-out object, 40 in each arrangement) |
 | confirm | 24 | 3 per trained cell, untouched until the winner |
 
-Two seeds per layout, as P2. All 128 checked for expert feasibility (including the held-out objects) before any policy rollout.
+**One rollout seed per layout** (*revised 2026-10-20*; the draft had two). The two seeds of one layout are strongly correlated
+(intraclass correlation 0.56 on the P2 report tier), so layouts carry the information and one seed on more layouts is the better
+use of rollouts: in the P2 re-test it gave a standard error of 3.4 points against 4.3 for the same 480 rollouts. The held-out arm
+is large because the pre-registered rule below needs it (see Power). Evaluation is cheap next to training (the 480-rollout
+re-test took 78 minutes on 8 pinned workers), so evaluation, not data, is where P3 spends. All 288 are checked for expert
+feasibility (including the held-out objects) before any policy rollout; an infeasible layout is dropped, not replaced, and
+counted.
 
 ## Gates before the full run
 
@@ -89,17 +91,42 @@ rollout; its causes are P2's (`never_lifted`, `timeout_carrying`, `dropped_outsi
 `wrong_object`. Screen all checkpoints; report on those within 2 successes of the best screen; confirm once on the winner;
 checkpoint selection never uses offline metrics. Parallel workers **pinned to cores**, sized by peak memory (FAILURES #57).
 
-## Success (proposed pre-registration; gates only on trained objects)
+## Success (pre-registration, revised 2026-10-20)
 
-1. Trained objects, report tier: overall success **≥ 75%** (P1 trained cells 72.5%, P2 85.0%).
-2. Trained objects: **wrong-bin ≤ 5%** (an object that comes to rest stably in the other container).
-3. Reported, **not gated**: success by bin arrangement (with its interval; P1 showed 85% against 65%), by object, failure
-   causes, and the P2-diagnostics measures (hand rise after closure, closest approach per object).
+**Gated on bin choice, not on overall success.** Motor failures (never lifted, hold, carry) dominate this robot: milk is 57% even
+on fresh layouts and the pooled milk-and-bread rate was 69%. A success gate would be decided by motor reliability and say nothing
+about Food vs Drinks. *Bin choice* is defined on **stable placements**: trials in which the object came to rest stably in either
+container, scored as correct if it is the container of its category.
 
-**Held-out objects: exploratory, read as such.** Primary read-out is **bin-choice accuracy**: among trials in which the object
-came to rest stably in either container, the fraction in the container of its category, per object, with a layout-clustered
-interval, against the chance level 0.5. "Evidence of generalisation" is declared in advance to mean the lower bound exceeds
-0.5 **for both** held-out objects. Success on held-out objects is reported next to it, never in its place.
+1. **Trained objects, report tier (80 layouts): wrong-bin ≤ 5%** of stable placements (the point estimate, reported with its
+   Wilson 95% interval; one trial per layout, so the layout is the unit).
+2. **Interpretability floor:** at least **60** stable placements among the trained layouts and at least **30** per held-out
+   object. Below the floor the corresponding result is "not interpretable", neither pass nor fail.
+3. **Held-out objects (exploratory):** "evidence of generalisation" is declared in advance to mean the lower bound of the Wilson
+   95% interval of bin-choice accuracy exceeds 0.5 **for both** bottle and cereal. A failure to show it below about 65% true
+   accuracy is **inconclusive, not a negative** (see Power).
+4. **Reported, not gated, as context:** overall and held-out success by object (milk read separately), by bin arrangement (P1
+   showed 85% against 65%; every trained object has equal training and evaluation counts in both arrangements, so a
+   position-only shortcut cannot masquerade as a mapping), the failure causes, and the P2-diagnostics measures (hand rise after
+   closure, closest approach per object).
+
+### Power (computed before fixing the rule; `2026-10-20-props-p3-power.py`)
+
+Simulation, 200,000 repetitions, one seed per layout, Wilson lower bound > 0.5, stable-placement probability 0.85 (P2: bottle
+0.93, cereal 0.86; sensitivity to 0.6 and 0.5 below), objects independent.
+
+| held-out layouts per object | both objects pass if the true bin-choice accuracy is 0.65 / 0.70 / 0.75 / 0.80 | floor of 30 stable placements met |
+|---|---|---|
+| 20 (the draft's 10 per cell × 2 cells) | 0.00 / 0.00 / 0.00 / 0.00 | 0.000 for 20 independent layouts; the draft's second seed adds correlated trials, not layouts, so it would have been close to this |
+| 40 | 0.17 / 0.42 / 0.70 / 0.88 | 0.97 |
+| 60 | 0.34 / 0.70 / 0.93 / 0.99 | 1.00 |
+| **80 (chosen)** | **0.50 / 0.86 / 0.98 / 1.00** | 1.00 |
+| 120 | 0.76 / 0.97 / 1.00 / 1.00 | 1.00 |
+
+A policy at chance (0.5) passes with probability about 0.0006 (0.00059 at 60 layouts, 0.00066 at 120). The floor still holds at 80 layouts with a stable
+probability of 0.5 (0.99). **Trained gate:** with 80 trained layouts and stable probability 0.85, a true wrong-bin rate of 2%
+passes with probability 0.95, 5% with 0.56, 8% with 0.20, 10% with 0.08: the gate is a point estimate near its threshold, so it
+reliably rejects a policy that confuses bins and cannot rank policies near 5%.
 
 ## What P3 cannot show
 

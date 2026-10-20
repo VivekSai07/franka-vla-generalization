@@ -28,26 +28,50 @@ manifest verification. No X-VLA local-varied or SmolVLA broad-workspace model pu
 
 ---
 
-## Latest (2026-10-16): Props P2 — instruction sorting with 1–2 distractors
+## Latest (2026-10-20): Props P2 — instruction sorting with 1–2 distractors, evaluated, diagnosed, re-tested
 
-P1's task (sort one object into a colour-designated bin, bins swap sides across layouts) repeated
+P1's task (sort one object into a colour-designated bin, bins swap sides across
+layouts) repeated
 with 1–2 distractor objects present. Dataset sealed 2026-10-13, 540 episodes, collected in 54
 minutes by 12 parallel shards
 ([docs/PROPS_P2_COLLECTION_20261013.md](docs/PROPS_P2_COLLECTION_20261013.md)).
 X-VLA trained 126,900 updates (P1's recipe unchanged).
-Evaluated 2026-10-16 on reserved layouts, 120 report trials and a 20-trial confirm:
+Evaluated 2026-10-16 on reserved layouts: a 20-trial screen for each of six checkpoints, a 120-trial report on
+the survivors (the fixed rule advanced only 101,520 and 126,900; the other four are screen-only), one 20-trial confirm
+on the winner, and a 20-trial no-distractor control.
 
-| checkpoint | overall (120 trials) | trained (80) | held-out (40) | wrong-object | wrong-bin |
+| set | policy | checkpoint | trials | success | never lifted | wrong object | wrong bin | unstable in bin | timed out carrying | dropped outside |
+|---|---|---|---|---|---|---|---|---|---|---|
+| screen | P2 | 50,760 | 20 | 11 | 6 | 0 | 0 | 0 | 2 | 1 |
+| screen | P2 | 76,140 | 20 | 10 | 3 | 1 | 0 | 1 | 4 | 1 |
+| screen | P2 | 88,830 | 20 | 16 | 2 | 0 | 0 | 0 | 2 | 0 |
+| screen | P2 | **101,520** | 20 | **19** | 1 | 0 | 0 | 0 | 0 | 0 |
+| screen | P2 | 114,210 | 20 | 16 | 2 | 0 | 0 | 0 | 2 | 0 |
+| screen | P2 | **126,900** | 20 | **18** | 2 | 0 | 0 | 0 | 0 | 0 |
+| report | P2 | **101,520** | 120 | **90 (75.0%)** [65.0, 84.2] | 12 | 7 | 0 | 1 | 7 | 3 |
+| report | P2 | 126,900 | 120 | 83 (69.2%) | 24 | 2 | 0 | 0 | 10 | 1 |
+| report | P1 | 126,900 | 120 | **0** | 110 | 5 | 0 | 0 | 3 | 2 |
+| confirm | P2 | 101,520 | 20 | 16 (80%) | 3 | 0 | 0 | 0 | 1 | 0 |
+| control (no distractor) | P2 | 101,520 | 20 | 17 | 0 | 0 | 1 | 0 | 2 | 0 |
+| control (no distractor) | P1 | 126,900 | 20 | 14 | 2 | 0 | 0 | 0 | 4 | 0 |
+
+Successes by condition (successes / trials):
+
+| set | checkpoint | 1 distractor | 2 distractors | trained cells | held-out cells |
 |---|---|---|---|---|---|
-| 50,760 | — (screen) | — | — | — | — |
-| 76,140 | — (screen) | — | — | — | — |
-| 88,830 | — (screen) | — | — | — | — |
-| **101,520** | **75.0% (90/120)** [65.0, 84.2] | 85.0% (68/80) | 55.0% (22/40) | 7 | **0** |
-| 114,210 | — (screen) | — | — | — | — |
-| 126,900 | 69.2% (83/120) | — | — | 2 | 0 |
+| screen | 50,760 | 6/10 | 5/10 | 11/20 | – |
+| screen | 76,140 | 4/10 | 6/10 | 10/20 | – |
+| screen | 88,830 | 9/10 | 7/10 | 16/20 | – |
+| screen | 101,520 | 10/10 | 9/10 | 19/20 | – |
+| screen | 114,210 | 8/10 | 8/10 | 16/20 | – |
+| screen | 126,900 | 10/10 | 8/10 | 18/20 | – |
+| report | **101,520** | 48/60 | 42/60 | 68/80 (85.0%) | 22/40 (55.0%) |
+| report | 126,900 | 46/60 | 37/60 | 61/80 (76.3%) | 22/40 (55.0%) |
+| report | P1 126,900 | 0/60 | 0/60 | 0/80 | 0/40 |
+| confirm | 101,520 | 8/10 | 8/10 | 16/20 | – |
 
-Confirm (101,520, 20 trials, touched once): **80% (16/20)**, 0 wrong-object.
-P1's 126,900 checkpoint on the identical trials: **0/120**.
+P1's 126,900 checkpoint on the identical 120 report trials: **0/120** (110 never lifted anything). Control trials (no
+distractor, trained cells only): 17/20 for P2 101,520 and 14/20 for P1.
 
 Pre-registered criteria — 2 of 4 met:
 
@@ -58,14 +82,19 @@ Pre-registered criteria — 2 of 4 met:
 | 3 | trained vs held-out gap ≤ 10 points | **fail** — 30-point gap (85% vs 55%) |
 | 4 | beats P1 with non-overlapping CIs | **pass** — P1 0/120 vs P2 90/120, McNemar p = 1.6e-27 |
 
-- **Zero wrong-bin outcomes in 120 trials** — bin colour generalises to held-out cells.
-- **Object selection is largely solved, not fully** — 7 wrong-object in 120; bread and milk
-  objects show lower pick rates than props in P1.
-- The wide trained/held-out gap (30 points) and the wrong-object overshoot were the open issues for P3. A 2026-10-20 fresh-layout
-  re-test on the same objects (milk, bread) and layouts found a pooled unseen-pair penalty of 2.5 points [−4.2, +9.2], so the 30
-  points mostly reflect which objects the cells contain ([report](docs/PROPS_P2_RETEST_20261020.md)); criterion 3 stays failed.
-- 101,520 and 126,900 are statistically tied (McNemar p = 0.21); the pre-registered rule picked
-  101,520 as the earlier of the two.
+- **Bin colour is read.** Zero wrong-bin outcomes in the 120 report trials, and one in all 400 trials of every P2
+  checkpoint (a no-distractor control trial of 101,520); P1's checkpoint has none either. Bin identity generalises to held-out cells.
+- **Object selection is largely solved, not fully** — 7 wrong-object in 120 (126,900: 2). Success by target object for 101,520
+  over all four tiers: can 28/28, bottle 26/28, cereal 24/28, lemon 23/28, bread 27/34, **milk 14/34**; milk is the weak object.
+- **Failures are motor, not selection.** The dominant cause is `never_lifted` (12 of the 30 report failures of 101,520; 24 of
+  37 for 126,900). Replay diagnostics ([report](docs/PROPS_P2_DIAGNOSTICS_20261019.md), 2026-10-19; the pre-registered taxonomy
+  could not be validated and was not produced): all 12 never-lifted trials closed the gripper, 9 held the target without lifting
+  it, and milk fails at the hold, not the approach.
+- **The 30-point trained/held-out gap is mostly which objects the cells contain.** A 2026-10-20 fresh-layout re-test on the same
+  objects (milk, bread) and the same layouts under both bin instructions found a pooled unseen-pair penalty of 2.5 points
+  [−4.2, +9.2] over 238 pairs (milk 57.6% trained / 56.8% held-out, bread 80.8% / 76.7%;
+  [report](docs/PROPS_P2_RETEST_20261020.md)). Criterion 3 stays failed as pre-registered.
+- 101,520 and 126,900 are statistically tied (McNemar p = 0.21); the pre-registered rule picked 101,520 as the earlier of the two.
 
 Report: [docs/PROPS_P2_EVALUATION_20261016.md](docs/PROPS_P2_EVALUATION_20261016.md). Collection:
 [docs/PROPS_P2_COLLECTION_20261013.md](docs/PROPS_P2_COLLECTION_20261013.md). Failure diagnostics (replay, no new
@@ -135,6 +164,8 @@ Report: [docs/B3_XVLA_EVALUATION_20261005.md](docs/B3_XVLA_EVALUATION_20261005.m
 | 2026-10-05 | B3, robosuite (four colours, held-out pairs, harder distractors) | ~85% overall at the best checkpoint |
 | 2026-10-09 | Props P1, robosuite (instruction sorting, bins swap sides) | confirm 100% (20/20), report 75% (60/80), checkpoint 126,900 |
 | 2026-10-16 | Props P2, robosuite (instruction sorting + 1–2 distractors) | report 75.0% (90/120), confirm 80% (16/20), 2/4 criteria met, 0 wrong-bin |
+| 2026-10-19 | P2 failure diagnostics (replay, no new rollouts) | replay exact; taxonomy not produced (validation gate failed); never-lifted trials closed the gripper, milk fails at the hold |
+| 2026-10-20 | P2 fresh-layout re-test, milk and bread paired | unseen-pair penalty 2.5 points [−4.2, +9.2]: small, existence not shown |
 
 Every number with its protocol and caveats: [docs/RESULTS.md](docs/RESULTS.md).
 

@@ -1,13 +1,13 @@
 # Props P3 — collection Implementation Plan
 
-> **For agentic workers:** DRAFT, written 2026-10-19 to be executed in a new session after the user has confirmed the spec's
-> decisions D1–D7. Steps use checkbox (`- [ ]`) syntax for tracking. Training and evaluation get their own plans after the seal.
+> **For agentic workers:** written 2026-10-19, success rule and layout counts revised 2026-10-20 (user accepted the revisions), to be
+> executed in a new session after the user has confirmed the spec's decisions D1–D7. Steps use checkbox (`- [ ]`) syntax for tracking. Training and evaluation get their own plans after the seal.
 
 **Goal:** Build `experiments/props_p3_data/`, pass the expert re-test and a sharded pilot, then collect, merge and seal 544 P3
 episodes (fixed prompt, one object, food/drinks → blue/orange) with parallel CPU-rendered shards.
 
 **Architecture:** A fork of `experiments/props_p2_data/` that removes the distractor machinery and keeps the sharded scheduler,
-bounded model cache, verified merge and seal. New: the P3 plan (8 trained cells, 4 held-out cells, 128 reserved layouts, fixed
+bounded model cache, verified merge and seal. New: the P3 plan (8 trained cells, 4 held-out cells, 288 reserved layouts, fixed
 prompt), a task-label replacement in the episode sink, validators that accept one shared task string. `props_scene` is imported
 read-only and unchanged.
 
@@ -38,7 +38,7 @@ read-only and unchanged.
   simulator. **Not** the EGL image. Flags as P2: `--read-only --network none --tmpfs /tmp:rw,size=16g
   --ulimit nofile=65536:65536 -e MUJOCO_GL=osmesa -e HF_HOME=/tmp/hf -e XDG_CACHE_HOME=/tmp/cache -e HF_HUB_OFFLINE=1
   -e PYTHONPATH=/vla`; pin cores per worker (`--cpuset-cpus`, `LP_NUM_THREADS`).
-- Counts: 480 train (8 cells × 60), 64 validation (8 × 8), 544 admitted; reserved 128 = screen 24 + report 80 + confirm 24.
+- Counts: 480 train (8 cells × 60), 64 validation (8 × 8), 544 admitted; reserved 288 = screen 24 + report 240 (80 trained + 160 held-out) + confirm 24, one rollout seed per layout.
 - Success rule and P0/P1 gates never weakened; if a bar fails, find why, do not move the bar.
 - Commits: user identity, no AI or co-author trailers, short messages; never commit `outputs/`; do not push (no credentials on
   this machine; the user pushes). Docs pass after every finding.
@@ -68,7 +68,7 @@ read-only and unchanged.
 
 | file | responsibility |
 |---|---|
-| `plan.py` | cells, held-out cells, balanced slot/arrangement decks, resample/attempt draws, 128 reserved layouts; pure |
+| `plan.py` | cells, held-out cells, balanced slot/arrangement decks, resample/attempt draws, 288 reserved layouts; pure |
 | `contract.py` | `IMAGE`, `OUTPUT`, `provenance()` over this package + `props_scene` + shared + `src` + spec/plan; pure |
 | `episode.py` | one attempt, bounded expert cache, **task-label replacement in the sink** |
 | `validate.py` | `admit` (P1 gates, no distractor gate), `fingerprint`, `validate_dataset` (one shared task), `seal` |

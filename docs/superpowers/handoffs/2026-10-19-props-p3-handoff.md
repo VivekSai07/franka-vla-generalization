@@ -57,7 +57,7 @@ checkpoint scores 0/120 on the same trials. P2 is closed; the user merged `feat/
    proxy as build args). OSMesa unchanged byte for byte; physics bit-identical across renderers; EGL repeats differ by 1 to 2
    pixels of 904 images; 7.7× faster; **but EGL and OSMesa frames differ on half the pixels.** Check-only: **not adopted for any
    run**, and **the P2 checkpoints must not be evaluated under EGL.** (`docs/EGL_RENDERING_CHECK_20261019.md` (on branch `feat/egl-rendering` until merged))
-3. **P3 spec and plan** (drafts, this commit).
+3. **P3 spec and plan**, revised 2026-10-20 at the user's request after the re-test: the gate is now bin choice on trained objects, not overall success; one seed per layout; 288 reserved layouts with 80 per held-out object; a power table fixes the held-out rule (the first draft had almost no power: about 20 independent held-out layouts per object). D1–D7 are otherwise unchanged and still need confirming.
 
 **Sub-project B (fresh-layout re-test) is done** (2026-10-20, `docs/PROPS_P2_RETEST_20261020.md`, package `experiments/xvla_props_p2_retest/`). After a power analysis the user chose the pooled paired penalty as primary (milk-versus-bread was unresolvable): 238 paired layouts, penalty **2.5 points [−4.2, +9.2]**, "small, existence not shown" under the pre-registered reading. The P2 30-point held-out gap therefore mostly reflects which objects the cells contain; criterion 3 stays failed. Milk is still the weak object (57% against bread's 79%). B and P3 training both need the GPU: it is free now.
 
