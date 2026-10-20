@@ -1,0 +1,151 @@
+# Props P2 failure diagnostics — design
+
+**Date:** 2026-10-19
+**Status:** design approved by the user in conversation (2026-10-19). Follows
+[PROPS_P2_EVALUATION_20261016.md](../../PROPS_P2_EVALUATION_20261016.md). No new rollouts, no GPU, no new data.
+**Method guide:** [diagnosing-policy-failures](../../../.github/skills/diagnosing-policy-failures/SKILL.md).
+
+## Questions
+
+The P2 evaluation met two of four criteria and left three things unexplained. All three are asked of checkpoint
+101,520 (the pre-registered winner), with 126,900 and the P1 checkpoint as contrasts.
+
+1. **Never lifted.** 12 of the 120 report trials never lift anything (16 of 180 over all four tiers). What did the
+   policy do instead: never close the gripper, close it away from the object, close it on a distractor, or close it
+   correctly and fail to hold?
+2. **Wrong object.** 7 report trials lift a distractor first. Their nearest distractor is closer to the target
+   (median 0.123 m) than in successes (0.150 m). Is that a real association, and which distractors get lifted?
+3. **Milk.** `milk→blue` (held out) scored 7/20 and trained `milk→orange` 5/8. For each failed milk trial, did the
+   approach or the grasp fail?
+
+## Method
+
+**Replay, not new rollouts.** A recorded trial is reproduced by restoring its reserved layout (`scenes.restore`) and
+feeding the recorded `applied_action` tick by tick through the same physics calls the rollout uses
+(`synchronize_observation`, `apply_action`, `step_control`), unrendered. The stored traces hold only joint state and
+prop positions; replay recovers what they lack: hand pose, finger positions, and every contact (finger–target,
+finger–distractor, distractor–anything-but-table) at every tick.
+
+**Gate 0, positive control.** A replay must reproduce the trial's recorded `state` and `props_xyz` arrays exactly (all
+ticks) on every one of the 180 trials of 101,520. If any trial does not, replay is not used and the cause is found
+first; no analysis proceeds on a method that does not reproduce its own data. (The bundle smoke re-run already
+reproduced two trials bit for bit; this checks all of them.)
+
+**Expert reference.** The 540 sealed expert episodes (`props_p2_data/episodes/*.npz`: `qpos`, `props_pose`) give the
+reference distribution of every grasp quantity below, by forward kinematics only (set `qpos`, `mj_forward`; no
+stepping). Quantities are defined once, from the expert, **before** any policy failure is looked at.
+
+**Every measure is validated on the successes first (Gate 1).** The fraction of 101,520's successful trials whose grasp
+closure lies inside the target's expert envelope (position and yaw) is reported before any failure is read. If it is below
+0.80 the envelope is not describing this policy's grasps; the analysis stops and the definition is reconsidered with the
+user. A measure that does not agree with the expert on successes is noise and is dropped.
+
+## Definitions (fixed before any failure is examined)
+
+- **Hand frame.** The robot hand body `robot0_right_hand`, axes as MuJoCo reports them. Target pose is taken in this
+  frame. Finger axis yaw is the yaw of the vector between `left_finger` and `right_finger`.
+- **Closed run.** At least 5 consecutive ticks whose applied gripper command is below 127.5 (0 closed, 255 open; the
+  evaluator thresholds at 127). A single closed tick is chatter, not a grasp.
+- **First closure.** The first tick of the first closed run.
+- **Grasp closure.** For a trial in which the target was lifted, the first tick of the closed run that contains the lift
+  tick; otherwise the first closure. All hand-frame grasp quantities are taken at this tick, before that tick's action is
+  applied.
+- **Expert envelope, per object.** At the expert's first closure, the target centre in the hand frame, per axis, from
+  the 1st to the 99th percentile over that object's expert episodes; plus the finger-axis-to-object yaw error modulo
+  90 degrees, same percentiles.
+- **Lifted.** As in the evaluation: the object rises 2 cm above its start and stays up 15 ticks
+  (`analysis.lift_tick`). **Held.** Both fingers in contact with the object on at least 10 consecutive ticks after the
+  first closure.
+
+## Taxonomy of a failed trial (first cause, mutually exclusive)
+
+The evaluation's own label decides the first three rows; the grasp chain applies only to `never_lifted` trials, where the
+target was never lifted and a grasp closure is the thing to explain.
+
+| order | class | condition |
+|---|---|---|
+| 1 | `wrong_object` | the evaluation's label (the first object lifted is not the target); kept as is |
+| 2 | `lifted_then_failed` | the target was lifted and the evaluation's cause is `timeout_carrying`, `dropped_outside`, `unstable_in_target` or `wrong_bin` |
+| 3 | `never_closed` | `never_lifted` and the gripper has no closed run |
+| 4 | `closed_on_distractor` | `never_lifted`; at the first closure a distractor is inside its own object's envelope and the target is not |
+| 5 | `closed_off_target` | `never_lifted`; at the first closure the target is outside its envelope on at least one axis or in yaw (approach error) |
+| 6 | `closed_not_held` | `never_lifted`; the target is inside its envelope at the first closure and is never held (grasp execution) |
+| 7 | `held_not_lifted` | `never_lifted`; held, but never lifted |
+
+For every `never_lifted` trial the hand's closest approach (minimum fingertip-midpoint-to-target-centre distance over the
+trial) is also reported, to separate hovering from wandering. For `wrong_object` trials the descriptive report adds which
+distractor was lifted and whether the hand closed on it inside its envelope.
+
+## Analyses
+
+1. **Never lifted (question 1).** The taxonomy table for all 16 never-lifted trials of 101,520 (report tier reported
+   separately: 12), and for 126,900 (24 report trials) and P1 (110 report trials) as contrasts. Layout concentration: the sum of squared
+   per-layout failure counts against 10,000 permutations of the failure labels over trials with the two seeds of a
+   layout kept together (the B2 diagnosis procedure). Which layouts fail at both checkpoints.
+2. **Wrong object (question 2).** Layout is the unit (60 report layouts): a layout is positive if any of its trials is
+   `wrong_object`. One test: Mann–Whitney on the layout's minimum target–distractor distance, positive against
+   negative. Descriptive: which distractor was lifted (object and its distance to the target and to the hand's
+   starting pose), 126,900 and P1 alongside. Seven events: **exploratory**.
+3. **Milk (question 3).** All 34 milk trials of 101,520 (20 failures, 14 successes) through the taxonomy, split by cell,
+   with the hand-frame target position at the grasp closure and the yaw error against the milk expert envelope. A milk
+   trial that lifted and then failed is a carry or placement failure; its grasp quantities are still reported. Expert
+   milk episodes are the comparison. The 20 `milk→blue` trials are all report-tier, so cell and tier are one factor.
+4. **Video check.** Before the taxonomy is written up, the cases that land in each class are checked on
+   `cameras.mp4`; at least the two oddest per class. Wrong labels are fixed in the definition, not in the table.
+
+## Amendment 2026-10-19 (after Gate 1): the envelope is a success envelope, not the expert's
+
+**What happened.** Gate 0 passed (420/420 replays reproduce their trial exactly). Gate 1 failed: 0.225 of 101,520's
+successful grasps lie inside the expert envelope defined above (minimum 0.80). Reading only the 142 successes, per object
+and component: the policy succeeds with finger-axis yaw errors the expert never makes (median -15 degrees for bread, -7
+lemon, -2 cereal, -0.6 milk, against expert p1 to p99 of about +/-0.1 to 2 degrees for the boxes) and with a grasp depth a
+few millimetres shallower than the expert's for tall objects (milk 0.173 m against an expert upper bound of 0.168). The
+expert envelope measures how precisely the scripted expert grasps, not what is enough to succeed, so "outside it" does not
+mean "a bad grasp". No failure trial had been read when this was decided.
+
+**New definition** (user decision 2026-10-19; it replaces the "Expert envelope" and the Gate 1 envelope above).
+
+- **Success envelope, per object.** p1 to p99, per component (hand-frame x, y, z and the yaw error, all at the *grasp
+  closure*), over the successful trials of a *different* checkpoint: 101,520 and P1 trials are judged against the successes of
+  126,900 (report and screen tiers), and 126,900 trials against the successes of 101,520 (all four tiers). An object with
+  fewer than 10 such successes has no envelope and the analysis stops for it.
+- **Gate 1 (amended).** Both directions must reach 0.80: the fraction of 101,520's successes inside the 126,900-success
+  envelope, and the fraction of 126,900's successes inside the 101,520-success envelope. Neither judges a policy against its
+  own successes, so the gate is a real test and not true by construction.
+- **Stop rule, fixed now.** If the amended Gate 1 fails, there is no further redefinition: Gate 1 is reported as the finding
+  and the failure taxonomy is not produced.
+- **The expert envelope stays, as a description.** The report gives, on the successes, how far the policy's grasp is from the
+  expert's per object (median and p1 to p99 of each component), since "the expert over-specifies yaw" is itself a result.
+- **Implementation consequence.** Per-trial measures store the raw hand-frame samples (at the first closure for every prop,
+  at the grasp closure for the target); judging against an envelope happens at analysis time, so no replay is repeated when an
+  envelope changes. The replay needs `screen` of 126,900 added to the runs.
+
+## Counting tests
+
+At most six tests, stated here: the layout-concentration permutation (1), the layout-level Mann–Whitney (1), the
+milk comparisons (at most 3: held-out against trained failure class, grasp height against outcome, yaw error against
+outcome), and Gate 0 (a check, not a test). No correction is claimed; anything not backed by a physical mechanism or a
+replay measurement is labelled exploratory in the report.
+
+## What would change the next step
+
+- `closed_off_target` dominant: approach accuracy limits the policy, so more or more varied approach data
+  (positions near distractors) is the lever.
+- `never_closed` dominant: the policy stalls before grasping; an observation or action-chunking question, not a data one.
+- `closed_not_held` on milk with the expert's envelope respected: grasp height or yaw, i.e. a milk-specific grasp
+  strategy the demonstrations did not teach.
+- Wrong-object concentrated on small target–distractor distances: spacing in the data distribution
+  (`props_p2_data` spacing rule) is the lever.
+
+## Outputs
+
+- `docs/PROPS_P2_DIAGNOSTICS_<date>.md`: headline, taxonomy tables, what was ruled out, checks that did not hold up,
+  limitations, directions labelled as hypotheses.
+- Scripts under `experiments/xvla_props_p2_eval/diagnostics/` (not hash-bound: the evaluation package has no contract).
+- Live docs updated in the same pass (`RESULTS.md`, `BENCHMARK_STATUS.md`, `TODO.md`, `FAILURES.md` if a mistake
+  recurs).
+
+## Out of scope
+
+New rollouts, any GPU use, new layouts (that is the fresh-layout re-test, its own spec), any change to the sealed P2
+dataset or to hash-bound files, and any claim about why the model's weights behave as they do.

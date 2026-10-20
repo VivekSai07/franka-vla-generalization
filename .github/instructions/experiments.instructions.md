@@ -41,6 +41,12 @@ every `.py` in the package incl. tests, its README) and, through it, `experiment
 `src/`, and the P1 spec and plan. Editing any of them invalidates the seal; fork instead.
 `plan.py` and `contract.py` import no simulator so training can import them in the admission image.
 
+Hash-bound by the props P2 seal (2026-10-13): `experiments/props_p2_data/` (every `.py` incl. tests, its
+README) and, through it, `experiments/props_scene/*.py`, `experiments/robosuite_scene/*.py`, the shared
+modules it imports, `src/`, and the P2 spec and collection plan
+(`docs/superpowers/specs/2026-10-13-props-p2-distractors-design.md`,
+`docs/superpowers/plans/2026-10-13-props-p2-collection.md`). Fork; put later P2 design in new files.
+
 Not hash-bound: `experiments/robosuite_sim2sim/` (sim2sim rollouts), `experiments/xvla_b3_robosuite_eval/`
 (B3 evaluation), `experiments/props_scene/` (props P0: scene, expert, 300-attempt gate; robosuite image; not
 hash-bound on its own, but frozen and hashed through the props P1 seal above — treat it as bound too

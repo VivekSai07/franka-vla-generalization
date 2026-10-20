@@ -18,15 +18,94 @@ The central question: **how much and what kind of data does a VLA need to genera
 | B2 distractors | [200 episodes](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-b2-distractors-200) | [X-VLA step 50,000](https://huggingface.co/VivekSai07/xvla-franka-b2-distractors-50000) |
 | B3 robosuite cubes | [560 episodes](https://huggingface.co/datasets/VivekSai07/franka-panda-cube-stacking-b3-robosuite-560) | [X-VLA step 124,800](https://huggingface.co/VivekSai07/xvla-franka-b3-robosuite-124800) |
 | Props P1 instruction sorting | [540 episodes](https://huggingface.co/datasets/VivekSai07/franka-panda-props-p1-540) | [X-VLA step 126,900](https://huggingface.co/VivekSai07/xvla-franka-props-p1-126900) |
+| Props P2 instruction sorting + distractors | [540 episodes](https://huggingface.co/datasets/VivekSai07/franka-panda-props-p2-540) | [X-VLA step 101,520](https://huggingface.co/VivekSai07/xvla-franka-props-p2-101520) |
 
 The [HF artifact index](docs/HUGGING_FACE_ARTIFACTS.md) lists earlier checkpoint directories,
 exact revision pins, access, historical reports, and re-evaluation prerequisites.
-All seven dataset repositories and all published models are public as of 2026-10-09. No X-VLA
-local-varied or SmolVLA broad-workspace model publication was found.
+The seven earlier dataset repositories and their published models are public as of 2026-10-09.
+Props P2 was published **private** on 2026-10-17 after full bundle, reconstruction, and remote
+manifest verification. No X-VLA local-varied or SmolVLA broad-workspace model publication was found.
 
 ---
 
-## Latest (2026-10-09): Props P1 — instruction sorting in the robosuite scene
+## Latest (2026-10-20): Props P2 — instruction sorting with 1–2 distractors, evaluated, diagnosed, re-tested
+
+P1's task (sort one object into a colour-designated bin, bins swap sides across
+layouts) repeated
+with 1–2 distractor objects present. Dataset sealed 2026-10-13, 540 episodes, collected in 54
+minutes by 12 parallel shards
+([docs/PROPS_P2_COLLECTION_20261013.md](docs/PROPS_P2_COLLECTION_20261013.md)).
+X-VLA trained 126,900 updates (P1's recipe unchanged).
+Evaluated 2026-10-16 on reserved layouts: a 20-trial screen for each of six checkpoints, a 120-trial report on
+the survivors (the fixed rule advanced only 101,520 and 126,900; the other four are screen-only), one 20-trial confirm
+on the winner, and a 20-trial no-distractor control.
+
+| set | policy | checkpoint | trials | success | never lifted | wrong object | wrong bin | unstable in bin | timed out carrying | dropped outside |
+|---|---|---|---|---|---|---|---|---|---|---|
+| screen | P2 | 50,760 | 20 | 11 | 6 | 0 | 0 | 0 | 2 | 1 |
+| screen | P2 | 76,140 | 20 | 10 | 3 | 1 | 0 | 1 | 4 | 1 |
+| screen | P2 | 88,830 | 20 | 16 | 2 | 0 | 0 | 0 | 2 | 0 |
+| screen | P2 | **101,520** | 20 | **19** | 1 | 0 | 0 | 0 | 0 | 0 |
+| screen | P2 | 114,210 | 20 | 16 | 2 | 0 | 0 | 0 | 2 | 0 |
+| screen | P2 | **126,900** | 20 | **18** | 2 | 0 | 0 | 0 | 0 | 0 |
+| report | P2 | **101,520** | 120 | **90 (75.0%)** [65.0, 84.2] | 12 | 7 | 0 | 1 | 7 | 3 |
+| report | P2 | 126,900 | 120 | 83 (69.2%) | 24 | 2 | 0 | 0 | 10 | 1 |
+| report | P1 | 126,900 | 120 | **0** | 110 | 5 | 0 | 0 | 3 | 2 |
+| confirm | P2 | 101,520 | 20 | 16 (80%) | 3 | 0 | 0 | 0 | 1 | 0 |
+| control (no distractor) | P2 | 101,520 | 20 | 17 | 0 | 0 | 1 | 0 | 2 | 0 |
+| control (no distractor) | P1 | 126,900 | 20 | 14 | 2 | 0 | 0 | 0 | 4 | 0 |
+
+Successes by condition (successes / trials):
+
+| set | checkpoint | 1 distractor | 2 distractors | trained cells | held-out cells |
+|---|---|---|---|---|---|
+| screen | 50,760 | 6/10 | 5/10 | 11/20 | – |
+| screen | 76,140 | 4/10 | 6/10 | 10/20 | – |
+| screen | 88,830 | 9/10 | 7/10 | 16/20 | – |
+| screen | 101,520 | 10/10 | 9/10 | 19/20 | – |
+| screen | 114,210 | 8/10 | 8/10 | 16/20 | – |
+| screen | 126,900 | 10/10 | 8/10 | 18/20 | – |
+| report | **101,520** | 48/60 | 42/60 | 68/80 (85.0%) | 22/40 (55.0%) |
+| report | 126,900 | 46/60 | 37/60 | 61/80 (76.3%) | 22/40 (55.0%) |
+| report | P1 126,900 | 0/60 | 0/60 | 0/80 | 0/40 |
+| confirm | 101,520 | 8/10 | 8/10 | 16/20 | – |
+
+P1's 126,900 checkpoint on the identical 120 report trials: **0/120** (110 never lifted anything). Control trials (no
+distractor, trained cells only): 17/20 for P2 101,520 and 14/20 for P1.
+
+Pre-registered criteria — 2 of 4 met:
+
+| # | criterion | result |
+|---|---|---|
+| 1 | overall ≥ 70% | **pass** — 75.0% [65.0, 84.2] |
+| 2 | wrong-object ≤ 5% | **fail** — 5.8% (7/120; 6/120 = 5.0% would pass) |
+| 3 | trained vs held-out gap ≤ 10 points | **fail** — 30-point gap (85% vs 55%) |
+| 4 | beats P1 with non-overlapping CIs | **pass** — P1 0/120 vs P2 90/120, McNemar p = 1.6e-27 |
+
+- **Bin colour is read.** Zero wrong-bin outcomes in the 120 report trials, and one in all 400 trials of every P2
+  checkpoint (a no-distractor control trial of 101,520); P1's checkpoint has none either. Bin identity generalises to held-out cells.
+- **Object selection is largely solved, not fully** — 7 wrong-object in 120 (126,900: 2). Success by target object for 101,520
+  over all four tiers: can 28/28, bottle 26/28, cereal 24/28, lemon 23/28, bread 27/34, **milk 14/34**; milk is the weak object.
+- **Failures are motor, not selection.** The dominant cause is `never_lifted` (12 of the 30 report failures of 101,520; 24 of
+  37 for 126,900). Replay diagnostics ([report](docs/PROPS_P2_DIAGNOSTICS_20261019.md), 2026-10-19; the pre-registered taxonomy
+  could not be validated and was not produced): all 12 never-lifted trials closed the gripper, 9 held the target without lifting
+  it, and milk fails at the hold, not the approach.
+- **The 30-point trained/held-out gap is mostly which objects the cells contain.** A 2026-10-20 fresh-layout re-test on the same
+  objects (milk, bread) and the same layouts under both bin instructions found a pooled unseen-pair penalty of 2.5 points
+  [−4.2, +9.2] over 238 pairs (milk 57.6% trained / 56.8% held-out, bread 80.8% / 76.7%;
+  [report](docs/PROPS_P2_RETEST_20261020.md)). Criterion 3 stays failed as pre-registered.
+- 101,520 and 126,900 are statistically tied (McNemar p = 0.21); the pre-registered rule picked 101,520 as the earlier of the two.
+
+Report: [docs/PROPS_P2_EVALUATION_20261016.md](docs/PROPS_P2_EVALUATION_20261016.md). Collection:
+[docs/PROPS_P2_COLLECTION_20261013.md](docs/PROPS_P2_COLLECTION_20261013.md). Failure diagnostics (replay, no new
+rollouts; the pre-registered taxonomy could not be validated and was not produced):
+[docs/PROPS_P2_DIAGNOSTICS_20261019.md](docs/PROPS_P2_DIAGNOSTICS_20261019.md).
+Bundle hash-verified on Windows and published private on 2026-10-17:
+[dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-props-p2-540) and
+[model](https://huggingface.co/VivekSai07/xvla-franka-props-p2-101520). The model card contains the
+two-repository reconstruction and verification recipe.
+
+## Previous headline (2026-10-09): Props P1 — instruction sorting in the robosuite scene
 
 X-VLA trained 126,900 updates (5 epochs) on 540 scripted episodes: one object, two bins that swap
 left/right sides across layouts. Evaluated on reserved layouts, all 6 non-trivial checkpoints
@@ -42,16 +121,9 @@ screened and taken to the 80-trial report tier (protocol deviation, stated plain
 | **126,900** | **75.0% (60/80)** | 72.5% | 77.5% | 85.0% | 65.0% | 0/80 |
 
 - **Headline: 100% (20/20) on the confirm tier, checkpoint 126,900** — fixed by a pre-committed
-  rule (highest report-tier rate, ties toward the later checkpoint) before the tying data existed
-  (88,830 and 126,900 both 75.0%/60/80). Read alongside the report's own 75% (60/80) on the same
-  checkpoint; the confirm tier is a smaller, one-shot check, not a second independent estimate.
-- **Zero `wrong_bin` outcomes across all 480 report trials and all six checkpoints** — every failure
-  is a motor/timing problem (never lifted, timed out carrying, dropped outside, unstable in
-  target), never a colour/bin confusion. Held-out pairs perform at or above trained pairs on every
-  checkpoint.
-- A classifier bug (found by inspecting screen videos, not by a failing number) mislabelled one
-  correctly-placed trial as `dropped_outside`; fixed and all 120 screen trials rescanned, exactly
-  one affected.
+  rule before the tying data existed (88,830 and 126,900 both 75.0%/60/80).
+- **Zero `wrong_bin` outcomes across all 480 report trials** — every failure is motor/timing,
+  never a colour/bin confusion. Held-out pairs at or above trained pairs on every checkpoint.
 - Robosuite 1.5.2 / MuJoCo 3.4.0 — not comparable with the MuJoCo-scene numbers below.
 
 Report: [docs/PROPS_P1_EVALUATION_20261009.md](docs/PROPS_P1_EVALUATION_20261009.md). Training:
@@ -91,6 +163,9 @@ Report: [docs/B3_XVLA_EVALUATION_20261005.md](docs/B3_XVLA_EVALUATION_20261005.m
 | 2026-10-02 | sim2sim: the B2 policy on the robosuite scene | 3/20 against 19/20 on its own scene |
 | 2026-10-05 | B3, robosuite (four colours, held-out pairs, harder distractors) | ~85% overall at the best checkpoint |
 | 2026-10-09 | Props P1, robosuite (instruction sorting, bins swap sides) | confirm 100% (20/20), report 75% (60/80), checkpoint 126,900 |
+| 2026-10-16 | Props P2, robosuite (instruction sorting + 1–2 distractors) | report 75.0% (90/120), confirm 80% (16/20), 2/4 criteria met, 0 wrong-bin |
+| 2026-10-19 | P2 failure diagnostics (replay, no new rollouts) | replay exact; taxonomy not produced (validation gate failed); never-lifted trials closed the gripper, milk fails at the hold |
+| 2026-10-20 | P2 fresh-layout re-test, milk and bread paired | unseen-pair penalty 2.5 points [−4.2, +9.2]: small, existence not shown |
 
 Every number with its protocol and caveats: [docs/RESULTS.md](docs/RESULTS.md).
 

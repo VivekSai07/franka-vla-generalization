@@ -1,5 +1,68 @@
 # Franka benchmark: start here
 
+## Props P2 fresh-layout re-test: the unseen-pair penalty is small on the same objects - 2026-10-20
+
+Checkpoint 101,520 from the archive bundle on 240 fresh layouts of milk and bread, each under its trained and its held-out bin (480 rollouts, 8 pinned workers, 4 expert-infeasible entries dropped as 2 whole pairs). Pooled penalty **2.5 points [−4.2, +9.2]** over 238 pairs: small, existence not shown (pre-registered). Milk 57.6% / 56.8%, bread 80.8% / 76.7%. The design came from a power analysis before any rollout (the milk-versus-bread contrast first proposed was unresolvable). One deviation: the evaluator's hard-coded 120-layout feasibility check was replaced by a re-test loader, the evaluator itself unchanged. Report: [PROPS_P2_RETEST_20261020.md](PROPS_P2_RETEST_20261020.md).
+
+## Props P2 failure diagnostics: replay is exact, the pre-registered taxonomy was not produced - 2026-10-19
+
+Replay-only analysis of the 440 recorded P2/P1 trials (`experiments/xvla_props_p2_eval/diagnostics/`, branch
+`feat/props-p2-followup`). Gate 0 passed (440/440 exact). Gate 1, the check that a grasp measure agrees with the
+successes before any failure is read through it, failed twice (expert envelope 0.225; cross-checkpoint success
+envelope 0.486 / 0.634 against 0.80), and the 0.80 turned out to be unattainable (two identical policies score 0.605 /
+0.696 on it, FAILURES #58), so the stop rule applied and no failure was classified. Envelope-free findings: all 12
+never-lifted report trials of 101,520 closed the gripper and 9 held the target without lifting; milk fails at the
+hold, not the approach; never-lifted trials are not layout-concentrated for 101,520; the wrong-object association is
+not supported (p = 0.17). Report: [PROPS_P2_DIAGNOSTICS_20261019.md](PROPS_P2_DIAGNOSTICS_20261019.md).
+
+## Disk reclaim: 59 GB to 203 GB free - 2026-10-17
+
+User-approved. Props P2 resume snapshots and the heavy preflight / resume-proof scratch (70.4 GB, every `result.json`
+kept), six unused VS Code server versions, and, after the user confirmed the Windows copies were verified, the B1,
+broad-workspace, SmolVLA local-varied and B2 bundles together with their checkpoints (83.8 GB). The P2 bundle
+(`outputs/downloads_20261017/props_p2/`) was left in place and still passes `verify_bundle.py`; the user then hash-verified its two
+weights on Windows (both matched), after which the P1 and P2 intermediate checkpoints and optimizer states were removed as well
+(248 GB free, 71% full; those weights now exist nowhere, and `verify_checkpoints` cannot pass here for P1 or P2). On the user's
+go-ahead the remaining unbundled weights and optimizer states (B3 intermediates, B2/B3/local-varied `training_state.pt`, the
+superseded X-VLA local-varied checkpoints) followed: `outputs/` is 53 GB, down from 292 GB, and the disk is 64% full. Hardlink accounting mattered: the SmolVLA local-varied weights were linked from a second older bundle, so removing
+one bundle would have freed nothing. A safety assertion also fired once on a substring match against bundled source code
+(`local_varied_data/`) before any deletion and was tightened. Details: [OPERATIONS.md](OPERATIONS.md) Storage.
+
+## Props P2 trained and evaluated: 75.0% report, two of four criteria met - 2026-10-16
+
+X-VLA trained 126,900 updates on the P2 seal, then evaluated with `experiments/xvla_props_p2_eval/` (parallel workers:
+540 rollouts in about 3 h instead of ~12 h serial). All 120 reserved layouts were expert-feasible. Screen picked
+101,520 (19/20) and 126,900 (18/20); the report tier chose **101,520: 90/120 = 75.0%** [65.0, 84.2] over 83/120 (not
+distinguishable, p = 0.21); the same P1 checkpoint scored **0/120** on those trials (14/20 on its own task in the
+no-distractor control), confirm 16/20. Criteria: overall pass, beats-P1 pass, **wrong-object 5.8% against 5% fail,
+held-out gap 30 points against 10 fail**; no wrong-bin outcome in 120. The weak spot is `milk→blue` (7/20), a held-out
+cell on an object that is also the weakest when trained, so pair and object are confounded. Eight unpinned workers
+thrashed the CPU (load 142) and one died of GPU out of memory mid-screen; the first was stopped and the second
+absorbed by the driver's resume (FAILURES #57). Report: [PROPS_P2_EVALUATION_20261016.md](PROPS_P2_EVALUATION_20261016.md).
+
+## Props P2 training package: every gate passed, 39% faster per update - 2026-10-13
+
+`experiments/xvla_props_p2/` (branch `feat/props-p2`): P1's recipe unchanged on the P2 seal. Gates in
+the admission image: `--check` passed (fingerprint recomputed); `--preflight` passed (exact FP32 reload,
+snapshot 10.6 GB in 15 s); `--resume-proof` byte-equal; `--equivalence` byte-equal metrics, weights and
+Adam moments over 30 updates between P1's loop and the new one (fused finiteness checks, background
+decoding) — **0.524 s/update against 0.858 s** on the same GPU, projecting ~18.5 h for 126,900 updates.
+The new loop has not yet run a full session; the night reports record the real pace. Training is split
+into two nights by `--stop-at`, which pauses at a snapshot; a thermal guard sleeps at 83 °C. The package
+README was first committed empty and every test passed; caught before `--check` (FAILURES #56).
+
+## Props P2 dataset sealed: 540 episodes in 54 minutes - 2026-10-13
+
+Instruction sorting with 1–2 distractor objects (`experiments/props_p2_data/`, branch `feat/props-p2`):
+540/540 admitted, 0 rejected, 0 substitutions, 0 distractors touched; 480 train / 60 validation, 270
+one-distractor / 270 two-distractor; held-out pairs `milk→blue`, `bread→orange` never collected.
+Fingerprint `b1d642b3…f4d898`, re-verified in a second process. Collected by 12 parallel CPU-rendered
+shards (user decision; GPU rendering deferred, see TODO) and merged with every episode verified
+against its shard: 54 min against P1's 9 h 38 m for the same budget. The first expert re-test failed
+(261/288, hand housing clipping tall neighbours); a symmetric hand-clearance rule passed it
+(284/288 = 98.6%) without changing the bar. Report:
+[PROPS_P2_COLLECTION_20261013.md](PROPS_P2_COLLECTION_20261013.md); lessons FAILURES #54–55.
+
 ## Repository visibility, archive repair, and RTX disk reclaim - 2026-10-09
 
 All seven dataset repositories and all eight published model repositories were switched from

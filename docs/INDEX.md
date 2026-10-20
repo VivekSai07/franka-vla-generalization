@@ -23,6 +23,7 @@ Kept current; read these first.
 | point-in-time report | `TOPIC_YYYYMMDD.md` | `LOCAL_VARIED_COLLECTION_20260919.md` |
 | design spec | `superpowers/specs/YYYY-MM-DD-topic-design.md` | |
 | implementation plan | `superpowers/plans/YYYY-MM-DD-topic.md` | |
+| handoff to a new session | `superpowers/handoffs/YYYY-MM-DD-topic-handoff.md` | `superpowers/handoffs/2026-10-19-props-p3-handoff.md` |
 | superseded material | `archive/<topic>.md` | `archive/docker-compose-pipeline.md` |
 
 Dated reports are immutable records of what was true on that date. Do not edit them to reflect
@@ -48,7 +49,7 @@ later findings — add a new one and update the live documents.
 `PRECISION_OVERFIT_20260915.md` · `FITTING_AUDIT_20260915.md` · `PROPS_P1_EVALUATION_20261009.md`
 
 **Simulator / scene**
-`ROBOSUITE_SCENE_BRINGUP_20261002.md` · `PROPS_P0_20261005.md` · `PROPS_P0_RERUN_20261005.md` · `PROPS_P1_COLLECTION_20261007.md`
+`ROBOSUITE_SCENE_BRINGUP_20261002.md` · `PROPS_P0_20261005.md` · `PROPS_P0_RERUN_20261005.md` · `PROPS_P1_COLLECTION_20261007.md` · `PROPS_P2_COLLECTION_20261013.md` · `PROPS_P2_EVALUATION_20261016.md` · `PROPS_P2_DIAGNOSTICS_20261019.md` · `PROPS_P2_RETEST_20261020.md`
 
 **Expert / controller development**
 `ADAPTIVE_PLACEMENT_V4_20260917.md` · `BOUNDED_PLACEMENT_V3_20260917.md` ·

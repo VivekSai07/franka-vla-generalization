@@ -6,6 +6,62 @@ failures and lessons in [FAILURES.md](FAILURES.md).
 
 Download corresponding datasets/checkpoints: [HF artifact index](HUGGING_FACE_ARTIFACTS.md).
 
+## Props P2 X-VLA, instruction sorting with 1–2 distractors (2026-10-16) — measured, not sealed
+
+Dataset: [P2 collection](PROPS_P2_COLLECTION_20261013.md) (540 episodes, seal `b1d642b3…f4d898`, not yet published).
+Reserved layouts the policy never trained on, robosuite 1.5.2 / MuJoCo 3.4.0, **same scene as P1 below but with
+distractors; not comparable with any non-props row**. Intervals resample layouts. Report tier: 60 layouts × 2 seeds =
+120 trials; screen/confirm/control 20 trials each.
+
+| checkpoint (tier) | success | notes |
+|---|---|---|
+| screen 50,760 / 76,140 / 88,830 / **101,520** / 114,210 / 126,900 (/20) | 11 / 10 / 16 / **19** / 16 / **18** | survivors: 101,520, 126,900 |
+| **101,520 report (winner)** | **90/120 = 75.0%** [65.0, 84.2] | trained 68/80 = 85.0%, held-out 22/40 = 55.0%; 1 distractor 80%, 2 distractors 70%; wrong-object 7; **wrong-bin 0** |
+| 126,900 report | 83/120 = 69.2% | trained 76.3%, held-out 55.0%; wrong-object 2 |
+| P1 126,900 on the same 120 trials | **0/120** | 110 never lifted anything |
+| 101,520 confirm (touched once) | 16/20 = 80% [60, 95] | wrong-object 0 |
+| control, no distractor: 101,520 / P1 126,900 | 17/20 / 14/20 | no cost on the old task visible at n = 20 |
+
+Failure causes by run (verified against the result files; `wrong_bin` occurs once in all P2 runs, in the control) and successes by
+condition (successes / trials):
+
+| set | checkpoint | n | success | never lifted | wrong object | wrong bin | unstable | timed out carrying | dropped outside | 1 dist. | 2 dist. | trained | held-out |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| screen | 50,760 | 20 | 11 | 6 | 0 | 0 | 0 | 2 | 1 | 6/10 | 5/10 | 11/20 | – |
+| screen | 76,140 | 20 | 10 | 3 | 1 | 0 | 1 | 4 | 1 | 4/10 | 6/10 | 10/20 | – |
+| screen | 88,830 | 20 | 16 | 2 | 0 | 0 | 0 | 2 | 0 | 9/10 | 7/10 | 16/20 | – |
+| screen | 101,520 | 20 | 19 | 1 | 0 | 0 | 0 | 0 | 0 | 10/10 | 9/10 | 19/20 | – |
+| screen | 114,210 | 20 | 16 | 2 | 0 | 0 | 0 | 2 | 0 | 8/10 | 8/10 | 16/20 | – |
+| screen | 126,900 | 20 | 18 | 2 | 0 | 0 | 0 | 0 | 0 | 10/10 | 8/10 | 18/20 | – |
+| report | 101,520 | 120 | 90 | 12 | 7 | 0 | 1 | 7 | 3 | 48/60 | 42/60 | 68/80 | 22/40 |
+| report | 126,900 | 120 | 83 | 24 | 2 | 0 | 0 | 10 | 1 | 46/60 | 37/60 | 61/80 | 22/40 |
+| report | P1 126,900 | 120 | 0 | 110 | 5 | 0 | 0 | 3 | 2 | 0/60 | 0/60 | 0/80 | 0/40 |
+| confirm | 101,520 | 20 | 16 | 3 | 0 | 0 | 0 | 1 | 0 | 8/10 | 8/10 | 16/20 | – |
+| control (0 dist.) | 101,520 | 20 | 17 | 0 | 0 | 1 | 0 | 2 | 0 | – | – | 17/20 | – |
+| control (0 dist.) | P1 126,900 | 20 | 14 | 2 | 0 | 0 | 0 | 4 | 0 | – | – | 14/20 | – |
+
+Only the screen survivors (101,520 and 126,900) advanced; the other four checkpoints are screen-only, and confirm ran once, on 101,520.
+By target object, 101,520 over all four tiers: can 28/28, bottle 26/28, cereal 24/28, lemon 23/28, bread 27/34, milk 14/34.
+
+Pre-registered criteria for 101,520: overall ≥70% **pass** (75.0%); wrong-object ≤5% **fail** (7/120 = 5.8%, [1.7, 11.7]);
+trained-vs-held-out gap ≤10 points **fail** (30 points); beats P1 with non-overlapping intervals **pass** (McNemar
+p = 1.6e-27). 101,520 vs 126,900: 15 vs 8 discordant trials, p = 0.21. Held-out cells: `bread→orange` 15/20,
+`milk→blue` 7/20 (milk is also weak when trained, so object difficulty and unseen pair are confounded).
+Full analysis: [PROPS_P2_EVALUATION_20261016.md](PROPS_P2_EVALUATION_20261016.md).
+
+**Fresh-layout re-test (2026-10-20, [PROPS_P2_RETEST_20261020.md](PROPS_P2_RETEST_20261020.md)), 101,520, same objects and layouts under both bin instructions.** 238 fresh paired layouts of milk and bread (2 of 120 milk layouts dropped as expert-infeasible): pooled unseen-pair penalty **2.5 points, 95% interval [−4.2, +9.2]** (layout-clustered bootstrap), i.e. *small, existence not shown* under the pre-registered reading. Milk 57.6% trained / 56.8% held-out, bread 80.8% / 76.7%. The P2 30-point gap compared different objects; on the same objects it is not reproduced. The P2 criterion 3 result (failed) is unchanged. The cell rates above (`milk→blue` 7/20 etc.) were small-sample noise: milk is 0.57 in both bins on 118 fresh layouts.
+
+**Diagnostics of those failures (2026-10-19, replay only,
+[PROPS_P2_DIAGNOSTICS_20261019.md](PROPS_P2_DIAGNOSTICS_20261019.md)).** The pre-registered failure taxonomy was **not
+produced**: replay is exact (440/440 trials), but its validation gate failed twice (0.225 with the expert envelope;
+0.486 / 0.634 against 0.80 with a cross-checkpoint success envelope, where identical policies would score only 0.605 /
+0.696 — the 0.80 was unattainable), and the spec's stop rule forbids a third definition. Envelope-free, descriptive,
+not pre-registered: of 101,520's 12 report never-lifted trials, all 12 closed the gripper and 9 held the target
+without lifting it (9 of 12 hands rose >2 cm after closing; 126,900: 7 of 24); never-lifted trials are not
+concentrated in layouts for 101,520 (p = 0.45) but are for 126,900 (p = 0.0001); wrong-object vs nearest-distractor
+distance is not supported at layout level (p = 0.17, 5 layouts); milk is 7 of the 12 never-lifted trials and fails at
+the hold, not the approach (closest approach and grasp position match its successes).
+
 ## Props P1 X-VLA, instruction sorting with bins that swap sides (2026-10-09) — measured, not sealed
 
 HF: [dataset](https://huggingface.co/datasets/VivekSai07/franka-panda-props-p1-540); [X-VLA checkpoint 126,900](https://huggingface.co/VivekSai07/xvla-franka-props-p1-126900); [archive details](HUGGING_FACE_ARTIFACTS.md#props-p1-instruction-sorting).

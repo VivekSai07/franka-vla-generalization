@@ -71,6 +71,32 @@ describes the layouts, not the sampling variability of the policy. Before callin
 "tight" or "consistent", check how many independent layouts it was computed over; a handful of
 trials from a handful of layouts describes between-layout variation, not measurement precision.
 
+## 8. Parallel evaluation: one process per share of trials, not one per checkpoint
+
+A serial evaluation is the cost of the longest failure times the number of trials (~70-100 s each
+on the props path), and the GPU idles while OSMesa renders. Rollouts are independent, so shard them.
+`experiments/xvla_props_p2_eval/` is the template:
+
+- **Shard the (checkpoint, trial) jobs interleaved** (`jobs[k::n]`), then order each shard by
+  checkpoint so a worker loads each policy once. Contiguous shards make one worker own the hard
+  trials of one checkpoint.
+- **One folder per trial**, written by exactly one worker; a separate `collect` merges them and is
+  `complete` only if every planned trial exists and matches the plan. No shared `result.json` to race on.
+- **Verify checkpoints once** (`prepare`: full inventory, seals, feasibility, writes a record), and have
+  each worker re-check only the marker hash, size and mtime. Eight workers each hashing 3.6 GB
+  weights is minutes of wasted CPU.
+- **Measure a worker in a smoke run before sizing the pool, then distrust the number.** X-VLA measured ~4.1 GB GPU
+  and ~4 cores with 2 workers; with 8 it needed ~7.3 GB after a checkpoint switch (one worker died of out of
+  memory) and, unpinned, thrashed the CPU (load 142 on 48 cores, no trial in 6 min). Pin each worker to its own cores
+  (`--cpuset-cpus`, `OMP_NUM_THREADS`), size by peak memory, leave GPU headroom, and rely on the resume.
+- **Run the expert feasibility pass unrendered and sharded**: 120 layouts took under a minute.
+- **Test the loop, not the constants**: stub policies through the real rollout; the expert's own recorded
+  actions replayed as the policy must succeed; and produce each failure class with real physics (an expert
+  that carries a distractor) rather than a fabricated trace.
+- Selection rules (survivors, winner, ties) live in code and are applied by a `decide` step, never by eye.
+- The driver polls `docker ps` (not `docker wait`), resumes an incomplete stage once, and stops loudly
+  if it is still incomplete. A resumed trial equals an uninterrupted one only because each trial reseeds itself.
+
 ## See also
 
 [diagnosing-policy-failures](../diagnosing-policy-failures/SKILL.md) once the rollouts are in and
