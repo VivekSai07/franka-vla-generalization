@@ -22,6 +22,27 @@ distractors; not comparable with any non-props row**. Intervals resample layouts
 | 101,520 confirm (touched once) | 16/20 = 80% [60, 95] | wrong-object 0 |
 | control, no distractor: 101,520 / P1 126,900 | 17/20 / 14/20 | no cost on the old task visible at n = 20 |
 
+Failure causes by run (verified against the result files; `wrong_bin` occurs once in all P2 runs, in the control) and successes by
+condition (successes / trials):
+
+| set | checkpoint | n | success | never lifted | wrong object | wrong bin | unstable | timed out carrying | dropped outside | 1 dist. | 2 dist. | trained | held-out |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| screen | 50,760 | 20 | 11 | 6 | 0 | 0 | 0 | 2 | 1 | 6/10 | 5/10 | 11/20 | – |
+| screen | 76,140 | 20 | 10 | 3 | 1 | 0 | 1 | 4 | 1 | 4/10 | 6/10 | 10/20 | – |
+| screen | 88,830 | 20 | 16 | 2 | 0 | 0 | 0 | 2 | 0 | 9/10 | 7/10 | 16/20 | – |
+| screen | 101,520 | 20 | 19 | 1 | 0 | 0 | 0 | 0 | 0 | 10/10 | 9/10 | 19/20 | – |
+| screen | 114,210 | 20 | 16 | 2 | 0 | 0 | 0 | 2 | 0 | 8/10 | 8/10 | 16/20 | – |
+| screen | 126,900 | 20 | 18 | 2 | 0 | 0 | 0 | 0 | 0 | 10/10 | 8/10 | 18/20 | – |
+| report | 101,520 | 120 | 90 | 12 | 7 | 0 | 1 | 7 | 3 | 48/60 | 42/60 | 68/80 | 22/40 |
+| report | 126,900 | 120 | 83 | 24 | 2 | 0 | 0 | 10 | 1 | 46/60 | 37/60 | 61/80 | 22/40 |
+| report | P1 126,900 | 120 | 0 | 110 | 5 | 0 | 0 | 3 | 2 | 0/60 | 0/60 | 0/80 | 0/40 |
+| confirm | 101,520 | 20 | 16 | 3 | 0 | 0 | 0 | 1 | 0 | 8/10 | 8/10 | 16/20 | – |
+| control (0 dist.) | 101,520 | 20 | 17 | 0 | 0 | 1 | 0 | 2 | 0 | – | – | 17/20 | – |
+| control (0 dist.) | P1 126,900 | 20 | 14 | 2 | 0 | 0 | 0 | 4 | 0 | – | – | 14/20 | – |
+
+Only the screen survivors (101,520 and 126,900) advanced; the other four checkpoints are screen-only, and confirm ran once, on 101,520.
+By target object, 101,520 over all four tiers: can 28/28, bottle 26/28, cereal 24/28, lemon 23/28, bread 27/34, milk 14/34.
+
 Pre-registered criteria for 101,520: overall ≥70% **pass** (75.0%); wrong-object ≤5% **fail** (7/120 = 5.8%, [1.7, 11.7]);
 trained-vs-held-out gap ≤10 points **fail** (30 points); beats P1 with non-overlapping intervals **pass** (McNemar
 p = 1.6e-27). 101,520 vs 126,900: 15 vs 8 discordant trials, p = 0.21. Held-out cells: `bread→orange` 15/20,
