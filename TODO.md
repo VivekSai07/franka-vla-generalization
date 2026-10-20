@@ -1,8 +1,16 @@
 # SmolVLA / X-VLA Franka TODO
 
-## Where things stand (2026-10-16)
+## Where things stand (2026-10-20)
 
-- **Now: props P2 (instruction sorting with 1–2 distractors) trained and evaluated 2026-10-16: two of the four
+- **Now: props P3 (Food vs Drinks, fixed prompt `sort the item`) dataset collected and sealed 2026-10-20: 544/544 episodes,
+  0 rejected, fingerprint `6430d34e…d151acf`; not yet trained.** Decisions D1–D7 confirmed by the user 2026-10-20 (unchanged).
+  Expert re-test 286/288 = 99.3% (lemon with the blue bin on the left is the only miss), the 16-worker thread cap proven
+  pixel-neutral, 46 min 43 s in 16 parallel shards, seal re-verified in a second process (held-out objects bottle and cereal: 0
+  episodes, checked from the recorded arrays). Report: [docs/PROPS_P3_COLLECTION_20261020.md](docs/PROPS_P3_COLLECTION_20261020.md);
+  branch `feat/props-p3` (not pushed). **Open:** the training package (fork of `xvla_props_p2` with the instruction machinery
+  re-derived for one prompt), the evaluation package (288 reserved layouts, bin-choice gate), and disk (71 GB free; P2 snapshots
+  were 10.6 GB each: any reclaim is the user's call).
+- **Props P2 (instruction sorting with 1–2 distractors) trained and evaluated 2026-10-16: two of the four
   pre-registered criteria met.** Dataset sealed 2026-10-13 (540/540, fingerprint `b1d642b3…f4d898`), trained 126,900
   updates. Winner by the fixed rule, checkpoint 101,520, report tier 90/120 = **75.0%** [65.0, 84.2]: overall ≥70%
   **pass**, beats P1 126,900 (**0/120**) **pass**, wrong-object ≤5% **fail** (7/120 = 5.8%, one trial over),
@@ -436,11 +444,12 @@ Two-phase project. User accepted the one-variable-per-run attribution trade-off:
         an explicit tolerance decided before data; (3) EGL vs OSMesa differ on 72% of pixels (mean 1.2,
         max 105 levels), so training data and evaluation rollouts must use the same renderer, and the
         switch must not coincide with another variable. Also worth it for evaluation, which renders too.
-      - **P3 — rule-based Food vs Drinks — spec and plan drafted 2026-10-19, revised 2026-10-20 (bin-choice gate, power-based layout counts), nothing built**
+      - **P3 — rule-based Food vs Drinks — dataset sealed 2026-10-20 (544/544), not yet trained**
         ([spec](docs/superpowers/specs/2026-10-19-props-p3-food-drinks-design.md),
         [collection plan](docs/superpowers/plans/2026-10-19-props-p3-collection.md),
+        [collection report](docs/PROPS_P3_COLLECTION_20261020.md),
         [handoff to a new session](docs/superpowers/handoffs/2026-10-19-props-p3-handoff.md)): fixed prompt, one object, P0's
-        blue/orange bins (drinks orange, food blue), bottle and cereal held out; decisions D1–D7 await the user. Original
+        blue/orange bins (drinks orange, food blue), bottle and cereal held out; decisions D1–D7 confirmed 2026-10-20. Original
         roadmap text: two visually distinct containers. First one object per
         episode with a fixed prompt; then held-out objects as a stretch test (zero-shot category from
         six objects is a long shot and is read as exploratory). Multi-object sequential sorting only

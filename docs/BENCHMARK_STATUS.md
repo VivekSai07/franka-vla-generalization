@@ -1,5 +1,15 @@
 # Franka benchmark: start here
 
+## Props P3 dataset sealed: 544 Food-vs-Drinks episodes, 46 min 43 s - 2026-10-20
+
+`experiments/props_p3_data/` (branch `feat/props-p3`): one object per episode, the fixed prompt `sort the item`, P0's bins (drinks
+orange, food blue, sides swap); can and milk (drinks), bread and lemon (food) trained, bottle and cereal never collected (user
+confirmed D1–D7 unchanged the same day). 544/544 admitted, 0 rejected, 0 substitutions, fingerprint `6430d34e…d151acf`, re-verified in a
+second process from the recorded arrays. Expert re-test 286/288 = 99.3% (only misses: lemon, blue bin on the left); the thread cap for
+16 pinned workers is pixel-neutral (12 rendered attempts, capped against default, byte-equal). 16 parallel CPU-rendered shards, 12.4 h of
+serial work. The first launch died at once (shards directory not created, nothing written; FAILURES #59). Not a policy result: training and
+evaluation plans are next. Report: [PROPS_P3_COLLECTION_20261020.md](PROPS_P3_COLLECTION_20261020.md).
+
 ## Props P2 fresh-layout re-test: the unseen-pair penalty is small on the same objects - 2026-10-20
 
 Checkpoint 101,520 from the archive bundle on 240 fresh layouts of milk and bread, each under its trained and its held-out bin (480 rollouts, 8 pinned workers, 4 expert-infeasible entries dropped as 2 whole pairs). Pooled penalty **2.5 points [−4.2, +9.2]** over 238 pairs: small, existence not shown (pre-registered). Milk 57.6% / 56.8%, bread 80.8% / 76.7%. The design came from a power analysis before any rollout (the milk-versus-bread contrast first proposed was unresolvable). One deviation: the evaluator's hard-coded 120-layout feasibility check was replaced by a re-test loader, the evaluator itself unchanged. Report: [PROPS_P2_RETEST_20261020.md](PROPS_P2_RETEST_20261020.md).

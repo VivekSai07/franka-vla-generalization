@@ -124,6 +124,18 @@ approach, never-lifted against successes) must be re-read per object before it i
 where the target never rose more than 1.2 cm; (e) test the branch the real data does not reach: the passing-gate path crashed on
 an object that appears only as a distractor and was found only because it was given a test.
 
+59. **A collection launch died in all 16 containers at once because the shards directory did not exist, and the tests could not have
+seen it.** P3's `--collect` (forked from P2) calls `shutil.disk_usage(shards_dir)` before it creates the shard; the pilot had worked
+because its directory had been made by hand, and the real launcher did not make one. `collect_shard`, `gate_shard` and `determinism`
+need the robosuite image, so none of the 77 simulator-free tests, and none of the mutation checks, executed that line; the pilot
+ran it only because of the manual `mkdir`. Nothing was written (the failure precedes the shard's own `mkdir`), the 16 dead containers
+were removed and the launch repeated with the directory created by the launcher; the code was left alone because from `--collect`
+onward it is hash-bound. **Lessons:** (a) a pilot proves only the path it was launched through: launch it the way the real run will
+be launched, including every directory a launcher is assumed to make; (b) check each container's state a minute after a mass
+launch (the first poll found `running=0`, which is what showed it), not after the first interval; (c) the same mutation pass found
+a dead check and several unasserted ones in the merge, and a merge path whose `verify` call no test required: a check that no test
+can fail is a candidate for deletion or for a test, not for trust.
+
 Broader lessons — every "just increment a counter" or "just leave state alone on retry" assumption in the fixed-layout pipeline broke under broad_workspace retries. Rejections need explicit cleanup for every piece of shared state (LeRobot buffer + PNG dir + attempts dir semantics + admit-count invariant). And a result is only interpretable once you know what the *absence* of the treatment scores on the same protocol.
 
 **Recurring meta-lesson — a green test suite is not evidence.** Six separate times (#10, #15, #20, #24, and twice while porting eval packages) the tests passed while the thing that actually runs was broken, because the tests exercised a *fixture*, a *constant*, the *wrong module*, or every path *except* the one the job takes. When adding a regression test, confirm it fails against the unfixed code. When forking a package, run the `symtable` undefined-name check from #24 before spending GPU time.

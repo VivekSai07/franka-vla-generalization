@@ -24,7 +24,9 @@ see [docs/PROPS_P1_EVALUATION_20261009.md](docs/PROPS_P1_EVALUATION_20261009.md)
 75.0% (90/120) on checkpoint 101,520, two of four pre-registered criteria met, see
 [docs/PROPS_P2_EVALUATION_20261016.md](docs/PROPS_P2_EVALUATION_20261016.md); replay diagnostics of its failures
 2026-10-19, [docs/PROPS_P2_DIAGNOSTICS_20261019.md](docs/PROPS_P2_DIAGNOSTICS_20261019.md); fresh-layout re-test 2026-10-20,
-[docs/PROPS_P2_RETEST_20261020.md](docs/PROPS_P2_RETEST_20261020.md)). See [README.md](README.md) for results,
+[docs/PROPS_P2_RETEST_20261020.md](docs/PROPS_P2_RETEST_20261020.md)). The P3 Food-vs-Drinks dataset (fixed prompt, 544 episodes,
+bottle and cereal never collected) was collected and sealed 2026-10-20, not yet trained, see
+[docs/PROPS_P3_COLLECTION_20261020.md](docs/PROPS_P3_COLLECTION_20261020.md). See [README.md](README.md) for results,
 [TODO.md](TODO.md) for what is open, and [HF artifacts](docs/HUGGING_FACE_ARTIFACTS.md)
 for the exact published datasets/checkpoints and re-evaluation dependencies.
 
@@ -136,6 +138,10 @@ results. Do not edit them even to fix a stale statement:
   `experiments/props_scene/*.py`, `experiments/robosuite_scene/*.py`, the P2 spec
   (`docs/superpowers/specs/2026-10-13-props-p2-distractors-design.md`) and the P2 collection plan:
   the props P2 seal's `provenance()` hashes them (sealed 2026-10-13)
+- `experiments/props_p3_data/` (every `.py` including tests, and its README), and through it
+  `experiments/props_scene/*.py`, `experiments/robosuite_scene/*.py`, the P3 spec
+  (`docs/superpowers/specs/2026-10-19-props-p3-food-drinks-design.md`) and the P3 collection plan
+  (`docs/superpowers/plans/2026-10-19-props-p3-collection.md`): the props P3 seal's `provenance()` hashes them (sealed 2026-10-20)
 
 Before editing anything under `experiments/`, check whether it is in `SOURCE_FILES` or reachable
 from `provenance()`. Package READMEs are always in both, except in `experiments/robosuite_sim2sim/`
