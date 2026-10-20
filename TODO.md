@@ -19,9 +19,12 @@
   unattainable, FAILURES #58). What it did show, descriptive and untested: all 12 never-lifted report trials of 101,520
   closed the gripper, 9 held the target without lifting it; milk (7 of the 12) fails at the hold, not the approach;
   no layout concentration for 101,520; wrong-object association not supported (p = 0.17).
-  **Open:** whether the held-out gap is "unseen pair" or "hard object" (milk is weak even when trained; a fresh-layout
-  re-test that holds milk out in the other bin separates them), why a closed, holding gripper does not lift, and whether
-  to publish P2 (the P2 branch was merged to `main` by the user).
+  **Fresh-layout re-test 2026-10-20** ([report](docs/PROPS_P2_RETEST_20261020.md)), 101,520, 238 paired layouts of milk and
+  bread under both bin instructions: pooled unseen-pair penalty **2.5 points [−4.2, +9.2]**, "small, existence not shown"
+  (pre-registered reading); milk 57.6% / 56.8%, bread 80.8% / 76.7%. The P2 30-point gap compared different objects; criterion 3
+  stays failed. Answers the "unseen pair or hard object" question: mostly object.
+  **Open:** why a closed, holding gripper does not lift (milk fails at the hold), and whether to publish P2 (the P2 branch was
+  merged to `main` by the user).
 - **Props P1 trained and evaluated (2026-10-09): confirm 100% (20/20), report 75% (60/80) on checkpoint
   126,900**; zero wrong-bin outcomes in 480 report trials. Reports:
   [evaluation](docs/PROPS_P1_EVALUATION_20261009.md), [training](docs/PROPS_P1_TRAINING_20261009.md),

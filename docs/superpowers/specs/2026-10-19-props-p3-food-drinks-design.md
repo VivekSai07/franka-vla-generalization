@@ -19,7 +19,8 @@ in one, food in the other), when the containers swap sides, and does that carry 
 | P1: the policy reads a named bin colour: **0 wrong-bin outcomes in 480 report trials**, held-out pairs not below trained | RESULTS (P1) |
 | P2: with 1–2 distractors 75.0% [65.0, 84.2] report; trained 85.0%, held-out 55.0%; wrong-bin 0 of 120; wrong-object 7 of 120 | RESULTS (P2) |
 | P2 per target object, all tiers, 101,520: can 28/28, bottle 26/28, cereal 24/28, lemon 23/28, bread 27/34, **milk 14/34** | computed from the P2 evaluation results |
-| milk is weak **even in its trained pair** (`milk→orange` 7/14) and fails at the hold, not the approach | P2 diagnostics |
+| milk is weak **even in its trained pair** (`milk→orange` 7/14 in P2; 57.6% on 118 fresh layouts in the re-test) and fails at the hold, not the approach | P2 diagnostics, P2 re-test |
+| on the same objects and layouts the trained-versus-held-out pair penalty is small: 2.5 points [−4.2, +9.2] | P2 re-test (2026-10-20) |
 | P1's confirm winner had an arrangement split: blue-left 85% against blue-right 65% | RESULTS (P1) |
 | the expert passes its gate on all six objects: P0 283/288 (98.3%), P2 re-test 284/288 (98.6%) | P0, P2 collection reports |
 | 540 P2 episodes collect in 54 min with 12 parallel OSMesa shards; training ran ~0.52 s/update (projected ~18.5 h for 126,900) | P2 collection, training notes |

@@ -59,14 +59,7 @@ checkpoint scores 0/120 on the same trials. P2 is closed; the user merged `feat/
    run**, and **the P2 checkpoints must not be evaluated under EGL.** (`docs/EGL_RENDERING_CHECK_20261019.md` (on branch `feat/egl-rendering` until merged))
 3. **P3 spec and plan** (drafts, this commit).
 
-**Not started: sub-project B**, a fresh-layout re-test of checkpoint 101,520 on milk. The user decided: milk-focused, fresh
-layouts, and the decision rule is **milk→blue (held out) against a matched object (bread→orange, the other held-out cell) on the
-same fresh layouts**. A cleaner contrast adds the two trained cells (milk→orange, bread→blue), so the quantity is a
-difference of differences; that is a suggestion, not a decision. Still to do: a spec with pre-registered numbers (the user wants
-to set them; **compute what the sample size permits before fixing any threshold**, see lessons), new reserved layouts (the P2
-`plan.json` is sealed and hash-bound: a new plan, not an edit), checkpoint verification from the bundle (`verify_checkpoints`
-cannot pass in the repo because the intermediate weights were deleted), OSMesa only so the numbers compare with P2. The user's
-order was: C (EGL) and D (this) first, then B. B and P3 training both need the GPU.
+**Sub-project B (fresh-layout re-test) is done** (2026-10-20, `docs/PROPS_P2_RETEST_20261020.md`, package `experiments/xvla_props_p2_retest/`). After a power analysis the user chose the pooled paired penalty as primary (milk-versus-bread was unresolvable): 238 paired layouts, penalty **2.5 points [−4.2, +9.2]**, "small, existence not shown" under the pre-registered reading. The P2 30-point held-out gap therefore mostly reflects which objects the cells contain; criterion 3 stays failed. Milk is still the weak object (57% against bread's 79%). B and P3 training both need the GPU: it is free now.
 
 ## What to do first (state checks; do not assume)
 
@@ -163,7 +156,7 @@ user has not confirmed.**
 ## Open decisions for the user
 
 1. Confirm or change P3 decisions D1–D7 and the proposed success thresholds (they are pre-registration).
-2. B: numbers for the pre-registered rule, and whether to include the two trained cells.
+2. ~~B: numbers for the pre-registered rule~~ done 2026-10-20 (see above).
 3. Push and merge `feat/props-p2-followup` and `feat/egl-rendering` (the user does it; this machine cannot).
 4. Whether to reclaim `outputs/egl_rendering_check/` and other scratch before P3 training (about 18.5 h of projected training
    needs the snapshots' space: 10.6 GB each in P2).

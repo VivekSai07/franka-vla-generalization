@@ -1,5 +1,9 @@
 # Franka benchmark: start here
 
+## Props P2 fresh-layout re-test: the unseen-pair penalty is small on the same objects - 2026-10-20
+
+Checkpoint 101,520 from the archive bundle on 240 fresh layouts of milk and bread, each under its trained and its held-out bin (480 rollouts, 8 pinned workers, 4 expert-infeasible entries dropped as 2 whole pairs). Pooled penalty **2.5 points [−4.2, +9.2]** over 238 pairs: small, existence not shown (pre-registered). Milk 57.6% / 56.8%, bread 80.8% / 76.7%. The design came from a power analysis before any rollout (the milk-versus-bread contrast first proposed was unresolvable). One deviation: the evaluator's hard-coded 120-layout feasibility check was replaced by a re-test loader, the evaluator itself unchanged. Report: [PROPS_P2_RETEST_20261020.md](PROPS_P2_RETEST_20261020.md).
+
 ## Props P2 failure diagnostics: replay is exact, the pre-registered taxonomy was not produced - 2026-10-19
 
 Replay-only analysis of the 440 recorded P2/P1 trials (`experiments/xvla_props_p2_eval/diagnostics/`, branch

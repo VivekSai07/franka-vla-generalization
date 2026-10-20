@@ -28,6 +28,8 @@ p = 1.6e-27). 101,520 vs 126,900: 15 vs 8 discordant trials, p = 0.21. Held-out 
 `milk→blue` 7/20 (milk is also weak when trained, so object difficulty and unseen pair are confounded).
 Full analysis: [PROPS_P2_EVALUATION_20261016.md](PROPS_P2_EVALUATION_20261016.md).
 
+**Fresh-layout re-test (2026-10-20, [PROPS_P2_RETEST_20261020.md](PROPS_P2_RETEST_20261020.md)), 101,520, same objects and layouts under both bin instructions.** 238 fresh paired layouts of milk and bread (2 of 120 milk layouts dropped as expert-infeasible): pooled unseen-pair penalty **2.5 points, 95% interval [−4.2, +9.2]** (layout-clustered bootstrap), i.e. *small, existence not shown* under the pre-registered reading. Milk 57.6% trained / 56.8% held-out, bread 80.8% / 76.7%. The P2 30-point gap compared different objects; on the same objects it is not reproduced. The P2 criterion 3 result (failed) is unchanged. The cell rates above (`milk→blue` 7/20 etc.) were small-sample noise: milk is 0.57 in both bins on 118 fresh layouts.
+
 **Diagnostics of those failures (2026-10-19, replay only,
 [PROPS_P2_DIAGNOSTICS_20261019.md](PROPS_P2_DIAGNOSTICS_20261019.md)).** The pre-registered failure taxonomy was **not
 produced**: replay is exact (440/440 trials), but its validation gate failed twice (0.225 with the expert envelope;

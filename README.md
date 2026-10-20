@@ -61,8 +61,9 @@ Pre-registered criteria — 2 of 4 met:
 - **Zero wrong-bin outcomes in 120 trials** — bin colour generalises to held-out cells.
 - **Object selection is largely solved, not fully** — 7 wrong-object in 120; bread and milk
   objects show lower pick rates than props in P1.
-- The wide trained/held-out gap (30 points) and the wrong-object overshoot are the open issues
-  for P3.
+- The wide trained/held-out gap (30 points) and the wrong-object overshoot were the open issues for P3. A 2026-10-20 fresh-layout
+  re-test on the same objects (milk, bread) and layouts found a pooled unseen-pair penalty of 2.5 points [−4.2, +9.2], so the 30
+  points mostly reflect which objects the cells contain ([report](docs/PROPS_P2_RETEST_20261020.md)); criterion 3 stays failed.
 - 101,520 and 126,900 are statistically tied (McNemar p = 0.21); the pre-registered rule picked
   101,520 as the earlier of the two.
 
