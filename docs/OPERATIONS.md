@@ -322,6 +322,12 @@ user's go-ahead, the rest went too: B3's four unbundled intermediate checkpoints
 checkpoints directory of the superseded `xvla_..._localvaried_v1` run (21 GB plus 7 GB). B3 keeps steps 124,800 and 156,000 (bundled);
 B2 keeps no checkpoint on RTX. `outputs/` went from 292 GB to 53 GB over the day.
 
+**Reclaimed 2026-10-21 (user-approved, 13 GB; free 50 to 63 GiB):** the four kept weight files of B3 (steps 124,800 and
+156,000) and P1 (88,830 and 126,900), all three hardlinks of each (`outputs/train/...`, `downloads_20261005/b3_robosuite/`,
+`downloads_20261009/props_p1/` incl. `hf_upload/`). Both are on the Hub and were verified on Windows; re-evaluate from the
+Hub download. Run records, results and the bundles' runtime/evidence files stay. The `xvla_base_bundle` is not touched.
+The user's HF cache `~/.cache/huggingface` (68 GB) is Qwen models of another project; the UnifoLM entries in it are empty stubs.
+
 **Disk.** As of 2026-10-17: 879 GB total, **248 GB free (71% full)** after the reclaim below (it was 59 GB, 94%; 203 GB before the
 P1/P2 intermediates went).
 As of 2026-10-05: 879 GB total, ~96 GB free (89% full). Check `df -h .` before

@@ -7,8 +7,10 @@
   checks re-derived and mutation-tested) and evaluation `experiments/xvla_props_p3_eval/` (288 reserved layouts, one seed each, the
   pre-registered bin-choice criteria, a real-physics test of every classifier path), driver `scripts/xvla_props_p3_eval.sh`, plan
   [docs/superpowers/plans/2026-10-21-props-p3-training-eval.md](docs/superpowers/plans/2026-10-21-props-p3-training-eval.md). **Open, the
-  user's:** the checkpoint-selection rule (trained-object layouts only; the spec did not state it), disk before `--preflight` (54 GB free;
-  the run needs about 61 GB at peak), and the go-ahead for `--check` then the GPU gates. Expert feasibility of the 288 reserved layouts ran
+  user's:** the checkpoint-selection rule (trained-object layouts only; the spec did not state it), disk (`--check` passed 2026-10-21; 63 GB free after the P1/B3
+  checkpoint reclaim, but `--train` re-reads the `_preflight` and `_resumeproof` checkpoints, so those two scratches (~24 GB
+  each, estimated from P2) stay on disk beside the run's ~61 GB peak: about 110 GB in all, and the night script wants 70 GiB
+  free at `--train` launch), and the go-ahead for the GPU gates. Expert feasibility of the 288 reserved layouts ran
   (287 feasible; `report_062`, a bottle layout, is dropped and counted).
 - **Props P3 (Food vs Drinks, fixed prompt `sort the item`) dataset collected and sealed 2026-10-20: 544/544 episodes,
   0 rejected, fingerprint `6430d34e…d151acf`; not yet trained.** Decisions D1–D7 confirmed by the user 2026-10-20 (unchanged).
