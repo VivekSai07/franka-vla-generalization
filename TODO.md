@@ -13,7 +13,7 @@
   criteria were not loosened. Complete archive bundle `outputs/downloads_20261017/props_p2/` (14 GB: dataset, both kept
   checkpoints 101,520 and 126,900, all 540 trials, runtime, code snapshot; weights, seal and 540/540 trials hash-verified, and both weights hash-verified on Windows 2026-10-17;
   smoke re-evaluation from the bundle alone in a clean offline container reproduced both trials bit for bit). Branch
-  `feat/props-p2`: pushed to origin (2026-10-17; the RTX machine has no GitHub credentials, so the push and the pull request are made from elsewhere); pull request and merge are the user's step, not merged.
+  `feat/props-p2`: pushed to origin (2026-10-17; the RTX machine has no GitHub credentials, so the push and the pull request are made from elsewhere); merged into `main` by the user.
   **Diagnostics 2026-10-19** ([report](docs/PROPS_P2_DIAGNOSTICS_20261019.md), replay only): the pre-registered failure
   taxonomy was not produced (replay exact, 440/440; the validation gate failed twice and its 0.80 threshold was
   unattainable, FAILURES #58). What it did show, descriptive and untested: all 12 never-lifted report trials of 101,520
@@ -410,7 +410,7 @@ Two-phase project. User accepted the one-variable-per-run attribution trade-off:
         process; 12 parallel shards, 54 min wall-clock (10.8 h of serial work).** Report:
         [docs/PROPS_P2_COLLECTION_20261013.md](docs/PROPS_P2_COLLECTION_20261013.md). Spec (now bound):
         [docs/superpowers/specs/2026-10-13-props-p2-distractors-design.md](docs/superpowers/specs/2026-10-13-props-p2-distractors-design.md).
-        Branch `feat/props-p2`, not merged. Training package `experiments/xvla_props_p2/` (P1's recipe,
+        Branch `feat/props-p2`, merged into `main`. Training package `experiments/xvla_props_p2/` (P1's recipe,
         byte-equal faster loop, overnight pause, thermal guard) passed every gate 2026-10-13 and trained
         126,900 updates. **Evaluated 2026-10-16** with `experiments/xvla_props_p2_eval/` (parallel workers,
         `wrong_object` decided by what is lifted, 120/120 layouts expert-feasible): winner 101,520, report
@@ -426,8 +426,14 @@ Two-phase project. User accepted the one-variable-per-run attribution trade-off:
         option A):** contiguous slot blocks per worker, merged in slot order, OSMesa kept so pixels and
         byte-determinism match P1. Measured on one P1 episode: physics 0.6 s, OSMesa rendering ~37 s,
         frame write + AV1 encode 22.9 s; P1 ran all of it serially (9 h 38 m).
-      - [ ] **GPU (EGL) rendering — deferred, do at a phase boundary with its own side-by-side check,
-        never mixed into a phase's other changes** (user, 2026-10-13). Measured 2026-10-13 on one P1
+      - [x] **GPU (EGL) image built and checked 2026-10-19 (merged into `main` 2026-10-21):** one P1 attempt,
+        five runs: OSMesa in the new image is byte-identical to the base image, physics and recorded data are bit-identical
+        across all runs, EGL repeats differ by 1 to 2 pixels of 904 images (1 level), 7.7× faster (4.7 s against 36.5 s).
+        New image `sha256:fec83621…ade5`. **Still not adopted:** EGL and OSMesa frames differ on 50% of pixels, so a phase must
+        use one renderer end to end, the P2 checkpoints must not be evaluated under EGL without a paired test, and the
+        byte-equal determinism gate must be replaced for that phase.
+        [docs/EGL_RENDERING_CHECK_20261019.md](docs/EGL_RENDERING_CHECK_20261019.md). Original deferral (user, 2026-10-13), kept:
+        **do it at a phase boundary with its own side-by-side check, never mixed into a phase's other changes**. Measured 2026-10-13 on one P1
         episode (probe scripts in gitignored `outputs/p2_speed_probe/`): EGL 2.2 s vs OSMesa 37.8 s per
         attempt (~17×), same expert outcome. Three things to settle first: (1) the robosuite image lacks
         `libEGL.so.1` (Ubuntu `libegl1`; the NVIDIA EGL driver is injected by the runtime) — adding it

@@ -14,8 +14,7 @@ history**, and a number copied here may have gone stale. Verify against [TODO.md
 > `docs/superpowers/handoffs/2026-10-19-props-p3-handoff.md` (this file), the P3 spec
 > `docs/superpowers/specs/2026-10-19-props-p3-food-drinks-design.md` and plan
 > `docs/superpowers/plans/2026-10-19-props-p3-collection.md`, and the reports
-> `docs/PROPS_P2_EVALUATION_20261016.md`, `docs/PROPS_P2_DIAGNOSTICS_20261019.md`, `docs/EGL_RENDERING_CHECK_20261019.md` (if it is not in your tree yet it lives on branch
-> `feat/egl-rendering`: read it with `git show feat/egl-rendering:docs/EGL_RENDERING_CHECK_20261019.md`; do not check the branch out).
+> `docs/PROPS_P2_EVALUATION_20261016.md`, `docs/PROPS_P2_DIAGNOSTICS_20261019.md`, `docs/EGL_RENDERING_CHECK_20261019.md`.
 > Load the skills under `.github/skills/` when their topic comes up. **Your first job is not to write code:** run the state
 > checks in the handoff, then go through the spec's decisions D1–D7 with the user and ask what is unclear. The P3 spec and plan
 > are drafts written without running anything; treat every assumption in them as unverified. Hold yourself to the repo's rules:
@@ -51,12 +50,11 @@ checkpoint scores 0/120 on the same trials. P2 is closed; the user merged `feat/
    findings (descriptive, not pre-registered): all 12 never-lifted report trials of 101,520 closed the gripper, 9 held the target
    without lifting; milk is 7 of those 12 and fails at the hold, not the approach; no layout concentration for 101,520 (p = 0.45);
    wrong-object association not supported (p = 0.17). FAILURES #58.
-2. **EGL (GPU) rendering check** on branch `feat/egl-rendering` (worktree `.worktrees/feat-egl-rendering`, from `origin/main`,
-   **not pushed, not merged**): new image `vla-robosuite:1.5.2-mj3.4.0-egl`
+2. **EGL (GPU) rendering check** (package `experiments/egl_rendering/`; merged into `main` 2026-10-21 from `feat/egl-rendering`): new image `vla-robosuite:1.5.2-mj3.4.0-egl`
    `sha256:fec83621c46bdae862a60dbfa32607226f8e4afb7610f3b85acf1094a757ade5` (robosuite image + `libegl1`, built through the host
    proxy as build args). OSMesa unchanged byte for byte; physics bit-identical across renderers; EGL repeats differ by 1 to 2
    pixels of 904 images; 7.7× faster; **but EGL and OSMesa frames differ on half the pixels.** Check-only: **not adopted for any
-   run**, and **the P2 checkpoints must not be evaluated under EGL.** (`docs/EGL_RENDERING_CHECK_20261019.md` (on branch `feat/egl-rendering` until merged))
+   run**, and **the P2 checkpoints must not be evaluated under EGL.** ([report](../../EGL_RENDERING_CHECK_20261019.md))
 3. **P3 spec and plan**, revised 2026-10-20 at the user's request after the re-test: the gate is now bin choice on trained objects, not overall success; one seed per layout; 288 reserved layouts with 80 per held-out object; a power table fixes the held-out rule (the first draft had almost no power: about 20 independent held-out layouts per object). D1–D7 are otherwise unchanged and still need confirming.
 
 **Sub-project B (fresh-layout re-test) is done** (2026-10-20, `docs/PROPS_P2_RETEST_20261020.md`, package `experiments/xvla_props_p2_retest/`). After a power analysis the user chose the pooled paired penalty as primary (milk-versus-bread was unresolvable): 238 paired layouts, penalty **2.5 points [−4.2, +9.2]**, "small, existence not shown" under the pre-registered reading. The P2 30-point held-out gap therefore mostly reflects which objects the cells contain; criterion 3 stays failed. Milk is still the weak object (57% against bread's 79%). B and P3 training both need the GPU: it is free now.
@@ -69,8 +67,8 @@ docker ps -a --format '{{.Names}} {{.Image}} {{.Status}}'      # any live contai
 df -h /home | tail -1                                           # was 103 GB free, 88% full
 ```
 
-- `feat/props-p2-followup` and `feat/egl-rendering`: ask the user whether they were pushed and merged. Create the P3 branch from
-  whatever contains the diagnostics and docs: `git worktree add -b feat/props-p3 .worktrees/feat-props-p3 <base>`. **Never
+- `feat/props-p2-followup` and `feat/egl-rendering` are both merged into `main` (2026-10-21; push status is the user's). Create the P3
+  branch from `main`: `git worktree add -b feat/props-p3 .worktrees/feat-props-p3 <base>`. **Never
   `git checkout`/`switch`/`reset` in a directory a container has mounted** (FAILURES #34 crashed a live 200-episode collection).
 - `git stash@{0}` holds the user's own edit to `AGENTS.md` (removes the HF-artifacts link), deliberately not committed. Leave it.
 - Local `main` is behind `origin/main` by 24 commits; do not build on it.
@@ -157,7 +155,7 @@ user has not confirmed.**
 
 1. Confirm or change P3 decisions D1–D7 and the proposed success thresholds (they are pre-registration).
 2. ~~B: numbers for the pre-registered rule~~ done 2026-10-20 (see above).
-3. Push and merge `feat/props-p2-followup` and `feat/egl-rendering` (the user does it; this machine cannot).
+3. ~~Push and merge `feat/props-p2-followup` and `feat/egl-rendering`~~ done: both are in `main` (the EGL merge is local until the user pushes).
 4. Whether to reclaim `outputs/egl_rendering_check/` and other scratch before P3 training (about 18.5 h of projected training
    needs the snapshots' space: 10.6 GB each in P2).
 5. Whether to publish the P2 diagnostics or any P2 artifact.

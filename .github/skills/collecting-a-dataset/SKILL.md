@@ -78,9 +78,11 @@ and only a resumable run makes that recoverable rather than a total loss.
 **Profile one episode before choosing a speed-up.** Time each stage in the image you will run:
 props P1 was physics 0.6 s, OSMesa rendering ~37 s, frame write + AV1 encode 23 s. Rendering and
 encoding are per-episode CPU work with nothing shared between episodes, so the win is running
-episodes side by side, not a faster renderer. GPU (EGL) rendering was 17× faster per attempt but
-needs an image change, is not byte-deterministic (1-pixel differences run to run) and renders
-differently from OSMesa — deferred (TODO) because it adds variables a sealed dataset cannot carry.
+episodes side by side, not a faster renderer. GPU (EGL) rendering is 7.7× faster per attempt
+(measured 2026-10-19 on branch `feat/egl-rendering`, new image `sha256:fec83621…ade5`, physics bit-identical), but it is not
+byte-deterministic (1 to 2 pixels of 904 images differ run to run) and renders about half the pixels differently from OSMesa —
+a phase must adopt it end to end (collection, training, evaluation) and replace the byte-equal determinism gate
+([EGL_RENDERING_CHECK_20261019.md](../../../docs/EGL_RENDERING_CHECK_20261019.md)). Never mix it into a phase's other changes.
 
 The pattern (`experiments/props_p2_data/`, copy it):
 
