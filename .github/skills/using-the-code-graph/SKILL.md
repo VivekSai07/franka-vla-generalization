@@ -35,7 +35,10 @@ structure, an LLM for summaries). It is a **navigation aid**, not a source of tr
 ## 3. Generating and refreshing (manual only)
 
 Needs Node >= 22 and pnpm >= 10 on the host (`node --version`, `pnpm --version`). This is tooling for
-reading the repo; it is not an experiment and runs outside the two pinned images.
+reading the repo; it is not an experiment and runs outside the two pinned images. On the RTX machine
+they live in a dedicated conda env, never in `base`:
+`conda create -n ua-node -c conda-forge --override-channels nodejs=24 pnpm=10`, then
+`conda activate ua-node` before `/understand`.
 
 1. **Run from a checkout whose HEAD is `main`, with the redirect disabled:**
    `UNDERSTAND_NO_WORKTREE_REDIRECT=1`. Without it, from a worktree the plugin silently switches to the
@@ -59,7 +62,8 @@ reading the repo; it is not an experiment and runs outside the two pinned images
 
 ## 5. Installing the plugin
 
-Never `curl ... | bash`. Clone the repo, read `install.sh`, then run it. As of 2026-10-21 it only
-clones to `~/.understand-anything/repo` and symlinks skills into `~/.copilot/skills` (for `vscode`)
-plus `~/.understand-anything-plugin`; nothing inside this repo. Re-read it after `--update`.
+Never `curl ... | bash`. Clone the repo, read `install.sh`, then run it. On 2026-10-21 `install.sh`
+(plugin commit `b8c807c`) was reviewed and run for `vscode`: it only clones to
+`~/.understand-anything/repo` and symlinks skills into `~/.copilot/skills` plus
+`~/.understand-anything-plugin`; nothing inside this repo. Re-read it after `--update`.
 The first `/understand` also runs `pnpm install` inside that clone (network).
