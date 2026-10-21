@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "gitCommitHash": "86fff35a386da3853141c01042bc70cc0cef06eb",
-  "generatedAt": "2026-10-21T10:17:13.124Z",
+  "gitCommitHash": "7b1e41020b1376bc72fa0e7d393cd6e3b0b3649c",
+  "generatedAt": "2026-10-21T11:15:37.116Z",
   "files": {
     ".env.example": {
       "filePath": ".env.example",
@@ -15,12 +15,12 @@
     },
     ".github/copilot-instructions.md": {
       "filePath": ".github/copilot-instructions.md",
-      "contentHash": "e1a322022f250e536fd85527d5fa8db76ee15254db0a529b4fb83ddb307394d0",
+      "contentHash": "0edbf5dc02707a7bdb2b351726261062c72b3d4fab5fa2e9e2a3dfce3e440cdf",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 122,
+      "totalLines": 123,
       "hasStructuralAnalysis": false
     },
     ".github/instructions/experiments.instructions.md": {
@@ -45,12 +45,12 @@
     },
     ".github/skills/collecting-a-dataset/SKILL.md": {
       "filePath": ".github/skills/collecting-a-dataset/SKILL.md",
-      "contentHash": "13a11252326e9b9fb97ed887eeefa65f8b0801f4039c69237a96ff2376d9ccb7",
+      "contentHash": "022f0c8e7ed0be3043896126d8c6a6c72c73e906a49a5049ae42edf8e016c5ae",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 126,
+      "totalLines": 128,
       "hasStructuralAnalysis": false
     },
     ".github/skills/diagnosing-a-binding-failure/SKILL.md": {
@@ -125,12 +125,12 @@
     },
     ".github/skills/using-the-code-graph/SKILL.md": {
       "filePath": ".github/skills/using-the-code-graph/SKILL.md",
-      "contentHash": "b89b37dfa66351e261d65af914ee69dec11f0261025d572b668756fa3e960459",
+      "contentHash": "07c6e2e30b1ff2517d802494f2fdb65228cb84c406fe9a9a207e13f194958a32",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 70,
+      "totalLines": 78,
       "hasStructuralAnalysis": false
     },
     ".github/skills/working-on-the-robosuite-path/SKILL.md": {
@@ -195,12 +195,12 @@
     },
     "TODO.md": {
       "filePath": "TODO.md",
-      "contentHash": "c826933bdb279bbcf836ff7a253d7bc7d702802300eb5ed12040f4a0bcbe024d",
+      "contentHash": "317b5fd522ae8368c5f4263225769ec8e5a1c9193a4dfbf3390b90e2c5155ebf",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 668,
+      "totalLines": 674,
       "hasStructuralAnalysis": false
     },
     "data_collection/benchmark.py": {
@@ -1521,7 +1521,7 @@
     },
     "docs/INDEX.md": {
       "filePath": "docs/INDEX.md",
-      "contentHash": "0d415f2ad60eef50ad9bc515f03d8112a447b63c37a0b1fd6d2b454207e2e434",
+      "contentHash": "5db771b6332202d9568751e066797ca29ed5f7b0a98c797cd6df8ea8414bc249",
       "functions": [],
       "classes": [],
       "imports": [],
@@ -1581,12 +1581,12 @@
     },
     "docs/OPERATIONS.md": {
       "filePath": "docs/OPERATIONS.md",
-      "contentHash": "a1ec2981722be445cd09a9c0e1c15cb16183cfd34b1682114f7d98e8885689d4",
+      "contentHash": "fc9e00a8b8aff818181be548247ec4886b96043b5b8df5c712a1fa259b0f1e65",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 405,
+      "totalLines": 406,
       "hasStructuralAnalysis": false
     },
     "docs/OVERFIT_VALIDATION_20260915.md": {
@@ -1931,12 +1931,12 @@
     },
     "docs/superpowers/handoffs/2026-10-19-props-p3-handoff.md": {
       "filePath": "docs/superpowers/handoffs/2026-10-19-props-p3-handoff.md",
-      "contentHash": "7c65312f877ec98a0bbea0608134661a1bb60cef7191865d5b1951cbb2a85339",
+      "contentHash": "8b48ce31f16e207b144fe08acadfe6be563db28e8481795591ad8ab218e6f9eb",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 171,
+      "totalLines": 169,
       "hasStructuralAnalysis": false
     },
     "docs/superpowers/plans/2026-09-14-fix-action-observation-alignment.md": {
@@ -2451,7 +2451,7 @@
     },
     "docs/superpowers/specs/2026-10-19-props-p3-food-drinks-design.md": {
       "filePath": "docs/superpowers/specs/2026-10-19-props-p3-food-drinks-design.md",
-      "contentHash": "8c4c525cce4342a6b574848c88d07fafac7b5b534c4ea7b9e41ce8c3a86df504",
+      "contentHash": "15df140bfa92a3f9afcb38b653c4c0c3580c09b6c3b238454501a35ef0a841de",
       "functions": [],
       "classes": [],
       "imports": [],
@@ -55219,6 +55219,489 @@
         "validate"
       ],
       "totalLines": 275,
+      "hasStructuralAnalysis": true
+    },
+    "docs/EGL_RENDERING_CHECK_20261019.md": {
+      "filePath": "docs/EGL_RENDERING_CHECK_20261019.md",
+      "contentHash": "bf703fc290e60e4a76ea34907c725c472d7b46c49fd941c05f0db35704e5e252",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 63,
+      "hasStructuralAnalysis": false
+    },
+    "docs/superpowers/specs/2026-10-19-egl-rendering-design.md": {
+      "filePath": "docs/superpowers/specs/2026-10-19-egl-rendering-design.md",
+      "contentHash": "acf1d2206da652d0b495eeadb326dbd3564e556be91dd063a9a28986338cbe5d",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 75,
+      "hasStructuralAnalysis": false
+    },
+    "experiments/egl_rendering/Dockerfile": {
+      "filePath": "experiments/egl_rendering/Dockerfile",
+      "contentHash": "76c7cfa80f51ce2ef42678137823307327494734b071fdc40e8b845a41485f6e",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 9,
+      "hasStructuralAnalysis": false
+    },
+    "experiments/egl_rendering/README.md": {
+      "filePath": "experiments/egl_rendering/README.md",
+      "contentHash": "af3ad47009a109a975ab110e128f9eb1cdab13b3ad4c30ee1a4ea6423f1a8048",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 30,
+      "hasStructuralAnalysis": false
+    },
+    "experiments/egl_rendering/__init__.py": {
+      "filePath": "experiments/egl_rendering/__init__.py",
+      "contentHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 1,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/egl_rendering/check.py": {
+      "filePath": "experiments/egl_rendering/check.py",
+      "contentHash": "b807892ec31044ca64eaa2e2e9792fe687cce3c4e384fd807619eda4b8cab6c4",
+      "functions": [
+        {
+          "name": "require_renderer",
+          "params": [
+            "requested",
+            "env"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "verdict",
+          "params": [
+            "osmesa_pair",
+            "physics_differences",
+            "egl_pairs",
+            "layers_added"
+          ],
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "run",
+          "params": [
+            "renderer",
+            "label",
+            "out",
+            "slot"
+          ],
+          "exported": true,
+          "lineCount": 43
+        },
+        {
+          "name": "_load",
+          "params": [
+            "out",
+            "label"
+          ],
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "_physics_plain",
+          "params": [
+            "arrays"
+          ],
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "report",
+          "params": [
+            "out",
+            "osmesa_base",
+            "osmesa_new",
+            "egl",
+            "layers_added"
+          ],
+          "exported": true,
+          "lineCount": 22
+        },
+        {
+          "name": "main",
+          "params": [
+            "argv"
+          ],
+          "exported": true,
+          "lineCount": 19
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "argparse",
+          "specifiers": [
+            "argparse"
+          ]
+        },
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "time",
+          "specifiers": [
+            "time"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "experiments.egl_rendering",
+          "specifiers": [
+            "compare"
+          ]
+        }
+      ],
+      "exports": [
+        "require_renderer",
+        "verdict",
+        "run",
+        "_load",
+        "_physics_plain",
+        "report",
+        "main"
+      ],
+      "totalLines": 140,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/egl_rendering/compare.py": {
+      "filePath": "experiments/egl_rendering/compare.py",
+      "contentHash": "c8bc92b84342792d00d9c3d150e4a1bedd0eb0c9113d414a92835eae8b5e0d52",
+      "functions": [
+        {
+          "name": "_diff",
+          "params": [
+            "a",
+            "b"
+          ],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "_summary",
+          "params": [
+            "d"
+          ],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "compare_images",
+          "params": [
+            "a",
+            "b"
+          ],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "physics_differences",
+          "params": [
+            "a",
+            "b"
+          ],
+          "exported": true,
+          "lineCount": 16
+        },
+        {
+          "name": "repeatable",
+          "params": [
+            "pair_stats"
+          ],
+          "exported": true,
+          "lineCount": 4
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        }
+      ],
+      "exports": [
+        "_diff",
+        "_summary",
+        "compare_images",
+        "physics_differences",
+        "repeatable"
+      ],
+      "totalLines": 56,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/egl_rendering/tests/test_check.py": {
+      "filePath": "experiments/egl_rendering/tests/test_check.py",
+      "contentHash": "13c061a724bc12cd451f4ef7f63e0432739d94fbb30d895c712d179661f7f4c1",
+      "functions": [],
+      "classes": [
+        {
+          "name": "RendererGuardTests",
+          "methods": [
+            "test_matching_environment_is_accepted",
+            "test_wrong_or_missing_renderer_is_refused",
+            "test_pyopengl_platform_is_not_required",
+            "test_unknown_renderer_name_is_refused"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 20
+        },
+        {
+          "name": "VerdictTests",
+          "methods": [
+            "verdict",
+            "test_all_three_pass",
+            "test_c1_needs_byte_identical_osmesa_and_exactly_one_layer",
+            "test_c2_any_physics_difference_fails_and_names_nothing_away",
+            "test_c3_follows_the_repeatability_limits",
+            "test_admission_needs_all_three_and_c4_c5_gate_nothing"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 27
+        }
+      ],
+      "imports": [
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "unittest",
+          "specifiers": [
+            "unittest"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "experiments.egl_rendering",
+          "specifiers": [
+            "check"
+          ]
+        }
+      ],
+      "exports": [
+        "RendererGuardTests",
+        "VerdictTests"
+      ],
+      "totalLines": 64,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/egl_rendering/tests/test_compare.py": {
+      "filePath": "experiments/egl_rendering/tests/test_compare.py",
+      "contentHash": "77eed74e5891300b55948e52b371bac3b902f62e4d245b958492e228281177aa",
+      "functions": [
+        {
+          "name": "stack",
+          "params": [
+            "n",
+            "h",
+            "w",
+            "value"
+          ],
+          "exported": true,
+          "lineCount": 2
+        }
+      ],
+      "classes": [
+        {
+          "name": "ImageComparisonTests",
+          "methods": [
+            "test_identical_stacks_differ_nowhere",
+            "test_one_channel_of_one_pixel_one_level",
+            "test_a_pixel_counts_once_however_many_channels_differ",
+            "test_unsigned_difference_does_not_wrap",
+            "test_images_differing_counts_images_not_pixels",
+            "test_shape_mismatch_is_an_error_not_a_zero",
+            "test_shapes_that_would_broadcast_are_still_an_error",
+            "test_per_camera_split"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 49
+        },
+        {
+          "name": "PhysicsComparisonTests",
+          "methods": [
+            "arrays",
+            "test_equal_arrays_differ_nowhere",
+            "test_the_last_bit_of_a_float_is_a_difference",
+            "test_dtype_and_shape_and_missing_keys_are_differences",
+            "test_a_changed_outcome_string_is_a_difference",
+            "test_nan_in_the_same_place_is_not_a_difference_but_a_moved_nan_is"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 32
+        },
+        {
+          "name": "RepeatabilityTests",
+          "methods": [
+            "stats",
+            "test_within_both_limits_passes",
+            "test_the_level_limit_is_inclusive_at_two_and_fails_at_three",
+            "test_the_image_fraction_limit_is_one_percent_and_exclusive_above",
+            "test_one_bad_pair_fails_the_set_and_an_empty_set_is_not_a_pass"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 18
+        }
+      ],
+      "imports": [
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "unittest",
+          "specifiers": [
+            "unittest"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "experiments.egl_rendering",
+          "specifiers": [
+            "compare"
+          ]
+        }
+      ],
+      "exports": [
+        "stack",
+        "ImageComparisonTests",
+        "PhysicsComparisonTests",
+        "RepeatabilityTests"
+      ],
+      "totalLines": 122,
+      "hasStructuralAnalysis": true
+    },
+    "scripts/code_graph.py": {
+      "filePath": "scripts/code_graph.py",
+      "contentHash": "a13db623daca9e47ec954b449619f94adc978629763b208b2bb491cced1345a7",
+      "functions": [
+        {
+          "name": "load",
+          "params": [],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "file_node",
+          "params": [
+            "nodes",
+            "path"
+          ],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "main",
+          "params": [
+            "argv"
+          ],
+          "exported": true,
+          "lineCount": 44
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "subprocess",
+          "specifiers": [
+            "subprocess"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        }
+      ],
+      "exports": [
+        "load",
+        "file_node",
+        "main"
+      ],
+      "totalLines": 80,
       "hasStructuralAnalysis": true
     }
   }
