@@ -5,3 +5,9 @@ huggingface/
 publication/
 .worktrees/
 inference/inference_videos/
+
+# 3D mesh assets: no structure to graph, large line counts
+*.obj
+*.dae
+*.stl
+experiments/xvla_single_task/CPU_ADMISSION*.json
