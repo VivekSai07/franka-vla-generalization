@@ -19,7 +19,8 @@ worktrees — `git worktree list` before concluding a package is missing, and `d
 editing anything a run might hash. A live container may mount a worktree, not this checkout.
 
 `.ua/` holds a generated code graph of `main` for navigation. Query it with
-`python3 scripts/code_graph.py` (never read the 2 MB JSON whole). It is incomplete, not evidence, and
+`python3 scripts/code_graph.py` (start with `status`; never read the 2 MB JSON whole). Use it for
+orientation and file triage, not for "who imports X" (grep). It is incomplete, not evidence, and
 does not know what is hash-bound; rules in
 [skills/using-the-code-graph/SKILL.md](skills/using-the-code-graph/SKILL.md).
 

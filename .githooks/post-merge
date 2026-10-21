@@ -1,0 +1,6 @@
+#!/bin/sh
+# Only says when the code graph is due. A git hook cannot start an LLM, so it never refreshes, writes or blocks.
+[ "$(git rev-parse --abbrev-ref HEAD 2>/dev/null)" = main ] || exit 0
+out=$(python3 scripts/code_graph.py status 2>/dev/null) || exit 0
+case "$out" in *STALE*) printf '[code graph] %s\n' "$out" >&2 ;; esac
+exit 0

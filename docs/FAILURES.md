@@ -124,6 +124,18 @@ approach, never-lifted against successes) must be re-read per object before it i
 where the target never rose more than 1.2 cm; (e) test the branch the real data does not reach: the passing-gate path crashed on
 an object that appears only as a distractor and was found only because it was given a test.
 
+59. **I advertised a code-graph feature before measuring it, and the first measurement used an ambiguous ground truth.**
+On 2026-10-21 I documented `code_graph.py importers` as a way to find what a shared helper touches, after one spot check
+(59 of 83 importers of `data_collection/benchmark.py`, so "71% recall"). The first benchmark then appeared to show 33% and
+11% for two `scene.py` targets, but `experiments/props_scene/scene.py` and `experiments/robosuite_scene/scene.py` share a
+stem, so my grep counted both modules' importers for each. With repo-unique stems the measured median recall over 14 modules
+is 63% (min 0%, max 100%), and for 5 of the 14 the graph found no importer at all; precision was 100%, and the output
+is no smaller than `git grep -l`. So the importer query is neither complete nor cheaper than grep. **Lessons:** (a) a
+single spot check is not a measurement, and the quoted figure was the best case I had seen; (b) a grep ground truth is
+only as good as its pattern, so check that the target name is unique before computing recall; (c) positive uses (file
+summary 968 tokens saved per file not opened, orientation 5.3x fewer tokens than `ls`/`head`) held up, so the
+graph stays, but only for those uses (`scripts/code_graph_bench.py` reproduces every figure).
+
 Broader lessons — every "just increment a counter" or "just leave state alone on retry" assumption in the fixed-layout pipeline broke under broad_workspace retries. Rejections need explicit cleanup for every piece of shared state (LeRobot buffer + PNG dir + attempts dir semantics + admit-count invariant). And a result is only interpretable once you know what the *absence* of the treatment scores on the same protocol.
 
 **Recurring meta-lesson — a green test suite is not evidence.** Six separate times (#10, #15, #20, #24, and twice while porting eval packages) the tests passed while the thing that actually runs was broken, because the tests exercised a *fixture*, a *constant*, the *wrong module*, or every path *except* the one the job takes. When adding a regression test, confirm it fails against the unfixed code. When forking a package, run the `symtable` undefined-name check from #24 before spending GPU time.

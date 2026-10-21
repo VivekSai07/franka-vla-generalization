@@ -12,10 +12,10 @@ structure, an LLM for summaries). It is a **navigation aid**, not a source of tr
 
 ## 1. Using it (agents and humans)
 
-- **Agents:** never read `.ua/knowledge-graph.json` whole (2 MB, far larger than a context window).
-  Query it: `python3 scripts/code_graph.py status | layers | show PATH | importers PATH | find TEXT`.
-  Each answer is under 4 KB. Start with `status` (is it stale?) and `layers`, then `show` the files you
-  are about to open. Then read the real files.
+- **Agents:** never read `.ua/knowledge-graph.json` whole (2 MB, about 540k tokens). Query it:
+  `python3 scripts/code_graph.py status | layers | show PATH | find TEXT`. Use it for **orientation**
+  (`layers`) and **triage** (`show` a file instead of opening it), where it measured well. Do not use it
+  for "who imports X": use `git grep` (see the limits below). Then read the real files.
 - **Humans:** `npx https://github.com/Egonex-AI/Understand-Anything/releases/download/v2.9.0/understand-anything-viewer.tgz .`
   from the repo root (Node >= 18; no LLM, no API key; serves `.ua/` read-only on 127.0.0.1). The URL is
   pinned to a release tag on purpose — `releases/latest/download/` would run whatever was published last.
@@ -33,10 +33,16 @@ structure, an LLM for summaries). It is a **navigation aid**, not a source of tr
   `/understand-diff` for the ripple, then check bindings yourself
   ([experiments.instructions.md](../../instructions/experiments.instructions.md)).
 - Do not copy graph text into live docs as if it were a finding.
-- **Incomplete.** Measured 2026-10-21: for `data_collection/benchmark.py` the graph lists 59 importers,
-  grep finds 83 (no false positives, 71% recall). Function-level `calls` edges across files are
-  mostly absent (162 dropped at merge). So "nothing imports this" is never proof; grep before you
-  conclude, and always grep before editing a shared helper.
+- **Incomplete.** Measured 2026-10-21 by `scripts/code_graph_bench.py` over 14 modules with a repo-unique
+  name: median import recall 63% (min 0%, max 100%), 5 of 14 had no importer found at all, precision
+  100%. Function-level `calls` edges across files are mostly absent (162 dropped at merge). So `importers`
+  is a lower bound at best, and "nothing imports this" is never proof: grep before you conclude, and
+  always grep before editing a shared helper ([FAILURES.md](../../../docs/FAILURES.md) #59).
+- **Measured gains** (same script, tokens approximated as bytes/4, a proxy and not a session
+  measurement): `layers` 636 tokens against 3,360 for `ls` plus README heads (5.3x); `show` returns a
+  median 151 tokens where the file is 1,098 (about 968 saved per file not opened, if the summary is
+  enough to decide); concept `find` was cheaper for 2 of 4 queries and costlier for 2. The always-loaded
+  cost of this integration is about 126 tokens per session.
 
 ## 3. Generating and refreshing (manual only)
 
@@ -68,7 +74,22 @@ they live in a dedicated conda env, never in `base`:
   changes. `.ua/` is outside every `SOURCE_FILES`; if a contract ever globs the repo root, re-check.
 - Never edit `.ua/*.json` by hand.
 
-## 5. Installing the plugin
+## 5. What is automatic and what is not
+
+- **Automatic, zero tokens:** staleness detection. `scripts/code_graph.py status` counts analysed files
+  changed since `.ua/meta.json`'s commit (stale from 10). Agents run it first. The opt-in git hook
+  `.githooks/post-merge` prints it after a merge into `main`; enable it once per clone with
+  `git config core.hooksPath .githooks` (applies to every worktree; it only prints, never writes or
+  blocks, and no other hooks exist to override).
+- **Not automatic, by decision:** the refresh itself. It needs an LLM, a git hook cannot start one, and the
+  plugin's own `--auto-update` is a Claude Code hook that makes the model rewrite `.ua/` unprompted after
+  every `git commit|merge|cherry-pick|rebase` (checked in its source), which would spend tokens and
+  touch `.ua/` mid-experiment, and never fires in Copilot. Revisit only with a way to bound the cost.
+- A refresh costs about the number of files `status` reports: 18 files cost 9 small analyzer batches,
+  a layers pass and a tour pass; the deterministic prepare/merge/save steps cost no tokens.
+- Benchmark: `python3 scripts/code_graph_bench.py` reproduces every figure above.
+
+## 6. Installing the plugin
 
 Never `curl ... | bash`. Clone the repo, read `install.sh`, then run it. On 2026-10-21 `install.sh`
 (plugin commit `b8c807c`) was reviewed and run for `vscode`: it only clones to
