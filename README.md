@@ -228,6 +228,7 @@ Full numbers, protocols and confidence intervals: **[docs/RESULTS.md](docs/RESUL
 | read the chronological log | [docs/BENCHMARK_STATUS.md](docs/BENCHMARK_STATUS.md) |
 | download datasets / model checkpoints | [docs/HUGGING_FACE_ARTIFACTS.md](docs/HUGGING_FACE_ARTIFACTS.md) |
 | find a dated report | [docs/INDEX.md](docs/INDEX.md) |
+| browse the code as an interactive graph | [.github/skills/using-the-code-graph/SKILL.md](.github/skills/using-the-code-graph/SKILL.md) |
 | understand dataset design | [DATASET_DESIGN.md](DATASET_DESIGN.md) |
 | work on this as an agent | [AGENTS.md](AGENTS.md) → [.github/copilot-instructions.md](.github/copilot-instructions.md) |
 

@@ -14,6 +14,7 @@ Kept current; read these first.
 | [OPERATIONS.md](OPERATIONS.md) | how to run things now |
 | [BENCHMARK_STATUS.md](BENCHMARK_STATUS.md) | chronological status log, newest first |
 | [../DATASET_DESIGN.md](../DATASET_DESIGN.md) | v1 failure analysis, v2 design rationale |
+| [../.ua/](../.ua/) | generated code graph of `main` (navigation only); rules and viewer command in [`using-the-code-graph`](../.github/skills/using-the-code-graph/SKILL.md) |
 
 ## Naming convention
 
