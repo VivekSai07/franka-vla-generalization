@@ -1,0 +1,7 @@
+# Scan scope for the code graph (gitignore syntax). Rules: .github/skills/using-the-code-graph/SKILL.md
+outputs/
+datasets/
+huggingface/
+publication/
+.worktrees/
+inference/inference_videos/

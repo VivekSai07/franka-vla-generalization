@@ -42,6 +42,12 @@ cam_check.png
 # Linked worktrees — local checkouts, never part of the repo
 .worktrees/
 
+# Code graph (.ua/) is committed; only the plugin's scratch is not
+.ua/intermediate/
+.ua/tmp/
+.ua/.trash-*/
+.ua/diff-overlay.json
+
 # Existing machine-local offline setup — preserved on disk, not portable source.
 /Dockerfile.offline
 /Dockerfile.offline.dockerignore

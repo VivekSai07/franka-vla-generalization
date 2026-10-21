@@ -385,6 +385,15 @@ the RTX originals without a separate go-ahead. Full file lists and rationale:
 
 ---
 
+## Code graph (`.ua/`)
+
+A generated map of `main` for navigation. View it with the pinned `npx` command, refresh it by hand,
+and commit it, all as described in
+[.github/skills/using-the-code-graph/SKILL.md](../.github/skills/using-the-code-graph/SKILL.md)
+(the only copy of those rules). It is not part of any run, seal or `provenance()`.
+
+---
+
 ## What must never be deleted or edited
 
 - `datasets/` — deleting the pilot manifest permanently broke `local_varied` provenance

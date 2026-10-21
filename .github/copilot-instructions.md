@@ -18,6 +18,10 @@ dated reports is [docs/INDEX.md](../docs/INDEX.md).
 worktrees — `git worktree list` before concluding a package is missing, and `docker ps` before
 editing anything a run might hash. A live container may mount a worktree, not this checkout.
 
+`.ua/` holds a generated code graph of `main` for navigation and impact checks. It is not evidence
+and does not know what is hash-bound; rules in
+[skills/using-the-code-graph/SKILL.md](skills/using-the-code-graph/SKILL.md).
+
 ## Non-negotiable
 
 - **Never edit a hash-bound file while a run is active.** `SOURCE_FILES` and `provenance()` reach
