@@ -12,8 +12,10 @@ structure, an LLM for summaries). It is a **navigation aid**, not a source of tr
 
 ## 1. Using it (agents and humans)
 
-- **Agents:** before grepping across `experiments/`, read `.ua/knowledge-graph.json` (or ask
-  `/understand-chat`) to find the package, its layer and what imports it. Then read the real files.
+- **Agents:** never read `.ua/knowledge-graph.json` whole (2 MB, far larger than a context window).
+  Query it: `python3 scripts/code_graph.py status | layers | show PATH | importers PATH | find TEXT`.
+  Each answer is under 4 KB. Start with `status` (is it stale?) and `layers`, then `show` the files you
+  are about to open. Then read the real files.
 - **Humans:** `npx https://github.com/Egonex-AI/Understand-Anything/releases/download/v2.9.0/understand-anything-viewer.tgz .`
   from the repo root (Node >= 18; no LLM, no API key; serves `.ua/` read-only on 127.0.0.1). The URL is
   pinned to a release tag on purpose — `releases/latest/download/` would run whatever was published last.
@@ -31,6 +33,10 @@ structure, an LLM for summaries). It is a **navigation aid**, not a source of tr
   `/understand-diff` for the ripple, then check bindings yourself
   ([experiments.instructions.md](../../instructions/experiments.instructions.md)).
 - Do not copy graph text into live docs as if it were a finding.
+- **Incomplete.** Measured 2026-10-21: for `data_collection/benchmark.py` the graph lists 59 importers,
+  grep finds 83 (no false positives, 71% recall). Function-level `calls` edges across files are
+  mostly absent (162 dropped at merge). So "nothing imports this" is never proof; grep before you
+  conclude, and always grep before editing a shared helper.
 
 ## 3. Generating and refreshing (manual only)
 
@@ -40,7 +46,8 @@ they live in a dedicated conda env, never in `base`:
 `conda create -n ua-node -c conda-forge --override-channels nodejs=24 pnpm=10`, then
 `conda activate ua-node` before `/understand`.
 
-1. **Run from a checkout whose HEAD is `main`, with the redirect disabled:**
+1. **Refresh in a throwaway worktree cut from `main`**, never by switching a checkout:
+   `git worktree add .worktrees/graph-refresh -b chore/graph-refresh main`, then run with
    `UNDERSTAND_NO_WORKTREE_REDIRECT=1`. Without it, from a worktree the plugin silently switches to the
    main checkout, which is usually on a feature branch here, and writes `.ua/` there for the wrong tree.
 2. **Scope with `.ua/.understandignore`** (committed; gitignore syntax). It must exclude `outputs/`,
@@ -48,8 +55,9 @@ they live in a dedicated conda env, never in `base`:
    confirm this file. Review it; do not accept the starter blindly.
 3. **Never `--auto-update`.** The post-commit hook would spend tokens on every commit and rewrite
    `.ua/` in the middle of unrelated work. Keep `autoUpdate` false in `.ua/config.json`.
-4. Refresh with plain `/understand` (incremental, only changed files). Refresh after an axis merges
-   into `main`, not during one.
+4. Refresh with plain `/understand` (incremental: only files changed since `.ua/meta.json`'s commit are
+   re-analysed). Refresh after an axis merges into `main`, not during one. `scripts/code_graph.py
+   status` says when it is due.
 5. The first full run is token-heavy. Say so before starting; do not start it unprompted.
 
 ## 4. Committing it
