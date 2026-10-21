@@ -136,6 +136,15 @@ launch (the first poll found `running=0`, which is what showed it), not after th
 a dead check and several unasserted ones in the merge, and a merge path whose `verify` call no test required: a check that no test
 can fail is a candidate for deletion or for a test, not for trust.
 
+60. **A confidence interval for an empty group was NaN, and the evaluation's `collect` would have crashed after the rollouts.** The P3
+evaluation reports bin choice on stable placements. A stage in which nothing comes to rest in a bin (a policy that never lifts, a held-out
+object below the floor) has zero of them, and `wilson(0, 0)` returned `(nan, nan)`; `write_json` refuses NaN (`allow_nan=False`), so
+`collect` raised after every trial had been run. Found by the first collect test, whose fixture had trials that were never lifted; a
+previously written test file had no such case, and the same branch is the one real data reaches when a checkpoint is poor. Fixed (an
+empty group gives `None`, intervals clipped to [0, 1]) with tests that serialise `bin_choice([])`, `readouts([], [])` and `criteria([], [])`.
+**Lesson:** a statistic over a group that can be empty needs its empty case tested through the writer, not only through the arithmetic;
+this is the same class as FAILURES #58 (the branch real data did not yet reach was the one that broke).
+
 Broader lessons — every "just increment a counter" or "just leave state alone on retry" assumption in the fixed-layout pipeline broke under broad_workspace retries. Rejections need explicit cleanup for every piece of shared state (LeRobot buffer + PNG dir + attempts dir semantics + admit-count invariant). And a result is only interpretable once you know what the *absence* of the treatment scores on the same protocol.
 
 **Recurring meta-lesson — a green test suite is not evidence.** Six separate times (#10, #15, #20, #24, and twice while porting eval packages) the tests passed while the thing that actually runs was broken, because the tests exercised a *fixture*, a *constant*, the *wrong module*, or every path *except* the one the job takes. When adding a regression test, confirm it fails against the unfixed code. When forking a package, run the `symtable` undefined-name check from #24 before spending GPU time.

@@ -112,6 +112,15 @@ the pinned image above on MuJoCo 3.13.0.
   544 episodes took 46 min 43 s (12.4 h of serial work: 54.8 s per attempt and 27.0 s per commit under load); merge 60 s.
   Expert re-test: `--gate` per shard, `--determinism --tag` twice (one with the thread cap, one without),
   `--gate-summary`. Report: [PROPS_P3_COLLECTION_20261020.md](PROPS_P3_COLLECTION_20261020.md).
+- Props P3 training (`experiments/xvla_props_p3/`, admission image, no simulator; fork of `xvla_props_p2`): the same
+  `--check`/`--preflight`/`--resume-proof`/`--equivalence`/`--train [--resume] [--stop-at T]` gates and mounts as P2, with the
+  sealed parent `outputs/props_p3_data/props_p3_20261020` and outputs `outputs/train/xvla_props_p3_v1{,_admission,_preflight,
+  _resumeproof,_equivalence}`; hash-bound by its own `SOURCE_FILES` from `--check`. Plan:
+  [superpowers/plans/2026-10-21-props-p3-training-eval.md](superpowers/plans/2026-10-21-props-p3-training-eval.md).
+- Props P3 evaluation (`experiments/xvla_props_p3_eval/`, robosuite image + GPU, not hash-bound): `scripts/xvla_props_p3_eval.sh
+  feas|prepare|smoke|all`; run from a worktree it mounts the main checkout's `outputs` and `.cache` (`OUT_ROOT` overrides) and creates
+  the (gitignored) bind-mount targets inside the read-only code mount first, or docker refuses to start. Workers
+  pinned to 5 cores, peak GPU about 7.3 GiB after a checkpoint switch (as P2). OSMesa only.
 - Props P2 evaluation (`experiments/xvla_props_p2_eval/`, robosuite image + GPU, not hash-bound): `evaluate.py prepare`
   once (admission image, mounts `outputs/train`, both parents, `.cache`), then `scripts/xvla_props_p2_eval.sh smoke|all N`
   runs N parallel workers, each pinned to 5 cores (`--cpuset-cpus`, `OMP_NUM_THREADS=5`), ~4 GB GPU at first load and

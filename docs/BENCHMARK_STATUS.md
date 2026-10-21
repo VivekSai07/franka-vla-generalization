@@ -1,5 +1,19 @@
 # Franka benchmark: start here
 
+## Props P3 training and evaluation packages built - 2026-10-21
+
+`experiments/xvla_props_p3/` (admission image; fork of `xvla_props_p2`, recipe unchanged: 126,900 updates = 5.0 epochs, same checkpoint grid)
+bound to the sealed P3 dataset (fingerprint `6430d34e…d151acf`), with the P2 ten-instruction machinery re-derived for one prompt: the plan
+must carry only `sort the item`, the task table must be exactly `{prompt: 0}`, the expert's own wording is rejected. 72 tests, every
+P3-specific change mutation-checked. `experiments/xvla_props_p3_eval/` (robosuite image + GPU): 288 reserved layouts, one seed each, the
+pre-registered bin-choice criteria on stable placements with interpretability floors, 64 pure tests and 12 real-physics tests (all 288
+layouts restore; the expert's actions replayed as the policy succeed for a drink and a food among trained and held-out objects; a
+`wrong_bin` outcome is produced by real physics; four more cover `run_job`'s skip, quarantine and no-retry rules), every rule mutation-checked.
+Expert feasibility of the 288 reserved layouts (unrendered, 43 s): **287 of 288**; `report_062` (bottle) is infeasible and is dropped and
+counted, not replaced (the bottle then has 79 report layouts). An unexplained edit to `rollout.py` that thinned the recorded object trace
+to every second tick was caught by the rollout test (shape) and reverted. Writing its tests found that a stage with no stable placement crashed `collect` (NaN in
+a Wilson interval, FAILURES #60). No GPU run yet. Plan: [superpowers/plans/2026-10-21-props-p3-training-eval.md](superpowers/plans/2026-10-21-props-p3-training-eval.md).
+
 ## Props P3 dataset sealed: 544 Food-vs-Drinks episodes, 46 min 43 s - 2026-10-20
 
 `experiments/props_p3_data/` (branch `feat/props-p3`): one object per episode, the fixed prompt `sort the item`, P0's bins (drinks

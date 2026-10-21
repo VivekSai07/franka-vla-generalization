@@ -1,15 +1,21 @@
 # SmolVLA / X-VLA Franka TODO
 
-## Where things stand (2026-10-20)
+## Where things stand (2026-10-21)
 
-- **Now: props P3 (Food vs Drinks, fixed prompt `sort the item`) dataset collected and sealed 2026-10-20: 544/544 episodes,
+- **Now: props P3 training and evaluation packages built and tested (2026-10-21); no GPU run has started.** Training
+  `experiments/xvla_props_p3/` (fork of `xvla_props_p2`, recipe unchanged, 126,900 updates, bound to the sealed P3 dataset, the one-instruction
+  checks re-derived and mutation-tested) and evaluation `experiments/xvla_props_p3_eval/` (288 reserved layouts, one seed each, the
+  pre-registered bin-choice criteria, a real-physics test of every classifier path), driver `scripts/xvla_props_p3_eval.sh`, plan
+  [docs/superpowers/plans/2026-10-21-props-p3-training-eval.md](docs/superpowers/plans/2026-10-21-props-p3-training-eval.md). **Open, the
+  user's:** the checkpoint-selection rule (trained-object layouts only; the spec did not state it), disk before `--preflight` (54 GB free;
+  the run needs about 61 GB at peak), and the go-ahead for `--check` then the GPU gates. Expert feasibility of the 288 reserved layouts ran
+  (287 feasible; `report_062`, a bottle layout, is dropped and counted).
+- **Props P3 (Food vs Drinks, fixed prompt `sort the item`) dataset collected and sealed 2026-10-20: 544/544 episodes,
   0 rejected, fingerprint `6430d34e…d151acf`; not yet trained.** Decisions D1–D7 confirmed by the user 2026-10-20 (unchanged).
   Expert re-test 286/288 = 99.3% (lemon with the blue bin on the left is the only miss), the 16-worker thread cap proven
   pixel-neutral, 46 min 43 s in 16 parallel shards, seal re-verified in a second process (held-out objects bottle and cereal: 0
   episodes, checked from the recorded arrays). Report: [docs/PROPS_P3_COLLECTION_20261020.md](docs/PROPS_P3_COLLECTION_20261020.md);
-  branch `feat/props-p3` (not pushed). **Open:** the training package (fork of `xvla_props_p2` with the instruction machinery
-  re-derived for one prompt), the evaluation package (288 reserved layouts, bin-choice gate), and disk (71 GB free; P2 snapshots
-  were 10.6 GB each: any reclaim is the user's call).
+  branch `feat/props-p3` (not pushed). The training and evaluation packages for it are built (bullet above).
 - **Props P2 (instruction sorting with 1–2 distractors) trained and evaluated 2026-10-16: two of the four
   pre-registered criteria met.** Dataset sealed 2026-10-13 (540/540, fingerprint `b1d642b3…f4d898`), trained 126,900
   updates. Winner by the fixed rule, checkpoint 101,520, report tier 90/120 = **75.0%** [65.0, 84.2]: overall ≥70%
