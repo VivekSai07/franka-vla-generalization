@@ -15,6 +15,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 UA = ROOT / ".ua"
 FILE_TYPES = {"file", "config", "document", "service", "pipeline", "table", "schema", "resource", "endpoint"}
+ANALYSED = ["experiments", "src", "data_collection", "validation", "training", "inference", "scripts", "tests", "docs", ".github", "*.md"]
+STALE_AT = 10
 
 
 def load():
@@ -37,11 +39,13 @@ def main(argv):
     if cmd == "status":
         meta = json.loads((UA / "meta.json").read_text())
         h = meta["gitCommitHash"]
-        behind = subprocess.run(
-            ["git", "-C", str(ROOT), "log", "--oneline", f"{h}..HEAD", "--", "experiments", "src", "data_collection", "validation", "training", "inference", "scripts", "tests", "docs"],
-            capture_output=True, text=True).stdout.strip().splitlines()
-        print(f"graph built at {h[:8]} ({meta['lastAnalyzedAt']}), {meta['analyzedFiles']} files; {len(behind)} commits since touching analysed paths")
-        print("STALE: run /understand (see skill using-the-code-graph)" if behind else "up to date")
+        changed = subprocess.run(
+            ["git", "-C", str(ROOT), "diff", "--name-only", h, "HEAD", "--", *ANALYSED],
+            capture_output=True, text=True).stdout.split()
+        n = len(changed)
+        print(f"graph built at {h[:8]} ({meta['lastAnalyzedAt']}), {meta['analyzedFiles']} files; {n} analysed files changed since")
+        # Judgment call, not a measured limit: a few files behind is normal after merging a refresh itself.
+        print(f"STALE ({n} files behind): refresh per skill using-the-code-graph, incremental cost grows with this count" if n >= STALE_AT else "up to date enough")
         return
     g, nodes, layer_of = load()
     if cmd == "layers":
@@ -59,7 +63,7 @@ def main(argv):
                 print(f"  <- {e['type']} {e['source']}")
     elif cmd == "importers":
         n = file_node(nodes, arg)
-        print("# lower bound: the graph misses some import forms (measured 59 of 83 for benchmark.py); confirm with grep")
+        print("# lower bound only: measured median import recall 63% (0-100%) vs grep; confirm with git grep")
         for e in g["edges"]:
             if e["target"] == n["id"] and e["type"] == "imports":
                 print(f"imported by  {e['source']}")

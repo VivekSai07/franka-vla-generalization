@@ -391,7 +391,8 @@ the RTX originals without a separate go-ahead. Full file lists and rationale:
 A generated map of `main` for navigation. View it with the pinned `npx` command, refresh it by hand,
 and commit it, all as described in
 [.github/skills/using-the-code-graph/SKILL.md](../.github/skills/using-the-code-graph/SKILL.md)
-(the only copy of those rules). It is not part of any run, seal or `provenance()`.
+(the only copy of those rules). It is not part of any run, seal or `provenance()`. Staleness check:
+`python3 scripts/code_graph.py status`; token and accuracy benchmark: `python3 scripts/code_graph_bench.py`.
 
 ---
 
