@@ -13,7 +13,7 @@
   134 GB, ~33 GB/day, user is not in sudoers) keeps eating it; an admin must truncate it and stop its source or the run can hit a full disk
   (it resumes from the last snapshot). The gates' scratch (23 GB each, measured) stays on disk until training ends.
 - **Props P3 (Food vs Drinks, fixed prompt `sort the item`) dataset collected and sealed 2026-10-20: 544/544 episodes,
-  0 rejected, fingerprint `6430d34e…d151acf`; not yet trained.** Decisions D1–D7 confirmed by the user 2026-10-20 (unchanged).
+  0 rejected, fingerprint `6430d34e…d151acf`; training started 2026-10-22 (bullet above).** Decisions D1–D7 confirmed by the user 2026-10-20 (unchanged).
   Expert re-test 286/288 = 99.3% (lemon with the blue bin on the left is the only miss), the 16-worker thread cap proven
   pixel-neutral, 46 min 43 s in 16 parallel shards, seal re-verified in a second process (held-out objects bottle and cereal: 0
   episodes, checked from the recorded arrays). Report: [docs/PROPS_P3_COLLECTION_20261020.md](docs/PROPS_P3_COLLECTION_20261020.md);
@@ -452,7 +452,7 @@ Two-phase project. User accepted the one-variable-per-run attribution trade-off:
         an explicit tolerance decided before data; (3) EGL vs OSMesa differ on 72% of pixels (mean 1.2,
         max 105 levels), so training data and evaluation rollouts must use the same renderer, and the
         switch must not coincide with another variable. Also worth it for evaluation, which renders too.
-      - **P3 — rule-based Food vs Drinks — dataset sealed 2026-10-20 (544/544), not yet trained**
+      - **P3 — rule-based Food vs Drinks — dataset sealed 2026-10-20 (544/544), training started 2026-10-22**
         ([spec](docs/superpowers/specs/2026-10-19-props-p3-food-drinks-design.md),
         [collection plan](docs/superpowers/plans/2026-10-19-props-p3-collection.md),
         [collection report](docs/PROPS_P3_COLLECTION_20261020.md),

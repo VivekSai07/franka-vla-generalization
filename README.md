@@ -28,7 +28,7 @@ manifest verification. No X-VLA local-varied or SmolVLA broad-workspace model pu
 
 ---
 
-## Latest (2026-10-20): Props P3 — Food vs Drinks dataset sealed (not yet trained)
+## Latest (2026-10-20): Props P3 — Food vs Drinks dataset sealed (training started 2026-10-22)
 
 One object per episode, the fixed prompt `sort the item`, P0's two bins as containers (drinks orange, food blue, sides swap), trained
 on can and milk (drinks) and bread and lemon (food), with bottle and cereal never collected. 544 episodes (480 train, 64 validation),

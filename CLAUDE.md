@@ -25,7 +25,7 @@ see [docs/PROPS_P1_EVALUATION_20261009.md](docs/PROPS_P1_EVALUATION_20261009.md)
 [docs/PROPS_P2_EVALUATION_20261016.md](docs/PROPS_P2_EVALUATION_20261016.md); replay diagnostics of its failures
 2026-10-19, [docs/PROPS_P2_DIAGNOSTICS_20261019.md](docs/PROPS_P2_DIAGNOSTICS_20261019.md); fresh-layout re-test 2026-10-20,
 [docs/PROPS_P2_RETEST_20261020.md](docs/PROPS_P2_RETEST_20261020.md)). The P3 Food-vs-Drinks dataset (fixed prompt, 544 episodes,
-bottle and cereal never collected) was collected and sealed 2026-10-20, not yet trained, see
+bottle and cereal never collected) was collected and sealed 2026-10-20, training started 2026-10-22, see
 [docs/PROPS_P3_COLLECTION_20261020.md](docs/PROPS_P3_COLLECTION_20261020.md). See [README.md](README.md) for results,
 [TODO.md](TODO.md) for what is open, and [HF artifacts](docs/HUGGING_FACE_ARTIFACTS.md)
 for the exact published datasets/checkpoints and re-evaluation dependencies.
