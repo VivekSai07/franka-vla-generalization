@@ -1,5 +1,13 @@
 # Franka benchmark: start here
 
+## Props P3 training launched - 2026-10-22
+
+All four gates passed: `--check`, `--preflight` (23 GB scratch, measured), `--resume-proof` (metrics, model and training state bit-equal after resuming
+from the update-1 snapshot) and `--equivalence` (30 updates, metrics, model and optimizer equal). `--train` started 19:00 from the detached tree
+`.worktrees/p3-train` at `06d1d98`; update 1 reproduces the preflight loss (0.82804). The first batch stops itself at 06:00 on 2026-10-23.
+No result yet. Getting to this point needed ~87 GB reclaimed (OPERATIONS.md): `/var/log/syslog` had grown to 134 GB and the user is not in sudoers,
+so the pre-P2 datasets and a Qwen cache were deleted instead; the log still grows ~33 GB/day.
+
 ## Props P3 training and evaluation packages built - 2026-10-21
 
 `experiments/xvla_props_p3/` (admission image; fork of `xvla_props_p2`, recipe unchanged: 126,900 updates = 5.0 epochs, same checkpoint grid)

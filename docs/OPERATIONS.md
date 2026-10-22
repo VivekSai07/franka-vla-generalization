@@ -328,6 +328,13 @@ B2 keeps no checkpoint on RTX. `outputs/` went from 292 GB to 53 GB over the day
 Hub download. Run records, results and the bundles' runtime/evidence files stay. The `xvla_base_bundle` is not touched.
 The user's HF cache `~/.cache/huggingface` (68 GB) is Qwen models of another project; the UnifoLM entries in it are empty stubs.
 
+**Reclaimed 2026-10-22 (user-approved, ~87 GB; free 31 to 117 GiB):** the Qwen models in the user's HF cache (68 GB, another project, re-downloadable;
+the UnifoLM entries were empty stubs); `outputs/egl_rendering_check`; the pre-P2 dataset roots `b1_language_data`, `b2_distractor_data`,
+`b3_robosuite_data`, `broad_workspace_data`, `local_varied_data`, `fixed_layout`, `paired_demonstrations`, `pilot_overnight_20260915`; the bundles
+`downloads_20260920` and `downloads_20261005`; `publication/`; and the P3 shard audit copy (the sealed P3 root was not touched). Run records,
+`datasets/` and the P1/P2 data were kept. Those sealed datasets now exist only on Windows and the Hub, so their packages' verify steps cannot
+pass here. Cause of the shortage: `/var/log/syslog` at 134 GB (33 GB/day), root-owned; the user is not in sudoers.
+
 **Disk.** As of 2026-10-17: 879 GB total, **248 GB free (71% full)** after the reclaim below (it was 59 GB, 94%; 203 GB before the
 P1/P2 intermediates went).
 As of 2026-10-05: 879 GB total, ~96 GB free (89% full). Check `df -h .` before

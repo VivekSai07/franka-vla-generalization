@@ -1,17 +1,17 @@
 # SmolVLA / X-VLA Franka TODO
 
-## Where things stand (2026-10-21)
+## Where things stand (2026-10-22)
 
-- **Now: props P3 training and evaluation packages built and tested (2026-10-21); no GPU run has started.** Training
-  `experiments/xvla_props_p3/` (fork of `xvla_props_p2`, recipe unchanged, 126,900 updates, bound to the sealed P3 dataset, the one-instruction
-  checks re-derived and mutation-tested) and evaluation `experiments/xvla_props_p3_eval/` (288 reserved layouts, one seed each, the
-  pre-registered bin-choice criteria, a real-physics test of every classifier path), driver `scripts/xvla_props_p3_eval.sh`, plan
-  [docs/superpowers/plans/2026-10-21-props-p3-training-eval.md](docs/superpowers/plans/2026-10-21-props-p3-training-eval.md). **Open, the
-  user's:** the checkpoint-selection rule (trained-object layouts only; the spec did not state it), disk (`--check` passed 2026-10-21; 63 GB free after the P1/B3
-  checkpoint reclaim, 31 GB on 2026-10-22 because `/var/log/syslog` (root-owned) grew to 134 GB, 33 GB/day; needs an admin, not a repo deletion, but `--train` re-reads the `_preflight` and `_resumeproof` checkpoints, so those two scratches (~24 GB
-  each, estimated from P2) stay on disk beside the run's ~61 GB peak: about 110 GB in all, and the night script wants 70 GiB
-  free at `--train` launch), and the go-ahead for the GPU gates. Expert feasibility of the 288 reserved layouts ran
-  (287 feasible; `report_062`, a bottle layout, is dropped and counted).
+- **Now: props P3 training running (launched 2026-10-22 19:00, first batch stops itself 2026-10-23 06:00).** All four gates passed
+  2026-10-22 (`--check`, `--preflight`, `--resume-proof` with metrics/model/training state bit-equal, `--equivalence` 30 updates equal);
+  update 1 reproduces the preflight loss (0.82804). `experiments/xvla_props_p3/` (admission image, tree `.worktrees/p3-train` at `06d1d98`,
+  never switch it) and evaluation `experiments/xvla_props_p3_eval/` (288 reserved layouts, one seed each, pre-registered bin-choice criteria;
+  287 feasible, `report_062` dropped and counted), driver `scripts/xvla_props_p3_eval.sh`, plan
+  [docs/superpowers/plans/2026-10-21-props-p3-training-eval.md](docs/superpowers/plans/2026-10-21-props-p3-training-eval.md). Later nights:
+  `scripts/xvla_props_p3_night.sh resume "<deadline>"`; `status` for progress. **Open:** (1) the checkpoint-selection rule (trained-object
+  layouts only; the spec did not state it) before any rollout; (2) **disk**: 67 GB free during the run, and `/var/log/syslog` (root-owned,
+  134 GB, ~33 GB/day, user is not in sudoers) keeps eating it; an admin must truncate it and stop its source or the run can hit a full disk
+  (it resumes from the last snapshot). The gates' scratch (23 GB each, measured) stays on disk until training ends.
 - **Props P3 (Food vs Drinks, fixed prompt `sort the item`) dataset collected and sealed 2026-10-20: 544/544 episodes,
   0 rejected, fingerprint `6430d34e…d151acf`; not yet trained.** Decisions D1–D7 confirmed by the user 2026-10-20 (unchanged).
   Expert re-test 286/288 = 99.3% (lemon with the blue bin on the left is the only miss), the 16-worker thread cap proven
