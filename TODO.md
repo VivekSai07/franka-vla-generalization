@@ -9,9 +9,9 @@
   287 feasible, `report_062` dropped and counted), driver `scripts/xvla_props_p3_eval.sh`, plan
   [docs/superpowers/plans/2026-10-21-props-p3-training-eval.md](docs/superpowers/plans/2026-10-21-props-p3-training-eval.md). Later nights:
   `scripts/xvla_props_p3_night.sh resume "<deadline>"`; `status` for progress. **Open:** (1) the checkpoint-selection rule (trained-object
-  layouts only; the spec did not state it) before any rollout; (2) **disk**: 67 GB free during the run, and `/var/log/syslog` (root-owned,
-  134 GB, ~33 GB/day, user is not in sudoers) keeps eating it; an admin must truncate it and stop its source or the run can hit a full disk
-  (it resumes from the last snapshot). The gates' scratch (23 GB each, measured) stays on disk until training ends.
+  layouts only; the spec did not state it) before any rollout; (2) **resume is blocked on 2026-10-23**: night 1 paused cleanly at update 46,800 of 126,900 (36.9%, snapshot 46,800); free disk is 30 GB against the runner's
+  fixed 65 GiB guard (`/var/log/syslog`, root-owned, now 152 GB at ~29 GB/day, user not in sudoers), and another user's job holds 37 of the GPU's 48 GiB while the
+  runner needs 28 GiB free. The guard is not to be relaxed. The gates' scratch (23 GB each, measured) stays on disk until training ends.
 - **Props P3 (Food vs Drinks, fixed prompt `sort the item`) dataset collected and sealed 2026-10-20: 544/544 episodes,
   0 rejected, fingerprint `6430d34e…d151acf`; training started 2026-10-22 (bullet above).** Decisions D1–D7 confirmed by the user 2026-10-20 (unchanged).
   Expert re-test 286/288 = 99.3% (lemon with the blue bin on the left is the only miss), the 16-worker thread cap proven

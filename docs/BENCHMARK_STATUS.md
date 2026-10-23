@@ -1,5 +1,12 @@
 # Franka benchmark: start here
 
+## Props P3 training, night 1: paused at 46,800 of 126,900 - 2026-10-23
+
+The first batch ran 19:00 to 06:00 and paused itself at the last snapshot before the deadline (exit 0, snapshot 46,800; checkpoint 1 only so far, the next is 50,760).
+Pace 0.515 s/update, but 474 cool-down pauses (GPU max 84 C, 5 thermal slowdowns) make the effective rate about 0.85 s/update; about 11.5 h of work remain.
+Training loss 0.0024 is an offline figure and says nothing about capability. Resume is blocked: 30 GB free against the runner's 65 GiB guard (syslog 152 GB, root-owned)
+and another user's process holds 37 GiB of GPU memory against the 28 GiB the runner requires. Neither check is to be relaxed.
+
 ## Props P3 training launched - 2026-10-22
 
 All four gates passed: `--check`, `--preflight` (23 GB scratch, measured), `--resume-proof` (metrics, model and training state bit-equal after resuming
