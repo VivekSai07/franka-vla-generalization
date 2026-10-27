@@ -1,5 +1,59 @@
 # Franka benchmark: start here
 
+## Props P3 closed and deleted - 2026-10-27
+
+The user closed P3 as a failed attempt (85% on trained objects but 5.7% on held-out ones, milk only 10/20) and had its artifacts deleted, without copying them to
+Windows or publishing them: the sealed dataset, all training output including the 23 GB `_preflight` and `_resumeproof` scratch, the evaluation outputs, the run
+worktree and its stopped containers (about 101 GB; disk 84 to 184 GiB free). Kept: the code and docs on branch `feat/props-p3` (not pushed), RESULTS.md's figures and
+FAILURES #59 and #60. The recorded figures can no longer be re-verified.
+
+## Props P3 evaluated: trained objects 85%, held-out objects 6% - 2026-10-27
+
+Training finished 2026-10-26 (126,900 updates, six checkpoints); `prepare` and the smoke stage passed; screen, report and confirm ran in 8 parallel
+workers (about 6 h of rollouts). Winner 101,520 by the trained-only rule: report **77/239 = 32.2%**, trained objects **68/80 = 85.0%**, held-out
+**9/159 = 5.7%**, confirm 22/24 = 91.7%. Trained-object bin choice was never wrong (68/68). Held-out: bottle 0/79 (77 never lifted), cereal 9/80 with
+22 wrong-bin of 31 stable placements. Milk is the weak trained object (10/20 at 101,520; 12, 10, 8, 8 across the four report checkpoints; never-lifted
+3, 6, 7, 11). The second pre-registered criterion is not interpretable (bottle never reaches a bin). Numbers and caveats: RESULTS.md; report: [PROPS_P3_EVALUATION_20261027.md](PROPS_P3_EVALUATION_20261027.md).
+
+## Props P3 training, night 1: paused at 46,800 of 126,900 - 2026-10-23
+
+The first batch ran 19:00 to 06:00 and paused itself at the last snapshot before the deadline (exit 0, snapshot 46,800; checkpoint 1 only so far, the next is 50,760).
+Pace 0.515 s/update, but 474 cool-down pauses (GPU max 84 C, 5 thermal slowdowns) make the effective rate about 0.85 s/update; about 11.5 h of work remain.
+Training loss 0.0024 is an offline figure and says nothing about capability. Resume is blocked: 30 GB free against the runner's 65 GiB guard (syslog 152 GB, root-owned)
+and another user's process holds 37 GiB of GPU memory against the 28 GiB the runner requires. Neither check is to be relaxed.
+
+## Props P3 training launched - 2026-10-22
+
+All four gates passed: `--check`, `--preflight` (23 GB scratch, measured), `--resume-proof` (metrics, model and training state bit-equal after resuming
+from the update-1 snapshot) and `--equivalence` (30 updates, metrics, model and optimizer equal). `--train` started 19:00 from the detached tree
+`.worktrees/p3-train` at `06d1d98`; update 1 reproduces the preflight loss (0.82804). The first batch stops itself at 06:00 on 2026-10-23.
+No result yet. Getting to this point needed ~87 GB reclaimed (OPERATIONS.md): `/var/log/syslog` had grown to 134 GB and the user is not in sudoers,
+so the pre-P2 datasets and a Qwen cache were deleted instead; the log still grows ~33 GB/day.
+
+## Props P3 training and evaluation packages built - 2026-10-21
+
+`experiments/xvla_props_p3/` (admission image; fork of `xvla_props_p2`, recipe unchanged: 126,900 updates = 5.0 epochs, same checkpoint grid)
+bound to the sealed P3 dataset (fingerprint `6430d34e…d151acf`), with the P2 ten-instruction machinery re-derived for one prompt: the plan
+must carry only `sort the item`, the task table must be exactly `{prompt: 0}`, the expert's own wording is rejected. 72 tests, every
+P3-specific change mutation-checked. `experiments/xvla_props_p3_eval/` (robosuite image + GPU): 288 reserved layouts, one seed each, the
+pre-registered bin-choice criteria on stable placements with interpretability floors, 64 pure tests and 12 real-physics tests (all 288
+layouts restore; the expert's actions replayed as the policy succeed for a drink and a food among trained and held-out objects; a
+`wrong_bin` outcome is produced by real physics; four more cover `run_job`'s skip, quarantine and no-retry rules), every rule mutation-checked.
+Expert feasibility of the 288 reserved layouts (unrendered, 43 s): **287 of 288**; `report_062` (bottle) is infeasible and is dropped and
+counted, not replaced (the bottle then has 79 report layouts). An unexplained edit to `rollout.py` that thinned the recorded object trace
+to every second tick was caught by the rollout test (shape) and reverted. Writing its tests found that a stage with no stable placement crashed `collect` (NaN in
+a Wilson interval, FAILURES #60). No GPU run yet. Plan: [superpowers/plans/2026-10-21-props-p3-training-eval.md](superpowers/plans/2026-10-21-props-p3-training-eval.md).
+
+## Props P3 dataset sealed: 544 Food-vs-Drinks episodes, 46 min 43 s - 2026-10-20
+
+`experiments/props_p3_data/` (branch `feat/props-p3`): one object per episode, the fixed prompt `sort the item`, P0's bins (drinks
+orange, food blue, sides swap); can and milk (drinks), bread and lemon (food) trained, bottle and cereal never collected (user
+confirmed D1–D7 unchanged the same day). 544/544 admitted, 0 rejected, 0 substitutions, fingerprint `6430d34e…d151acf`, re-verified in a
+second process from the recorded arrays. Expert re-test 286/288 = 99.3% (only misses: lemon, blue bin on the left); the thread cap for
+16 pinned workers is pixel-neutral (12 rendered attempts, capped against default, byte-equal). 16 parallel CPU-rendered shards, 12.4 h of
+serial work. The first launch died at once (shards directory not created, nothing written; FAILURES #59). Not a policy result: training and
+evaluation plans are next. Report: [PROPS_P3_COLLECTION_20261020.md](PROPS_P3_COLLECTION_20261020.md).
+
 ## Props P2 fresh-layout re-test: the unseen-pair penalty is small on the same objects - 2026-10-20
 
 Checkpoint 101,520 from the archive bundle on 240 fresh layouts of milk and bread, each under its trained and its held-out bin (480 rollouts, 8 pinned workers, 4 expert-infeasible entries dropped as 2 whole pairs). Pooled penalty **2.5 points [−4.2, +9.2]** over 238 pairs: small, existence not shown (pre-registered). Milk 57.6% / 56.8%, bread 80.8% / 76.7%. The design came from a power analysis before any rollout (the milk-versus-bread contrast first proposed was unresolvable). One deviation: the evaluator's hard-coded 120-layout feasibility check was replaced by a re-test loader, the evaluator itself unchanged. Report: [PROPS_P2_RETEST_20261020.md](PROPS_P2_RETEST_20261020.md).

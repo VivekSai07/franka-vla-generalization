@@ -28,7 +28,23 @@ manifest verification. No X-VLA local-varied or SmolVLA broad-workspace model pu
 
 ---
 
-## Latest (2026-10-20): Props P2 — instruction sorting with 1–2 distractors, evaluated, diagnosed, re-tested
+## Latest (2026-10-27): Props P3 — Food vs Drinks evaluated, failed, deleted
+
+Checkpoint 101,520 (winner by the trained-only rule): **85.0% (68/80) on trained objects, 5.7% (9/159) on the two held-out objects**, 91.7% (22/24) on
+fresh confirm layouts; trained-object bin choice 68/68 correct, held-out objects almost never reach a bin (bottle 0/79 never lifted, cereal 22 of 31
+stable placements in the wrong bin). The user closed P3 as a failed attempt and deleted its dataset, checkpoints and evaluation outputs the same day (never
+transferred or published); the numbers survive in [docs/RESULTS.md](docs/RESULTS.md), the code and docs on branch `feat/props-p3`.
+
+## Earlier (2026-10-20): Props P3 — Food vs Drinks dataset sealed (later trained and evaluated, failed)
+
+One object per episode, the fixed prompt `sort the item`, P0's two bins as containers (drinks orange, food blue, sides swap), trained
+on can and milk (drinks) and bread and lemon (food), with bottle and cereal never collected. 544 episodes (480 train, 64 validation),
+0 rejected, sealed 2026-10-20 (fingerprint `6430d34e…d151acf`), collected in 46 min 43 s by 16 parallel CPU-rendered shards.
+Expert re-test 286/288 = 99.3%. No policy result yet: training and the evaluation package are the next plans
+([docs/PROPS_P3_COLLECTION_20261020.md](docs/PROPS_P3_COLLECTION_20261020.md),
+[spec](docs/superpowers/specs/2026-10-19-props-p3-food-drinks-design.md)).
+
+## Previously (2026-10-20): Props P2 — instruction sorting with 1–2 distractors, evaluated, diagnosed, re-tested
 
 P1's task (sort one object into a colour-designated bin, bins swap sides across
 layouts) repeated

@@ -119,6 +119,8 @@ Size the estimate from the pilot's attempt **and** commit seconds under full loa
   otherwise fails at import (`cannot cache function ... no locator available`).
 - A run binds its spec and plan through `provenance()`: from the first `--collect` until the seal, and
   after it, do not edit them (FAILURES #52). Put later design in new files.
+- Create the shards directory (`/out/<run>_shards`) in the launcher before `--collect`: the forked collector reads its free
+  space before it makes it, so 16 containers died at once (FAILURES #59). Check `docker ps` a minute after a mass launch.
 
 ## See also
 

@@ -112,7 +112,8 @@ Nothing runs outside one of two digest-pinned images.
 There are two images. The admission image (MuJoCo 3.13.0) runs everything sealed, B3 training
 (`experiments/xvla_b3_robosuite/`, no simulator needed) and every test that imports no simulator. A
 second image (robosuite 1.5.2, MuJoCo 3.4.0) runs everything that builds the robosuite scene: `experiments/robosuite_scene/`, the rollout stage of
-`experiments/robosuite_sim2sim/`, B3 collection (`experiments/b3_robosuite_data/`) and B3 evaluation
+`experiments/robosuite_sim2sim/`, B3 collection (`experiments/b3_robosuite_data/`), the props P1–P3 collections
+(`experiments/props_p{1,2,3}_data/`) and B3 evaluation
 rollouts (`experiments/xvla_b3_robosuite_eval/`). Numbers from the two
 are not physics-comparable. Digests, build notes and which runs need `--ulimit nofile=65536:65536` or a
 large `/tmp`: OPERATIONS.md.

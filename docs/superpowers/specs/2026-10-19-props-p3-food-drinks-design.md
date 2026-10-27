@@ -1,6 +1,6 @@
 # Props P3 — Food vs Drinks — design
 
-**Date:** 2026-10-19. **Status: revised 2026-10-20.** The user accepted the recommended revisions (below) after the P2 diagnostics and re-test, and said to go with them; D1–D7 stand as proposed and are otherwise unconfirmed, so a new session should still walk through them. Written to be executed in a new session ([handoff](../handoffs/2026-10-19-props-p3-handoff.md)); the roadmap level text is in [2026-10-05-props-sorting-design.md](2026-10-05-props-sorting-design.md) ("P3 — Food vs Drinks"), which this document replaces. Follows [P2](../../PROPS_P2_EVALUATION_20261016.md) and its
+**Date:** 2026-10-19. **Status: revised 2026-10-20; D1–D7 confirmed 2026-10-20.** The user accepted the recommended revisions (below) after the P2 diagnostics and re-test, and confirmed D1–D7 unchanged in the session that began the build. Written to be executed in a new session ([handoff](../handoffs/2026-10-19-props-p3-handoff.md)); the roadmap level text is in [2026-10-05-props-sorting-design.md](2026-10-05-props-sorting-design.md) ("P3 — Food vs Drinks"), which this document replaces. Follows [P2](../../PROPS_P2_EVALUATION_20261016.md) and its
 [diagnostics](../../PROPS_P2_DIAGNOSTICS_20261019.md). No code or data exists yet.
 
 ## Question
@@ -36,6 +36,15 @@ trip on noise or on a real position asymmetry, so the arrangement split is repor
 | D5 | **Renderer: OSMesa, as P1/P2. EGL is not adopted.** | one new variable per phase; collection is already 54 min in parallel; the P2 checkpoints and any comparison with P1/P2 need the same pixels ([EGL_RENDERING_CHECK_20261019.md](../../EGL_RENDERING_CHECK_20261019.md)). Evaluation speed is the only real gain and does not justify mixing |
 | D6 | Training: base X-VLA, P1/P2 recipe, **5 epochs** (exposure held constant, not updates). | the repo rule; the update count follows from the dataset size |
 | D7 | Size: **8 trained cells × 60 = 480 train, 8 × 8 = 64 validation, 544 admitted.** Cells are object × bin arrangement (the bin follows from the object). | ≈ P1/P2's 540; 120 demonstrations per object against P1's 72–96 |
+
+**Confirmed 2026-10-20 (user): D1, D2, D3, D4, D5, D6 and D7 all confirmed as proposed, unchanged.** Decided before any P3 code.
+
+**Risk accepted with D4 (stated before confirmation, 2026-10-20).** P2's rates for bottle (0.93) and cereal (0.86) are for objects the
+policy was trained on as targets. In P3 the held-out objects have no demonstration at all, so their grasp reliability is unknown and
+can be much lower. The interpretability floor (≥ 30 stable placements of 80 layouts per object) is then met with probability 0.99 at a
+stable-placement rate of 0.5, 0.71 at 0.4, 0.09 at 0.3 and about 0 at 0.2 (exact binomial). Below the floor the result is "not
+interpretable", neither pass nor fail, as pre-registered; the floor and the rule are not changed. The trained-object gate (wrong-bin
+≤ 5%) only shows that four trained objects were mapped to their bins; the held-out objects are the test of generalisation.
 
 ## Task
 

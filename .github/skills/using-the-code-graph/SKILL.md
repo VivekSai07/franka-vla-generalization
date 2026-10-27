@@ -37,7 +37,7 @@ structure, an LLM for summaries). It is a **navigation aid**, not a source of tr
   name: median import recall 63% (min 0%, max 100%), 5 of 14 had no importer found at all, precision
   100%. Function-level `calls` edges across files are mostly absent (162 dropped at merge). So `importers`
   is a lower bound at best, and "nothing imports this" is never proof: grep before you conclude, and
-  always grep before editing a shared helper ([FAILURES.md](../../../docs/FAILURES.md) #59).
+  always grep before editing a shared helper ([FAILURES.md](../../../docs/FAILURES.md) #63).
 - **Measured gains** (same script, tokens approximated as bytes/4, a proxy and not a session
   measurement): `layers` 636 tokens against 3,360 for `ls` plus README heads (5.3x); `show` returns a
   median 151 tokens where the file is 1,098 (about 968 saved per file not opened, if the summary is

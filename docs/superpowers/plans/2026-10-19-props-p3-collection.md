@@ -17,14 +17,36 @@ read-only and unchanged.
 
 ## Task 0 (before any code): confirm and verify
 
-- [ ] **0.1** Confirm D1–D7 with the user, one at a time if any is contested; edit the spec with a dated line for each change
+- [x] **0.1** Confirm D1–D7 with the user, one at a time if any is contested; edit the spec with a dated line for each change
   **before** coding. The success thresholds are pre-registration: they are fixed now and not moved after any rollout.
-- [ ] **0.2** Check the state the draft assumes (it was written without running any of this): `git worktree list`, `docker ps`
+  *(done 2026-10-20: all confirmed unchanged, recorded in the spec.)*
+- [x] **0.2** Check the state the draft assumes (it was written without running any of this): `git worktree list`, `docker ps`
   (a live container may hash a tree you are about to edit), `git log --oneline -5`, whether `feat/props-p2-followup` and
   `feat/egl-rendering` were merged, free disk (`df -h /home`; the P2 collection needed the sealed root 3.2 GB plus 3.1 GB of
-  shards).
-- [ ] **0.3** Create the branch with a worktree, never a checkout in a mounted tree:
+  shards). *(done 2026-10-20: the follow-up is on `origin/main`; `feat/egl-rendering` is not merged; 76 GB free.)*
+- [x] **0.3** Create the branch with a worktree, never a checkout in a mounted tree:
   `git worktree add -b feat/props-p3 .worktrees/feat-props-p3 <base>` (see the `branching-for-an-experiment-axis` skill).
+
+## Build decisions (2026-10-20, made while building; before the first `--collect`)
+
+This plan is hash-bound by the seal's `provenance()` (FAILURES #52): it is not edited after `--collect` starts, so task
+progress and results from Task 8 on live in the dated collection report, not here.
+
+- **Expert: `props_scene.expert.PropsExpert` unchanged** (the spec says "the P0/P1 expert unchanged"). P2's 0.19 m carry
+  existed to clear a standing distractor and has no purpose with one object. The episode wrapper is P1's single-object one,
+  plus P2's bounded model cache (12 possible object-and-arrangement models per worker, at most 4 kept).
+- **16 shards of 34 slots**, each pinned to 3 cores with `LP_NUM_THREADS=3` (544 does not divide by P2's 12). The thread cap
+  was proven pixel-neutral for this package: 12 rendered gate attempts, capped at 3 against default threads, in two
+  processes, byte-equal (traces and per-frame image digests).
+- **No control tier** among the reserved layouts (nothing to control for without distractors): screen 24, report 240,
+  confirm 24. The expert gate is 288 = 6 objects × 2 arrangements × 24, bars as P0/P2 (95% overall, 90% per object, 93% per slot).
+- **The shared-prompt checks, re-derived (Review Focus 4), scoped:** the `labels` gate and `validate_dataset` require exactly
+  `sort the item` in every frame, episode and the task table (P2 matched ten instructions by text); the bin must be the
+  object's container and no held-out object may be a target, both checked on the plan and on the merged dataset. The training
+  contract's equivalents (`INSTRUCTIONS`, `planned_instructions`, `task_index_map`, `approved_instruction`) belong to the training
+  plan and are not touched here.
+- Fork hygiene is tested (`test_contract`: no P1/P2 package reference, a `symtable` unbound-global scan, no distractor residue,
+  a non-empty README), and every test was mutation-checked.
 
 ## Global Constraints
 
@@ -79,17 +101,17 @@ read-only and unchanged.
 
 ## Tasks
 
-- [ ] **1. Plan** — `plan.py` + `test_plan.py` (Review Focus 1–2). Admission image.
-- [ ] **2. Contract** — `contract.py` + `test_contract.py` (Focus 6; provenance stable; spec and plan bound).
-- [ ] **3. Episode, validate** — `episode.py`, `validate.py`; `test_validate.py` (admission image, fake replay),
+- [x] **1. Plan** — `plan.py` + `test_plan.py` (Review Focus 1–2). Admission image.
+- [x] **2. Contract** — `contract.py` + `test_contract.py` (Focus 6; provenance stable; spec and plan bound).
+- [x] **3. Episode, validate** — `episode.py`, `validate.py`; `test_validate.py` (admission image, fake replay),
   `test_episode.py` (robosuite image: the recorded task equals the fixed prompt, the expert's text never appears, bounded cache
   rebuild is bit-identical) (Focus 3–4).
-- [ ] **4. Sharded scheduler** — `record.py` + `test_record.py` (shard slot blocks partition 0..543 exactly; resume per shard)
+- [x] **4. Sharded scheduler** — `record.py` + `test_record.py` (shard slot blocks partition 0..543 exactly; resume per shard)
   (Focus 5).
-- [ ] **5. Merge** — `merge.py` + `test_merge.py` (two tiny synthetic shards) (Focus 5).
-- [ ] **6. Expert re-test** — `record --gate`: 288 attempts, no rendering, bars in the spec; rendered attempts re-run in a second
+- [x] **5. Merge** — `merge.py` + `test_merge.py` (two tiny synthetic shards) (Focus 5).
+- [x] **6. Expert re-test** — `record --gate`: 288 attempts, no rendering, bars in the spec; rendered attempts re-run in a second
   process for byte-equality; `LP_NUM_THREADS` pixel check (Focus 7). Report numbers; stop if a bar fails.
-- [ ] **7. Pilot** — 2 shards × 6 slots → merge → validate on a scratch root. Watch the first episodes.
+- [x] **7. Pilot** — 2 shards × 6 slots → merge → validate on a scratch root. Watch the first episodes.
 - [ ] **8. Launch** — shards `--collect`, poll actively (`docker wait` has failed silently here); `--merge`; seal; independent
   re-verification in a second process.
 - [ ] **9. Report + docs pass** — `docs/PROPS_P3_COLLECTION_<date>.md`, TODO, BENCHMARK_STATUS, INDEX, RESULTS if numbers

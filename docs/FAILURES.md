@@ -124,7 +124,40 @@ approach, never-lifted against successes) must be re-read per object before it i
 where the target never rose more than 1.2 cm; (e) test the branch the real data does not reach: the passing-gate path crashed on
 an object that appears only as a distractor and was found only because it was given a test.
 
-59. **I advertised a code-graph feature before measuring it, and the first measurement used an ambiguous ground truth.**
+59. **A collection launch died in all 16 containers at once because the shards directory did not exist, and the tests could not have
+seen it.** P3's `--collect` (forked from P2) calls `shutil.disk_usage(shards_dir)` before it creates the shard; the pilot had worked
+because its directory had been made by hand, and the real launcher did not make one. `collect_shard`, `gate_shard` and `determinism`
+need the robosuite image, so none of the 77 simulator-free tests, and none of the mutation checks, executed that line; the pilot
+ran it only because of the manual `mkdir`. Nothing was written (the failure precedes the shard's own `mkdir`), the 16 dead containers
+were removed and the launch repeated with the directory created by the launcher; the code was left alone because from `--collect`
+onward it is hash-bound. **Lessons:** (a) a pilot proves only the path it was launched through: launch it the way the real run will
+be launched, including every directory a launcher is assumed to make; (b) check each container's state a minute after a mass
+launch (the first poll found `running=0`, which is what showed it), not after the first interval; (c) the same mutation pass found
+a dead check and several unasserted ones in the merge, and a merge path whose `verify` call no test required: a check that no test
+can fail is a candidate for deletion or for a test, not for trust.
+
+60. **A confidence interval for an empty group was NaN, and the evaluation's `collect` would have crashed after the rollouts.** The P3
+evaluation reports bin choice on stable placements. A stage in which nothing comes to rest in a bin (a policy that never lifts, a held-out
+object below the floor) has zero of them, and `wilson(0, 0)` returned `(nan, nan)`; `write_json` refuses NaN (`allow_nan=False`), so
+`collect` raised after every trial had been run. Found by the first collect test, whose fixture had trials that were never lifted; a
+previously written test file had no such case, and the same branch is the one real data reaches when a checkpoint is poor. Fixed (an
+empty group gives `None`, intervals clipped to [0, 1]) with tests that serialise `bin_choice([])`, `readouts([], [])` and `criteria([], [])`.
+**Lesson:** a statistic over a group that can be empty needs its empty case tested through the writer, not only through the arithmetic;
+this is the same class as FAILURES #58 (the branch real data did not yet reach was the one that broke).
+
+61. **The disk budget omitted the gate scratch that `--train` re-reads, and a root-owned log then ate the margin.** P3's plan said the run needs about
+61 GB at peak. `--train` re-verifies the `_preflight` and `_resumeproof` checkpoints (23 GB each, measured), so the real requirement was about
+110 GB beyond the dataset, and the night script wanted 70 GiB free at launch. The machine then went from 63 to 30 GiB free overnight because
+`/var/log/syslog` (root-owned, the user is not in sudoers) reached 134 GB at about 30 GB/day; the run could not resume until space was freed (the
+user deleted pre-P2 datasets and a model cache) and, later, the log was truncated. **Lesson:** budget disk from what the run re-reads at every start,
+not from what it writes; check what else on the machine is growing (`find / -xdev -size +1G -mmin -1500`) before deleting research data, because
+deleting data would not have fixed a log that grows 30 GB a day.
+62. **The checkpoint-selection rule was written by the author, not by the spec, and it decided between two readings of the same data.** The P3 plan
+chose the winner on trained-object layouts only (flagged to the user, never confirmed). Held-out successes favour 126,900 (17 against 9) and
+all-layout counts rank it first (83 against 77); trained-object counts (68, 68, 66, 66 of 80) are a tie in substance. **Lesson:** a selection rule
+that can change the headline belongs in the spec, confirmed before the first rollout, with the tie behaviour stated; otherwise report every candidate
+the alternative rule would have picked next to the winner.
+63. **I advertised a code-graph feature before measuring it, and the first measurement used an ambiguous ground truth.**
 On 2026-10-21 I documented `code_graph.py importers` as a way to find what a shared helper touches, after one spot check
 (59 of 83 importers of `data_collection/benchmark.py`, so "71% recall"). The first benchmark then appeared to show 33% and
 11% for two `scene.py` targets, but `experiments/props_scene/scene.py` and `experiments/robosuite_scene/scene.py` share a

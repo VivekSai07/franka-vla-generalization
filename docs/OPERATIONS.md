@@ -106,6 +106,22 @@ the pinned image above on MuJoCo 3.13.0.
   54 min (10.8 h of serial work). `--status /out/<run>_shards` while it runs. Expert re-test: `--gate` per shard
   (unrendered), `--determinism --tag` twice, `--gate-summary`. Report:
   [PROPS_P2_COLLECTION_20261013.md](PROPS_P2_COLLECTION_20261013.md).
+- Props P3 (closed 2026-10-27, artifacts deleted; the recipes below are historical) (`experiments/props_p3_data/`, sealed 2026-10-20, hash-bound — fork, do not edit): the P2 pattern with **16 shard
+  containers** (`--collect /out/<run>_shards --shard K`, K = 0..15, 34 contiguous slots each), each pinned to 3 cores
+  (`--cpuset-cpus 3K-3K+2`) with `-e LP_NUM_THREADS=3` (proven pixel-neutral against default threads), 16 GB `/tmp`, same flags.
+  **Create `/out/<run>_shards` first** (`--collect` reads its free space before making it; FAILURES #59). ~4 GB per worker.
+  544 episodes took 46 min 43 s (12.4 h of serial work: 54.8 s per attempt and 27.0 s per commit under load); merge 60 s.
+  Expert re-test: `--gate` per shard, `--determinism --tag` twice (one with the thread cap, one without),
+  `--gate-summary`. Report: [PROPS_P3_COLLECTION_20261020.md](PROPS_P3_COLLECTION_20261020.md).
+- Props P3 training (`experiments/xvla_props_p3/`, admission image, no simulator; fork of `xvla_props_p2`): the same
+  `--check`/`--preflight`/`--resume-proof`/`--equivalence`/`--train [--resume] [--stop-at T]` gates and mounts as P2, with the
+  sealed parent `outputs/props_p3_data/props_p3_20261020` and outputs `outputs/train/xvla_props_p3_v1{,_admission,_preflight,
+  _resumeproof,_equivalence}`; hash-bound by its own `SOURCE_FILES` from `--check`. Plan:
+  [superpowers/plans/2026-10-21-props-p3-training-eval.md](superpowers/plans/2026-10-21-props-p3-training-eval.md).
+- Props P3 evaluation (`experiments/xvla_props_p3_eval/`, robosuite image + GPU, not hash-bound): `scripts/xvla_props_p3_eval.sh
+  feas|prepare|smoke|all`; run from a worktree it mounts the main checkout's `outputs` and `.cache` (`OUT_ROOT` overrides) and creates
+  the (gitignored) bind-mount targets inside the read-only code mount first, or docker refuses to start. Workers
+  pinned to 5 cores, peak GPU about 7.3 GiB after a checkpoint switch (as P2). OSMesa only.
 - Props P2 evaluation (`experiments/xvla_props_p2_eval/`, robosuite image + GPU, not hash-bound): `evaluate.py prepare`
   once (admission image, mounts `outputs/train`, both parents, `.cache`), then `scripts/xvla_props_p2_eval.sh smoke|all N`
   runs N parallel workers, each pinned to 5 cores (`--cpuset-cpus`, `OMP_NUM_THREADS=5`), ~4 GB GPU at first load and
@@ -306,6 +322,24 @@ user's go-ahead, the rest went too: B3's four unbundled intermediate checkpoints
 93,600 had been evaluated in the B3 report, so those weights now exist nowhere), the `training_state.pt` of B2 and B3, and the whole
 checkpoints directory of the superseded `xvla_..._localvaried_v1` run (21 GB plus 7 GB). B3 keeps steps 124,800 and 156,000 (bundled);
 B2 keeps no checkpoint on RTX. `outputs/` went from 292 GB to 53 GB over the day.
+
+**Reclaimed 2026-10-21 (user-approved, 13 GB; free 50 to 63 GiB):** the four kept weight files of B3 (steps 124,800 and
+156,000) and P1 (88,830 and 126,900), all three hardlinks of each (`outputs/train/...`, `downloads_20261005/b3_robosuite/`,
+`downloads_20261009/props_p1/` incl. `hf_upload/`). Both are on the Hub and were verified on Windows; re-evaluate from the
+Hub download. Run records, results and the bundles' runtime/evidence files stay. The `xvla_base_bundle` is not touched.
+The user's HF cache `~/.cache/huggingface` (68 GB) is Qwen models of another project; the UnifoLM entries in it are empty stubs.
+
+**Reclaimed 2026-10-22 (user-approved, ~87 GB; free 31 to 117 GiB):** the Qwen models in the user's HF cache (68 GB, another project, re-downloadable;
+the UnifoLM entries were empty stubs); `outputs/egl_rendering_check`; the pre-P2 dataset roots `b1_language_data`, `b2_distractor_data`,
+`b3_robosuite_data`, `broad_workspace_data`, `local_varied_data`, `fixed_layout`, `paired_demonstrations`, `pilot_overnight_20260915`; the bundles
+`downloads_20260920` and `downloads_20261005`; `publication/`; and the P3 shard audit copy (the sealed P3 root was not touched). Run records,
+`datasets/` and the P1/P2 data were kept. Those sealed datasets now exist only on Windows and the Hub, so their packages' verify steps cannot
+pass here. Cause of the shortage: `/var/log/syslog` at 134 GB (33 GB/day), root-owned; the user is not in sudoers.
+(The syslog was later truncated by someone else.)
+
+**Reclaimed 2026-10-27 (user instruction, ~101 GB; free 84 to 184 GiB):** everything on disk for props P3: `outputs/props_p3_data` (the sealed dataset),
+`outputs/train/xvla_props_p3_v1` and its `_admission`, `_preflight`, `_resumeproof`, `_equivalence` directories, `outputs/xvla_props_p3_eval`, the detached run worktree
+`.worktrees/p3-train` and the stopped P3 containers. None of it was on Windows or the Hub. Code and docs stay on branch `feat/props-p3`.
 
 **Disk.** As of 2026-10-17: 879 GB total, **248 GB free (71% full)** after the reclaim below (it was 59 GB, 94%; 203 GB before the
 P1/P2 intermediates went).
