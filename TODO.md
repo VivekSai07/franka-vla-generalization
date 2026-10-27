@@ -8,7 +8,7 @@
   copied to Windows or published, so nothing in P3 can be re-verified or re-evaluated; what is kept is the code and docs on branch `feat/props-p3` (not pushed),
   which hold the evidence and the lessons (FAILURES #59, #60). Open: whether to delete that branch, and what replaces P3.
 - **Props P3 (Food vs Drinks, fixed prompt `sort the item`) dataset collected and sealed 2026-10-20 (deleted 2026-10-27): 544/544 episodes,
-  0 rejected, fingerprint `6430d34e…d151acf`; training started 2026-10-22 (bullet above).** Decisions D1–D7 confirmed by the user 2026-10-20 (unchanged).
+  0 rejected, fingerprint `6430d34e…d151acf`; trained and evaluated, failed, deleted (bullet above).** Decisions D1–D7 confirmed by the user 2026-10-20 (unchanged).
   Expert re-test 286/288 = 99.3% (lemon with the blue bin on the left is the only miss), the 16-worker thread cap proven
   pixel-neutral, 46 min 43 s in 16 parallel shards, seal re-verified in a second process (held-out objects bottle and cereal: 0
   episodes, checked from the recorded arrays). Report: [docs/PROPS_P3_COLLECTION_20261020.md](docs/PROPS_P3_COLLECTION_20261020.md);

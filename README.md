@@ -35,7 +35,7 @@ fresh confirm layouts; trained-object bin choice 68/68 correct, held-out objects
 stable placements in the wrong bin). The user closed P3 as a failed attempt and deleted its dataset, checkpoints and evaluation outputs the same day (never
 transferred or published); the numbers survive in [docs/RESULTS.md](docs/RESULTS.md), the code and docs on branch `feat/props-p3`.
 
-## Earlier (2026-10-20): Props P3 — Food vs Drinks dataset sealed (training started 2026-10-22)
+## Earlier (2026-10-20): Props P3 — Food vs Drinks dataset sealed (later trained and evaluated, failed)
 
 One object per episode, the fixed prompt `sort the item`, P0's two bins as containers (drinks orange, food blue, sides swap), trained
 on can and milk (drinks) and bread and lemon (food), with bottle and cereal never collected. 544 episodes (480 train, 64 validation),
