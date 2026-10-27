@@ -145,6 +145,19 @@ empty group gives `None`, intervals clipped to [0, 1]) with tests that serialise
 **Lesson:** a statistic over a group that can be empty needs its empty case tested through the writer, not only through the arithmetic;
 this is the same class as FAILURES #58 (the branch real data did not yet reach was the one that broke).
 
+61. **The disk budget omitted the gate scratch that `--train` re-reads, and a root-owned log then ate the margin.** P3's plan said the run needs about
+61 GB at peak. `--train` re-verifies the `_preflight` and `_resumeproof` checkpoints (23 GB each, measured), so the real requirement was about
+110 GB beyond the dataset, and the night script wanted 70 GiB free at launch. The machine then went from 63 to 30 GiB free overnight because
+`/var/log/syslog` (root-owned, the user is not in sudoers) reached 134 GB at about 30 GB/day; the run could not resume until space was freed (the
+user deleted pre-P2 datasets and a model cache) and, later, the log was truncated. **Lesson:** budget disk from what the run re-reads at every start,
+not from what it writes; check what else on the machine is growing (`find / -xdev -size +1G -mmin -1500`) before deleting research data, because
+deleting data would not have fixed a log that grows 30 GB a day.
+62. **The checkpoint-selection rule was written by the author, not by the spec, and it decided between two readings of the same data.** The P3 plan
+chose the winner on trained-object layouts only (flagged to the user, never confirmed). Held-out successes favour 126,900 (17 against 9) and
+all-layout counts rank it first (83 against 77); trained-object counts (68, 68, 66, 66 of 80) are a tie in substance. **Lesson:** a selection rule
+that can change the headline belongs in the spec, confirmed before the first rollout, with the tie behaviour stated; otherwise report every candidate
+the alternative rule would have picked next to the winner.
+
 Broader lessons — every "just increment a counter" or "just leave state alone on retry" assumption in the fixed-layout pipeline broke under broad_workspace retries. Rejections need explicit cleanup for every piece of shared state (LeRobot buffer + PNG dir + attempts dir semantics + admit-count invariant). And a result is only interpretable once you know what the *absence* of the treatment scores on the same protocol.
 
 **Recurring meta-lesson — a green test suite is not evidence.** Six separate times (#10, #15, #20, #24, and twice while porting eval packages) the tests passed while the thing that actually runs was broken, because the tests exercised a *fixture*, a *constant*, the *wrong module*, or every path *except* the one the job takes. When adding a regression test, confirm it fails against the unfixed code. When forking a package, run the `symtable` undefined-name check from #24 before spending GPU time.

@@ -8,7 +8,7 @@ Download corresponding datasets/checkpoints: [HF artifact index](HUGGING_FACE_AR
 
 ## Props P3 X-VLA, Food vs Drinks with a fixed prompt (2026-10-27) — measured, not sealed
 
-Dataset: [P3 collection](PROPS_P3_COLLECTION_20261020.md) (544 episodes, seal `6430d34e…d151acf`). One seed per reserved layout,
+Dataset: [P3 collection](PROPS_P3_COLLECTION_20261020.md) (544 episodes, seal `6430d34e…d151acf`); report: [PROPS_P3_EVALUATION_20261027.md](PROPS_P3_EVALUATION_20261027.md). One seed per reserved layout,
 robosuite 1.5.2 / MuJoCo 3.4.0, OSMesa; 287 of 288 layouts used (`report_062`, a bottle layout, is expert-infeasible and dropped). Trained on can,
 milk (drinks) and bread, lemon (food); bottle (drink) and cereal (food) never collected. Report tier, 239 layouts per checkpoint:
 

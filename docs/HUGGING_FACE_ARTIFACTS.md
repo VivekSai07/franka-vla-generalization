@@ -135,6 +135,12 @@ Records: [PROPS_P2_COLLECTION_20261013.md](PROPS_P2_COLLECTION_20261013.md), [tr
 
 Windows publication completed 2026-10-17. Dataset commit `6263e62c7c4f26da02ec9b8e5cd359ef7335f42a` is shared by `main` and `v3.0`; model commit is `55499baadd46012d314938618a3c90bd031dfe67`. The model root is the preregistered winner at step 101,520 and `checkpoints/step_126900/` holds the final checkpoint. The two snapshots reconstruct the original bundle with `reevaluate/reconstruct_bundle.py`; that reconstructed layout passed `verify_bundle.py` on Windows. RTX reported the clean-container 2-trial smoke as bit-identical to the original. Windows did not rerun GPU rollouts or retraining.
 
+### Props P3 Food vs Drinks
+
+Not published and not transferred to Windows. The user closed P3 as a failed attempt on 2026-10-27 and deleted its dataset, checkpoints and evaluation outputs
+from RTX; only the code and docs on `feat/props-p3` (merged to `main`) and the figures in [RESULTS.md](RESULTS.md) remain
+([report](PROPS_P3_EVALUATION_20261027.md)).
+
 ## Legacy datasets and model
 
 These belong to the archived docker-compose-era work, rather than the sealed fixed-layout/B1/B2/B3/P1 programme. The archived TODO and [DATASET_DESIGN.md](../DATASET_DESIGN.md) preserve the original alignment/design caveats. Repairing viewer metadata does not repair observation/action alignment or prove the proposed 300-episode, 12-instruction design was collected.

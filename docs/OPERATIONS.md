@@ -105,7 +105,7 @@ the pinned image above on MuJoCo 3.13.0.
   54 min (10.8 h of serial work). `--status /out/<run>_shards` while it runs. Expert re-test: `--gate` per shard
   (unrendered), `--determinism --tag` twice, `--gate-summary`. Report:
   [PROPS_P2_COLLECTION_20261013.md](PROPS_P2_COLLECTION_20261013.md).
-- Props P3 (`experiments/props_p3_data/`, sealed 2026-10-20, hash-bound — fork, do not edit): the P2 pattern with **16 shard
+- Props P3 (closed 2026-10-27, artifacts deleted; the recipes below are historical) (`experiments/props_p3_data/`, sealed 2026-10-20, hash-bound — fork, do not edit): the P2 pattern with **16 shard
   containers** (`--collect /out/<run>_shards --shard K`, K = 0..15, 34 contiguous slots each), each pinned to 3 cores
   (`--cpuset-cpus 3K-3K+2`) with `-e LP_NUM_THREADS=3` (proven pixel-neutral against default threads), 16 GB `/tmp`, same flags.
   **Create `/out/<run>_shards` first** (`--collect` reads its free space before making it; FAILURES #59). ~4 GB per worker.
