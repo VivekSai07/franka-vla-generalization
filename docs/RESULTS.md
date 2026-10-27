@@ -6,6 +6,30 @@ failures and lessons in [FAILURES.md](FAILURES.md).
 
 Download corresponding datasets/checkpoints: [HF artifact index](HUGGING_FACE_ARTIFACTS.md).
 
+## Props P3 X-VLA, Food vs Drinks with a fixed prompt (2026-10-27) — measured, not sealed
+
+Dataset: [P3 collection](PROPS_P3_COLLECTION_20261020.md) (544 episodes, seal `6430d34e…d151acf`). One seed per reserved layout,
+robosuite 1.5.2 / MuJoCo 3.4.0, OSMesa; 287 of 288 layouts used (`report_062`, a bottle layout, is expert-infeasible and dropped). Trained on can,
+milk (drinks) and bread, lemon (food); bottle (drink) and cereal (food) never collected. Report tier, 239 layouts per checkpoint:
+
+| checkpoint | trained objects (80) | held-out objects (159) | all | milk (20) | cereal (80) | bottle (79) |
+|---|---|---|---|---|---|---|
+| 88,830 | 68 | 10 | 78 | 12 | 10 | 0 |
+| **101,520 (winner by the trained-only rule)** | **68 (85.0%)** | **9 (5.7%)** | **77 (32.2%)** | 10 | 9 | 0 |
+| 114,210 | 66 | 8 | 74 | 8 | 8 | 0 |
+| 126,900 | 66 | 17 | 83 | 8 | 16 | 1 |
+
+Screen (24 layouts): 50,760: 17, 76,140: 16, 88,830: 20, 101,520: 22, 114,210: 22, 126,900: 22. Confirm (24 fresh layouts, 101,520, selected
+on nothing): 22/24 = 91.7% (Wilson 74.2-97.7%). Per trained object at 101,520: can 19/20, bread 20/20, lemon 19/20, **milk 10/20**.
+Bin choice on stable placements, trained objects: **68/68 correct, 0 wrong** at 101,520 (88,830 also 68/68; 114,210 and 126,900 66/66), criterion
+"wrong at most 5%" met (Wilson upper bound of the wrong rate 5.3%). Held-out: bottle 0 stable placements at 101,520, cereal 31 stable with
+**22 wrong-bin** (accuracy 29%, Wilson 16-47%); the held-out criterion is `not_interpretable` (bottle below the floor of 30).
+Failure causes at 101,520 (162 non-successes): never lifted 120 (bottle 77, cereal 36, milk 6, lemon 1), wrong bin 22 (all cereal),
+timeout while carrying 12, dropped outside 9. The winner is chosen on trained layouts only (a rule fixed in the plan, not in the spec); the same
+data ranked by all layouts would pick 126,900 (83), so the checkpoint ranking among 88,830-126,900 is not resolved (trained-object counts 68, 68,
+66, 66 of 80 are a tie in substance). Caveats: one seed per layout; all four checkpoints are evaluated on the same layouts so their counts are not
+independent; failures of milk and of the held-out objects are described from traces (contact, lift, displacement), not yet explained.
+
 ## Props P2 X-VLA, instruction sorting with 1–2 distractors (2026-10-16) — measured, not sealed
 
 Dataset: [P2 collection](PROPS_P2_COLLECTION_20261013.md) (540 episodes, seal `b1d642b3…f4d898`, not yet published).

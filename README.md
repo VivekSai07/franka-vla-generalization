@@ -28,7 +28,13 @@ manifest verification. No X-VLA local-varied or SmolVLA broad-workspace model pu
 
 ---
 
-## Latest (2026-10-20): Props P3 — Food vs Drinks dataset sealed (training started 2026-10-22)
+## Latest (2026-10-27): Props P3 — Food vs Drinks evaluated
+
+Checkpoint 101,520 (winner by the trained-only rule): **85.0% (68/80) on trained objects, 5.7% (9/159) on the two held-out objects**, 91.7% (22/24) on
+fresh confirm layouts; trained-object bin choice 68/68 correct, held-out objects almost never reach a bin (bottle 0/79 never lifted, cereal 22 of 31
+stable placements in the wrong bin). Details and caveats: [docs/RESULTS.md](docs/RESULTS.md).
+
+## Earlier (2026-10-20): Props P3 — Food vs Drinks dataset sealed (training started 2026-10-22)
 
 One object per episode, the fixed prompt `sort the item`, P0's two bins as containers (drinks orange, food blue, sides swap), trained
 on can and milk (drinks) and bread and lemon (food), with bottle and cereal never collected. 544 episodes (480 train, 64 validation),

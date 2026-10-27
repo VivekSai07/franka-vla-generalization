@@ -1,5 +1,13 @@
 # Franka benchmark: start here
 
+## Props P3 evaluated: trained objects 85%, held-out objects 6% - 2026-10-27
+
+Training finished 2026-10-26 (126,900 updates, six checkpoints); `prepare` and the smoke stage passed; screen, report and confirm ran in 8 parallel
+workers (about 6 h of rollouts). Winner 101,520 by the trained-only rule: report **77/239 = 32.2%**, trained objects **68/80 = 85.0%**, held-out
+**9/159 = 5.7%**, confirm 22/24 = 91.7%. Trained-object bin choice was never wrong (68/68). Held-out: bottle 0/79 (77 never lifted), cereal 9/80 with
+22 wrong-bin of 31 stable placements. Milk is the weak trained object (10/20 at 101,520; 12, 10, 8, 8 across the four report checkpoints; never-lifted
+3, 6, 7, 11). The second pre-registered criterion is not interpretable (bottle never reaches a bin). Numbers and caveats: RESULTS.md.
+
 ## Props P3 training, night 1: paused at 46,800 of 126,900 - 2026-10-23
 
 The first batch ran 19:00 to 06:00 and paused itself at the last snapshot before the deadline (exit 0, snapshot 46,800; checkpoint 1 only so far, the next is 50,760).

@@ -2,16 +2,11 @@
 
 ## Where things stand (2026-10-22)
 
-- **Now: props P3 training running (launched 2026-10-22 19:00, first batch stops itself 2026-10-23 06:00).** All four gates passed
-  2026-10-22 (`--check`, `--preflight`, `--resume-proof` with metrics/model/training state bit-equal, `--equivalence` 30 updates equal);
-  update 1 reproduces the preflight loss (0.82804). `experiments/xvla_props_p3/` (admission image, tree `.worktrees/p3-train` at `06d1d98`,
-  never switch it) and evaluation `experiments/xvla_props_p3_eval/` (288 reserved layouts, one seed each, pre-registered bin-choice criteria;
-  287 feasible, `report_062` dropped and counted), driver `scripts/xvla_props_p3_eval.sh`, plan
-  [docs/superpowers/plans/2026-10-21-props-p3-training-eval.md](docs/superpowers/plans/2026-10-21-props-p3-training-eval.md). Later nights:
-  `scripts/xvla_props_p3_night.sh resume "<deadline>"`; `status` for progress. **Open:** (1) the checkpoint-selection rule (trained-object
-  layouts only; the spec did not state it) before any rollout; (2) **resume is blocked on 2026-10-23**: night 1 paused cleanly at update 46,800 of 126,900 (36.9%, snapshot 46,800); free disk is 30 GB against the runner's
-  fixed 65 GiB guard (`/var/log/syslog`, root-owned, now 152 GB at ~29 GB/day, user not in sudoers), and another user's job holds 37 of the GPU's 48 GiB while the
-  runner needs 28 GiB free. The guard is not to be relaxed. The gates' scratch (23 GB each, measured) stays on disk until training ends.
+- **Now: props P3 trained (126,900 updates, 2026-10-26) and evaluated (2026-10-27).** Winner 101,520 by the trained-only rule: 85.0% on trained objects,
+  5.7% on held-out, 91.7% confirm (numbers, per-checkpoint table and caveats in [docs/RESULTS.md](docs/RESULTS.md)). **Open:** (1) the selection rule was
+  mine, not the spec's, and all-layout counts would pick 126,900; (2) why milk (a trained object) fails half the time and gets worse with training; (3) what
+  the held-out failures are (bottle never lifted, cereal sent to the orange bin); (4) a dated report and FAILURES entries once (2)-(3) are diagnosed
+  (replay the expert on failing layouts, interference, video checks); (5) publishing the dataset and the 101,520 / 126,900 checkpoints.
 - **Props P3 (Food vs Drinks, fixed prompt `sort the item`) dataset collected and sealed 2026-10-20: 544/544 episodes,
   0 rejected, fingerprint `6430d34e…d151acf`; training started 2026-10-22 (bullet above).** Decisions D1–D7 confirmed by the user 2026-10-20 (unchanged).
   Expert re-test 286/288 = 99.3% (lemon with the blue bin on the left is the only miss), the 16-worker thread cap proven
