@@ -334,6 +334,11 @@ the UnifoLM entries were empty stubs); `outputs/egl_rendering_check`; the pre-P2
 `downloads_20260920` and `downloads_20261005`; `publication/`; and the P3 shard audit copy (the sealed P3 root was not touched). Run records,
 `datasets/` and the P1/P2 data were kept. Those sealed datasets now exist only on Windows and the Hub, so their packages' verify steps cannot
 pass here. Cause of the shortage: `/var/log/syslog` at 134 GB (33 GB/day), root-owned; the user is not in sudoers.
+(The syslog was later truncated by someone else.)
+
+**Reclaimed 2026-10-27 (user instruction, ~101 GB; free 84 to 184 GiB):** everything on disk for props P3: `outputs/props_p3_data` (the sealed dataset),
+`outputs/train/xvla_props_p3_v1` and its `_admission`, `_preflight`, `_resumeproof`, `_equivalence` directories, `outputs/xvla_props_p3_eval`, the detached run worktree
+`.worktrees/p3-train` and the stopped P3 containers. None of it was on Windows or the Hub. Code and docs stay on branch `feat/props-p3`.
 
 **Disk.** As of 2026-10-17: 879 GB total, **248 GB free (71% full)** after the reclaim below (it was 59 GB, 94%; 203 GB before the
 P1/P2 intermediates went).

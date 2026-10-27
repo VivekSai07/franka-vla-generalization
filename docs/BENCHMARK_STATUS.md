@@ -1,5 +1,12 @@
 # Franka benchmark: start here
 
+## Props P3 closed and deleted - 2026-10-27
+
+The user closed P3 as a failed attempt (85% on trained objects but 5.7% on held-out ones, milk only 10/20) and had its artifacts deleted, without copying them to
+Windows or publishing them: the sealed dataset, all training output including the 23 GB `_preflight` and `_resumeproof` scratch, the evaluation outputs, the run
+worktree and its stopped containers (about 101 GB; disk 84 to 184 GiB free). Kept: the code and docs on branch `feat/props-p3` (not pushed), RESULTS.md's figures and
+FAILURES #59 and #60. The recorded figures can no longer be re-verified.
+
 ## Props P3 evaluated: trained objects 85%, held-out objects 6% - 2026-10-27
 
 Training finished 2026-10-26 (126,900 updates, six checkpoints); `prepare` and the smoke stage passed; screen, report and confirm ran in 8 parallel

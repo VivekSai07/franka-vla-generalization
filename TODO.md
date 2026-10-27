@@ -2,12 +2,12 @@
 
 ## Where things stand (2026-10-22)
 
-- **Now: props P3 trained (126,900 updates, 2026-10-26) and evaluated (2026-10-27).** Winner 101,520 by the trained-only rule: 85.0% on trained objects,
-  5.7% on held-out, 91.7% confirm (numbers, per-checkpoint table and caveats in [docs/RESULTS.md](docs/RESULTS.md)). **Open:** (1) the selection rule was
-  mine, not the spec's, and all-layout counts would pick 126,900; (2) why milk (a trained object) fails half the time and gets worse with training; (3) what
-  the held-out failures are (bottle never lifted, cereal sent to the orange bin); (4) a dated report and FAILURES entries once (2)-(3) are diagnosed
-  (replay the expert on failing layouts, interference, video checks); (5) publishing the dataset and the 101,520 / 126,900 checkpoints.
-- **Props P3 (Food vs Drinks, fixed prompt `sort the item`) dataset collected and sealed 2026-10-20: 544/544 episodes,
+- **Now: props P3 closed as a failed attempt (2026-10-27), artifacts deleted by the user; next plan not yet written.** It was trained (126,900 updates) and
+  evaluated: best checkpoint 101,520, 85.0% on trained objects, 5.7% on held-out ones, milk (trained) only 10/20; numbers in
+  [docs/RESULTS.md](docs/RESULTS.md). The dataset, checkpoints, gate scratch and evaluation outputs were deleted on the user's instruction and were never
+  copied to Windows or published, so nothing in P3 can be re-verified or re-evaluated; what is kept is the code and docs on branch `feat/props-p3` (not pushed),
+  which hold the evidence and the lessons (FAILURES #59, #60). Open: whether to delete that branch, and what replaces P3.
+- **Props P3 (Food vs Drinks, fixed prompt `sort the item`) dataset collected and sealed 2026-10-20 (deleted 2026-10-27): 544/544 episodes,
   0 rejected, fingerprint `6430d34e…d151acf`; training started 2026-10-22 (bullet above).** Decisions D1–D7 confirmed by the user 2026-10-20 (unchanged).
   Expert re-test 286/288 = 99.3% (lemon with the blue bin on the left is the only miss), the 16-worker thread cap proven
   pixel-neutral, 46 min 43 s in 16 parallel shards, seal re-verified in a second process (held-out objects bottle and cereal: 0
@@ -447,7 +447,7 @@ Two-phase project. User accepted the one-variable-per-run attribution trade-off:
         an explicit tolerance decided before data; (3) EGL vs OSMesa differ on 72% of pixels (mean 1.2,
         max 105 levels), so training data and evaluation rollouts must use the same renderer, and the
         switch must not coincide with another variable. Also worth it for evaluation, which renders too.
-      - **P3 — rule-based Food vs Drinks — dataset sealed 2026-10-20 (544/544), training started 2026-10-22**
+      - **P3 — rule-based Food vs Drinks — dataset sealed 2026-10-20 (544/544), trained and evaluated, failed; deleted 2026-10-27**
         ([spec](docs/superpowers/specs/2026-10-19-props-p3-food-drinks-design.md),
         [collection plan](docs/superpowers/plans/2026-10-19-props-p3-collection.md),
         [collection report](docs/PROPS_P3_COLLECTION_20261020.md),

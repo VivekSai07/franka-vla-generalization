@@ -29,6 +29,7 @@ timeout while carrying 12, dropped outside 9. The winner is chosen on trained la
 data ranked by all layouts would pick 126,900 (83), so the checkpoint ranking among 88,830-126,900 is not resolved (trained-object counts 68, 68,
 66, 66 of 80 are a tie in substance). Caveats: one seed per layout; all four checkpoints are evaluated on the same layouts so their counts are not
 independent; failures of milk and of the held-out objects are described from traces (contact, lift, displacement), not yet explained.
+**The dataset, checkpoints and every evaluation output behind these figures were deleted on 2026-10-27 (never copied to Windows or published); they cannot be re-checked.**
 
 ## Props P2 X-VLA, instruction sorting with 1–2 distractors (2026-10-16) — measured, not sealed
 
