@@ -19,7 +19,7 @@ class ExactReplay(unittest.TestCase):
             self.assertEqual(sealed["state"].dtype, np.float32)
             self.assertTrue(np.array_equal(sealed["state"], sealed["qpos"][:, :9].astype(np.float32)))
             summary = replay.frames(index, _noop)
-            self.assertEqual(summary, {"frames": 452, "index": index})
+            self.assertEqual((summary["frames"], summary["index"]), (452, index))
 
     def test_on_frame_sees_the_observation_instant(self):
         sealed = replay.load_episode(271)
@@ -68,6 +68,29 @@ class ExactReplay(unittest.TestCase):
             with self.assertRaises(replay.ReplayMismatch) as caught:
                 replay.frames(0, _noop)
         self.assertEqual((caught.exception.tick, caught.exception.field), (120, "props_pose"))
+
+    def test_sealed_npz_has_no_phase_index(self):
+        with np.load(replay.contract.P2_ROOT / "episodes" / "episode_000.npz") as npz:
+            self.assertNotIn("phase_index", npz.files)
+
+    def test_phase_index_is_rebuilt_from_the_clock(self):
+        for index in INDICES:
+            phases = replay.frames(index, _noop)["phase_index"]
+            self.assertEqual(phases.shape, (452,))
+            self.assertEqual((int(phases[0]), int(phases[-1])), (0, 8))
+            self.assertTrue((np.diff(phases) >= 0).all())
+            counts = np.bincount(phases, minlength=9)
+            for name, count in zip(replay.c.PHASE_NAMES, counts):
+                self.assertAlmostEqual(count, replay.c.PHASE_DURATION_S[name] * replay.c.FPS, delta=1, msg=name)
+
+    def test_phase_must_agree_with_the_sealed_gripper_command(self):
+        sealed = replay.load_episode(0)
+        action = sealed["action"].copy()
+        action[300, 7] = 255.0 - action[300, 7]
+        with mock.patch.object(replay, "load_episode", return_value={**sealed, "action": action}):
+            with self.assertRaises(replay.ReplayMismatch) as caught:
+                replay.frames(0, _noop)
+        self.assertEqual((caught.exception.tick, caught.exception.field), (300, "phase"))
 
     def test_sealed_episode_identity_matches_the_plan(self):
         sealed = replay.load_episode(271)

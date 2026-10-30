@@ -13,6 +13,7 @@ import numpy as np
 from data_collection.benchmark import apply_action, restore_state, step_control, synchronize_observation
 from experiments.props_p2_data.episode import expert_for, names_of
 from experiments.props_scene import constants as c
+from experiments.props_scene.expert import HOLDING
 from experiments.vla_inputs_signals import contract
 from src.robots.franka_panda.config import ACTIVE_JOINTS, ARM_DOF
 
@@ -63,7 +64,9 @@ def load_episode(index):
 def frames(index, on_frame):
     """Replay episode `index`; `on_frame(tick, model, data)` runs at the observation instant of every tick.
 
-    `on_frame` must not write `data` (S0 computes on a scratch copy). Returns {"frames", "index"}.
+    `on_frame` must not write `data` (S0 computes on a scratch copy). Returns {"frames", "index", "phase_index"}.
+    The sealed NPZ has no phase index, so it is rebuilt from the simulation clock by the expert's own rule and
+    must agree with the sealed gripper command at every tick.
     """
     sealed = load_episode(index)
     expert = expert_for(names_of(sealed["episode"]), sealed["episode"]["blue_slot"])
@@ -71,6 +74,7 @@ def frames(index, on_frame):
     bodies = [model.body(f"prop_{name}").id for name in expert.objects]
     data = mujoco.MjData(model)
     restore_state(model, data, sealed["initial_state"])
+    phase, phase_start, phases = 0, data.time, []
     for tick, action in enumerate(sealed["action"]):
         synchronize_observation(model, data)
         if not np.array_equal(data.qpos, sealed["qpos"][tick]):
@@ -78,9 +82,15 @@ def frames(index, on_frame):
         props = np.array([np.concatenate((data.xpos[b], data.xquat[b])) for b in bodies])
         if not np.array_equal(props, sealed["props_pose"][tick]):
             raise ReplayMismatch(index, tick, "props_pose")
+        name = c.PHASE_NAMES[phase]
+        if (float(action[7]) == 0.0) != (name in HOLDING):
+            raise ReplayMismatch(index, tick, "phase")
+        phases.append(phase)
+        if data.time - phase_start > c.PHASE_DURATION_S[name]:
+            phase, phase_start = phase + 1, data.time
         on_frame(tick, model, data)
         apply_action(model, data, action, ACTIVE_JOINTS)
         step_control(model, data, 1 / c.FPS, ARM_DOF)
     if not np.array_equal(data.qpos, sealed["final_qpos"]):
         raise ReplayMismatch(index, len(sealed["action"]), "final_qpos")
-    return {"frames": len(sealed["action"]), "index": index}
+    return {"frames": len(sealed["action"]), "index": index, "phase_index": np.asarray(phases, dtype=np.int64)}
