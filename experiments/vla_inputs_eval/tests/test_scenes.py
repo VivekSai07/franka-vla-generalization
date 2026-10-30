@@ -4,8 +4,13 @@ import tempfile
 import unittest
 from pathlib import Path
 
-import mujoco
 import numpy as np
+
+try:
+    import robosuite  # noqa: F401
+except ImportError:  # the admission image has no robosuite
+    raise unittest.SkipTest("needs the robosuite image")
+import mujoco
 
 from experiments.vla_inputs_eval import feasibility, plan, scenes
 from experiments.xvla_props_p2_eval import scenes as p2_scenes
