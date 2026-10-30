@@ -10,7 +10,8 @@ FP32 full tuning at 57.9 GB before activations (does not fit 48 GB); (3) pin `pi
 `0eb11ca9…`, same in every revision): the latest hub preprocessor uses a step LeRobot 0.4.4 lacks; (4) PaliGemma access is
 manual approval, so request it early; (5) R2 (only view 0 reaches the language encoder) is confirmed on the installed X-VLA
 source; (6) eval workers that never switch checkpoint ran at ~4.2 GB each in P3, so M0 assigns one checkpoint per worker pool;
-(7) the M0 C size (384/480/576) is a user decision before the layout plan is written; (8) per-arm eval adapters and their tests
+(7) the M0 C size is fixed at 576 (48 cells × 12; user, same day, before any layout was drawn; it supersedes the 384 and the
+"up to 384 extra trials" in the audit entry below); (8) per-arm eval adapters and their tests
 stay out of training `SOURCE_FILES` and out of the frozen M0 core. Disk 123 GB free, GPU idle, `/var/log/syslog` absent.
 
 ## VLA inputs pre-implementation audit - 2026-10-30

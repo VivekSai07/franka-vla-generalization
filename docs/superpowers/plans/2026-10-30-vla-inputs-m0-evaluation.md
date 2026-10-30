@@ -4,7 +4,7 @@
 > superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 > This plan fixes files, interfaces, tests and gates; the code is written at execution time, test first, in the order below.
 
-**Goal:** a policy-agnostic evaluator on 464 fresh P2-style layouts (80 selection, 384 comparison), the paired statistics, and
+**Goal:** a policy-agnostic evaluator on 656 fresh P2-style layouts (80 selection, 576 comparison), the paired statistics, and
 the control arm A0 (X-VLA 101,520 from the P2 bundle) measured on the comparison tier.
 
 **Architecture:** new package `experiments/vla_inputs_eval/` (shared core frozen and hash-bound before A0; arm adapters separately bound): `plan.py` (layouts), `scenes.py` (restore, forked),
@@ -21,7 +21,7 @@ admission image `sha256:08de1e09200539a26f7564bbf095fb846b8104ba07a72564b8232feb
 ## Global constraints
 
 - Worktree `.worktrees/feat-vla-inputs`, branch `feat/vla-inputs`. `docker ps` before editing anything a run might read.
-- Tiers: smoke 2 (⊂ S), **S = 80** (40 trained cells × 2), **C = 384** (48 cells × 8). One rollout seed per layout, shared by
+- Tiers: smoke 2 (⊂ S), **S = 80** (40 trained cells × 2), **C = 576** (48 cells × 12; user decision 2026-10-30). One rollout seed per layout, shared by
   every arm. Never re-run a completed trial.
 - Cells: objects `can, milk, bread, lemon, bottle, cereal` × bins `blue, orange` × blue-bin side `left, right` × distractors
   `1, 2`. Held-out pairs: `milk→blue`, `bread→orange` (C only).
@@ -49,7 +49,7 @@ admission image `sha256:08de1e09200539a26f7564bbf095fb846b8104ba07a72564b8232feb
   distractors, start, home_pose_jitter_deg, seed, held_out: bool}}` and `tiers: {"smoke": [...], "selection": [...],
   "comparison": [...]}`; `plan.write(out)` (writes `plan.json` and its sha256; no overwrite).
 
-- [ ] **Step 1: failing tests:** counts per tier and per cell (S: 2 per trained cell, none held-out; C: 8 per cell);
+- [ ] **Step 1: failing tests:** counts per tier and per cell (S: 2 per trained cell, none held-out; C: 12 per cell, 576 total);
   smoke ⊂ S; deterministic (two calls equal byte for byte after `json.dumps(sort_keys=True)`); every seed distinct; **disjoint
   from P2** (no seed, start pose or distractor pose equal to any layout in the sealed P2 `plan.json`, episodes and
   `evaluation_holdout`) and from the P2 re-test plan (`experiments.xvla_props_p2_retest.plan`); distractor identities in each
@@ -148,7 +148,7 @@ folder per trial, skip existing complete trials); `collect --arm A --tier T`; `s
   policy output counts as failure. Record exclusions by cell and define the resulting population.
 - [ ] Recompute power before policy outcomes at actual feasible N, including alpha .0125 as the conservative first Holm
   threshold for four tests; report assumptions and Monte Carlo error. Do not claim the old .05 table is adjusted power.
-- [ ] Add the secondary fixed 4.0-epoch comparison per arm, deduplicating the S winner when identical; budget up to 384 extra
+- [ ] Add the secondary fixed 4.0-epoch comparison per arm, deduplicating the S winner when identical; budget up to 576 extra
   trials. Never use C to choose between them. Freeze recipes/analysis before C; subsequent C-informed redesign needs fresh
   confirmation layouts. Name results as conditional on the trained seed.
 - [ ] Record ties explicitly. The later-checkpoint rule is an administrative choice, not evidence that it is better.
@@ -164,6 +164,6 @@ folder per trial, skip existing complete trials); `collect --arm A --tier T`; `s
   X-VLA workers ran at ~4.2 GB each in P3; switching workers reached 7.3 GiB in P2 and one died. **Never let a worker switch
   checkpoint:** one checkpoint per worker pool (A0: 8 workers; selection: one worker per candidate).
   Schedule GPU rollouts separately from M1 training unless combined measured peaks fit. Budget video storage.
-- [ ] A0 on C (384 minus dropped). Poll. `collect`.
+- [ ] A0 on C (576 minus dropped). Poll. `collect`.
 - [ ] Write `docs/VLA_INPUTS_M0_<date>.md` (plan, feasibility, A0 per object, per cell, failure causes, signals recorded), update
   `docs/RESULTS.md`, `docs/BENCHMARK_STATUS.md`, `TODO.md`, `docs/INDEX.md`; commit `Docs: M0 control arm`.

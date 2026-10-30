@@ -5,8 +5,8 @@
 - **Plans revised with RTX evidence (2026-10-30, after the audit):** no phase index in the sealed P2 NPZ; pi0.5 needs
   transformers@`dcddb970` **plus** tokenizers 0.21.x and has 3.617 B parameters (FP32 full tuning cannot fit); pin `pi05_base`
   revision `9e55186a`; **request PaliGemma access now (manual approval)**; one checkpoint per evaluation worker; adapters outside
-  training `SOURCE_FILES`. **Open for the user:** M0 comparison-tier size (384 default, 480 or 576; table in the M0 spec) before
-  the M0 layout plan is written. Details: [docs/BENCHMARK_STATUS.md](docs/BENCHMARK_STATUS.md).
+  training `SOURCE_FILES`. **M0 comparison tier fixed at 576 layouts (48 cells × 12; user, 2026-10-30)**, before any layout was
+  drawn; table in the M0 spec. Details: [docs/BENCHMARK_STATUS.md](docs/BENCHMARK_STATUS.md).
 
 - **VLA inputs audit completed; planning documents revised, no implementation started.**
   [Audit and research roadmap](docs/VLA_INPUTS_AUDIT_20261030.md): evaluator core/adapter binding contradiction,

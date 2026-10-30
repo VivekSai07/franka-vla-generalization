@@ -40,7 +40,7 @@ trained in P2 and 2 were held out (`milk→blue`, `bread→orange`), so 8 cells 
 |---|---|---|---|
 | smoke | 2 | from the selection tier | every arm, cost check only |
 | selection **S** | **80** | trained pairs only: 40 trained cells × 2 | new arms only, every candidate checkpoint |
-| comparison **C** | **384** | all 48 cells × 8 (320 trained-pair, 64 held-out-pair layouts) | A0 fixed at 101,520; each new arm one S-selected checkpoint plus the predeclared 4.0-epoch secondary checkpoint (deduplicate if identical) |
+| comparison **C** | **576** | all 48 cells × 12 (480 trained-pair, 96 held-out-pair layouts); size decided by the user 2026-10-30, before any layout was drawn | A0 fixed at 101,520; each new arm one S-selected checkpoint plus the predeclared 4.0-epoch secondary checkpoint (deduplicate if identical) |
 
 - Layouts are drawn with P2's own samplers (start region, yaw caps, symmetric spacing, hand clearance, distractor decks) under
   identities `vla_inputs:m0:<tier>:<cell>:<i>`, a namespace no earlier plan used. Tests assert no seed, start pose or
@@ -90,7 +90,7 @@ and the signal tap change nothing about the rollout.
 
 **Additional predeclared comparison:** evaluate the 4.0-epoch checkpoint of each new arm against A0 (also 4.0 epochs),
 as a secondary matched-phase contrast, even if S selects a different winner. Do not choose between the two using C.
-Deduplicate if the checkpoints coincide. Budget up to 384 additional trials per arm. This controls selection-phase
+Deduplicate if the checkpoints coincide. Budget up to 576 additional trials per arm. This controls selection-phase
 differences but does not turn M1 into an architecture-only comparison. Selection remains trained-pair-only;
 the primary C population includes held-out pairs and is explicitly a different target population.
 
@@ -130,7 +130,17 @@ machine (2026-10-30, the audit's formula) for a 10-point effect at α = 0.0125:
 | 480 (48 × 10) | 0.931 | 0.822 | up to +192 |
 | 576 (48 × 12) | 0.970 | 0.897 | up to +384 |
 
-At α = 0.05 the same rows are 0.943/0.861, 0.979/0.929, 0.992/0.964. Default stays 384 unless the user changes it.
+At α = 0.05 the same rows are 0.943/0.861, 0.979/0.929, 0.992/0.964. **Decided (user, 2026-10-30): C = 576**, before any
+layout or outcome existed. Exact power at 576 (D = 0.19 / 0.30 / 0.40):
+
+| true improvement | α = 0.05 | α = 0.0125 (first Holm threshold) |
+|---|---|---|
+| 6 points | 0.90 / 0.73 / 0.60 | 0.77 / 0.53 / 0.39 |
+| 8 points | 0.99 / 0.93 / 0.85 | 0.97 / 0.83 / 0.69 |
+| 10 points | 1.00 / 0.99 / 0.96 | 1.00 / 0.97 / 0.90 |
+| 15 points | 1.00 / 1.00 / 1.00 | 1.00 / 1.00 / 1.00 |
+
+The 384-layout tables above are kept as the record of how the size was chosen.
 
 ## Reported, not gated
 
@@ -150,14 +160,14 @@ trial, so under 3 GB per arm.
 
 | run | rollouts | wall-clock |
 |---|---|---|
-| A0 on C | 384 | ~1.1 h |
-| one new X-VLA arm (S × 6 checkpoints + C) | 480 + 384 = 864 | ~2.5 h |
+| A0 on C | 576 | ~1.7 h (8 workers) |
+| one new X-VLA arm (S × 6 checkpoints, one worker each; C winner and matched-phase checkpoint, separate pools) | 480 + 576 + up to 576 = up to 1,632 | ~5–6 h |
 | pi0.5 arm | 864 | unknown: GPU memory per worker and inference time measured in its smoke |
 
 ## What M0 cannot show
 
-- Effects smaller than about 8 points with useful power.
-- Per-object differences with any power (64 C layouts per object); per-object tables are descriptive.
+- Effects smaller than about 8 points with useful power under the four-arm Holm family (0.69–0.97 at 8 points, C = 576).
+- Per-object differences with any power (96 C layouts per object); per-object tables are descriptive.
 - Anything about A0's earlier P2 numbers: different layouts, so A0's C rate is a fresh estimate, not a correction.
 
 ## Out of scope

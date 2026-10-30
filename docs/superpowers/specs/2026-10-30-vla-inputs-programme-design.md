@@ -13,7 +13,7 @@ semantics and statistical/resource claims. No code or runs have been added. Addi
 recommendations only. Runtime gates and choice of pi0.5 memory/batch recipe remain outstanding on the RTX workstation.
 
 M0's shared core is frozen before A0; arm adapters are separately bound. Results are single-training-seed selected-system
-pilots, with a predeclared 4.0-epoch secondary contrast and a fixed A1–A4 multiplicity family. This adds up to 384 evaluation
+pilots, with a predeclared 4.0-epoch secondary contrast and a fixed A1–A4 multiplicity family. This adds up to 576 evaluation
 trials per arm when the selected checkpoint differs; budget this before launching. No broad method claim without replication.
 
 Only M0 preparation/feasibility and S0 are CPU work. M0 GPU rollouts need separate scheduling from M1 training unless
