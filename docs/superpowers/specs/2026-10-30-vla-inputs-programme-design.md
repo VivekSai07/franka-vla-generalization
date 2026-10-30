@@ -5,6 +5,20 @@
 the read-only checks cited here. Follows P3, closed as a failed attempt
 ([PROPS_P3_EVALUATION_20261027.md](../../PROPS_P3_EVALUATION_20261027.md)).
 
+## Review revision — 2026-10-30
+
+Read the [pre-implementation audit and research roadmap](../../VLA_INPUTS_AUDIT_20261030.md) before execution.
+The approved programme and broad order remain. Revised specs/plans correct evaluator binding, M4a camera access, signal
+semantics and statistical/resource claims. No code or runs have been added. Additional research arms in the audit are
+recommendations only. Runtime gates and choice of pi0.5 memory/batch recipe remain outstanding on the RTX workstation.
+
+M0's shared core is frozen before A0; arm adapters are separately bound. Results are single-training-seed selected-system
+pilots, with a predeclared 4.0-epoch secondary contrast and a fixed A1–A4 multiplicity family. This adds up to 384 evaluation
+trials per arm when the selected checkpoint differs; budget this before launching. No broad method claim without replication.
+
+Only M0 preparation/feasibility and S0 are CPU work. M0 GPU rollouts need separate scheduling from M1 training unless
+measured combined peaks fit. Historical workstation free-space and GPU figures below must be remeasured, not assumed.
+
 ## Question
 
 Every phase so far changed the **dataset**. This programme holds the data fixed and changes **what the model sees** (and,
@@ -21,7 +35,7 @@ later, what it emits). With the 540 sealed P2 episodes unchanged:
 | item | decision |
 |---|---|
 | sub-projects | M0 evaluation protocol and baseline, S0 extra-signal sidecar, M1 pi0.5 vs X-VLA, M2 force/torque in state, M3 bounding box in state, M4 output side |
-| order | M0 and S0 (CPU) in parallel with M1 training (GPU); then M2, then M3, then M4a |
+| order | M0 preparation/feasibility and S0 (CPU) alongside M1 training (GPU); M0 GPU rollouts separately resource-gated; then M2, M3, M4a |
 | pi variant | pi0.5 (`pi05` in the pinned LeRobot 0.4.4), base weights `pi05_base` |
 | pi recipe | each model's own recipe at matched exposure (epochs), stated as "model plus its recipe" |
 | F/T signals | wrist 6-axis force/torque + 2 finger contact forces, per frame at 30 Hz, per-dimension normalisation, no history |
@@ -35,7 +49,7 @@ later, what it emits). With the 540 sealed P2 episodes unchanged:
 The P2 root keeps, per episode, the full simulator trace: `episodes/episode_NNN.npz` holds `qpos` (every joint and every
 free body, float64), `ctrl`, `props_pose` for each of the 452 frames, and the `initial_state`. **Measured 2026-10-30:**
 replaying the sealed actions from the sealed initial state reproduces the sealed `qpos` byte for byte (3 of 3 episodes probed,
-every frame, error 0.0). So every extra quantity can be recorded at the exact instant of each recorded frame, with the replay
+every frame, error 0.0). This supports reconstruction at the observation instant; position equality alone does not independently validate historical forces. Every extra quantity is reconstructed, with the replay
 proven equal to the sealed trace for all 540 episodes before anything is read from it (S0). The images and the actions the
 model is trained on stay the sealed ones.
 
@@ -70,7 +84,7 @@ flowchart LR
 | A0 | X-VLA, P2 checkpoint 101,520 (bundle) | 9 | sealed P2 | P2 | existing (2026-10-16) |
 | A1 | pi0.5 | 9 | sealed P2 | P2 | M1 |
 | A2 | X-VLA | 9 + 8 (F/T 6, finger forces 2) = 17 | sealed P2 | P2 + S0 | M2 |
-| A3 | X-VLA | 9 + 10 (box 4 + visible 1, per camera) = 19 | sealed P2 | P2 + S0 | M3 |
+| A3 | X-VLA | 9 + 10 (box 4 + in_frame 1, per camera) = 19 | sealed P2 | P2 + S0 | M3 |
 | A4 | X-VLA + auxiliary box head | 9 | sealed P2 | P2 + S0 (targets only) | M4a |
 
 A2, A3 and A4 use P2's recipe unchanged (126,900 updates = 5.0 epochs, effective batch 8, the same checkpoint grid and the
@@ -86,8 +100,8 @@ without an architecture change.
   behaviour must differ the code is forked into the new package, never patched on disk.
 - **Every new training package proves equality before it trains:** with its extra inputs set to zero it reproduces P2's
   training byte for byte over 30 updates (M2, M3, M4a). That makes the extra inputs the only difference in the real run.
-- **Selection never touches the comparison tier.** Checkpoints are chosen on M0's selection tier; the comparison tier is run
-  once per arm with one checkpoint.
+- **Selection never touches the comparison tier.** Checkpoints are chosen on M0's selection tier; the comparison tier evaluates the S winner and the predeclared fixed-phase secondary checkpoint,
+  deduplicated if identical. C never chooses between them. Recipes/analysis freeze before C; C-informed redesign needs fresh confirmation.
 - **Offline metrics are never used** to choose, stop, or claim.
 - **Predictions are written before rollouts** (each spec has one) and results are reported against them, including nulls.
 - Docs pass on every finding; commits by the user only; nothing pushed by the agent.
@@ -97,8 +111,9 @@ without an architecture change.
 - P2's failures at 101,520 are dominated by "never lifted" (12 of the 30 report failures; all 12 closed the gripper, 9 held the
   target), with milk the weakest object (57.6% on 118 fresh trained-bin layouts). Wrong object is 7 of 120.
 - **M3 (box):** wrong-object choices should fall toward zero (the target box says which object); little effect on milk's hold.
-  Expected overall gain at most about the wrong-object rate (≈ 6 points), which M0 can detect only with low power.
-- **M2 (F/T):** the only arm with a mechanism aimed at the hold. But the state already contains both finger positions, so the
+  A gain around the wrong-object rate (about 6 points) is a hypothesis, not an upper bound; boxes may also change alignment.
+  M0 has low unadjusted power at that effect size.
+- **M2 (F/T):** an arm intended to help the hold, sampled at 30 Hz but used at 3 Hz replanning (ten queued actions). But the state already contains both finger positions, so the
   policy already "knows" the gripper closed; the new information is load (object weight 0.5–2 N at the wrist, masses
   0.05–0.20 kg) and grip force. The expert never fails a grasp, so demonstrations contain no recovery. **A null is plausible.**
 - **M1 (pi0.5):** no confident prediction; larger VLM, different action head, state given as text tokens.
@@ -106,9 +121,9 @@ without an architecture change.
 ## What this programme cannot show
 
 - That a deployable robot benefits: the extra signals are exact simulator quantities (an upper bound). F/T has a real-robot
-  analogue (estimated external wrench); the box needs a detector or M4a.
+  analogue (estimated external wrench); a detector-fed box policy needs its own error-distribution evaluation; M4a separately tests auxiliary supervision.
 - Anything about other tasks, objects, or more data. The data is P2's, unchanged.
-- That pi0.5 is a better *model* in general: A1 is pi0.5 with its recipe on 540 episodes, against X-VLA with P2's recipe.
+- That pi0.5 is a better *model* in general: A1 is pi0.5 with its recipe on the 480 training episodes (60 validation episodes), against X-VLA with P2's recipe.
 
 ## Known blockers and costs (measured or read, 2026-10-30)
 

@@ -53,8 +53,8 @@ docker run --rm --runtime runc --network none --read-only --user "$(id -u):$(id 
   Raises `ReplayMismatch(index, tick, field)` on the first difference.
 
 - [ ] **Step 1: failing tests.** `test_three_episodes_replay_exactly` (indices 0, 271, 539: no exception, 452 frames, sealed
-  `observation.state` equals `qpos[:, :9].astype(float32)`); `test_corrupted_action_is_caught` (copy the actions, add one ulp
-  to `action[100][0]` via `np.nextafter`, expect `ReplayMismatch` with `tick == 101`); `test_on_frame_sees_the_observation_instant`
+  `observation.state` equals `qpos[:, :9].astype(float32)`); `test_corrupted_action_is_caught` (change a non-saturated command enough to alter dynamics, expect replay rejection;
+  do not assume a one-ULP change must survive actuator clipping and change qpos at precisely tick 101); `test_on_frame_sees_the_observation_instant`
   (the callback's `data.qpos` equals sealed `qpos[t]` for every t).
 - [ ] **Step 2:** run the test command; expect import failure.
 - [ ] **Step 3:** implement `replay.py` (the probe of 2026-10-30 is the reference loop; it matched 452/452 frames on all three).
@@ -75,14 +75,12 @@ docker run --rm --runtime runc --network none --read-only --user "$(id -u):$(id 
 - [ ] **Step 1: failing tests.** `test_wrench_matches_mujoco_sensor` (G3): build a sensor model from the same XML with `MjSpec`,
   add a site at the hand body origin and `force` + `torque` sensors on it; for every 10th frame of episodes 0, 271, 539 (via
   `replay.frames`), copy the full integration state (`mjSTATE_INTEGRATION`, includes warm start) into the sensor model's data,
-  `mj_forward`, compare `sensordata` with `wrist_wrench` to 1e-9 absolute. `test_wrench_feels_the_load`: for 3 milk episodes, the world-z
-  component of the wrist force averaged over the "closed and lifted" segment minus its average over the "before close" segment
-  lies between 0.5 and 1.5 × 0.20 kg × 9.81 m/s² (order-of-magnitude sanity only; the measured value is reported, the band is
-  not tightened after seeing it). Segments are defined from the sealed actions and object heights (the sealed npz has no phase
-  index): *before close* = frames before the first gripper-close command; *closed and lifted* = gripper closed and target more
-  than 2 cm above its start; *after release* = frames after the gripper re-opens.
-  `test_finger_force_zero_without_contact` (frame 0 of each episode), `test_finger_force_positive_while_holding` (both fingers
-  > 0 N on every frame where the sealed trace's target is lifted > 2 cm). `test_signals_do_not_write_data`: `qpos`, `qvel`,
+  `mj_forward` from the same pre-forward integration state/warm start used for the scratch reference path, compare `sensordata` with `wrist_wrench` to 1e-9 absolute. Controlled static known-load fixtures test sensor sign, torque reference-point translation and gravity contribution;
+  controlled no-contact and known-contact fixtures test each finger and robot/external filtering. Real trajectory forces
+  and moving-pose load differences are descriptive, not universal pass/fail laws. An elevated object may have been released.
+  Inspect sealed NPZ keys for `phase_index` (the collector declares it); use verified phases if present, otherwise document
+  pre-close / closed-and-lifted / after-release inference from actions and height.
+  `test_signals_do_not_write_data`: `qpos`, `qvel`,
   `qacc_warmstart`, `efc_force` unchanged after calling both.
 - [ ] **Step 2:** run; expect failure.
 - [ ] **Step 3:** implement (on a scratch copy: `mj_rnePostConstraint`, then the force sensor's transform of `cfrc_int` to the
@@ -96,8 +94,8 @@ docker run --rm --runtime runc --network none --read-only --user "$(id -u):$(id 
 **Files:** modify `signals.py`; create `tests/test_boxes.py`.
 
 **Interfaces:**
-- Produces: `signals.box(model, data, body_name: str, camera: str) -> np.ndarray (5,)` = `(u_min, v_min, u_max, v_max, visible)`,
-  coordinates / 512 clipped to [0, 1], all 0 when not visible; `signals.target_box(model, data, target) -> (2, 5)` (front_cam,
+- Produces: `signals.box(model, data, body_name: str, camera: str) -> np.ndarray (5,)` = `(u_min, v_min, u_max, v_max, in_frame)`,
+  coordinates / 512 clipped to [0, 1], all 0 when not in_frame; `signals.target_box(model, data, target) -> (2, 5)` (front_cam,
   gripper_cam); `signals.props_box(model, data, names) -> (len(names), 2, 5)`; `CAMERAS = ("front_cam", "gripper_cam")`.
 
 - [ ] **Step 1: failing tests.** `test_axis_point_projects_to_centre` (a vertex on the camera's optical axis → (0.5, 0.5));
@@ -105,6 +103,9 @@ docker run --rm --runtime runc --network none --read-only --user "$(id -u):$(id 
   render segmentation with `mujoco.Renderer(model, 512, 512)` + `enable_segmentation_rendering()`, take the pixels whose geom
   belongs to `prop_<target>`, assert all inside the box expanded by 1 px; record IoU in the test log). Mutations that must
   fail: flip v; swap u/v; fovy of the other camera; using only the collision geom when the visual geoms are larger.
+- [ ] Add analytic tight-box fixtures, near-plane edge intersections, behind-camera/out-of-frame/full-occlusion cases,
+  compiled mesh transforms and geom-group checks. A constant full-image-box mutation must fail; containment alone is not
+  correctness. `in_frame` means projected geometric validity, not visible pixels. Clip geometry before perspective division.
 - [ ] **Step 2–4:** fail, implement, pass, mutate.
 - [ ] **Step 5:** commit `S0: projected boxes`.
 
@@ -115,15 +116,17 @@ docker run --rm --runtime runc --network none --read-only --user "$(id -u):$(id 
 **Interfaces:**
 - Produces: `sidecar.build_shard(out, k, shards)` (episodes `k::shards`, each via `replay.frames` with `on_frame` computing
   `wrist_wrench`, `finger_force`, `target_box`, `props_box`; writes `episodes/episode_NNN.npz` with those arrays (452, …),
-  float64; no overwrite); `sidecar.merge(out)` (all 540 present, `index.json` sha256 per file); `sidecar.report(out)` (per object
+  float64 with explicit episode/frame identity; no overwrite); `sidecar.merge(out)` (all 540 present, `index.json` sha256 per file); `sidecar.report(out)` (per object
   × segment statistics, segments as in Task 2, training-row 0.1/99.9 percentiles of the 8 force values, written to `report.json`);
   `sidecar.seal(out)` / `sidecar.verify(out)`; `contract.SOURCE_FILES`, `contract.provenance()`,
   `contract.P2_SEAL = "b1d642b3…f4d898"` (full value), `contract.SIDECAR_ROOT`.
 - [ ] **Step 1: failing tests:** no-overwrite; merge refuses a missing episode; seal changes when one byte of one sidecar file
   changes; `verify` in a fresh process recomputes the fingerprint; `test_non_perturbation` (G2: episode 0 replayed with and
-  without the signal callback, identical `qpos` every frame); fork hygiene (symtable dead-name scan; no import of any
+  without the signal callback, identical full integration state and subsequent `qpos` every frame); fork hygiene (symtable dead-name scan; no import of any
   `props_p2_data` module except read-only use in `replay.py`).
 - [ ] **Step 2–4:** fail, implement, pass, mutate.
+- [ ] Seal report/statistics, frame identities, model/runtime and full source closure as well as arrays; reject tampering
+  and missing/duplicate/shifted rows. Exact qpos validates kinematics, not independently observed historical wrench.
 - [ ] **Step 5:** README written (what, gates, how to run) **before** the run; it is in `SOURCE_FILES`. Confirm its size on disk is
   not zero (FAILURES #56). Commit `S0: sidecar builder, contract, seal`.
 

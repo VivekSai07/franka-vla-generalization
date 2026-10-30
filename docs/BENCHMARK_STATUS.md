@@ -1,5 +1,17 @@
 # Franka benchmark: start here
 
+## VLA inputs pre-implementation audit - 2026-10-30
+
+[Audit and research roadmap](VLA_INPUTS_AUDIT_20261030.md) records eight findings and verified primary sources.
+All seven specs and six plans revised: frozen evaluation core with separately bound adapters; both camera feature paths
+for M4a; instantaneous force inputs at 3 Hz replanning; fixed multiplicity family and single-seed claim limits; stronger
+signal/reference checks and realistic resource scheduling. An added fixed-phase secondary comparison costs up to 384
+extra trials per arm. The previous “M0 CPU alongside training” description and unqualified power claims are superseded.
+Exact planning-power enumeration confirms the old unadjusted table but gives lower power at the conservative four-test
+threshold. No policy/simulator tests ran on this laptop (Docker unavailable); workstation runtime gates remain pending.
+No experiment source or historical result report was changed.
+
+
 ## VLA inputs programme designed (specs and plans, under review) - 2026-10-30
 
 Next direction (user): hold P2's 540 sealed episodes fixed and change what the model sees. Six specs and plans, nothing built:

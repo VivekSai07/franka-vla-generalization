@@ -7,8 +7,8 @@
 **Goal:** a policy-agnostic evaluator on 464 fresh P2-style layouts (80 selection, 384 comparison), the paired statistics, and
 the control arm A0 (X-VLA 101,520 from the P2 bundle) measured on the comparison tier.
 
-**Architecture:** new package `experiments/vla_inputs_eval/` (not hash-bound): `plan.py` (layouts), `scenes.py` (restore, forked),
-`adapters.py` (one adapter per model family, one state builder per arm), `rollout.py` (forked from P2's, plus S0 signals in the
+**Architecture:** new package `experiments/vla_inputs_eval/` (shared core frozen and hash-bound before A0; arm adapters separately bound): `plan.py` (layouts), `scenes.py` (restore, forked),
+`adapters.py` (frozen interface and lazy loader; implementations in arm packages), `rollout.py` (forked from P2's, plus S0 signals in the
 trace), `stats.py`, `evaluate.py` (stages), driver `scripts/vla_inputs_eval.sh`. P2's success rule and classifier are imported
 unchanged from `experiments/xvla_props_p2_eval/analysis.py`.
 
@@ -16,7 +16,7 @@ unchanged from `experiments/xvla_props_p2_eval/analysis.py`.
 admission image `sha256:08de1e09200539a26f7564bbf095fb846b8104ba07a72564b8232feb58714abc` for pure steps.
 
 **Spec:** [../specs/2026-10-30-vla-inputs-m0-evaluation-design.md](../specs/2026-10-30-vla-inputs-m0-evaluation-design.md).
-**Depends on:** S0 Tasks 2–3 (`experiments/vla_inputs_signals/signals.py`) before Task 5 here.
+**Depends on:** S0 Tasks 2–3 before equivalence development; S0 signal source finalized and sealed before preparing A0.
 
 ## Global constraints
 
@@ -28,7 +28,7 @@ admission image `sha256:08de1e09200539a26f7564bbf095fb846b8104ba07a72564b8232feb
 - Identity namespace `vla_inputs:m0:<tier>:<cell>:<i>`.
 - Selection: candidates = the six checkpoints after update 1; winner = most S successes; tie → later checkpoint.
 - Primary per arm vs A0: exact two-sided McNemar on C, α = 0.05; effect with a paired bootstrap stratified by object (10,000,
-  seed 0); Holm across completed arms reported alongside.
+  seed 0); Holm for the fixed A1–A4 family reported alongside (unrun arms p=1); original power is unadjusted.
 - Workers pinned (`--cpuset-cpus`, `OMP_NUM_THREADS`, `MKL_NUM_THREADS`, `LP_NUM_THREADS` = cores per worker), sized by the peak
   GPU memory measured in smoke (FAILURES #57). Poll `docker ps`.
 - OSMesa only. A0 never under EGL.
@@ -127,22 +127,40 @@ admission image `sha256:08de1e09200539a26f7564bbf095fb846b8104ba07a72564b8232feb
 **Files:** create `evaluate.py`, `README.md`, `tests/test_evaluate.py`, `scripts/vla_inputs_eval.sh`.
 
 **Interfaces:** `evaluate.py prepare --arm A --checkpoints ...` (hash every checkpoint against its marker; write
-`arms/<arm>/prepared.json` with the sha256 of `vla_inputs_eval/*.py`, `xvla_props_p2_eval/analysis.py`, `scenes.py` and
-`signals.py`, and S0's provenance digest); `worker --arm A --tier T --checkpoint N --shard k --shards n` (interleaved jobs, one
+`arms/<arm>/prepared.json` with separate shared-core and arm-specific source closures, immutable layout/feasibility
+manifests, runtime digest, processor/statistics/weights hashes, and S0 provenance; core equality with A0 is mandatory); `worker --arm A --tier T --checkpoint N --shard k --shards n` (interleaved jobs, one
 folder per trial, skip existing complete trials); `collect --arm A --tier T`; `select --arm A` (S only); `compare --arm A`
-(C, against A0; refuses if A's prepared module hashes differ from A0's); `final`.
+(C, against A0; shared-core hashes must match A0 and each arm must match its own adapter/runtime manifest); `final`.
 - [ ] **Step 1: failing tests (pure):** a resumed worker skips complete trials and redoes incomplete ones; `compare` refuses on a
   module-hash mismatch; `select` reads only S; `compare` reads only C; held-out layouts never reach `select`.
 - [ ] **Step 2–4:** fail, implement, pass, mutate. Fork hygiene: grep for `xvla_props_p2_eval` outside the deliberate read-only
   imports; symtable dead-name scan.
 - [ ] **Step 5:** commit `M0: stages and driver`.
 
+### Task 6b: audit and freeze the protocol before A0
+
+- [ ] Freeze the shared adapter interface/loader; implementations are lazy imports from separately bound modules. Test with
+  an X-VLA-only environment and a fake future adapter that adding an arm does not alter shared-core hashes.
+- [ ] Mutation tests: modifying shared rollout, analysis, signal source or layout manifest rejects comparison; modifying an
+  arm adapter after prepare rejects that arm; a different declared adapter with identical core is accepted.
+- [ ] Require complete feasible pairs before comparison. Infrastructure interruption resumes missing trials; nonfinite
+  policy output counts as failure. Record exclusions by cell and define the resulting population.
+- [ ] Recompute power before policy outcomes at actual feasible N, including alpha .0125 as the conservative first Holm
+  threshold for four tests; report assumptions and Monte Carlo error. Do not claim the old .05 table is adjusted power.
+- [ ] Add the secondary fixed 4.0-epoch comparison per arm, deduplicating the S winner when identical; budget up to 384 extra
+  trials. Never use C to choose between them. Freeze recipes/analysis before C; subsequent C-informed redesign needs fresh
+  confirmation layouts. Name results as conditional on the trained seed.
+- [ ] Record ties explicitly. The later-checkpoint rule is an administrative choice, not evidence that it is better.
+- [ ] Verify S0 signal source is finalized/bound before A0; no later edits to the shared signal tap.
+
 ### Task 7: run A0
 
 - [ ] Pre-launch checklist ([launching-a-run](../../../.github/skills/launching-a-run/SKILL.md) section 1).
 - [ ] `plan` → `feasibility` (CPU, sharded) → merge; record dropped layouts.
 - [ ] `verify_bundle.py` on the P2 bundle; `prepare --arm A0 --checkpoints 101520`.
-- [ ] Smoke (2 trials): wall-clock and peak GPU memory per worker → worker count.
+- [ ] Smoke: measure peak memory including checkpoint switches and loading, not only two steady-state trials (use a separate resource probe or selection-tier jobs; never rerun completed C trials).
+  Worker count must fit actual available GPU/RAM/CPU with headroom. Eight times 7.3 GiB exceeds this GPU.
+  Schedule GPU rollouts separately from M1 training unless combined measured peaks fit. Budget video storage.
 - [ ] A0 on C (384 minus dropped). Poll. `collect`.
 - [ ] Write `docs/VLA_INPUTS_M0_<date>.md` (plan, feasibility, A0 per object, per cell, failure causes, signals recorded), update
   `docs/RESULTS.md`, `docs/BENCHMARK_STATUS.md`, `TODO.md`, `docs/INDEX.md`; commit `Docs: M0 control arm`.

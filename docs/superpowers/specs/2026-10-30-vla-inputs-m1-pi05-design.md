@@ -34,6 +34,30 @@ tier?
 | D7 | Same prompts as P2 (`put the <object> in the <bin> bin`), same two cameras in the same order, no third camera | inputs held equal |
 | D8 | Training package `experiments/pi05_props_p2/` (admission-pi image), gates `--check`, `--preflight`, `--resume-proof`, `--train [--stop-at T] [--resume]`, the thermal guard and snapshot pause from the X-VLA runner. No `--equivalence` (no reference loop exists for pi0.5) | the X-VLA runner's proven structure |
 
+## Review requirements before implementation
+
+[Audit R8](../../VLA_INPUTS_AUDIT_20261030.md) qualifies D1/D3/D5/D8:
+
+- Pin installed LeRobot source hashes and the transformers commit; run `pip check` plus actual offline forward,
+  backward, optimizer step and queued inference. If the transformers-only image fails, stop and amend its dependency
+  manifest before runs; do not bypass dependency or physics-equivalence gates.
+- Effective batch 8 is a proposed experimental choice. Gradient accumulation can preserve batch 32 despite small
+  microbatches; memory alone does not require changing effective batch. Freeze the choice and schedule together.
+- Both D5(a) and D5(b) can lose small updates when weights are stored in bf16 without FP32 master weights. Compare a
+  supported optimizer path with FP32 reference updates; report dtypes of parameters, gradients, moments and any master
+  weights. Fraction-changed is diagnostic, not proof of training fidelity. Measure actual optimizer compatibility,
+  round-trip and resume. A supported LoRA or frozen-backbone recipe is a separately named alternative if needed.
+- D8's absence of an old project runner does not remove the need for reference parity: match the installed policy and
+  processors on a fixed batch, forward/backward/update and action queue. Check padding, action masks/reduction, camera
+  order, prompt truncation and normalization round-trip, including quantile tails and constant dimensions. The upstream
+  quantile transform need not clip; do not assert all state tokens are 0–255 without inspecting the exact code path.
+- Five epochs means each model's complete-window epoch. Chunk 50 excludes 20 more observation starts per episode than
+  chunk 30. Report observation starts, samples and supervised action positions separately; do not claim identical exposure.
+- Measure disk for assets, image layers, videos, gate/preflight/resume-proof outputs, final optimizer state and atomic-write
+  peaks. Host free space and syslog growth quoted below are historical workstation observations, not current laptop facts.
+- M0's frozen core is not edited for A1. Create `experiments/pi05_props_p2/eval_adapter.py`, loaded lazily and independently
+  bound. GPU evaluation is separately scheduled from training. Include M0's matched-phase secondary evaluation.
+
 ## Primary result
 
 M0's primary test (paired McNemar on C, two-sided, α = 0.05) of A1 against A0. **Secondary (exploratory):** milk success, and
@@ -56,7 +80,7 @@ overfit differently from X-VLA. A null result is reported as such.
 
 ## What M1 cannot show
 
-- That pi0.5 is a better model in general: A1 is pi0.5 with its recipe (and the D5 memory strategy) on 540 episodes, against X-VLA
+- That pi0.5 is a better model in general: A1 is pi0.5 with its recipe (and the D5 memory strategy) on the 480 training episodes (60 validation episodes), against X-VLA
   with P2's recipe.
 - Anything about pi0.5 with richer inputs (that would be a second variable; not planned).
 

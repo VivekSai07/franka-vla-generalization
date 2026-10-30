@@ -2,11 +2,18 @@
 
 ## Where things stand (2026-10-30)
 
+- **VLA inputs audit completed; planning documents revised, no implementation started.**
+  [Audit and research roadmap](docs/VLA_INPUTS_AUDIT_20261030.md): evaluator core/adapter binding contradiction,
+  missing wrist-view features in M4a, 3 Hz versus 30 Hz force feedback, single-seed/multiplicity limits, signal validation
+  and pi0.5 numerical/resource gates. All seven specs and six plans revised. Adds a predeclared matched-phase secondary
+  comparison (up to 384 additional trials per arm); runtime gates remain outstanding on the workstation. CPU preparation
+  may overlap M1; GPU evaluation must be separately resource-gated. No experiment source or sealed artifacts changed.
+
 - **Next: the VLA inputs programme — specs and plans drafted 2026-10-30, under external review; nothing built.** The data stays
   P2's 540 sealed episodes; what changes is what the model sees: M0 a common paired evaluation (fresh layouts, A0 = X-VLA 101,520
   as control), S0 a sealed sidecar of wrist force/torque, finger forces and target boxes for every P2 frame, M1 pi0.5 against
   X-VLA, M2 force/torque in the state, M3 the target box in the state, M4 an auxiliary box head (M4b force outputs scoped only).
-  Order approved by the user: M0 and S0 alongside M1 training, then M2, M3, M4a. Overview:
+  Broad order approved: M0/S0 preparation alongside M1, then M2, M3, M4a; the audit corrects M0 GPU scheduling. Overview:
   [docs/superpowers/specs/2026-10-30-vla-inputs-programme-design.md](docs/superpowers/specs/2026-10-30-vla-inputs-programme-design.md)
   (links every spec and plan). Two facts measured while writing it: replaying the sealed P2 actions from the sealed initial state
   reproduces the sealed `qpos` byte for byte (3 of 3 episodes probed), and **pi0.5 cannot be constructed in the pinned admission

@@ -75,7 +75,7 @@ compare metrics, weights and Adam moments byte for byte; write `zero_equivalence
 
 ### Task 4: train/rollout parity
 
-**Files:** modify `experiments/vla_inputs_eval/adapters.py` (add `state_force`); create
+**Files:** modify `experiments/xvla_p2_force/eval_adapter.py` (add `state_force`; M0 core unchanged); create
 `experiments/vla_inputs_eval/tests/test_force_parity.py`.
 
 **Interfaces:** `adapters.state_force(model, data, target) -> np.ndarray (17,)` = `qpos[:9]`, `signals.wrist_wrench`,
@@ -84,6 +84,15 @@ compare metrics, weights and Adam moments byte for byte; write `zero_equivalence
   every frame, cast to float32, equals `xvla_p2_force.contract`'s joined training row byte for byte.
 - [ ] **Step 2–4:** fail, implement, pass, mutate (unclipped; reordered).
 - [ ] **Step 5:** README of `xvla_p2_force` written (non-zero size checked); commit `M2: rollout state builder, parity`.
+
+### Task 4b: timing, normalization and binding proof
+
+- [ ] Extend parity to the normalized/padded tensor seen by the policy, not only raw concatenation. Compute extra-state
+  statistics after clipping; prove original nine stats unchanged. Join by episode/frame identity and reject missing,
+  duplicate and shifted rows; report clipping rates without changing the frozen thresholds from rollout results.
+- [ ] Prove queued calls do not recompute actions: observations at 30 Hz yield 3 Hz replanning with ten executed actions.
+  Log timestamps/inference boundaries. Interpret M2 as instantaneous boundary conditioning, not fast force feedback.
+- [ ] Bind the arm adapter/state builder separately and keep M0's shared-core hash identical to A0.
 
 ### Task 5: gates and training
 
@@ -94,6 +103,6 @@ compare metrics, weights and Adam moments byte for byte; write `zero_equivalence
 
 ### Task 6: evaluation as A2
 
-- [ ] `prepare --arm A2` (six candidates) → smoke → S → `select` → C with the winner → `compare --arm A2`.
+- [ ] `prepare --arm A2` (six candidates) → smoke → S → `select` → C with the winner plus fixed 4.0-epoch secondary checkpoint (deduplicate) → `compare --arm A2`.
 - [ ] `docs/VLA_INPUTS_M2_<date>.md`: primary result, `never_lifted` and milk (exploratory), force traces of failing milk trials
   for A0 and A2, against the spec's prediction; docs pass; commit.

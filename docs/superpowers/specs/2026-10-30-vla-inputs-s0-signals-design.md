@@ -44,15 +44,35 @@ Signals are computed on a **scratch copy** (`mujoco.mj_copyData`) so the live si
 |---|---|---|
 | `wrist_wrench` | 6 | force (3, N) and torque (3, N·m) between the hand body and its parent, at the hand body's origin, in the hand frame, with MuJoCo's force/torque-sensor convention (`mj_rnePostConstraint` on the scratch copy, then the sensor's transform). Gravity of hand, fingers and anything held is included, as on a real wrist sensor without compensation |
 | `finger_force` | 2 | per finger body (`left_finger`, `right_finger`): sum of the normal components of `mj_contactForce` over contacts between that finger and any geom outside the robot, in N |
-| `target_box` | 2 × 5 | per camera: the target body's geoms (mesh vertices, or the 8 corners of a primitive) projected with the camera pose (`cam_xpos`, `cam_xmat`) and `cam_fovy` into the 512 × 512 image; `(u_min, v_min, u_max, v_max)` / 512 clipped to [0, 1], plus `visible` (1 if the clipped box has positive area and a vertex is in front of the camera, else 0 with the four values 0). Occlusion is ignored by design |
+| `target_box` | 2 × 5 | per camera: the target body's rendered geoms (mesh geometry or a documented conservative primitive bound, clipped at the near plane) projected with the camera pose (`cam_xpos`, `cam_xmat`) and `cam_fovy` into the 512 × 512 image; `(u_min, v_min, u_max, v_max)` / 512 clipped to [0, 1], plus `in_frame` (1 if near-plane-clipped geometry projects to a positive-area box intersecting the image, else 0 with the four values 0). Occlusion is ignored by design |
 | `props_box` | n_props × 2 × 5 | the same for every prop present. **Recorded, not used by M3** (for a later drawn-on-image or all-object variant, so S0 is not re-run) |
+
+### Review requirements for signal semantics
+
+[Audit R6/R7](../../VLA_INPUTS_AUDIT_20261030.md): exact positions prove the recorded kinematic trajectory, not an
+independent historical force measurement. Bind full initial integration state, action bytes, timing, model/runtime and
+signal-source closure. Compare reference sensors from the same pre-forward state/solver warm start as the scratch path;
+`synchronize_observation` restores integration state after forwarding. Diagnose any reference mismatch without relaxing G3.
+Non-perturbation includes full integration state and subsequent replay, not only qpos.
+
+The `in_frame` bit means geometric projection validity, not occlusion-aware visibility. Clip primitives/mesh geometry
+against the camera near plane before perspective division; include edge intersections and compiled geom/mesh transforms.
+Use the renderer's geom-group convention; if conservative collision bounds are included, document their looseness.
+Keep G4 containment, but add analytic tight-box and fully occluded/out-of-frame/behind-camera fixtures plus a full-image-box
+mutation. A constant full-image box must fail a correctness test.
+
+Force correctness uses controlled static known-load, zero-contact and known-contact fixtures (both fingers and external
+body filtering). Positive force on every elevated trajectory frame and mass-times-gravity differences between unrelated
+moving poses are not invariants; record trajectory distributions descriptively instead. Keep the native-sensor parity gate.
+Check whether phase_index exists in the sealed files before inferring phases from height/actions. Signal timestamps are
+pre-command and must never use future action/state rows. Seal explicit episode/frame identities and report/statistics files.
 
 ### Gates (each must pass before the next step; a failed gate stops S0, nothing is relaxed)
 
 | gate | check |
 |---|---|
 | G1 replay exact | all 540 episodes: every frame's `qpos` byte-equal to the sealed `qpos[t]`, `props_pose` equal to the sealed `props_pose[t]`, the sealed `observation.state` equal to `qpos[t, :9]` as float32, and the final state equal to `final_qpos`; any difference stops the run (no tolerance; the admission gate's tolerance is not used) |
-| G2 non-perturbation | one episode replayed with and without the signal computation: identical `qpos` at every frame (the scratch copy really is a copy) |
+| G2 non-perturbation | one episode replayed with and without the signal computation: identical full integration state and subsequent `qpos` at every frame (the scratch copy really is a copy) |
 | G3 wrench correctness | on 3 episodes' frames: `wrist_wrench` equals MuJoCo's own `force` and `torque` sensors on a site at the hand origin, in a copy of the model built with `MjSpec` plus that site and sensors, given the same full state (`mj_setState` with integration state including warm start, then `mj_forward`), to 1e-9 absolute |
 | G4 box correctness | 60 frames from 10 episodes, both cameras: every pixel of the target in a **segmentation render** lies inside the projected box expanded by 1 pixel (containment is exact for a correct projection, whatever the occlusion; a flipped axis or wrong fovy fails it). The IoU of segmentation box and projected box is reported, not gated |
 | G5 seal | fingerprint over the sidecar files, bound to the P2 seal fingerprint `b1d642b3…f4d898` and to S0's own source hashes (`provenance()`); re-verified in a second process |
@@ -64,9 +84,9 @@ time.
 ### Descriptive report (from demonstrations only; no policy involved)
 
 Per object and segment (*before close*, *closed and lifted*, *after release*, defined from the sealed actions and object
-heights; the sealed trace has no phase index): distributions of `wrist_wrench` and `finger_force`, their frame-to-frame variation during the
+heights; inspect sealed NPZ keys first: the collector declares phase_index): distributions of `wrist_wrench` and `finger_force`, their frame-to-frame variation during the
 steady hold, the 0.1 and 99.9 percentiles over training rows (M2 clips to these; fixed here, before M2 trains), the largest
-|z| after mean/std normalisation, and `gripper_cam` box visibility by segment.
+|z| after mean/std normalisation, and `gripper_cam` box in-frame rate by segment (not occlusion-aware visibility).
 
 ## Output
 

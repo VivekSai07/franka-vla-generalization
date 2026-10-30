@@ -18,7 +18,7 @@ only the selected sidecar arrays, the state size (19), the clip rule (none) and 
 ## Global constraints
 
 - Everything in the M2 plan's global constraints, with: state order `qpos[:9]`, front camera
-  `(u_min, v_min, u_max, v_max, visible)`, gripper camera `(u_min, v_min, u_max, v_max, visible)`; no clipping.
+  `(u_min, v_min, u_max, v_max, in_frame)`, gripper camera `(u_min, v_min, u_max, v_max, in_frame)`; no clipping.
 - `experiments/xvla_p2_force/**` is frozen once A2's training started.
 
 ---
@@ -31,27 +31,30 @@ output paths only), `README.md`; adapt tests.
 **Interfaces:** `contract.extra_state(episode_index, frame_index) -> np.ndarray (10,)` from S0's `target_box`; `OBS` state (19,);
 `check_model_inputs` with `REAL_STATE_DIM = 19`.
 - [ ] **Step 1: failing tests:** joined row = sealed state + `target_box.reshape(10)` for (episode 0, frame 0) and a frame where
-  `gripper_cam` sees no target (visible 0, four zeros); recipe equals P2's; statistics shapes (19,); first 9 statistics equal
+  the target projects outside `gripper_cam` (in_frame 0, four zeros); recipe equals P2's; statistics shapes (19,); first 9 statistics equal
   P2's byte for byte; the input check fails on a truncated state.
 - [ ] **Step 2:** forking-skill pass: grep for `xvla_p2_force` and `force` residue (sidecar keys, clip helper), symtable scan.
-- [ ] **Step 3–4:** implement, pass, mutate (camera order swapped; `visible` dropped; clip applied).
+- [ ] **Step 3–4:** implement, pass, mutate (camera order swapped; `in_frame` dropped; clip applied).
 - [ ] **Step 5:** commit `M3: fork for the target box`.
 
 ### Task 2: zero-equivalence and parity
 
-**Files:** modify `runner.py`; modify `experiments/vla_inputs_eval/adapters.py` (add `state_box`); create
+**Files:** modify `runner.py`; modify `experiments/xvla_p2_box/eval_adapter.py` (add `state_box`; M0 core unchanged); create
 `tests/test_zero_equivalence.py`, `experiments/vla_inputs_eval/tests/test_box_parity.py`.
 
 - [ ] `--zero-equivalence` against P2's runner, columns 9–18 forced to 0 after normalisation: equal over 30 updates; mutation run
   recorded.
 - [ ] `state_box(model, data, target)` equals the joined training rows byte for byte on episodes 0, 271, 539 (S0 replay).
+- [ ] Extend parity to normalized/padded inputs; invalid boxes and constant validity dimensions remain finite.
+  Bind adapter/state builder independently and verify M0 shared-core equality. The in_frame bit is geometric validity,
+  not occlusion-aware visibility. No six-point ceiling on possible effects.
 - [ ] README written (non-zero size); commit `M3: gates`.
 
 ### Task 3: gates, training, evaluation
 
 - [ ] Pre-launch checklist; `--check` → `--preflight` → `--resume-proof` → `--equivalence` → `--zero-equivalence` → `--train`
   nights.
-- [ ] `prepare --arm A3` → smoke → S → `select` → C → `compare --arm A3`.
+- [ ] `prepare --arm A3` → smoke → S → `select` → C with winner plus fixed 4.0-epoch secondary checkpoint (deduplicate) → `compare --arm A3`.
 - [ ] `docs/VLA_INPUTS_M3_<date>.md`: primary result; `wrong_object` (paired) and held-out-pair success (exploratory); A3 against
   A2 (descriptive); the spec's prediction and the "inconclusive below ~8 points" reading; docs pass; commit.
 - [ ] Record whether M4a's start condition (M4 spec D1) is met, with the numbers.

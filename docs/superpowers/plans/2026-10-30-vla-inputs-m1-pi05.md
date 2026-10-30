@@ -72,8 +72,9 @@ and `action` (8)); `contract.recipe(preflight: bool)`; `contract.make_config(dev
 - [ ] **Step 1: failing tests:** `len(windows()) == 193_440`; `recipe(False)["max_optimizer_updates"] == 120_900` computed as
   `round(5.0 * len(windows()) / 8)`; checkpoint grid equals the fractions (0.4, 0.6, 0.7, 0.8, 0.9, 1.0) of the run plus 1;
   statistics read no validation row (count the rows); the copied dataset checks accept the sealed P2 dataset and reject a
-  fixture with one instruction changed; on CPU, the processor turns one training frame into a prompt that contains
-  `"State: "` followed by 32 integers in [0, 255] and the P2 instruction text. Fork hygiene as the forking skill (residue grep,
+  fixture with one instruction changed; on CPU, the processor matches the installed reference prompt for a real training frame and quantile-boundary/tail
+  fixtures (including values below q01), has 32 state tokens, and preserves the full P2 instruction without truncation.
+  Do not assume quantile scaling clips; record native out-of-range token behavior and any explicit recipe deviation. Fork hygiene as the forking skill (residue grep,
   symtable scan).
 - [ ] **Step 2–4:** fail, implement, pass, mutate (typed 120900, validation rows in statistics, chunk 30 windows).
 - [ ] **Step 5:** README written now (it is in `SOURCE_FILES`; confirm non-zero size). Commit `M1: contract`.
@@ -95,6 +96,21 @@ sizes in `recipe()`.
 - [ ] **Step 6:** **user decision** on the memory strategy and the time/disk projection, recorded in `README.md` and
   `recipe()`. Commit `M1: runner, memory strategy <x>`.
 
+### Task 4b: numerical and reference-path proof
+
+- [ ] Pin installed source hashes, optimizer implementation and transformers commit; `pip check`, offline load and actual
+  forward/backward/update/inference must pass. If changing transformers alone cannot satisfy dependencies, stop and amend
+  the manifest before training; do not weaken the gate or mutate the old images.
+- [ ] Compare custom runner loss, gradients and update against the installed policy/processor reference on a fixed batch;
+  check padding/masks, real action dimensions, camera order, prompt length and physical-action round-trip.
+- [ ] Record parameter/gradient/moment/master-weight dtypes. Both bf16-weight candidates can lose sub-ULP updates;
+  fraction-changed is diagnostic only. Verify the optimizer supports its actual dtype configuration and resumes exactly.
+- [ ] Decide effective batch independently from microbatch memory (accumulation can retain 32); freeze the chosen recipe
+  before check. A supported LoRA/frozen-backbone fallback is a named different arm recipe, not full-tuning equivalence.
+- [ ] Report complete-window starts, observation samples, action-target positions and schedule phase. Different chunks have
+  different start support despite five epochs each. Include all retained gate artifacts and image/assets/video storage in
+  disk projections, plus temporary atomic writes and the final optimizer save.
+
 ### Task 5: gates and training
 
 - [ ] Pre-launch checklist ([launching-a-run](../../../.github/skills/launching-a-run/SKILL.md) section 1); disk decision by the user.
@@ -104,14 +120,15 @@ sizes in `recipe()`.
 
 ### Task 6: evaluation as A1
 
-**Files:** modify `experiments/vla_inputs_eval/adapters.py`; create `experiments/vla_inputs_eval/tests/test_pi05_adapter.py`.
+**Files:** modify `experiments/pi05_props_p2/eval_adapter.py`; create `experiments/vla_inputs_eval/tests/test_pi05_adapter.py`.
 
 - [ ] **Step 1: failing test (robosuite-pi, GPU):** `Pi05Adapter(checkpoint, state_p2)` returns (8,) actions; with the
   checkpoint's statistics the unnormalised action of a fixed observation equals the policy's own `select_action` →
   postprocessor path; the adapter's queue re-plans every 10 calls.
 - [ ] **Step 2–4:** fail, implement, pass, mutate (n_action_steps 50 → test fails).
 - [ ] **Step 5:** smoke in `robosuite-pi` (memory per worker → worker count); S on the six candidates; `select`; C with the
-  winner; `compare --arm A1`.
+  winner and predeclared 4.0-epoch secondary checkpoint (deduplicated); `compare --arm A1`.
+  Load the separately bound adapter lazily; do not edit M0 core. Reserve GPU time separately from training.
 - [ ] **Step 6:** `docs/VLA_INPUTS_M1_<date>.md` (recipe, memory strategy, pace, selection, primary result, per object,
   failure causes, against the spec's prediction); docs pass over `RESULTS.md`, `BENCHMARK_STATUS.md`, `TODO.md`, `INDEX.md`;
   commit.

@@ -32,6 +32,10 @@ later findings — add a new one and update the live documents.
 
 ## Point-in-time reports by topic
 
+**Planning audits**
+[VLA_INPUTS_AUDIT_20261030.md](VLA_INPUTS_AUDIT_20261030.md) — pre-implementation findings, primary research sources and learning roadmap.
+
+
 **Datasets and collection**
 `LOCAL_VARIED_COLLECTION_20260919.md` · `DATASET_UPLOAD_20260916.md` ·
 `DATA_COVERAGE_AND_PUBLIC_REFERENCES_20260918.md` · `LOCAL_POSITION_PROBE_20260919.md` ·

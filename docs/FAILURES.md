@@ -169,6 +169,14 @@ only as good as its pattern, so check that the target name is unique before comp
 summary 968 tokens saved per file not opened, orientation 5.3x fewer tokens than `ls`/`head`) held up, so the
 graph stays, but only for those uses (`scripts/code_graph_bench.py` reproduces every figure).
 
+64. **A pre-implementation plan froze the evaluator and then scheduled edits to that same evaluator.**
+The 2026-10-30 VLA-inputs draft hashed all evaluation modules against A0, while M1–M3 later added adapters to the hashed
+`adapters.py`. Its comparisons would reject those changes. The audit caught this before implementation; no run failed.
+The same review found that M4a read only X-VLA's first-view/language features while predicting two camera boxes.
+**Lesson:** trace the actual feature and provenance boundaries before committing to interfaces. Freeze the shared
+measurement core, bind arm-specific modules independently, and test which inputs can reach each prediction head.
+See [VLA_INPUTS_AUDIT_20261030.md](VLA_INPUTS_AUDIT_20261030.md) for evidence and revised plans.
+
 Broader lessons — every "just increment a counter" or "just leave state alone on retry" assumption in the fixed-layout pipeline broke under broad_workspace retries. Rejections need explicit cleanup for every piece of shared state (LeRobot buffer + PNG dir + attempts dir semantics + admit-count invariant). And a result is only interpretable once you know what the *absence* of the treatment scores on the same protocol.
 
 **Recurring meta-lesson — a green test suite is not evidence.** Six separate times (#10, #15, #20, #24, and twice while porting eval packages) the tests passed while the thing that actually runs was broken, because the tests exercised a *fixture*, a *constant*, the *wrong module*, or every path *except* the one the job takes. When adding a regression test, confirm it fails against the unfixed code. When forking a package, run the `symtable` undefined-name check from #24 before spending GPU time.

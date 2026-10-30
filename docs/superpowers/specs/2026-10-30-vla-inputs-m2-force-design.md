@@ -30,6 +30,21 @@ force/torque and the two finger contact forces to the robot state change success
 | D5 | **Zero-equivalence gate** before training: with the 8 extra values forced to exactly 0 after normalisation, the new runner reproduces P2's runner byte for byte over 30 updates (metrics, weights, Adam moments). Then the real run differs from P2 only by those 8 values | proves the fork changed nothing else |
 | D6 | **Train/rollout parity gate:** replaying 3 sealed episodes' actions through the evaluator's state builder gives 17-value states byte-equal to the training rows the loader builds for those frames | the policy must see at test time exactly what it saw in training |
 
+## Review requirements
+
+[Audit R3/R6](../../VLA_INPUTS_AUDIT_20261030.md): 30 Hz describes the signal/command clock. Ten queued actions mean
+**3 Hz policy replanning**; intermediate force samples do not alter queued actions. This tests instantaneous force
+conditioning at chunk boundaries, not reactive force control. A null does not rule out causal history or faster feedback.
+
+Compute extra-state statistics after clipping, using training rows only; preserve the original nine statistics exactly.
+Report per-dimension clipping rates on demonstration validation rows and rollouts without retuning the frozen ranges.
+Use explicit episode/frame keys and reject shifted, duplicate or missing sidecar rows. Train/rollout parity includes the
+complete normalized and padded policy input, not just raw concatenation. The wrist signal is a sensor-frame interaction
+wrench including inertial/gravitational contributions, not an external-load estimate.
+
+Put `state_force` and its adapter in `experiments/xvla_p2_force/eval_adapter.py`, not M0's frozen core. Follow M0's
+single-seed claim limits and matched-phase secondary comparison.
+
 ## Primary result
 
 M0's primary test of A2 against A0. **Secondary (exploratory):** the count of `never_lifted` failures (paired), milk success.

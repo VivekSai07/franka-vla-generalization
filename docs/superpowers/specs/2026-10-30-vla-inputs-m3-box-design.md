@@ -21,11 +21,21 @@ success on M0's comparison tier, and does it remove wrong-object choices?
 
 | id | decision | reason |
 |---|---|---|
-| D1 | State = 9 P2 values + `target_box` = front camera `(u_min, v_min, u_max, v_max, visible)` then gripper camera, **19** values, from the S0 sidecar for training and S0 `signals.py` at rollout | approved: target only, both cameras, normalised to [0, 1] |
+| D1 | State = 9 P2 values + `target_box` = front camera `(u_min, v_min, u_max, v_max, in_frame)` then gripper camera, **19** values, from the S0 sidecar for training and S0 `signals.py` at rollout | approved: target only, both cameras, normalised to [0, 1] |
 | D2 | No clipping (bounded by construction); the unchanged mean/std normaliser over 19 values, training-row statistics | — |
 | D3 | Recipe unchanged, as M2 D3 | one variable |
 | D4 | Package `experiments/xvla_p2_box/`, forked from `experiments/xvla_p2_force/` **after A2's evaluation**; only the signal selection, `OBS` (19) and the local input check change | M2's files stay bound to M2's run |
 | D5 | Zero-equivalence gate and train/rollout parity gate exactly as M2 D5–D6 | same proofs |
+
+## Review requirements
+
+[Audit R7](../../VLA_INPUTS_AUDIT_20261030.md): `in_frame` is geometric projected-box validity, not visible pixels;
+boxes are amodal and ignore occlusion. S0 must test near-plane clipping, geom transforms and tightness as well as containment.
+No claim about detector robustness follows from an oracle box. A zero-treatment run checks plumbing, not whether useful
+spatial information must work through this encoding.
+
+Put the state builder/adapter in `experiments/xvla_p2_box/eval_adapter.py`, independently bound by M0. Check normalized/padded
+input parity, including invalid boxes and constant validity flags. Follow M0's matched-phase secondary comparison.
 
 ## Primary result
 
@@ -34,15 +44,17 @@ Descriptive: A3 against A2 (both on C), by object.
 
 ## Prediction (2026-10-30, before any run)
 
-`wrong_object` should fall toward zero: the box names the target. Overall success should rise by at most about the wrong-object
-rate (≈ 6 points), which M0 detects with power 0.43–0.74 (M0 power table), so an overall null is likely and would be
-**inconclusive**, not negative. The box should not help milk's hold.
+`wrong_object` should fall toward zero: the box names the target. A gain around the historical wrong-object rate (about 6 points) is one hypothesis, **not an upper bound**:
+box location and size could also affect approach, alignment or carrying. M0's unadjusted power at 6 points is 0.43–0.74;
+interpret the interval rather than equating non-significance with no effect. Little effect on milk's hold is a prediction,
+not a mechanism established by the existing failure labels.
 
 ## Caveats
 
 - The box gives away which object to pick. A wrong-object reduction is partly by construction; it measures whether the policy
   uses the information, not whether it could ground the instruction.
-- Privileged at test time: an upper bound. A deployable version needs a detector, or M4a.
+- Privileged at test time: an upper bound. A detector-fed policy needs its own training/inference parity and robustness evaluation. M4a tests auxiliary
+  supervision with unchanged inputs; it is not a replacement detector for A3.
 
 ## Costs
 
