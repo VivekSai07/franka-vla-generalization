@@ -1,5 +1,16 @@
 # Franka benchmark: start here
 
+## VLA inputs programme designed (specs and plans, under review) - 2026-10-30
+
+Next direction (user): hold P2's 540 sealed episodes fixed and change what the model sees. Six specs and plans, nothing built:
+M0 common paired evaluation (80 selection + 384 comparison layouts, power from `2026-10-30-vla-inputs-m0-power.py`), S0 a sealed
+sidecar of wrist force/torque, finger forces and target boxes, M1 pi0.5 against X-VLA, M2 force/torque in the state, M3 the target
+box in the state, M4 an auxiliary box head and a force-output scoping note. Measured while writing (read-only): replaying the sealed
+actions from the sealed initial state reproduces the sealed `qpos` byte for byte on 3 of 3 probed episodes; two P2 checkpoints
+disagree on 23 of 120 identical report trials (discordance 0.19, a power input); and pi0.5 cannot be constructed in the pinned
+admission image (LeRobot's patched transformers is missing), so M1 needs a new image. Overview:
+[superpowers/specs/2026-10-30-vla-inputs-programme-design.md](superpowers/specs/2026-10-30-vla-inputs-programme-design.md).
+
 ## Props P3 closed and deleted - 2026-10-27
 
 The user closed P3 as a failed attempt (85% on trained objects but 5.7% on held-out ones, milk only 10/20) and had its artifacts deleted, without copying them to

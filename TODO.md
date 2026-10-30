@@ -1,12 +1,21 @@
 # SmolVLA / X-VLA Franka TODO
 
-## Where things stand (2026-10-22)
+## Where things stand (2026-10-30)
 
-- **Now: props P3 closed as a failed attempt (2026-10-27), artifacts deleted by the user; next plan not yet written.** It was trained (126,900 updates) and
+- **Next: the VLA inputs programme — specs and plans drafted 2026-10-30, under external review; nothing built.** The data stays
+  P2's 540 sealed episodes; what changes is what the model sees: M0 a common paired evaluation (fresh layouts, A0 = X-VLA 101,520
+  as control), S0 a sealed sidecar of wrist force/torque, finger forces and target boxes for every P2 frame, M1 pi0.5 against
+  X-VLA, M2 force/torque in the state, M3 the target box in the state, M4 an auxiliary box head (M4b force outputs scoped only).
+  Order approved by the user: M0 and S0 alongside M1 training, then M2, M3, M4a. Overview:
+  [docs/superpowers/specs/2026-10-30-vla-inputs-programme-design.md](docs/superpowers/specs/2026-10-30-vla-inputs-programme-design.md)
+  (links every spec and plan). Two facts measured while writing it: replaying the sealed P2 actions from the sealed initial state
+  reproduces the sealed `qpos` byte for byte (3 of 3 episodes probed), and **pi0.5 cannot be constructed in the pinned admission
+  image** (it needs LeRobot's patched transformers; `transformers.models.siglip.check` is missing), so M1 needs a new image.
+- **Props P3 closed as a failed attempt (2026-10-27), artifacts deleted by the user.** It was trained (126,900 updates) and
   evaluated: best checkpoint 101,520, 85.0% on trained objects, 5.7% on held-out ones, milk (trained) only 10/20; numbers in
   [docs/RESULTS.md](docs/RESULTS.md). The dataset, checkpoints, gate scratch and evaluation outputs were deleted on the user's instruction and were never
-  copied to Windows or published, so nothing in P3 can be re-verified or re-evaluated; what is kept is the code and docs on branch `feat/props-p3` (not pushed),
-  which hold the evidence and the lessons (FAILURES #59, #60). Open: whether to delete that branch, and what replaces P3.
+  copied to Windows or published, so nothing in P3 can be re-verified or re-evaluated; what is kept is the code and docs, merged into `main`
+  (`0ce1698`, on origin), which hold the evidence and the lessons (FAILURES #59, #60). The `feat/props-p3` branch no longer exists locally.
 - **Props P3 (Food vs Drinks, fixed prompt `sort the item`) dataset collected and sealed 2026-10-20 (deleted 2026-10-27): 544/544 episodes,
   0 rejected, fingerprint `6430d34e…d151acf`; trained and evaluated, failed, deleted (bullet above).** Decisions D1–D7 confirmed by the user 2026-10-20 (unchanged).
   Expert re-test 286/288 = 99.3% (lemon with the blue bin on the left is the only miss), the 16-worker thread cap proven
