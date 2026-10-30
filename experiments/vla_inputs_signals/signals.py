@@ -57,3 +57,90 @@ def finger_force(model, data):
                     mujoco.mj_contactForce(model, data, i, force)
                     out[k] += force[0]
     return out
+
+
+CAMERAS = ("front_cam", "gripper_cam")
+IMAGE = 512
+RENDERED_GROUPS = 3  # the renderer draws geom groups 0-2 by default
+_CUBE = np.array(np.meshgrid((-1, 1), (-1, 1), (-1, 1), indexing="ij")).reshape(3, 8).T
+_CUBE_EDGES = np.array([(i, j) for i in range(8) for j in range(i + 1, 8) if bin(i ^ j).count("1") == 1])
+
+
+def _half_extent(model, geom):
+    """Half-extents of the geom's local axis-aligned cube: exact for a box, a documented loose bound otherwise."""
+    size, kind = model.geom_size[geom], model.geom_type[geom]
+    if kind in (mujoco.mjtGeom.mjGEOM_BOX, mujoco.mjtGeom.mjGEOM_ELLIPSOID):
+        return size.copy()
+    if kind == mujoco.mjtGeom.mjGEOM_SPHERE:
+        return np.full(3, size[0])
+    if kind == mujoco.mjtGeom.mjGEOM_CAPSULE:
+        return np.array([size[0], size[0], size[1] + size[0]])
+    if kind == mujoco.mjtGeom.mjGEOM_CYLINDER:
+        return np.array([size[0], size[0], size[1]])
+    raise ValueError(f"geom {geom}: type {mujoco.mjtGeom(kind).name} has no projected bound")
+
+
+def _geometry(model, data, body):
+    """World-space vertices and edges of the rendered geoms of `body`: mesh surface edges, cube edges for primitives."""
+    verts, edges, offset = [], [], 0
+    for geom in range(model.ngeom):
+        if model.geom_bodyid[geom] != body or model.geom_group[geom] >= RENDERED_GROUPS:
+            continue
+        if model.geom_type[geom] == mujoco.mjtGeom.mjGEOM_MESH:
+            mesh = model.geom_dataid[geom]
+            start, count = model.mesh_vertadr[mesh], model.mesh_vertnum[mesh]
+            local = model.mesh_vert[start:start + count]
+            faces = model.mesh_face[model.mesh_faceadr[mesh]:][:model.mesh_facenum[mesh]]
+            edge = faces[:, [0, 1, 1, 2, 2, 0]].reshape(-1, 2)
+        else:
+            local, edge = _CUBE * _half_extent(model, geom), _CUBE_EDGES
+        verts.append(data.geom_xpos[geom] + local @ data.geom_xmat[geom].reshape(3, 3).T)
+        edges.append(edge + offset)
+        offset += len(local)
+    if not verts:
+        return np.zeros((0, 3)), np.zeros((0, 2), dtype=int)
+    return np.concatenate(verts), np.concatenate(edges)
+
+
+def _project(model, data, geometry, camera):
+    verts, edges = geometry
+    cam = model.camera(camera).id
+    local = (verts - data.cam_xpos[cam]) @ data.cam_xmat[cam].reshape(3, 3)  # x right, y up, looking along -z
+    depth = -local[:, 2]
+    near = model.vis.map.znear * model.stat.extent
+    front = depth > near
+    a, b = edges[:, 0], edges[:, 1]
+    crossing = front[a] != front[b]
+    t = (near - depth[a[crossing]]) / (depth[b[crossing]] - depth[a[crossing]])
+    cut = local[a[crossing]] + t[:, None] * (local[b[crossing]] - local[a[crossing]])
+    points = np.concatenate([local[front], cut])
+    if not len(points):
+        return np.zeros(5)
+    d = np.concatenate([depth[front], np.full(len(cut), near)])
+    f = IMAGE / 2 / np.tan(np.radians(model.cam_fovy[cam]) / 2)
+    u, v = IMAGE / 2 + f * points[:, 0] / d, IMAGE / 2 - f * points[:, 1] / d
+    low = np.maximum([u.min(), v.min()], 0.0)
+    high = np.minimum([u.max(), v.max()], float(IMAGE))
+    if (high <= low).any():
+        return np.zeros(5)
+    return np.array([low[0], low[1], high[0], high[1], IMAGE]) / IMAGE
+
+
+def box(model, data, body_name, camera):
+    """(u_min, v_min, u_max, v_max, in_frame) of the body's rendered geoms in `camera`, /512, clipped to [0, 1].
+
+    Geometry is clipped at the near plane before the perspective division. `in_frame` is projected geometric
+    validity (a positive-area box meeting the image), not visibility: occlusion is ignored. Not in frame: all zeros.
+    """
+    return _project(model, data, _geometry(model, data, model.body(body_name).id), camera)
+
+
+def target_box(model, data, target):
+    """(2, 5): `box` of `prop_<target>` in front_cam and gripper_cam."""
+    geometry = _geometry(model, data, model.body(f"prop_{target}").id)
+    return np.stack([_project(model, data, geometry, camera) for camera in CAMERAS])
+
+
+def props_box(model, data, names):
+    """(len(names), 2, 5): `target_box` for every prop in `names`."""
+    return np.stack([target_box(model, data, name) for name in names])
