@@ -1,5 +1,22 @@
 # Franka benchmark: start here
 
+## M1 Tasks 1-3 done: pi0.5 images, pinned assets, contract - 2026-10-30
+
+Branch `feat/vla-inputs-m1` (not pushed). **Images:** `vla-pi05:admission` (`sha256:a229f2fb…290eae`) and `vla-pi05:robosuite`
+(`sha256:2abb18a5…b21`) are the existing images plus transformers@`dcddb970` and tokenizers 0.21.4, installed `--no-deps
+--require-hashes` (92.6 MB each; the existing images were not touched). `test_image.py` passes in both (siglip check, pi0.5
+constructs with 3,616,757,520 parameters, `pip check` equal to the parent's, `pip freeze` equal to the parent's except those two
+lines) and fails in the unmodified parents. **Physics unchanged:** the 12 rendered determinism attempts of P2's collection gave
+12 equal trace digests in `robosuite-pi` and in the robosuite image. **Assets:** `pi05_base` revision `9e55186a` downloaded
+anonymously (14.5 GB; weights hash `0eb11ca9…` as pinned) and every asset file hashed in `assets.py`; disk 109 GB free
+afterwards. **Finding:** LeRobot 0.4.4's `PI05Policy.from_pretrained(strict=True)` always reports the tied
+`embed_tokens.weight` missing (the checkpoint stores it under `lm_head`) and, like any failure inside it, only prints a
+warning, so the runner must not rely on it; `test_weights_load.py` asserts on key sets and every tensor. **Contract:**
+`experiments/pi05_props_p2/` (dataset binding copied from X-VLA's and checked against the original on the real dataset, 193,440
+windows, horizon derived to 5.0 epochs, native quantile behaviour recorded: below q01 maps to token -1, above q99 saturates
+at 255, nothing clips). 69 tests OK in `admission-pi`. No runner, no GPU use, no run started; Task 4 (memory probe) is next and
+needs an idle GPU.
+
 ## M2/M3/M4 specs corrected after S0; S0 merged to main - 2026-10-30
 
 Two corrections before any M2 code. (1) **P2's X-VLA recipe does not normalise the state** (`STATE` is `IDENTITY`, enforced by
