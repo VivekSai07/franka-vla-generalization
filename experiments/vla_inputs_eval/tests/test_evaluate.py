@@ -111,9 +111,16 @@ class Campaign(unittest.TestCase):
         (package / "adapter.py").write_text(source)
         (package / "README.md").write_text("# fake arm\n")
 
-    def prepare(self, arm="A0", name="vla_inputs_arm_fake", checkpoints=None):
-        return evaluate.prepare(self.root, arm, f"experiments.{name}.adapter:FakeAdapter",
-                                checkpoints or {1000: self.ckpt}, repo=self.repo)
+    def prepare(self, arm="A0", name="vla_inputs_arm_fake", checkpoints=None, phase=None):
+        checkpoints = checkpoints or {1000: self.ckpt}
+        if arm != "A0" and phase is None:
+            phase = max(checkpoints)
+        return evaluate.prepare(self.root, arm, f"experiments.{name}.adapter:FakeAdapter", checkpoints, repo=self.repo,
+                                phase_checkpoint=phase)
+
+    def fake_selection(self, arm, winner=1000, phase=1000):
+        evaluate.write_json(self.root / "arms" / arm / "selection.json",
+                            dict(arm=arm, winner=winner, phase_checkpoint=phase, comparison_checkpoints=sorted({winner, phase})))
 
     def run_worker(self, arm="A0", tier="smoke", checkpoint=1000, shard=0, shards=1, rule=lambda t: True, log=None, **kwargs):
         return evaluate.worker(self.root, arm, tier, checkpoint, shard, shards, repo=self.repo,
@@ -173,6 +180,28 @@ class Prepare(Campaign):
             evaluate.prepare(self.root, "A0", "os:system", {1000: self.ckpt}, repo=self.repo)
         with self.assertRaises(ValueError):
             evaluate.prepare(self.root, "control", "experiments.vla_inputs_arm_fake.adapter:FakeAdapter", {1000: self.ckpt}, repo=self.repo)
+
+    def test_a_new_arm_must_declare_its_matched_phase_checkpoint_and_the_control_must_not(self):
+        self.prepare("A0")
+        for bad in (None, 5000):
+            with self.assertRaises(ValueError, msg=bad):
+                evaluate.prepare(self.root, "A1", "experiments.vla_inputs_arm_fake.adapter:FakeAdapter", {1000: self.ckpt},
+                                 repo=self.repo, phase_checkpoint=bad)
+        with self.assertRaises(ValueError):
+            evaluate.prepare(self.root, "A0", "experiments.vla_inputs_arm_fake.adapter:FakeAdapter", {1000: self.ckpt},
+                             repo=self.repo, phase_checkpoint=1000)
+
+    def test_exclusions_by_cell_are_recorded(self):
+        self.assertEqual(self.prepare()["dropped_by_cell"], {})
+
+    def test_adding_a_future_arm_leaves_the_core_hash_unchanged(self):
+        before = contract.core_sha256(self.repo)
+        self.add_arm("vla_inputs_arm_fake3", FAKE_ADAPTER.replace("scale=1.0", "scale=3.0") + "\nEXTRA = 1\n")
+        self.assertEqual(contract.core_sha256(self.repo), before)
+        a0 = self.prepare("A0")
+        a3 = self.prepare("A2", "vla_inputs_arm_fake3")
+        self.assertEqual(a0["core"]["sha256"], before)
+        self.assertEqual(a3["core"]["sha256"], before)
 
     def test_a_second_arm_needs_the_same_core_as_a0(self):
         self.prepare("A0")
@@ -344,7 +373,7 @@ class Select(Campaign):
         super().setUp()
         self.second = make_checkpoint(self.tmp, "ckpt_b", b"b")
         self.prepare("A0")
-        self.prepare("A1", checkpoints={1000: self.ckpt, 2000: self.second})
+        self.prepare("A1", checkpoints={1000: self.ckpt, 2000: self.second}, phase=2000)
 
     def test_picks_the_most_successful_checkpoint_on_the_selection_tier(self):
         self.stage("A1", "selection", 1000, rule=lambda t: t["ordinal"] <= 30)
@@ -352,6 +381,17 @@ class Select(Campaign):
         decision = evaluate.select(self.root, "A1")
         self.assertEqual((decision["winner"], decision["counts"], decision["tied"]), (2000, {"1000": 30, "2000": 50}, [2000]))
         self.assertTrue((self.root / "arms/A1/selection.json").exists())
+
+    def test_the_matched_phase_checkpoint_joins_the_comparison_list_unless_it_is_the_winner(self):
+        self.stage("A1", "selection", 1000, rule=lambda t: t["ordinal"] <= 60)
+        self.stage("A1", "selection", 2000, rule=lambda t: t["ordinal"] <= 20)
+        decision = evaluate.select(self.root, "A1")  # phase checkpoint is 2000 (the later one), the winner is 1000
+        self.assertEqual((decision["winner"], decision["phase_checkpoint"], decision["comparison_checkpoints"]), (1000, 2000, [1000, 2000]))
+
+    def test_a_coinciding_winner_and_phase_checkpoint_is_run_once(self):
+        self.stage("A1", "selection", 1000, rule=lambda t: t["ordinal"] <= 20)
+        self.stage("A1", "selection", 2000, rule=lambda t: t["ordinal"] <= 60)
+        self.assertEqual(evaluate.select(self.root, "A1")["comparison_checkpoints"], [2000])
 
     def test_a_tie_goes_to_the_later_checkpoint_and_is_recorded(self):
         self.stage("A1", "selection", 1000, rule=lambda t: t["ordinal"] <= 40)
@@ -398,6 +438,7 @@ class Compare(Campaign):
         self.add_arm("vla_inputs_arm_fake2", FAKE_ADAPTER.replace("scale=1.0", "scale=2.0"))
         self.prepare("A0")
         self.prepare("A1", "vla_inputs_arm_fake2")
+        self.fake_selection("A1")
 
     def both(self, rule_new, rule_control):
         self.stage("A0", "comparison", 1000, rule=rule_control)
@@ -423,6 +464,32 @@ class Compare(Campaign):
         finally:
             evaluate.load_stage = original
         self.assertEqual(set(tiers), {"comparison"})
+
+    def test_the_comparison_tier_never_chooses_a_checkpoint(self):
+        self.both(lambda t: True, lambda t: False)
+        with self.assertRaises(ValueError):
+            evaluate.compare(self.root, "A1", 2000, repo=self.repo)
+        (self.root / "arms/A1/selection.json").unlink()
+        with self.assertRaises(FileNotFoundError):
+            evaluate.compare(self.root, "A1", 1000, repo=self.repo)
+
+    def test_the_two_comparison_checkpoints_are_labelled_primary_and_matched_phase(self):
+        second = make_checkpoint(self.tmp, "ckpt_phase", b"p")
+        self.prepare("A2", "vla_inputs_arm_fake2", checkpoints={1000: self.ckpt, 2000: second}, phase=2000)
+        self.fake_selection("A2", winner=1000, phase=2000)
+        self.stage("A0", "comparison", 1000, rule=lambda t: t["ordinal"] % 2 == 0)
+        for ckpt in (1000, 2000):
+            self.stage("A2", "comparison", ckpt, rule=lambda t: True)
+        roles = {c: evaluate.compare(self.root, "A2", c, repo=self.repo)["role"] for c in (1000, 2000)}
+        self.assertEqual(roles, {1000: "primary", 2000: "matched-phase secondary"})
+        self.assertEqual(sorted(p.name for p in (self.root / "arms/A2").glob("compare_step_*.json")),
+                         ["compare_step_001000.json", "compare_step_002000.json"])
+
+    def test_the_population_and_the_exclusions_are_stated(self):
+        self.both(lambda t: True, lambda t: False)
+        result = evaluate.compare(self.root, "A1", 1000, repo=self.repo)
+        self.assertIn("576 feasible comparison layouts of 576 planned; 0 dropped", result["population"])
+        self.assertEqual(result["dropped_by_cell"], {})
 
     def test_refuses_the_control_against_itself(self):
         with self.assertRaises(ValueError):
@@ -500,12 +567,57 @@ class Compare(Campaign):
             evaluate.compare(self.root, "A1", 1000, repo=self.repo)
 
 
+class CompareWithDroppedLayouts(Campaign):
+    """Three comparison layouts fail the expert feasibility pass: they leave every arm's population, counted by cell."""
+
+    def setUp(self):
+        super().setUp()
+        self.add_arm("vla_inputs_arm_fake2", FAKE_ADAPTER.replace("scale=1.0", "scale=2.0"))
+        plan, feas = evaluate.load_manifests(self.root)
+        self.victims = [plan["tiers"]["comparison"][i] for i in (0, 1, 300)]
+        feas["feasible"] = [i for i in feas["feasible"] if i not in self.victims]
+        feas["dropped"] = sorted(self.victims)
+        cells = {}
+        for v in self.victims:
+            key = "-".join(map(str, plan["layouts"][v]["cell"]))
+            cells[key] = cells.get(key, 0) + 1
+        feas["dropped_by_cell"], feas["reasons"] = dict(sorted(cells.items())), {v: "stub" for v in self.victims}
+        (self.root / "feasibility/feasibility.json").write_text(json.dumps(feas))
+        self.expected_cells = feas["dropped_by_cell"]
+        self.prepare("A0")
+        self.prepare("A1", "vla_inputs_arm_fake2")
+        self.fake_selection("A1")
+
+    def test_the_population_excludes_them_for_both_arms_and_names_them_by_cell(self):
+        self.stage("A0", "comparison", 1000, rule=lambda t: t["ordinal"] % 3 == 0)
+        self.stage("A1", "comparison", 1000, rule=lambda t: True)
+        result = evaluate.compare(self.root, "A1", 1000, repo=self.repo)
+        self.assertEqual(result["layouts"], 573)
+        self.assertEqual(sorted(result["dropped_layouts"]), sorted(self.victims))
+        self.assertEqual(result["dropped_by_cell"], self.expected_cells)
+        self.assertIn("573 feasible comparison layouts of 576 planned; 3 dropped", result["population"])
+        folders = {p.name for p in (self.root / "arms/A1/comparison/step_001000").glob("trial_*")}
+        self.assertEqual(len(folders), 573)
+        self.assertFalse(any(name.endswith("_" + v) for v in self.victims for name in folders))
+
+    def test_ordinals_keep_their_plan_position_so_a_drop_leaves_a_gap(self):
+        plan, feas = evaluate.load_manifests(self.root)
+        ordinals = [t["ordinal"] for t in protocol.stage_trials(plan, feas, "comparison")]
+        self.assertNotIn(1, ordinals)
+        self.assertNotIn(2, ordinals)
+        self.assertNotIn(301, ordinals)
+        self.assertEqual(ordinals[0], 3)
+
+
 class Final(Campaign):
     def test_holm_over_the_family_with_unrun_arms_as_one(self):
         for arm, p in (("A1", 0.004), ("A2", 0.2)):
             (self.root / "arms" / arm).mkdir(parents=True)
+            self.fake_selection(arm, winner=1000, phase=2000)
             (self.root / "arms" / arm / "compare_step_001000.json").write_text(json.dumps(dict(mcnemar_exact_p=p)))
+            (self.root / "arms" / arm / "compare_step_002000.json").write_text(json.dumps(dict(mcnemar_exact_p=0.0001)))
         out = evaluate.final(self.root)
+        self.assertEqual(out["files"], {"A1": "compare_step_001000.json", "A2": "compare_step_001000.json"})
         self.assertAlmostEqual(out["holm"]["A1"], 0.016)
         self.assertAlmostEqual(out["holm"]["A2"], 0.6)
         self.assertEqual((out["holm"]["A3"], out["holm"]["A4"]), (1.0, 1.0))
@@ -536,6 +648,16 @@ def unbound_after_importing(names):
     if out.returncode:
         raise RuntimeError(out.stderr[-800:])
     return json.loads(out.stdout.strip().splitlines()[-1])
+
+
+class XVLAOnlyEnvironment(unittest.TestCase):
+    def test_importing_the_stages_loads_no_model_stack_and_no_arm(self):
+        import subprocess
+        code = ("import sys; import experiments.vla_inputs_eval.evaluate as e; "
+                "print(sorted(m for m in ('torch', 'lerobot', 'transformers', 'robosuite', 'mujoco') if m in sys.modules), "
+                "sorted(m for m in sys.modules if 'vla_inputs_arm_' in m))")
+        out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, cwd=REPO)
+        self.assertEqual(out.stdout.strip(), "[] []", out.stderr[-400:])
 
 
 class Closure(unittest.TestCase):

@@ -17,6 +17,14 @@ unchanged. A core correction is a new protocol with a new control; it is never r
 Arms live in `experiments/vla_inputs_arm_*` and are loaded lazily by `module:Class`, so an environment without an arm's
 dependencies never imports it and adding an arm never edits the core. Adapter interface: `reset()`, `act(obs) -> (8,)`.
 
+## Checkpoints and the matched-phase secondary
+
+New arms declare their 4.0-epoch checkpoint at `prepare`. `select` picks the winner on the selection tier (ties recorded, the
+later checkpoint wins) and lists the checkpoints to run on the comparison tier: the winner and the matched-phase checkpoint
+(once when they coincide). `compare` refuses any other checkpoint, so the comparison tier never chooses between them. The
+Holm family uses each arm's selection winner; the matched-phase result is reported separately. Layouts the expert cannot solve
+are dropped for every arm and reported by cell (`population`, `dropped_by_cell`); complete feasible pairs are required.
+
 ## Modules
 
 | file | role |

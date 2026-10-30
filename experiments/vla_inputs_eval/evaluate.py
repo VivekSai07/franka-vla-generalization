@@ -116,12 +116,17 @@ def arm_files(identifier, root=ROOT):
     return {rel: contract.file_hash(root / rel) for rel in sorted(files)}
 
 
-def prepare(root, arm, identifier, checkpoints, repo=ROOT):
+def prepare(root, arm, identifier, checkpoints, repo=ROOT, phase_checkpoint=None):
     """Write `arms/<arm>/prepared.json`. `checkpoints`: {update: path}. For arms other than A0, A0 must be prepared with an
-    identical shared core."""
+    identical shared core, and `phase_checkpoint` (the 4.0-epoch checkpoint, evaluated on the comparison tier whatever the
+    selection says) must be one of the checkpoints."""
     root = Path(root)
     if not ARM_NAME.match(arm):
         raise ValueError(f"arm {arm!r} is not A0..A9")
+    if arm != CONTROL and phase_checkpoint not in checkpoints:
+        raise ValueError(f"arm {arm}: declare the matched-phase (4.0-epoch) checkpoint, one of {sorted(checkpoints)}")
+    if arm == CONTROL and phase_checkpoint is not None:
+        raise ValueError("A0 is a single fixed checkpoint; it has no matched-phase secondary")
     plan, feas = load_manifests(root)
     sidecar_fingerprint = contract.check_signal_source(repo)
     contract.s0.check_p2_frozen(repo)
@@ -130,7 +135,8 @@ def prepare(root, arm, identifier, checkpoints, repo=ROOT):
         arm=dict(name=arm, adapter=identifier, files=arm_files(identifier, repo), runtime=runtime()),
         core=dict(provenance=core, sha256=contract.digest(core)),
         plan_sha256=contract.file_hash(root / "plan/plan.json"), feasibility_sha256=contract.file_hash(root / "feasibility/feasibility.json"),
-        dropped=feas["dropped"], s0_seal=sidecar_fingerprint,
+        dropped=feas["dropped"], dropped_by_cell=feas["dropped_by_cell"], s0_seal=sidecar_fingerprint,
+        phase_checkpoint=phase_checkpoint,
         checkpoints={str(k): checkpoint_facts(v) for k, v in sorted(checkpoints.items())},
         prepared_at=time.strftime("%Y-%m-%dT%H:%M:%S%z"))
     record["arm"]["sha256"] = contract.digest([record["arm"]["adapter"], record["arm"]["files"]])
@@ -309,7 +315,8 @@ def collect(root, arm, tier, checkpoint):
         rows.append(row)
     report = dict(status="complete" if not missing else "incomplete", arm=arm, tier=tier, checkpoint=checkpoint,
                   model_sha256=prepared["checkpoints"][str(checkpoint)]["model_sha256"], core_sha256=prepared["core"]["sha256"],
-                  arm_sha256=prepared["arm"]["sha256"], dropped_layouts=feas["dropped"], planned_trials=len(trials),
+                  arm_sha256=prepared["arm"]["sha256"], dropped_layouts=feas["dropped"], dropped_by_cell=feas["dropped_by_cell"],
+                  planned_trials=len(trials),
                   missing_ordinals=missing, failure_files=sorted(p.name for p in directory.glob("failure_shard*.json")),
                   episodes=rows, readouts=analysis.readouts(rows, []) if rows else None)
     write_json(directory / "result.json", report)
@@ -339,8 +346,11 @@ def select(root, arm):
         if any(e["kind"] != "trained" or e["tier"] != "selection" for e in episodes):
             raise ValueError("the selection tier holds only trained-pair selection layouts; held-out layouts never select")
         counts[int(key)] = sum(1 for e in episodes if e["task_success"])
-    decision = dict(arm=arm, counts={str(k): v for k, v in counts.items()}, tied=stats.tied(counts), winner=stats.select(counts),
-                    rule="most successes on the selection tier; a tie goes to the later checkpoint (administrative, not evidence)")
+    winner, phase = stats.select(counts), prepared["phase_checkpoint"]
+    decision = dict(arm=arm, counts={str(k): v for k, v in counts.items()}, tied=stats.tied(counts), winner=winner,
+                    rule="most successes on the selection tier; a tie goes to the later checkpoint (administrative, not evidence)",
+                    phase_checkpoint=phase, comparison_checkpoints=sorted({winner, phase}),
+                    note="the comparison tier is run at both checkpoints (one when they coincide); C never chooses between them")
     write_new_json(root / "arms" / arm / "selection.json", decision)
     print("SELECTED", json.dumps(decision), flush=True)
     return decision
@@ -354,6 +364,12 @@ def compare(root, arm, checkpoint, repo=ROOT, seed=0):
     if arm == CONTROL:
         raise ValueError("A0 is the control; compare an arm A1..A4")
     control, mine = load_prepared(root, CONTROL), load_prepared(root, arm)
+    decision = read_json(root / "arms" / arm / "selection.json")
+    if checkpoint not in decision["comparison_checkpoints"]:
+        raise ValueError(f"checkpoint {checkpoint} is neither the selection winner nor the matched-phase checkpoint "
+                         f"{decision['comparison_checkpoints']}; the comparison tier never chooses a checkpoint")
+    role = ("primary and matched-phase" if decision["winner"] == decision["phase_checkpoint"] == checkpoint
+            else "primary" if checkpoint == decision["winner"] else "matched-phase secondary")
     for name, prepared in ((CONTROL, control), (arm, mine)):
         verify_core(prepared, repo)
         verify_manifests(root, prepared)
@@ -373,10 +389,13 @@ def compare(root, arm, checkpoint, repo=ROOT, seed=0):
     c = sum(1 for r in rows if r["control"] and not r["new"])
     p = stats.mcnemar(b, c)
     result = dict(
-        arm=arm, checkpoint=checkpoint, control_checkpoint=control_checkpoint, layouts=len(ids), new_successes=sum(r["new"] for r in rows),
+        arm=arm, checkpoint=checkpoint, role=role, control_checkpoint=control_checkpoint, layouts=len(ids), new_successes=sum(r["new"] for r in rows),
         control_successes=sum(r["control"] for r in rows), discordant=dict(new_only=b, control_only=c), mcnemar_exact_p=p,
         effect=stats.paired_effect(rows, seed=seed), core_sha256=mine["core"]["sha256"], arm_sha256=mine["arm"]["sha256"],
         control_arm_sha256=control["arm"]["sha256"], dropped_layouts=new["dropped_layouts"],
+        dropped_by_cell=new["dropped_by_cell"],
+        population=f"{len(ids)} feasible comparison layouts of 576 planned; {len(new['dropped_layouts'])} dropped for every arm "
+                   f"(expert could not solve them), counted by cell and never replaced",
         discordant_layouts=dict(new_only=[r["layout_id"] for r in rows if r["new"] and not r["control"]],
                                 control_only=[r["layout_id"] for r in rows if r["control"] and not r["new"]]),
         readouts=dict(new=analysis.readouts(new["episodes"], []), control=analysis.readouts(old["episodes"], [])),
@@ -392,12 +411,16 @@ def final(root):
     root = Path(root)
     raw, files = {}, {}
     for arm in stats.FAMILY:
-        found = sorted((root / "arms" / arm).glob("compare_step_*.json"))
-        if found:
-            files[arm] = found[-1].name
-            raw[arm] = read_json(found[-1])["mcnemar_exact_p"]
+        selection = root / "arms" / arm / "selection.json"
+        if not selection.is_file():
+            continue
+        found = root / "arms" / arm / f"compare_step_{read_json(selection)['winner']:06d}.json"
+        if found.is_file():
+            files[arm] = found.name
+            raw[arm] = read_json(found)["mcnemar_exact_p"]
     out = dict(raw=raw, holm=stats.family_holm(raw), files=files, family=list(stats.FAMILY),
-               note="original power is unadjusted; unrun arms enter the family as p = 1")
+               note="primary = the selection-tier winner of each arm; the matched-phase secondary is reported separately and is "
+                    "not in the family; original power is unadjusted; unrun arms enter the family as p = 1")
     write_json(root / "final.json", out)
     print("FINAL", json.dumps(out), flush=True)
     return out
@@ -422,6 +445,7 @@ def parse_args(argv=None):
     p.add_argument("--arm", required=True)
     p.add_argument("--adapter", required=True, help="module:Class under experiments.vla_inputs_arm_*")
     p.add_argument("--checkpoints", required=True, type=_checkpoints, help="update=path[,update=path]")
+    p.add_argument("--phase-checkpoint", type=int, help="the 4.0-epoch checkpoint (arms other than A0)")
     w = sub.add_parser("worker")
     w.add_argument("--arm", required=True)
     w.add_argument("--tier", required=True, choices=protocol.TIERS)
@@ -447,7 +471,7 @@ def main(argv=None):
     if args.command == "plan":
         print("PLAN", plan_module.write(Path(args.root) / "plan"), flush=True)
     elif args.command == "prepare":
-        prepare(args.root, args.arm, args.adapter, args.checkpoints)
+        prepare(args.root, args.arm, args.adapter, args.checkpoints, phase_checkpoint=args.phase_checkpoint)
     elif args.command == "worker":
         import torch
         torch.use_deterministic_algorithms(True)
