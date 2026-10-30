@@ -72,7 +72,9 @@ they live in a dedicated conda env, never in `base`:
    real plugin by symlink, with a 5-line patch that turns `FULL_UPDATE` into `ARCHITECTURE_UPDATE`; the
    install is untouched) and then the incremental steps by hand with that copy of `prepare-incremental.mjs`:
    `prepare-incremental.mjs <root> <meta hash>`, `compute-batches.mjs <root> --changed-files=.ua/intermediate/changed-files.json`,
-   one analyzer per batch, `merge-batch-graphs.py <root>`, layers and tour passes keeping the previous
+   one analyzer per batch, `merge-batch-graphs.py <root>`, then `node scripts/code_graph_cover.cjs <root>`
+   (every changed file has a node, nothing dangles, unchanged nodes identical; it compares against the
+   old graph, so run it before finalizing), layers and tour passes keeping the previous
    ones as the base, `finalize-incremental.mjs <root>` (the real one), then
    `node scripts/code_graph_verify.mjs <root>`. Symbol-loss validation and the schema check still run.
    Fall back to a full `/understand --full` if verification fails.
