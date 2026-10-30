@@ -45,7 +45,7 @@ Descriptive: A3 against A2 (both on C), by object.
 ## Prediction (2026-10-30, before any run)
 
 `wrong_object` should fall toward zero: the box names the target. A gain around the historical wrong-object rate (about 6 points) is one hypothesis, **not an upper bound**:
-box location and size could also affect approach, alignment or carrying. M0's unadjusted power at 6 points is 0.43–0.74;
+box location and size could also affect approach, alignment or carrying. M0's power at 6 points (C = 576) is 0.60–0.90 unadjusted, 0.39–0.77 at the first Holm threshold;
 interpret the interval rather than equating non-significance with no effect. Little effect on milk's hold is a prediction,
 not a mechanism established by the existing failure labels.
 

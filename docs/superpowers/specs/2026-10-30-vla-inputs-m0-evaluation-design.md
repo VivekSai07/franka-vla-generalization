@@ -23,6 +23,9 @@ On one set of fresh P2-style layouts, how does each new arm (A1–A4) compare wi
 | two seeds of one layout correlate (ICC 0.56): one seed on more layouts is the better use of rollouts | P2 re-test design |
 | the bundle re-evaluation reproduced recorded trials bit for bit in a clean container: rollouts are deterministic | TODO (P2 bundle smoke) |
 | median trial 82 s; 8 pinned workers; ~7.3 GiB GPU per X-VLA worker after a checkpoint switch | P2 evaluation, FAILURES #57 |
+| P3 ran 8 pinned workers (5 cores each) at **about 4.2 GB GPU each** through a six-checkpoint screen and a four-checkpoint report, no worker failure; P2's 7.3 GiB peak appeared in workers that switched checkpoint (4 such workers filled the 47 GB card; cause of the growth not isolated) | PROPS_P3_EVALUATION_20261027, FAILURES #57 |
+| one P2 trial folder (video, trace, json) is about 1.4 MB (120 report trials = 169 MB) | `outputs/xvla_props_p2_eval/report_p2_step_101520`, measured 2026-10-30 |
+| RTX machine 2026-10-30: 48 cores, 125 GB RAM, GPU idle (363 MiB used, no other compute process) | `nproc`, `free`, `nvidia-smi` |
 
 ## Design
 
@@ -37,7 +40,7 @@ trained in P2 and 2 were held out (`milk→blue`, `bread→orange`), so 8 cells 
 |---|---|---|---|
 | smoke | 2 | from the selection tier | every arm, cost check only |
 | selection **S** | **80** | trained pairs only: 40 trained cells × 2 | new arms only, every candidate checkpoint |
-| comparison **C** | **384** | all 48 cells × 8 (320 trained-pair, 64 held-out-pair layouts) | A0 fixed at 101,520; each new arm one S-selected checkpoint plus the predeclared 4.0-epoch secondary checkpoint (deduplicate if identical) |
+| comparison **C** | **576** | all 48 cells × 12 (480 trained-pair, 96 held-out-pair layouts); size decided by the user 2026-10-30, before any layout was drawn | A0 fixed at 101,520; each new arm one S-selected checkpoint plus the predeclared 4.0-epoch secondary checkpoint (deduplicate if identical) |
 
 - Layouts are drawn with P2's own samplers (start region, yaw caps, symmetric spacing, hand clearance, distractor decks) under
   identities `vla_inputs:m0:<tier>:<cell>:<i>`, a namespace no earlier plan used. Tests assert no seed, start pose or
@@ -87,7 +90,7 @@ and the signal tap change nothing about the rollout.
 
 **Additional predeclared comparison:** evaluate the 4.0-epoch checkpoint of each new arm against A0 (also 4.0 epochs),
 as a secondary matched-phase contrast, even if S selects a different winner. Do not choose between the two using C.
-Deduplicate if the checkpoints coincide. Budget up to 384 additional trials per arm. This controls selection-phase
+Deduplicate if the checkpoints coincide. Budget up to 576 additional trials per arm. This controls selection-phase
 differences but does not turn M1 into an architecture-only comparison. Selection remains trained-pair-only;
 the primary C population includes held-out pairs and is explicitly a different target population.
 
@@ -118,6 +121,27 @@ for D=.19/.30/.40, power is .540/.330/.238 at +6 points and .980/.851/.708 at +1
 Formula and full comparison with .05: [audit R4](../../VLA_INPUTS_AUDIT_20261030.md).
 These are marginal sensitivities, not exact joint Holm power.
 
+**C size is a decision for the user before Task 1 writes `plan.json` (never after any outcome).** Exact enumeration on the RTX
+machine (2026-10-30, the audit's formula) for a 10-point effect at α = 0.0125:
+
+| C layouts | D = 0.30 | D = 0.40 | extra rollouts per arm vs 384 (C + matched-phase) |
+|---|---|---|---|
+| 384 (48 × 8) | 0.851 | 0.708 | — |
+| 480 (48 × 10) | 0.931 | 0.822 | up to +192 |
+| 576 (48 × 12) | 0.970 | 0.897 | up to +384 |
+
+At α = 0.05 the same rows are 0.943/0.861, 0.979/0.929, 0.992/0.964. **Decided (user, 2026-10-30): C = 576**, before any
+layout or outcome existed. Exact power at 576 (D = 0.19 / 0.30 / 0.40):
+
+| true improvement | α = 0.05 | α = 0.0125 (first Holm threshold) |
+|---|---|---|
+| 6 points | 0.90 / 0.73 / 0.60 | 0.77 / 0.53 / 0.39 |
+| 8 points | 0.99 / 0.93 / 0.85 | 0.97 / 0.83 / 0.69 |
+| 10 points | 1.00 / 0.99 / 0.96 | 1.00 / 0.97 / 0.90 |
+| 15 points | 1.00 / 1.00 / 1.00 | 1.00 / 1.00 / 1.00 |
+
+The 384-layout tables above are kept as the record of how the size was chosen.
+
 ## Reported, not gated
 
 Per object (milk read separately), trained-pair against held-out-pair, by distractor count, by blue-bin side, failure
@@ -126,21 +150,24 @@ the discordant layouts, and A0's C-tier rate next to its P2 report (context only
 
 ## Costs (throughput arithmetic from P2's measured 82 s median, conditional on 8 workers)
 
-Eight workers at the reported 7.3 GiB peak require 58.4 GiB and cannot fit on the 48 GiB GPU. The table is not a feasible
-resource reservation. Choose workers from measured switch/load peaks and available memory with headroom, then recompute
-wall time including the matched-phase contrast. Only layout generation/feasibility are CPU-only; GPU rollouts must be
-scheduled separately from M1 training unless their measured combined peaks fit. Include videos in disk planning.
+Eight workers at the 7.3 GiB post-switch peak would need 58.4 GiB and cannot fit; eight workers that never switch
+checkpoint ran at about 4.2 GB each in P3 (about 34 GB). So **no worker switches checkpoint**: the A0 run on C is one
+checkpoint (8 workers); the selection tier gives each of the six candidates its own worker (6 workers, 80 trials each);
+the C runs of a new arm give the S winner and the matched-phase checkpoint separate worker pools. The smoke still measures
+peak memory at the planned concurrency before the pool is fixed. Only layout generation/feasibility are CPU-only; GPU
+rollouts must be scheduled separately from M1 training unless their measured combined peaks fit. Videos: about 1.4 MB per
+trial, so under 3 GB per arm.
 
 | run | rollouts | wall-clock |
 |---|---|---|
-| A0 on C | 384 | ~1.1 h |
-| one new X-VLA arm (S × 6 checkpoints + C) | 480 + 384 = 864 | ~2.5 h |
+| A0 on C | 576 | ~1.7 h (8 workers) |
+| one new X-VLA arm (S × 6 checkpoints, one worker each; C winner and matched-phase checkpoint, separate pools) | 480 + 576 + up to 576 = up to 1,632 | ~5–6 h |
 | pi0.5 arm | 864 | unknown: GPU memory per worker and inference time measured in its smoke |
 
 ## What M0 cannot show
 
-- Effects smaller than about 8 points with useful power.
-- Per-object differences with any power (64 C layouts per object); per-object tables are descriptive.
+- Effects smaller than about 8 points with useful power under the four-arm Holm family (0.69–0.97 at 8 points, C = 576).
+- Per-object differences with any power (96 C layouts per object); per-object tables are descriptive.
 - Anything about A0's earlier P2 numbers: different layouts, so A0's C rate is a fresh estimate, not a correction.
 
 ## Out of scope

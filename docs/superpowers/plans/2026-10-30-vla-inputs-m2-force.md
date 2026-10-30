@@ -75,8 +75,10 @@ compare metrics, weights and Adam moments byte for byte; write `zero_equivalence
 
 ### Task 4: train/rollout parity
 
-**Files:** modify `experiments/xvla_p2_force/eval_adapter.py` (add `state_force`; M0 core unchanged); create
-`experiments/vla_inputs_eval/tests/test_force_parity.py`.
+**Files:** create `experiments/xvla_p2_force/eval_adapter.py` (`state_force` and the X-VLA adapter wiring; M0 core unchanged) and
+`experiments/xvla_p2_force/eval_tests/test_force_parity.py`. Neither is listed in the training contract's `SOURCE_FILES`
+(explicit tuple; `test_contract` asserts their absence), so fixing an adapter after training never invalidates the training
+binding; M0's arm manifest binds them. Nothing is added to `experiments/vla_inputs_eval/` (frozen core, tests included).
 
 **Interfaces:** `adapters.state_force(model, data, target) -> np.ndarray (17,)` = `qpos[:9]`, `signals.wrist_wrench`,
 `signals.finger_force`, clipped with the same S0 ranges.

@@ -64,7 +64,10 @@ mutation. A constant full-image box must fail a correctness test.
 Force correctness uses controlled static known-load, zero-contact and known-contact fixtures (both fingers and external
 body filtering). Positive force on every elevated trajectory frame and mass-times-gravity differences between unrelated
 moving poses are not invariants; record trajectory distributions descriptively instead. Keep the native-sensor parity gate.
-Check whether phase_index exists in the sealed files before inferring phases from height/actions. Signal timestamps are
+**Verified on the RTX machine (2026-10-30): the sealed NPZ has no phase index.** `episode_000.npz` holds exactly `qpos`, `ctrl`,
+`props_pose`, `initial_state`, `final_qpos`, `object`, `bin`, `blue_slot`, `start`, `distractors`, `distractor_poses`;
+`props_p2_data.record.Committer` keeps `phase_index` in memory but never saves it. Segments are therefore inferred from the
+sealed actions and object heights, and that inference is documented as such. Signal timestamps are
 pre-command and must never use future action/state rows. Seal explicit episode/frame identities and report/statistics files.
 
 ### Gates (each must pass before the next step; a failed gate stops S0, nothing is relaxed)
@@ -73,7 +76,7 @@ pre-command and must never use future action/state rows. Seal explicit episode/f
 |---|---|
 | G1 replay exact | all 540 episodes: every frame's `qpos` byte-equal to the sealed `qpos[t]`, `props_pose` equal to the sealed `props_pose[t]`, the sealed `observation.state` equal to `qpos[t, :9]` as float32, and the final state equal to `final_qpos`; any difference stops the run (no tolerance; the admission gate's tolerance is not used) |
 | G2 non-perturbation | one episode replayed with and without the signal computation: identical full integration state and subsequent `qpos` at every frame (the scratch copy really is a copy) |
-| G3 wrench correctness | on 3 episodes' frames: `wrist_wrench` equals MuJoCo's own `force` and `torque` sensors on a site at the hand origin, in a copy of the model built with `MjSpec` plus that site and sensors, given the same full state (`mj_setState` with integration state including warm start, then `mj_forward`), to 1e-9 absolute |
+| G3 wrench correctness | on 3 episodes' frames: `wrist_wrench` equals MuJoCo's own `force` and `torque` sensors on a site at the hand origin, in a copy of the model built with `MjSpec` plus that site and sensors, to 1e-9 absolute. The reference state is captured with `mj_getState(mjSTATE_INTEGRATION)` **immediately before** `synchronize_observation` (whose own capture/restore uses exactly `mjSTATE_INTEGRATION`, `data_collection/benchmark.py` line 11), then `mj_setState` + `mj_forward` in the sensor model, so both paths start from the same warm start |
 | G4 box correctness | 60 frames from 10 episodes, both cameras: every pixel of the target in a **segmentation render** lies inside the projected box expanded by 1 pixel (containment is exact for a correct projection, whatever the occlusion; a flipped axis or wrong fovy fails it). The IoU of segmentation box and projected box is reported, not gated |
 | G5 seal | fingerprint over the sidecar files, bound to the P2 seal fingerprint `b1d642b3…f4d898` and to S0's own source hashes (`provenance()`); re-verified in a second process |
 
@@ -84,7 +87,7 @@ time.
 ### Descriptive report (from demonstrations only; no policy involved)
 
 Per object and segment (*before close*, *closed and lifted*, *after release*, defined from the sealed actions and object
-heights; inspect sealed NPZ keys first: the collector declares phase_index): distributions of `wrist_wrench` and `finger_force`, their frame-to-frame variation during the
+heights; the sealed NPZ has no phase index, verified above): distributions of `wrist_wrench` and `finger_force`, their frame-to-frame variation during the
 steady hold, the 0.1 and 99.9 percentiles over training rows (M2 clips to these; fixed here, before M2 trains), the largest
 |z| after mean/std normalisation, and `gripper_cam` box in-frame rate by segment (not occlusion-aware visibility).
 

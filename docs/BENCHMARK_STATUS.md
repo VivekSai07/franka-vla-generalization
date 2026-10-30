@@ -1,5 +1,19 @@
 # Franka benchmark: start here
 
+## VLA inputs plans revised with RTX evidence - 2026-10-30
+
+Read-only and throwaway-container checks on the workstation, written into the specs and plans before any build:
+(1) the sealed P2 NPZ has no `phase_index` (the audit's R6 suggestion is refuted; segments are inferred); (2) pi0.5 needs
+transformers@`dcddb970` (4.53.3, LeRobot's `fix/lerobot_openpi` head) **and** tokenizers 0.21.x (the image has 0.22.2), so
+"transformers alone" was wrong; with both, the siglip check passes and pi0.5 builds with **3,616,757,520 parameters**, which puts
+FP32 full tuning at 57.9 GB before activations (does not fit 48 GB); (3) pin `pi05_base` revision `9e55186a` (weights
+`0eb11ca9…`, same in every revision): the latest hub preprocessor uses a step LeRobot 0.4.4 lacks; (4) PaliGemma access is
+manual approval, so request it early; (5) R2 (only view 0 reaches the language encoder) is confirmed on the installed X-VLA
+source; (6) eval workers that never switch checkpoint ran at ~4.2 GB each in P3, so M0 assigns one checkpoint per worker pool;
+(7) the M0 C size is fixed at 576 (48 cells × 12; user, same day, before any layout was drawn; it supersedes the 384 and the
+"up to 384 extra trials" in the audit entry below); (8) per-arm eval adapters and their tests
+stay out of training `SOURCE_FILES` and out of the frozen M0 core. Disk 123 GB free, GPU idle, `/var/log/syslog` absent.
+
 ## VLA inputs pre-implementation audit - 2026-10-30
 
 [Audit and research roadmap](VLA_INPUTS_AUDIT_20261030.md) records eight findings and verified primary sources.
