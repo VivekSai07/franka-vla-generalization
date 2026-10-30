@@ -1,5 +1,14 @@
 # Franka benchmark: start here
 
+## M2/M3/M4 specs corrected after S0; S0 merged to main - 2026-10-30
+
+Two corrections before any M2 code. (1) **P2's X-VLA recipe does not normalise the state** (`STATE` is `IDENTITY`, enforced by
+`xvla_single_task.make_config`); the M2 and M3 specs had assumed a mean/std normaliser. M2 now clips its 8 extras to S0's
+percentiles and standardises them with fixed training-row constants in its own loader and rollout state builder, leaving the
+9 P2 values raw; M3's boxes stay raw (already in [0, 1]). (2) S0's findings are carried into the specs: the object's weight is not
+readable from the mean wrist force (M2's prediction rewritten), and `in_frame` is constant 1 (kept as a constant input in M3, the
+BCE term dropped from M4a's head). S0 tests re-run independently: 70 OK. `feat/vla-inputs` fast-forwarded into `main`.
+
 ## VLA inputs S0 sidecar built and sealed - 2026-10-30
 
 [Report](VLA_INPUTS_S0_20261030.md). All 540 sealed P2 episodes were replayed from their sealed actions with `qpos`, prop

@@ -22,7 +22,7 @@ success on M0's comparison tier, and does it remove wrong-object choices?
 | id | decision | reason |
 |---|---|---|
 | D1 | State = 9 P2 values + `target_box` = front camera `(u_min, v_min, u_max, v_max, in_frame)` then gripper camera, **19** values, from the S0 sidecar for training and S0 `signals.py` at rollout | approved: target only, both cameras, normalised to [0, 1] |
-| D2 | No clipping (bounded by construction); the unchanged mean/std normaliser over 19 values, training-row statistics | — |
+| D2 | No clipping and no rescaling: the box values are already in [0, 1], and the state passes through LeRobot's `IDENTITY` state normalisation as in P2 (see M2). **S0 found `in_frame` = 1 on every training frame in both cameras**, so the two flags are constant inputs (a bias, numerically harmless under `IDENTITY`); they are kept so the schema matches S0, and their rollout rate of 0 is reported. A rollout `in_frame` of 0 is outside the training distribution | — |
 | D3 | Recipe unchanged, as M2 D3 | one variable |
 | D4 | Package `experiments/xvla_p2_box/`, forked from `experiments/xvla_p2_force/` **after A2's evaluation**; only the signal selection, `OBS` (19) and the local input check change | M2's files stay bound to M2's run |
 | D5 | Zero-equivalence gate and train/rollout parity gate exactly as M2 D5–D6 | same proofs |
