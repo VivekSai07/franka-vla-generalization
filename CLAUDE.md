@@ -142,6 +142,9 @@ results. Do not edit them even to fix a stale statement:
   `experiments/props_scene/*.py`, `experiments/robosuite_scene/*.py`, the P3 spec
   (`docs/superpowers/specs/2026-10-19-props-p3-food-drinks-design.md`) and the P3 collection plan
   (`docs/superpowers/plans/2026-10-19-props-p3-collection.md`): the props P3 seal's `provenance()` hashes them (sealed 2026-10-20)
+- `experiments/vla_inputs_signals/` (every `.py` including tests, and its README), and through it everything P2's
+  provenance hashes: the S0 sidecar seal's `provenance()` binds 157 files (sealed 2026-10-30, seal `7e2e06db…f58e6c`).
+  M0's evaluator and M2/M3 call `signals.py` at rollout, so an edit here would also break train/rollout parity
 
 Before editing anything under `experiments/`, check whether it is in `SOURCE_FILES` or reachable
 from `provenance()`. Package READMEs are always in both, except in `experiments/robosuite_sim2sim/`
