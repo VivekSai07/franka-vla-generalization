@@ -34,6 +34,7 @@ later findings — add a new one and update the live documents.
 
 **Planning audits**
 [VLA_INPUTS_AUDIT_20261030.md](VLA_INPUTS_AUDIT_20261030.md) — pre-implementation findings, primary research sources and learning roadmap.
+[VLA_INPUTS_S0_20261030.md](VLA_INPUTS_S0_20261030.md) — S0 sidecar (wrist wrench, finger forces, boxes) for the sealed P2 episodes: gates, seal, descriptive report, deviations.
 
 
 **Datasets and collection**

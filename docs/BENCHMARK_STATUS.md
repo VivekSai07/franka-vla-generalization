@@ -1,5 +1,18 @@
 # Franka benchmark: start here
 
+## VLA inputs S0 sidecar built and sealed - 2026-10-30
+
+[Report](VLA_INPUTS_S0_20261030.md). All 540 sealed P2 episodes were replayed from their sealed actions with `qpos`, prop
+poses and `final_qpos` byte-equal at every tick (G1; the sealed `observation.state` clause checked separately, 0 differences),
+and every frame now has wrist wrench, finger forces and target/prop boxes: 244,080 frames, 87 MB, seal `7e2e06db…f58e6c`,
+re-verified in a second container, built in 3.5 min on 6 pinned shards. G2 to G4 passed (G3 below 1e-9 against MuJoCo's own
+sensors; G4 IoU 0.949 mean). Findings that change later plans: the wrist force is dominated by the hand's 10 N weight, so
+object weight is **not** readable from the mean `fz` (M2 can rely only on transients and pose loading); finger force does
+separate objects (4.1 to 6.6 N in the hold); `in_frame` is 1 for every frame (carries no information for M3); the signals
+have heavy tails (max |z| 17 to 58), so the 0.1/99.9 percentile clip fixed in the report is needed. P2's provenance lists 142
+files, not 76, and omits four transitive imports, which S0 binds itself. PaliGemma access was granted and the tokenizer files
+(pinned revision `35e4f464`) downloaded to `outputs/research/pi05_assets/`; the 14 GB `pi05_base` weights are not.
+
 ## VLA inputs plans revised with RTX evidence - 2026-10-30
 
 Read-only and throwaway-container checks on the workstation, written into the specs and plans before any build:

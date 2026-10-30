@@ -1,7 +1,7 @@
 # S0 — extra-signal sidecar for the sealed P2 episodes — design
 
 **Date:** 2026-10-30. **Status: draft for external review.** Part of the
-[VLA inputs programme](2026-10-30-vla-inputs-programme-design.md). CPU only, robosuite image. No package exists; one
+[VLA inputs programme](2026-10-30-vla-inputs-programme-design.md). CPU only, robosuite image. Built and sealed 2026-10-30 (see the S0 report); one
 read-only probe was run (below).
 
 ## Question
@@ -24,7 +24,7 @@ one**?
 | hand body `robot0_right_hand`; finger bodies `left_finger`, `right_finger` | `robosuite_scene/xml_contract.py` lines 9–19 |
 | cameras `front_cam` (fovy 60) and `gripper_cam` (fovy 75, on the hand), 512 × 512 | `robosuite_scene/cameras.py` |
 | each prop body `prop_<name>` has exactly one collision geom plus visual geoms; masses set explicitly (can 0.15, bread 0.05, lemon 0.08, milk 0.20, bottle 0.20, cereal 0.15 kg) | `props_scene/xml_contract.py`, `props_scene/constants.py` |
-| every file reachable from P2's `provenance()` (76 files) is frozen | `outputs/props_p2_data/props_p2_20261013/provenance.json` |
+| every file reachable from P2's `provenance()` (142 files, corrected from an earlier "76"; S0 also binds four transitive imports P2 left out, see the S0 report) is frozen | `outputs/props_p2_data/props_p2_20261013/provenance.json` |
 
 ## Design
 
@@ -36,7 +36,7 @@ action[t])` → `step_control`. Frozen modules are only imported to build the mo
 is patched. The signals are computed at the same point of the loop where the policy rollout reads its state, so training and
 evaluation see the same instant **by construction**, and the evaluator calls the same function (M0).
 
-Signals are computed on a **scratch copy** (`mujoco.mj_copyData`) so the live simulation is never written.
+Signals are computed on a **scratch copy** (`copy.copy(data)`; the Python bindings have no `mj_copyData`) so the live simulation is never written.
 
 ### Signals (per frame; all float64 in the sidecar)
 

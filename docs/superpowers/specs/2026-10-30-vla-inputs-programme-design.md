@@ -95,7 +95,7 @@ without an architecture change.
 
 - **One variable per arm.** A1 changes the model (and its recipe), A2 only the state contents, A3 only the state contents, A4
   only the training loss. Renderer stays OSMesa (EGL is not adopted; A0 must not be evaluated under EGL).
-- **Nothing sealed is edited.** P2's `provenance()` hashes 76 files (`experiments/props_p2_data/**`, `experiments/props_scene/*.py`,
+- **Nothing sealed is edited.** P2's `provenance()` hashes 142 files (`experiments/props_p2_data/**`, `experiments/props_scene/*.py`,
   `experiments/robosuite_scene/*.py`, `src/**`, the P2 spec and plan, shared helpers). They are imported read-only; where
   behaviour must differ the code is forked into the new package, never patched on disk.
 - **Every new training package proves equality before it trains:** with its extra inputs set to zero it reproduces P2's

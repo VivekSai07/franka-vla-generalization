@@ -177,6 +177,16 @@ The same review found that M4a read only X-VLA's first-view/language features wh
 measurement core, bind arm-specific modules independently, and test which inputs can reach each prediction head.
 See [VLA_INPUTS_AUDIT_20261030.md](VLA_INPUTS_AUDIT_20261030.md) for evidence and revised plans.
 
+65. **S0's own first tests could not fail, and P2's provenance is shorter than it looks.**
+Mutation checks on the S0 tests found three that were vacuous: a finger-on-finger fixture whose bodies were welded (fixed
+bodies never collide, so the "pad on pad" force it asserted was never produced), a no-write test on fields `mj_forward` had
+already filled (a write could not change them), and rewritten-file tests that the index digest rejected before the
+structural check they were written for. Separately, P2's sealed `provenance.json` holds 142 files (docs quoted 76) and omits
+four modules its frozen `expert_v1.py` imports; S0 binds them itself and a test fails if a loaded repository module is not
+bound. **Lessons:** assert that the condition a test relies on exists (a force is non-zero, a field is poisoned first, the
+earlier check is bypassed); and derive "what is bound" from what actually loads, not from a list. See
+[VLA_INPUTS_S0_20261030.md](VLA_INPUTS_S0_20261030.md).
+
 Broader lessons — every "just increment a counter" or "just leave state alone on retry" assumption in the fixed-layout pipeline broke under broad_workspace retries. Rejections need explicit cleanup for every piece of shared state (LeRobot buffer + PNG dir + attempts dir semantics + admit-count invariant). And a result is only interpretable once you know what the *absence* of the treatment scores on the same protocol.
 
 **Recurring meta-lesson — a green test suite is not evidence.** Six separate times (#10, #15, #20, #24, and twice while porting eval packages) the tests passed while the thing that actually runs was broken, because the tests exercised a *fixture*, a *constant*, the *wrong module*, or every path *except* the one the job takes. When adding a regression test, confirm it fails against the unfixed code. When forking a package, run the `symtable` undefined-name check from #24 before spending GPU time.

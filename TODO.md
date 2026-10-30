@@ -2,20 +2,27 @@
 
 ## Where things stand (2026-10-30)
 
+- **S0 built and sealed (2026-10-30, branch `feat/vla-inputs`, not merged):** wrist wrench, finger forces and target/prop boxes
+  for all 540 sealed P2 episodes by exact action replay (244,080 frames, seal `7e2e06db…f58e6c`, re-verified in a second
+  container). [Report](docs/VLA_INPUTS_S0_20261030.md). Consequences for later plans: object weight is not readable from the
+  mean wrist `fz` (the hand's own 10 N dominates), finger force does separate objects, `in_frame` is always 1, and the M2 clip
+  percentiles are fixed in the report. **Open:** merge `feat/vla-inputs` to `main`; M0 core and the M1 images are next.
+  PaliGemma access is granted and its tokenizer files are downloaded (pinned revision `35e4f464`); the `pi05_base` weights are not.
+
 - **Plans revised with RTX evidence (2026-10-30, after the audit):** no phase index in the sealed P2 NPZ; pi0.5 needs
   transformers@`dcddb970` **plus** tokenizers 0.21.x and has 3.617 B parameters (FP32 full tuning cannot fit); pin `pi05_base`
-  revision `9e55186a`; **request PaliGemma access now (manual approval)**; one checkpoint per evaluation worker; adapters outside
+  revision `9e55186a`; PaliGemma access (manual approval) **done 2026-10-30**; one checkpoint per evaluation worker; adapters outside
   training `SOURCE_FILES`. **M0 comparison tier fixed at 576 layouts (48 cells × 12; user, 2026-10-30)**, before any layout was
   drawn; table in the M0 spec. Details: [docs/BENCHMARK_STATUS.md](docs/BENCHMARK_STATUS.md).
 
-- **VLA inputs audit completed; planning documents revised, no implementation started.**
+- **VLA inputs audit completed; planning documents revised; only S0 is implemented (bullet above).**
   [Audit and research roadmap](docs/VLA_INPUTS_AUDIT_20261030.md): evaluator core/adapter binding contradiction,
   missing wrist-view features in M4a, 3 Hz versus 30 Hz force feedback, single-seed/multiplicity limits, signal validation
   and pi0.5 numerical/resource gates. All seven specs and six plans revised. Adds a predeclared matched-phase secondary
   comparison (up to 384 additional trials per arm); runtime gates remain outstanding on the workstation. CPU preparation
   may overlap M1; GPU evaluation must be separately resource-gated. No experiment source or sealed artifacts changed.
 
-- **Next: the VLA inputs programme — specs and plans drafted 2026-10-30, under external review; nothing built.** The data stays
+- **Next: the VLA inputs programme — specs and plans drafted 2026-10-30, under external review; only S0 is built (first bullet).** The data stays
   P2's 540 sealed episodes; what changes is what the model sees: M0 a common paired evaluation (fresh layouts, A0 = X-VLA 101,520
   as control), S0 a sealed sidecar of wrist force/torque, finger forces and target boxes for every P2 frame, M1 pi0.5 against
   X-VLA, M2 force/torque in the state, M3 the target box in the state, M4 an auxiliary box head (M4b force outputs scoped only).
