@@ -64,6 +64,18 @@ they live in a dedicated conda env, never in `base`:
 4. Refresh with plain `/understand` (incremental: only files changed since `.ua/meta.json`'s commit are
    re-analysed). Refresh after an axis merges into `main`, not during one. `scripts/code_graph.py
    status` says when it is due.
+   **Above 30 structurally changed files (or 50% of the repo) the plugin refuses to go incremental** and
+   demands a full rebuild (hardcoded in its `change-classifier.ts`; `finalize-incremental.mjs` rejects
+   such a plan). One axis such as P3 crosses 30, so refresh before then. If you are already past it, the
+   cheaper path, used on 2026-10-30 for 54 files (14 batches, 12k lines, against 682 files and 112k
+   lines for a rebuild), is `python3 scripts/code_graph_patched_plugin.py` (builds `/tmp/ua-patched`: the
+   real plugin by symlink, with a 5-line patch that turns `FULL_UPDATE` into `ARCHITECTURE_UPDATE`; the
+   install is untouched) and then the incremental steps by hand with that copy of `prepare-incremental.mjs`:
+   `prepare-incremental.mjs <root> <meta hash>`, `compute-batches.mjs <root> --changed-files=.ua/intermediate/changed-files.json`,
+   one analyzer per batch, `merge-batch-graphs.py <root>`, layers and tour passes keeping the previous
+   ones as the base, `finalize-incremental.mjs <root>` (the real one), then
+   `node scripts/code_graph_verify.mjs <root>`. Symbol-loss validation and the schema check still run.
+   Fall back to a full `/understand --full` if verification fails.
 5. The first full run is token-heavy. Say so before starting; do not start it unprompted.
 
 ## 4. Committing it
@@ -86,7 +98,8 @@ they live in a dedicated conda env, never in `base`:
   every `git commit|merge|cherry-pick|rebase` (checked in its source), which would spend tokens and
   touch `.ua/` mid-experiment, and never fires in Copilot. Revisit only with a way to bound the cost.
 - A refresh costs about the number of files `status` reports: 18 files cost 9 small analyzer batches,
-  a layers pass and a tour pass; the deterministic prepare/merge/save steps cost no tokens.
+  a layers pass and a tour pass; 54 files cost 14 batches plus the same two passes. The deterministic
+  prepare/merge/save steps cost no tokens.
 - Benchmark: `python3 scripts/code_graph_bench.py` reproduces every figure above.
 
 ## 6. Installing the plugin
