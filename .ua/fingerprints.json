@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "gitCommitHash": "7b1e41020b1376bc72fa0e7d393cd6e3b0b3649c",
-  "generatedAt": "2026-10-21T11:15:37.116Z",
+  "gitCommitHash": "0ce169843dc261159afe79f2dd5b3d4e1d2e5a80",
+  "generatedAt": "2026-10-30T19:24:36.408Z",
   "files": {
     ".env.example": {
       "filePath": ".env.example",
@@ -15,12 +15,12 @@
     },
     ".github/copilot-instructions.md": {
       "filePath": ".github/copilot-instructions.md",
-      "contentHash": "0edbf5dc02707a7bdb2b351726261062c72b3d4fab5fa2e9e2a3dfce3e440cdf",
+      "contentHash": "eb924d4d0d33efa17529c256d66720fea22ba86327bad6c3163b7dcbf34c54a9",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 123,
+      "totalLines": 125,
       "hasStructuralAnalysis": false
     },
     ".github/instructions/experiments.instructions.md": {
@@ -45,12 +45,12 @@
     },
     ".github/skills/collecting-a-dataset/SKILL.md": {
       "filePath": ".github/skills/collecting-a-dataset/SKILL.md",
-      "contentHash": "022f0c8e7ed0be3043896126d8c6a6c72c73e906a49a5049ae42edf8e016c5ae",
+      "contentHash": "8afdd5d07b7a01af39d64f5ad042623a8ade480d2ec52c2eb94dbf26de84e1cb",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 128,
+      "totalLines": 130,
       "hasStructuralAnalysis": false
     },
     ".github/skills/diagnosing-a-binding-failure/SKILL.md": {
@@ -125,12 +125,12 @@
     },
     ".github/skills/using-the-code-graph/SKILL.md": {
       "filePath": ".github/skills/using-the-code-graph/SKILL.md",
-      "contentHash": "07c6e2e30b1ff2517d802494f2fdb65228cb84c406fe9a9a207e13f194958a32",
+      "contentHash": "0052becefe4322c5f8e0d941cff8c05cfdba14701f2fb59aac41a85bd9f32ec8",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 78,
+      "totalLines": 99,
       "hasStructuralAnalysis": false
     },
     ".github/skills/working-on-the-robosuite-path/SKILL.md": {
@@ -155,12 +155,12 @@
     },
     "CLAUDE.md": {
       "filePath": "CLAUDE.md",
-      "contentHash": "526904ae58389388e0856dcca1d2ce6378803cad5320e258b3db44b2bf0e19fe",
+      "contentHash": "3f738e616ff9e3a9d554414fc5d16bbf3be891258d60e3125cf2974764ef96ac",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 161,
+      "totalLines": 167,
       "hasStructuralAnalysis": false
     },
     "DATASET_DESIGN.md": {
@@ -185,22 +185,22 @@
     },
     "README.md": {
       "filePath": "README.md",
-      "contentHash": "fe4721b6cd66809f47e5c3318cf5ffab48a768aafdd8ace4881bd4b7640aa8ea",
+      "contentHash": "81e297b7aca5447e42a3646a787eee6184c2662d4cc16968dfe81ea123a7adad",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 281,
+      "totalLines": 297,
       "hasStructuralAnalysis": false
     },
     "TODO.md": {
       "filePath": "TODO.md",
-      "contentHash": "317b5fd522ae8368c5f4263225769ec8e5a1c9193a4dfbf3390b90e2c5155ebf",
+      "contentHash": "9673d5c4d5a6a40a8a360578cf5cae009f8614687fc8a6054fffb4351b5def93",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 674,
+      "totalLines": 686,
       "hasStructuralAnalysis": false
     },
     "data_collection/benchmark.py": {
@@ -1411,12 +1411,12 @@
     },
     "docs/BENCHMARK_STATUS.md": {
       "filePath": "docs/BENCHMARK_STATUS.md",
-      "contentHash": "ac67eba8569ff96d294ab3d83a42b7aef094c27d1ec56b400e9c1b59c0f610e4",
+      "contentHash": "c122ddd6a0b83543b4eaf02937e0314dd99ac3177393d96127cef58c53896285",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 1033,
+      "totalLines": 1087,
       "hasStructuralAnalysis": false
     },
     "docs/BOUNDED_PLACEMENT_V3_20260917.md": {
@@ -1461,12 +1461,12 @@
     },
     "docs/FAILURES.md": {
       "filePath": "docs/FAILURES.md",
-      "contentHash": "ae763ac95e63b2cfc240444cb2be5e10be6058859f009ffae145c1287c11486e",
+      "contentHash": "dd6d25c59e953b2a8ace0348ec57319c4e6947d1fc03b69e095a710ccbace9ea",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 137,
+      "totalLines": 182,
       "hasStructuralAnalysis": false
     },
     "docs/FITTING_AUDIT_20260915.md": {
@@ -1511,17 +1511,17 @@
     },
     "docs/HUGGING_FACE_ARTIFACTS.md": {
       "filePath": "docs/HUGGING_FACE_ARTIFACTS.md",
-      "contentHash": "1cfcfebda70331fa0254fe3a789489aace270209d6747f8e8297c958d652c26e",
+      "contentHash": "0f34ed33da90c3900f8e9e5edaa5a35f053f6bf85908a36d37c55ec730c4fd6d",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 210,
+      "totalLines": 216,
       "hasStructuralAnalysis": false
     },
     "docs/INDEX.md": {
       "filePath": "docs/INDEX.md",
-      "contentHash": "5db771b6332202d9568751e066797ca29ed5f7b0a98c797cd6df8ea8414bc249",
+      "contentHash": "332dc0cd09fefa7ebb5a81be1f9fc22bcc5ac64549e60423643ddd7a886db15c",
       "functions": [],
       "classes": [],
       "imports": [],
@@ -1581,12 +1581,12 @@
     },
     "docs/OPERATIONS.md": {
       "filePath": "docs/OPERATIONS.md",
-      "contentHash": "fc9e00a8b8aff818181be548247ec4886b96043b5b8df5c712a1fa259b0f1e65",
+      "contentHash": "17c98b2f168dc111eb2d246aca0d7041f197b6c59647118bf9fc0df0ce54e67b",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 406,
+      "totalLines": 441,
       "hasStructuralAnalysis": false
     },
     "docs/OVERFIT_VALIDATION_20260915.md": {
@@ -1791,12 +1791,12 @@
     },
     "docs/RESULTS.md": {
       "filePath": "docs/RESULTS.md",
-      "contentHash": "be566b6753a95d99c08849af9a61a76f5d5b152a53d1ff5c814806ac4ad30a84",
+      "contentHash": "6f08502877f94c8eba1f1997ad2ff20c7b626af55445e10e17a6017f483e8f79",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 601,
+      "totalLines": 626,
       "hasStructuralAnalysis": false
     },
     "docs/ROBOSUITE_SCENE_BRINGUP_20261002.md": {
@@ -2221,12 +2221,12 @@
     },
     "docs/superpowers/plans/2026-10-19-props-p3-collection.md": {
       "filePath": "docs/superpowers/plans/2026-10-19-props-p3-collection.md",
-      "contentHash": "103c10be70ec1665ee939df407510beb3c0d31621220b5ed82b91f26bd998748",
+      "contentHash": "de73608c0fccdff3250f43a7693a377bf3e2e095fbecb82093fb582986172188",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 122,
+      "totalLines": 144,
       "hasStructuralAnalysis": false
     },
     "docs/superpowers/specs/2026-09-14-fix-action-observation-alignment-design.md": {
@@ -2451,12 +2451,12 @@
     },
     "docs/superpowers/specs/2026-10-19-props-p3-food-drinks-design.md": {
       "filePath": "docs/superpowers/specs/2026-10-19-props-p3-food-drinks-design.md",
-      "contentHash": "15df140bfa92a3f9afcb38b653c4c0c3580c09b6c3b238454501a35ef0a841de",
+      "contentHash": "6af1b792e1a4e31c367de6f221438af80c14d82ff8065719b0cf4e4acbf899e6",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 148,
+      "totalLines": 157,
       "hasStructuralAnalysis": false
     },
     "docs/superpowers/specs/2026-10-20-props-p3-power.py": {
@@ -55643,7 +55643,7 @@
     },
     "scripts/code_graph.py": {
       "filePath": "scripts/code_graph.py",
-      "contentHash": "a13db623daca9e47ec954b449619f94adc978629763b208b2bb491cced1345a7",
+      "contentHash": "aa89bfe448cb24eea50628cc83c38699cde5323162c11ff88f21e557064f97d6",
       "functions": [
         {
           "name": "load",
@@ -55666,7 +55666,7 @@
             "argv"
           ],
           "exported": true,
-          "lineCount": 44
+          "lineCount": 46
         }
       ],
       "classes": [],
@@ -55701,8 +55701,4820 @@
         "file_node",
         "main"
       ],
-      "totalLines": 80,
+      "totalLines": 84,
       "hasStructuralAnalysis": true
+    },
+    ".githooks/post-merge": {
+      "filePath": ".githooks/post-merge",
+      "contentHash": "8b403849bc254b92e4c7aa976f7485e5376c807906a8325b4ba0c0495c0fa843",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 7,
+      "hasStructuralAnalysis": false
+    },
+    "docs/PROPS_P3_COLLECTION_20261020.md": {
+      "filePath": "docs/PROPS_P3_COLLECTION_20261020.md",
+      "contentHash": "dc4e46f26f4bcd5a5e25f5510abe2b8dce739dd8ddea45844dfc95ed88d03913",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 85,
+      "hasStructuralAnalysis": false
+    },
+    "docs/PROPS_P3_EVALUATION_20261027.md": {
+      "filePath": "docs/PROPS_P3_EVALUATION_20261027.md",
+      "contentHash": "effda69a6c8f7b043ae1eae0c688067ff306dfa32762c48e17342480f6fb87c5",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 87,
+      "hasStructuralAnalysis": false
+    },
+    "docs/superpowers/plans/2026-10-21-props-p3-training-eval.md": {
+      "filePath": "docs/superpowers/plans/2026-10-21-props-p3-training-eval.md",
+      "contentHash": "cbc5336524374c9cc6cfcb930400229f9ffa67fe306cff99aca4f5f6234ff991",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 60,
+      "hasStructuralAnalysis": false
+    },
+    "experiments/props_p3_data/README.md": {
+      "filePath": "experiments/props_p3_data/README.md",
+      "contentHash": "a22470a2e6006f3ff6b4ffccf12805b0c8161c8197cae4549654230b622e5d2e",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 59,
+      "hasStructuralAnalysis": false
+    },
+    "experiments/props_p3_data/__init__.py": {
+      "filePath": "experiments/props_p3_data/__init__.py",
+      "contentHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 1,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/props_p3_data/contract.py": {
+      "filePath": "experiments/props_p3_data/contract.py",
+      "contentHash": "b199fe7355c36f7a95d41692d128ce2a93af13bf623307e8f1de607cbd16bbfd",
+      "functions": [
+        {
+          "name": "_file_hash",
+          "params": [
+            "path"
+          ],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "source_paths",
+          "params": [
+            "root"
+          ],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "provenance",
+          "params": [
+            "root"
+          ],
+          "exported": true,
+          "lineCount": 3
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "hashlib",
+          "specifiers": [
+            "hashlib"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data.plan",
+          "specifiers": [
+            "PLAN",
+            "SPEC"
+          ]
+        }
+      ],
+      "exports": [
+        "_file_hash",
+        "source_paths",
+        "provenance"
+      ],
+      "totalLines": 55,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/props_p3_data/episode.py": {
+      "filePath": "experiments/props_p3_data/episode.py",
+      "contentHash": "4a660c9933149052600413c8779b52ae7183c12b9789c41c24d9d09393409260",
+      "functions": [
+        {
+          "name": "expert_for",
+          "params": [
+            "obj",
+            "blue_slot"
+          ],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "relabelled",
+          "params": [
+            "sink",
+            "episode"
+          ],
+          "exported": true,
+          "lineCount": 10
+        },
+        {
+          "name": "run_attempt",
+          "params": [
+            "episode",
+            "draw",
+            "sink",
+            "render"
+          ],
+          "exported": true,
+          "lineCount": 9
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "gc",
+          "specifiers": [
+            "gc"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data",
+          "specifiers": [
+            "p"
+          ]
+        },
+        {
+          "source": "experiments.props_scene",
+          "specifiers": [
+            "props_scene"
+          ]
+        },
+        {
+          "source": "experiments.props_scene.expert",
+          "specifiers": [
+            "PropsExpert",
+            "task_text"
+          ]
+        },
+        {
+          "source": "experiments.props_scene.scene",
+          "specifiers": [
+            "reset"
+          ]
+        }
+      ],
+      "exports": [
+        "expert_for",
+        "relabelled",
+        "run_attempt"
+      ],
+      "totalLines": 55,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/props_p3_data/merge.py": {
+      "filePath": "experiments/props_p3_data/merge.py",
+      "contentHash": "25fd1daac1ce2ee15be53c47d6d9f3334709b545a266d660f4b0766ede780216",
+      "functions": [
+        {
+          "name": "_sha256",
+          "params": [
+            "path"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "_episodes",
+          "params": [
+            "dataset_root"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "_tasks",
+          "params": [
+            "dataset_root"
+          ],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "_data",
+          "params": [
+            "dataset_root",
+            "episode"
+          ],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "verify",
+          "params": [
+            "shard_dataset_roots",
+            "merged_root"
+          ],
+          "exported": true,
+          "lineCount": 37
+        },
+        {
+          "name": "aggregate",
+          "params": [
+            "shard_dataset_roots",
+            "merged_root"
+          ],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "merge_and_seal",
+          "params": [
+            "shards_dir",
+            "out",
+            "shards",
+            "pilot"
+          ],
+          "exported": true,
+          "lineCount": 43
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "hashlib",
+          "specifiers": [
+            "hashlib"
+          ]
+        },
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data",
+          "specifiers": [
+            "contract"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data",
+          "specifiers": [
+            "p"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data.record",
+          "specifiers": [
+            "_require_pinned_runtime",
+            "_write_json",
+            "read_journal",
+            "shard_root",
+            "substitutions_of"
+          ]
+        }
+      ],
+      "exports": [
+        "_sha256",
+        "_episodes",
+        "_tasks",
+        "_data",
+        "verify",
+        "aggregate",
+        "merge_and_seal"
+      ],
+      "totalLines": 146,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/props_p3_data/plan.py": {
+      "filePath": "experiments/props_p3_data/plan.py",
+      "contentHash": "3129595e9a272b7ec8425319033698c3ac4967c27ea428a8daa909e992077794",
+      "functions": [
+        {
+          "name": "container_of",
+          "params": [
+            "obj"
+          ],
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "digest",
+          "params": [
+            "value"
+          ],
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "seed",
+          "params": [
+            "identity"
+          ],
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "_stream",
+          "params": [
+            "identity",
+            "seeds"
+          ],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "_uniform",
+          "params": [
+            "stream",
+            "low",
+            "high"
+          ],
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "_draw_pose",
+          "params": [
+            "identity",
+            "obj",
+            "seeds"
+          ],
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "_jitter",
+          "params": [
+            "identity",
+            "seeds"
+          ],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "_shuffled",
+          "params": [
+            "cards",
+            "identity",
+            "seeds"
+          ],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "_layout_entry",
+          "params": [
+            "identity",
+            "cell",
+            "seeds"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "attempt_draw",
+          "params": [
+            "episode",
+            "k"
+          ],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "resample_start",
+          "params": [
+            "episode",
+            "r"
+          ],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "_training_episodes",
+          "params": [
+            "seeds"
+          ],
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "_validation_episodes",
+          "params": [
+            "start",
+            "seeds"
+          ],
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "_reserved",
+          "params": [
+            "seeds"
+          ],
+          "exported": true,
+          "lineCount": 14
+        },
+        {
+          "name": "_gate_attempts",
+          "params": [
+            "seeds"
+          ],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "shard_slots",
+          "params": [
+            "k",
+            "shards",
+            "total"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "make_plan",
+          "params": [],
+          "returnType": "dict",
+          "exported": true,
+          "lineCount": 25
+        },
+        {
+          "name": "validate_plan",
+          "params": [
+            "plan"
+          ],
+          "exported": true,
+          "lineCount": 3
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "hashlib",
+          "specifiers": [
+            "hashlib"
+          ]
+        },
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "math",
+          "specifiers": [
+            "math"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "experiments.props_scene",
+          "specifiers": [
+            "psc"
+          ]
+        }
+      ],
+      "exports": [
+        "container_of",
+        "digest",
+        "seed",
+        "_stream",
+        "_uniform",
+        "_draw_pose",
+        "_jitter",
+        "_shuffled",
+        "_layout_entry",
+        "attempt_draw",
+        "resample_start",
+        "_training_episodes",
+        "_validation_episodes",
+        "_reserved",
+        "_gate_attempts",
+        "shard_slots",
+        "make_plan",
+        "validate_plan"
+      ],
+      "totalLines": 209,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/props_p3_data/record.py": {
+      "filePath": "experiments/props_p3_data/record.py",
+      "contentHash": "90755815255dd7a2c6d1b3d37a971b3094448640c2dca34c168c34b1ef34a4db",
+      "functions": [
+        {
+          "name": "read_journal",
+          "params": [
+            "path"
+          ],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "_append",
+          "params": [
+            "path",
+            "record"
+          ],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "_write_json",
+          "params": [
+            "path",
+            "value"
+          ],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "substitutions_of",
+          "params": [
+            "journal"
+          ],
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "run_schedule",
+          "params": [
+            "plan",
+            "execute",
+            "journal_path",
+            "commit",
+            "slots",
+            "resume",
+            "max_attempts",
+            "strict",
+            "budget",
+            "check",
+            "dataset_count",
+            "log",
+            "tag"
+          ],
+          "exported": true,
+          "lineCount": 63
+        },
+        {
+          "name": "make_execute",
+          "params": [
+            "render"
+          ],
+          "exported": true,
+          "lineCount": 15
+        },
+        {
+          "name": "create_dataset",
+          "params": [
+            "root",
+            "repo_id"
+          ],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "open_dataset",
+          "params": [
+            "root",
+            "repo_id"
+          ],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "make_check",
+          "params": [
+            "root",
+            "provenance"
+          ],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "_require_pinned_runtime",
+          "params": [],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "shard_root",
+          "params": [
+            "shards_dir",
+            "k"
+          ],
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "collect_shard",
+          "params": [
+            "shards_dir",
+            "k",
+            "shards",
+            "resume",
+            "slots",
+            "pilot"
+          ],
+          "exported": true,
+          "lineCount": 35
+        },
+        {
+          "name": "status",
+          "params": [
+            "shards_dir"
+          ],
+          "exported": true,
+          "lineCount": 10
+        },
+        {
+          "name": "gate_shard",
+          "params": [
+            "out",
+            "k",
+            "shards"
+          ],
+          "exported": true,
+          "lineCount": 17
+        },
+        {
+          "name": "determinism_indices",
+          "params": [],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "determinism",
+          "params": [
+            "out",
+            "tag"
+          ],
+          "exported": true,
+          "lineCount": 18
+        },
+        {
+          "name": "gate_summary",
+          "params": [
+            "out"
+          ],
+          "exported": true,
+          "lineCount": 25
+        },
+        {
+          "name": "main",
+          "params": [
+            "argv"
+          ],
+          "exported": true,
+          "lineCount": 28
+        }
+      ],
+      "classes": [
+        {
+          "name": "SlotExhausted",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "BudgetExhausted",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "Committer",
+          "methods": [
+            "__init__",
+            "count",
+            "__call__"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 21
+        }
+      ],
+      "imports": [
+        {
+          "source": "argparse",
+          "specifiers": [
+            "argparse"
+          ]
+        },
+        {
+          "source": "copy",
+          "specifiers": [
+            "copy"
+          ]
+        },
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "shutil",
+          "specifiers": [
+            "shutil"
+          ]
+        },
+        {
+          "source": "time",
+          "specifiers": [
+            "time"
+          ]
+        },
+        {
+          "source": "collections",
+          "specifiers": [
+            "Counter"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data",
+          "specifiers": [
+            "contract"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data",
+          "specifiers": [
+            "p"
+          ]
+        },
+        {
+          "source": "experiments.props_scene",
+          "specifiers": [
+            "psc"
+          ]
+        }
+      ],
+      "exports": [
+        "SlotExhausted",
+        "BudgetExhausted",
+        "read_journal",
+        "_append",
+        "_write_json",
+        "substitutions_of",
+        "run_schedule",
+        "make_execute",
+        "create_dataset",
+        "open_dataset",
+        "Committer",
+        "make_check",
+        "_require_pinned_runtime",
+        "shard_root",
+        "collect_shard",
+        "status",
+        "gate_shard",
+        "determinism_indices",
+        "determinism",
+        "gate_summary",
+        "main"
+      ],
+      "totalLines": 391,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/props_p3_data/tests/test_contract.py": {
+      "filePath": "experiments/props_p3_data/tests/test_contract.py",
+      "contentHash": "7994b67a023e4fbdd4190b0d81541dd45ce49d5958d3c9c43cfededdd98e30a5",
+      "functions": [
+        {
+          "name": "undefined_globals",
+          "params": [
+            "source"
+          ],
+          "exported": true,
+          "lineCount": 17
+        }
+      ],
+      "classes": [
+        {
+          "name": "ForkHygieneTests",
+          "methods": [
+            "test_the_scan_finds_a_name_nothing_binds",
+            "test_no_function_in_the_package_reads_an_unbound_global",
+            "test_no_distractor_machinery_survives_in_the_code"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 16
+        },
+        {
+          "name": "ContractTests",
+          "methods": [
+            "test_provenance_binds_this_package_the_scene_the_spec_and_the_plan",
+            "test_provenance_does_not_reach_into_the_p1_or_p2_collections",
+            "test_no_residue_from_the_p1_or_p2_packages",
+            "test_the_readme_is_not_empty",
+            "test_a_symlinked_source_file_is_refused",
+            "test_images_and_shard_count",
+            "test_plan_and_contract_import_no_simulator"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 49
+        }
+      ],
+      "imports": [
+        {
+          "source": "builtins",
+          "specifiers": [
+            "builtins"
+          ]
+        },
+        {
+          "source": "symtable",
+          "specifiers": [
+            "symtable"
+          ]
+        },
+        {
+          "source": "tempfile",
+          "specifiers": [
+            "tempfile"
+          ]
+        },
+        {
+          "source": "unittest",
+          "specifiers": [
+            "unittest"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data",
+          "specifiers": [
+            "contract",
+            "p"
+          ]
+        }
+      ],
+      "exports": [
+        "undefined_globals",
+        "ForkHygieneTests",
+        "ContractTests"
+      ],
+      "totalLines": 104,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/props_p3_data/tests/test_episode.py": {
+      "filePath": "experiments/props_p3_data/tests/test_episode.py",
+      "contentHash": "9e92d13db69224882955c6482cc8908916828e3574e2061c7d606461b9e30c93",
+      "functions": [
+        {
+          "name": "_run",
+          "params": [
+            "episode",
+            "render"
+          ],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "_episode",
+          "params": [
+            "obj",
+            "slot"
+          ],
+          "exported": true,
+          "lineCount": 2
+        }
+      ],
+      "classes": [
+        {
+          "name": "FixedPromptTests",
+          "methods": [
+            "test_the_expert_itself_writes_its_own_wording",
+            "test_every_recorded_frame_carries_the_fixed_prompt_and_nothing_else",
+            "test_the_wrapper_accepts_the_expert_wording_for_every_object_and_raises_on_anything_else"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 33
+        },
+        {
+          "name": "EpisodeTests",
+          "methods": [
+            "test_a_trained_episode_succeeds_and_is_admitted_through_the_real_replay",
+            "test_every_object_in_both_arrangements_is_admitted",
+            "test_props_pose_logs_the_one_object",
+            "test_the_planned_start_is_where_the_object_begins",
+            "test_the_draws_home_jitter_moves_the_arm_by_the_jitter",
+            "test_the_draws_seed_drives_the_expert",
+            "test_the_expert_cache_is_bounded_and_a_rebuild_gives_the_same_episode",
+            "test_the_expert_for_a_key_is_cached",
+            "test_the_blue_bin_is_on_the_planned_side",
+            "test_rendered_frames_have_the_dataset_schema"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 82
+        }
+      ],
+      "imports": [
+        {
+          "source": "unittest",
+          "specifiers": [
+            "unittest"
+          ]
+        },
+        {
+          "source": "mujoco",
+          "specifiers": [
+            "mujoco"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data",
+          "specifiers": [
+            "ep"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data",
+          "specifiers": [
+            "p"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data.validate",
+          "specifiers": [
+            "admit"
+          ]
+        },
+        {
+          "source": "experiments.props_scene.expert",
+          "specifiers": [
+            "task_text"
+          ]
+        },
+        {
+          "source": "experiments.props_scene.validate",
+          "specifiers": [
+            "trace_digest"
+          ]
+        }
+      ],
+      "exports": [
+        "_run",
+        "_episode",
+        "FixedPromptTests",
+        "EpisodeTests"
+      ],
+      "totalLines": 152,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/props_p3_data/tests/test_merge.py": {
+      "filePath": "experiments/props_p3_data/tests/test_merge.py",
+      "contentHash": "518c2018bca996088c68840bf63a893550dedf6c409749c0bc0da794f2e33055",
+      "functions": [
+        {
+          "name": "_shard",
+          "params": [
+            "root",
+            "k",
+            "episodes",
+            "frames",
+            "task"
+          ],
+          "exported": true,
+          "lineCount": 12
+        },
+        {
+          "name": "_fake_shard",
+          "params": [
+            "root",
+            "k",
+            "plan",
+            "provenance",
+            "done",
+            "admitted",
+            "block"
+          ],
+          "exported": true,
+          "lineCount": 10
+        }
+      ],
+      "classes": [
+        {
+          "name": "MergeTests",
+          "methods": [
+            "setUpClass",
+            "tearDownClass",
+            "tampered",
+            "test_merge_equals_the_shards_in_order",
+            "test_the_merged_dataset_carries_only_the_fixed_prompt_and_reads_back",
+            "test_verify_refuses_the_wrong_shard_order",
+            "test_verify_refuses_a_missing_shard",
+            "test_verify_refuses_an_altered_video",
+            "test_verify_refuses_an_altered_action_column",
+            "test_verify_refuses_every_other_altered_column",
+            "assert_column_tamper_refused",
+            "test_verify_refuses_a_different_task_string_in_a_shard",
+            "edit_episode_metadata",
+            "test_verify_refuses_altered_episode_length_or_task_metadata",
+            "test_verify_refuses_altered_video_timestamps",
+            "test_verify_refuses_altered_info_totals",
+            "test_verify_refuses_a_renamed_task_in_the_merged_task_table",
+            "test_verify_refuses_a_missing_data_row"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 125
+        },
+        {
+          "name": "PilotMergeTests",
+          "methods": [
+            "test_a_pilot_merge_aggregates_verifies_and_collects_the_journals_and_arrays"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 28
+        },
+        {
+          "name": "MergeAndSealGuardTests",
+          "methods": [
+            "setUp",
+            "tearDown",
+            "full",
+            "test_a_shard_without_done_json_stops_a_full_merge",
+            "test_a_shard_that_did_not_admit_its_whole_block_stops_a_full_merge",
+            "test_a_shard_holding_another_shards_block_stops_a_full_merge",
+            "test_a_shard_from_another_plan_stops_the_merge",
+            "test_a_shard_collected_from_other_source_stops_the_merge",
+            "test_an_existing_output_is_never_overwritten"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 47
+        }
+      ],
+      "imports": [
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "shutil",
+          "specifiers": [
+            "shutil"
+          ]
+        },
+        {
+          "source": "tempfile",
+          "specifiers": [
+            "tempfile"
+          ]
+        },
+        {
+          "source": "unittest",
+          "specifiers": [
+            "unittest"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "unittest",
+          "specifiers": [
+            "mock"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data",
+          "specifiers": [
+            "contract"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data",
+          "specifiers": [
+            "merge_module"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data",
+          "specifiers": [
+            "p"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data.merge",
+          "specifiers": [
+            "aggregate",
+            "merge_and_seal",
+            "verify",
+            "VIDEO_KEYS"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data.record",
+          "specifiers": [
+            "create_dataset"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data.validate",
+          "specifiers": [
+            "read_dataset_meta"
+          ]
+        }
+      ],
+      "exports": [
+        "_shard",
+        "MergeTests",
+        "_fake_shard",
+        "PilotMergeTests",
+        "MergeAndSealGuardTests"
+      ],
+      "totalLines": 255,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/props_p3_data/tests/test_plan.py": {
+      "filePath": "experiments/props_p3_data/tests/test_plan.py",
+      "contentHash": "a8f9774089b658b23e893837ca1c7da3732fb8ed3d9064f3a1645f9ce51edbe5",
+      "functions": [
+        {
+          "name": "_layouts",
+          "params": [
+            "plan"
+          ],
+          "exported": true,
+          "lineCount": 3
+        }
+      ],
+      "classes": [
+        {
+          "name": "CountsTests",
+          "methods": [
+            "test_cells_and_counts",
+            "test_every_trained_cell_has_60_training_and_8_validation_episodes",
+            "test_reserved_tiers",
+            "test_gate_attempts_cover_every_object_and_arrangement_equally"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 39
+        },
+        {
+          "name": "ReviewFocusTests",
+          "methods": [
+            "test_held_out_objects_are_never_a_collected_target",
+            "test_the_bin_follows_from_the_object_exactly",
+            "test_side_does_not_predict_the_container_or_the_object",
+            "test_the_prompt_is_fixed_and_the_expert_wording_never_enters_the_plan",
+            "test_there_is_no_distractor_machinery",
+            "test_every_layout_is_inside_the_start_region",
+            "test_no_reserved_or_gate_layout_coincides_with_a_collected_one",
+            "test_resampled_layouts_keep_the_slot_and_stay_valid"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 65
+        },
+        {
+          "name": "DeterminismShardsAndDrawsTests",
+          "methods": [
+            "test_plan_is_deterministic_and_validate_plan_rejects_a_tamper",
+            "test_shards_partition_the_slots_into_contiguous_blocks",
+            "test_attempt_draw_and_resample_indices"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 25
+        }
+      ],
+      "imports": [
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "math",
+          "specifiers": [
+            "math"
+          ]
+        },
+        {
+          "source": "unittest",
+          "specifiers": [
+            "unittest"
+          ]
+        },
+        {
+          "source": "collections",
+          "specifiers": [
+            "Counter"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data",
+          "specifiers": [
+            "p"
+          ]
+        }
+      ],
+      "exports": [
+        "_layouts",
+        "CountsTests",
+        "ReviewFocusTests",
+        "DeterminismShardsAndDrawsTests"
+      ],
+      "totalLines": 158,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/props_p3_data/tests/test_record.py": {
+      "filePath": "experiments/props_p3_data/tests/test_record.py",
+      "contentHash": "56243a8cbce0e0ec87338286e411b863eca4ce47f4e88679c386b51b62f0cc84",
+      "functions": [
+        {
+          "name": "_gate_rows",
+          "params": [
+            "failures"
+          ],
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "_spread",
+          "params": [
+            "n"
+          ],
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "_indices",
+          "params": [
+            "obj",
+            "slot",
+            "n"
+          ],
+          "exported": true,
+          "lineCount": 4
+        }
+      ],
+      "classes": [
+        {
+          "name": "Interrupted",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "Fake",
+          "methods": [
+            "__init__",
+            "attempt_of",
+            "execute",
+            "commit"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 25
+        },
+        {
+          "name": "ShardSchedulerTests",
+          "methods": [
+            "setUp",
+            "tearDown",
+            "run_",
+            "test_a_shard_admits_exactly_its_block_in_order",
+            "test_the_shards_together_admit_every_slot_once",
+            "test_a_rejected_attempt_never_commits_and_retries_the_same_slot",
+            "test_three_rejections_resample_the_start_keeping_the_slot",
+            "test_a_slot_failing_every_layout_stops_the_shard",
+            "test_a_pilot_may_skip_an_exhausted_slot",
+            "test_the_shard_budget",
+            "test_a_resumed_journal_already_over_budget_is_refused",
+            "test_resume_continues_and_refuses_mismatches",
+            "test_fresh_run_over_a_journal_and_resume_without_one_refuse",
+            "test_truncated_last_journal_line_is_dropped_but_a_bad_middle_line_raises",
+            "test_journal_records_the_object_and_has_no_distractor_fields",
+            "test_the_check_runs_at_the_start_and_every_fifth_admit"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 107
+        },
+        {
+          "name": "FakeDataset",
+          "methods": [
+            "__init__",
+            "add_frame",
+            "save_episode",
+            "finalize"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 13
+        },
+        {
+          "name": "CommitterTests",
+          "methods": [
+            "test_an_admitted_episode_is_written_and_finalized_and_its_arrays_saved"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 18
+        },
+        {
+          "name": "CheckTests",
+          "methods": [
+            "test_low_disk_and_changed_provenance_abort"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "GateSummaryTests",
+          "methods": [
+            "summary",
+            "test_the_bars_are_the_p0_bars",
+            "test_a_perfect_gate_with_equal_determinism_passes",
+            "test_the_overall_bar",
+            "test_the_per_object_bar_fails_when_the_overall_rate_would_pass",
+            "test_the_per_slot_bar",
+            "test_determinism_must_be_run_twice_and_equal",
+            "test_an_incomplete_or_duplicated_gate_is_refused",
+            "test_reasons_are_reported_for_the_failures",
+            "test_determinism_covers_one_attempt_per_object_and_arrangement"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 69
+        },
+        {
+          "name": "StatusAndJsonTests",
+          "methods": [
+            "test_substitutions_list_only_admitted_slots_that_moved",
+            "test_status_counts_admitted_and_rejected_per_shard",
+            "test_write_json_replaces_atomically_and_leaves_no_temporary"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 33
+        },
+        {
+          "name": "ConstantsTests",
+          "methods": [
+            "test_slot_and_budget_constants",
+            "test_the_shard_count_divides_the_slots"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 8
+        }
+      ],
+      "imports": [
+        {
+          "source": "contextlib",
+          "specifiers": [
+            "contextlib"
+          ]
+        },
+        {
+          "source": "io",
+          "specifiers": [
+            "io"
+          ]
+        },
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "tempfile",
+          "specifiers": [
+            "tempfile"
+          ]
+        },
+        {
+          "source": "unittest",
+          "specifiers": [
+            "unittest"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "unittest",
+          "specifiers": [
+            "mock"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data",
+          "specifiers": [
+            "contract"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data",
+          "specifiers": [
+            "p"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data",
+          "specifiers": [
+            "rec"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data.record",
+          "specifiers": [
+            "BudgetExhausted",
+            "SlotExhausted",
+            "read_journal",
+            "run_schedule",
+            "substitutions_of"
+          ]
+        }
+      ],
+      "exports": [
+        "Interrupted",
+        "Fake",
+        "ShardSchedulerTests",
+        "FakeDataset",
+        "CommitterTests",
+        "CheckTests",
+        "_gate_rows",
+        "_spread",
+        "_indices",
+        "GateSummaryTests",
+        "StatusAndJsonTests",
+        "ConstantsTests"
+      ],
+      "totalLines": 353,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/props_p3_data/tests/test_validate.py": {
+      "filePath": "experiments/props_p3_data/tests/test_validate.py",
+      "contentHash": "1b0aa61d1b87d1bb762c50fbf679c28d4184754257239c79cad54ee3819005de",
+      "functions": [
+        {
+          "name": "_frames",
+          "params": [
+            "n",
+            "images",
+            "task"
+          ],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "_result",
+          "params": [
+            "success"
+          ],
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "_diverged",
+          "params": [
+            "result",
+            "frames",
+            "traces"
+          ],
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "_journal",
+          "params": [
+            "r_for"
+          ],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "_meta",
+          "params": [
+            "episodes",
+            "**override"
+          ],
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "_plan_with",
+          "params": [
+            "mutate"
+          ],
+          "exported": true,
+          "lineCount": 4
+        }
+      ],
+      "classes": [
+        {
+          "name": "AdmitTests",
+          "methods": [
+            "admit",
+            "test_a_clean_episode_is_admitted",
+            "test_the_expert_wording_is_rejected_by_the_labels_gate",
+            "test_a_single_wrong_frame_or_episode_label_rejects",
+            "test_a_bin_that_is_not_the_objects_container_rejects",
+            "test_p1_gates_still_reject",
+            "test_success_needs_the_full_stable_streak",
+            "test_frames_traces_and_the_expert_count_must_all_agree",
+            "test_camera_images_must_be_uint8_512_squares",
+            "test_a_diverging_replay_rejects_and_says_why",
+            "test_unrendered_gate_runs_skip_only_the_image_check"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 59
+        },
+        {
+          "name": "DatasetTests",
+          "methods": [
+            "validate",
+            "test_a_complete_dataset_validates",
+            "test_the_task_table_must_be_exactly_the_fixed_prompt",
+            "test_every_episode_must_carry_the_fixed_prompt",
+            "test_a_held_out_object_collected_is_refused",
+            "test_a_bin_that_is_not_the_objects_container_is_refused",
+            "test_cell_balance_is_enforced_for_train_and_validation",
+            "test_out_of_order_journal_or_dataset_is_refused",
+            "test_a_missing_episode_is_refused",
+            "test_counts_frames_and_fps_are_enforced",
+            "test_a_substituted_slot_uses_its_substitute_layout",
+            "test_substituted_slots_are_counted"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 81
+        },
+        {
+          "name": "FingerprintAndSealTests",
+          "methods": [
+            "test_fingerprint_ignores_seal_and_json_key_order_and_refuses_symlinks",
+            "test_seal_binds_the_fingerprint_plan_provenance_and_substitutions"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 30
+        }
+      ],
+      "imports": [
+        {
+          "source": "copy",
+          "specifiers": [
+            "copy"
+          ]
+        },
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "tempfile",
+          "specifiers": [
+            "tempfile"
+          ]
+        },
+        {
+          "source": "unittest",
+          "specifiers": [
+            "unittest"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data",
+          "specifiers": [
+            "p"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data",
+          "specifiers": [
+            "v"
+          ]
+        }
+      ],
+      "exports": [
+        "_frames",
+        "_result",
+        "_diverged",
+        "AdmitTests",
+        "_journal",
+        "_meta",
+        "_plan_with",
+        "DatasetTests",
+        "FingerprintAndSealTests"
+      ],
+      "totalLines": 235,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/props_p3_data/validate.py": {
+      "filePath": "experiments/props_p3_data/validate.py",
+      "contentHash": "e98c156f35f98f1dec45f343e222fe926e539d40ef409ab8c321093c8f024419",
+      "functions": [
+        {
+          "name": "_default_replay",
+          "params": [
+            "result",
+            "frames",
+            "traces"
+          ],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "_schema_ok",
+          "params": [
+            "frames",
+            "images"
+          ],
+          "exported": true,
+          "lineCount": 10
+        },
+        {
+          "name": "_labels_ok",
+          "params": [
+            "episode",
+            "frames"
+          ],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "admit",
+          "params": [
+            "episode",
+            "result",
+            "frames",
+            "traces",
+            "replay",
+            "images"
+          ],
+          "exported": true,
+          "lineCount": 20
+        },
+        {
+          "name": "_file_digest",
+          "params": [
+            "path"
+          ],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "fingerprint",
+          "params": [
+            "root"
+          ],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "read_dataset_meta",
+          "params": [
+            "root"
+          ],
+          "exported": true,
+          "lineCount": 14
+        },
+        {
+          "name": "admitted_episodes",
+          "params": [
+            "plan",
+            "journal"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "validate_dataset",
+          "params": [
+            "root",
+            "plan",
+            "journal",
+            "reader"
+          ],
+          "exported": true,
+          "lineCount": 29
+        },
+        {
+          "name": "seal",
+          "params": [
+            "root",
+            "plan",
+            "provenance"
+          ],
+          "exported": true,
+          "lineCount": 9
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "hashlib",
+          "specifiers": [
+            "hashlib"
+          ]
+        },
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "collections",
+          "specifiers": [
+            "Counter"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data",
+          "specifiers": [
+            "contract"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data",
+          "specifiers": [
+            "p"
+          ]
+        }
+      ],
+      "exports": [
+        "_default_replay",
+        "_schema_ok",
+        "_labels_ok",
+        "admit",
+        "_file_digest",
+        "fingerprint",
+        "read_dataset_meta",
+        "admitted_episodes",
+        "validate_dataset",
+        "seal"
+      ],
+      "totalLines": 160,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/xvla_props_p3/README.md": {
+      "filePath": "experiments/xvla_props_p3/README.md",
+      "contentHash": "659709fa44908f2aafd9bdc24c33146183cfb3db520a094d31ec1bb03d3d6032",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 98,
+      "hasStructuralAnalysis": false
+    },
+    "experiments/xvla_props_p3/__init__.py": {
+      "filePath": "experiments/xvla_props_p3/__init__.py",
+      "contentHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 1,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/xvla_props_p3/contract.py": {
+      "filePath": "experiments/xvla_props_p3/contract.py",
+      "contentHash": "4c1494ea7d0372ca30592cf7152e50de08b9feec6c39b58dc5487d52386e5bd9",
+      "functions": [
+        {
+          "name": "digest_json",
+          "params": [
+            "value"
+          ],
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "planned_instructions",
+          "params": [],
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "task_index_map",
+          "params": [
+            "ds"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "approved_instruction",
+          "params": [
+            "instruction"
+          ],
+          "exported": true,
+          "lineCount": 15
+        },
+        {
+          "name": "source_hashes",
+          "params": [],
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "is_mountpoint",
+          "params": [
+            "path"
+          ],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "claim_output",
+          "params": [
+            "path"
+          ],
+          "exported": true,
+          "lineCount": 12
+        },
+        {
+          "name": "claim_resume",
+          "params": [
+            "path"
+          ],
+          "exported": true,
+          "lineCount": 15
+        },
+        {
+          "name": "require_fields",
+          "params": [
+            "actual",
+            "expected",
+            "message"
+          ],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "indices",
+          "params": [
+            "episodes"
+          ],
+          "exported": true,
+          "lineCount": 10
+        },
+        {
+          "name": "selected_stats",
+          "params": [
+            "rows",
+            "selected",
+            "task_of_episode"
+          ],
+          "exported": true,
+          "lineCount": 16
+        },
+        {
+          "name": "policy_row",
+          "params": [
+            "row",
+            "training"
+          ],
+          "exported": true,
+          "lineCount": 20
+        },
+        {
+          "name": "collate_rows",
+          "params": [
+            "rows"
+          ],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "sample_batches",
+          "params": [
+            "starts"
+          ],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "parent_fingerprint",
+          "params": [],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "current_binding",
+          "params": [],
+          "exported": true,
+          "lineCount": 27
+        },
+        {
+          "name": "semantic_gate",
+          "params": [],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "cpu_proof",
+          "params": [
+            "binding",
+            "semantic",
+            "stats",
+            "processor",
+            "parent_fingerprint"
+          ],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "validate_cpu",
+          "params": [
+            "report",
+            "binding"
+          ],
+          "exported": true,
+          "lineCount": 12
+        },
+        {
+          "name": "admission",
+          "params": [],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "load_data",
+          "params": [],
+          "exported": true,
+          "lineCount": 23
+        },
+        {
+          "name": "statistics_json",
+          "params": [
+            "stats"
+          ],
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "prepare_data",
+          "params": [],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "snapshot_updates",
+          "params": [
+            "preflight"
+          ],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "learning_rate",
+          "params": [
+            "update"
+          ],
+          "exported": true,
+          "lineCount": 14
+        },
+        {
+          "name": "set_learning_rate",
+          "params": [
+            "optimizer",
+            "update"
+          ],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "make_config",
+          "params": [
+            "device"
+          ],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "recipe",
+          "params": [
+            "preflight"
+          ],
+          "exported": true,
+          "lineCount": 12
+        },
+        {
+          "name": "checkpoint_updates",
+          "params": [
+            "preflight"
+          ],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "checkpoint_directory",
+          "params": [
+            "update"
+          ],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "require_marker",
+          "params": [
+            "marker",
+            "update"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "verify_checkpoints",
+          "params": [
+            "report",
+            "output",
+            "preflight"
+          ],
+          "exported": true,
+          "lineCount": 37
+        },
+        {
+          "name": "validate_scratch",
+          "params": [
+            "report",
+            "binding",
+            "output",
+            "stats",
+            "cpu_hash"
+          ],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "validate_equivalence",
+          "params": [
+            "report",
+            "binding"
+          ],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "validate_resume_proof",
+          "params": [
+            "report",
+            "binding",
+            "scratch_report",
+            "output"
+          ],
+          "exported": true,
+          "lineCount": 17
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "hashlib",
+          "specifiers": [
+            "hashlib"
+          ]
+        },
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "math",
+          "specifiers": [
+            "math"
+          ]
+        },
+        {
+          "source": "contextlib",
+          "specifiers": [
+            "contextmanager"
+          ]
+        },
+        {
+          "source": "functools",
+          "specifiers": [
+            "lru_cache"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.utils.data",
+          "specifiers": [
+            "default_collate"
+          ]
+        },
+        {
+          "source": "experiments.fixed_layout.contract",
+          "specifiers": [
+            "IMAGE",
+            "_same"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data",
+          "specifiers": [
+            "p3_contract"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data",
+          "specifiers": [
+            "p3_plan"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data",
+          "specifiers": [
+            "p3_validate"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data.plan",
+          "specifiers": [
+            "PROMPT",
+            "validate_plan"
+          ]
+        },
+        {
+          "source": "experiments.xvla_trial",
+          "specifiers": [
+            "p"
+          ]
+        },
+        {
+          "source": "experiments.xvla_trial.assets",
+          "specifiers": [
+            "claim_directory",
+            "require_assets",
+            "sha256",
+            "write_json"
+          ]
+        },
+        {
+          "source": "experiments.xvla_single_task",
+          "specifiers": [
+            "single_task"
+          ]
+        },
+        {
+          "source": "experiments.xvla_single_task.contract",
+          "specifiers": [
+            "backward_microbatch",
+            "observation",
+            "check_model_inputs",
+            "inventory",
+            "source_path",
+            "_make_config"
+          ]
+        }
+      ],
+      "exports": [
+        "digest_json",
+        "planned_instructions",
+        "task_index_map",
+        "approved_instruction",
+        "source_hashes",
+        "is_mountpoint",
+        "claim_output",
+        "claim_resume",
+        "require_fields",
+        "indices",
+        "selected_stats",
+        "policy_row",
+        "collate_rows",
+        "sample_batches",
+        "parent_fingerprint",
+        "current_binding",
+        "semantic_gate",
+        "cpu_proof",
+        "validate_cpu",
+        "admission",
+        "load_data",
+        "statistics_json",
+        "prepare_data",
+        "snapshot_updates",
+        "learning_rate",
+        "set_learning_rate",
+        "make_config",
+        "recipe",
+        "checkpoint_updates",
+        "checkpoint_directory",
+        "require_marker",
+        "verify_checkpoints",
+        "validate_scratch",
+        "validate_equivalence",
+        "validate_resume_proof"
+      ],
+      "totalLines": 541,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/xvla_props_p3/runner.py": {
+      "filePath": "experiments/xvla_props_p3/runner.py",
+      "contentHash": "956fe822ee46ed8c4c3a16454119301d4408120e296987929ea9bb35cf6e40a2",
+      "functions": [
+        {
+          "name": "parse_args",
+          "params": [
+            "argv"
+          ],
+          "exported": true,
+          "lineCount": 15
+        },
+        {
+          "name": "verify_precision_fast",
+          "params": [
+            "params",
+            "optimizer",
+            "require_gradients"
+          ],
+          "exported": true,
+          "lineCount": 26
+        },
+        {
+          "name": "serial_fetch",
+          "params": [
+            "ds",
+            "samples"
+          ],
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "one_update",
+          "params": [
+            "update",
+            "policy",
+            "params",
+            "optimizer",
+            "pre",
+            "fetch",
+            "verify"
+          ],
+          "exported": true,
+          "lineCount": 22
+        },
+        {
+          "name": "gpu_telemetry",
+          "params": [],
+          "exported": true,
+          "lineCount": 10
+        },
+        {
+          "name": "parse_telemetry",
+          "params": [
+            "line"
+          ],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "too_hot",
+          "params": [
+            "telemetry"
+          ],
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "cool_down",
+          "params": [
+            "read",
+            "sleep",
+            "clock"
+          ],
+          "exported": true,
+          "lineCount": 10
+        },
+        {
+          "name": "should_pause",
+          "params": [
+            "now",
+            "stop_at",
+            "seconds_per_update",
+            "updates_to_next_snapshot"
+          ],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "state_digest",
+          "params": [
+            "policy"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "require_disk",
+          "params": [
+            "output",
+            "gib"
+          ],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "require_resources",
+          "params": [
+            "output",
+            "preflight"
+          ],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "failure",
+          "params": [
+            "output",
+            "report",
+            "exc"
+          ],
+          "exported": true,
+          "lineCount": 15
+        },
+        {
+          "name": "statistics_json",
+          "params": [
+            "stats"
+          ],
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "processor_check",
+          "params": [
+            "ds",
+            "selected",
+            "stats"
+          ],
+          "exported": true,
+          "lineCount": 16
+        },
+        {
+          "name": "check",
+          "params": [],
+          "exported": true,
+          "lineCount": 21
+        },
+        {
+          "name": "load_fresh_policy",
+          "params": [
+            "config"
+          ],
+          "exported": true,
+          "lineCount": 10
+        },
+        {
+          "name": "adam_roundtrip",
+          "params": [
+            "optimizer",
+            "path",
+            "update"
+          ],
+          "exported": true,
+          "lineCount": 38
+        },
+        {
+          "name": "_reload_and_verify",
+          "params": [
+            "checkpoint",
+            "expected"
+          ],
+          "exported": true,
+          "lineCount": 27
+        },
+        {
+          "name": "save_checkpoint",
+          "params": [
+            "policy",
+            "pre",
+            "post",
+            "optimizer",
+            "ds",
+            "probe",
+            "output",
+            "update",
+            "final"
+          ],
+          "exported": true,
+          "lineCount": 32
+        },
+        {
+          "name": "capture_rng",
+          "params": [],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "restore_rng",
+          "params": [
+            "python",
+            "numpy",
+            "tensors"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "save_snapshot",
+          "params": [
+            "policy",
+            "optimizer",
+            "report",
+            "output",
+            "update",
+            "binding"
+          ],
+          "exported": true,
+          "lineCount": 26
+        },
+        {
+          "name": "load_snapshot",
+          "params": [
+            "source",
+            "binding"
+          ],
+          "exported": true,
+          "lineCount": 19
+        },
+        {
+          "name": "quarantine",
+          "params": [
+            "output",
+            "number",
+            "restored",
+            "update"
+          ],
+          "exported": true,
+          "lineCount": 30
+        },
+        {
+          "name": "compare_with_reference",
+          "params": [
+            "output",
+            "reference",
+            "update"
+          ],
+          "exported": true,
+          "lineCount": 15
+        },
+        {
+          "name": "train",
+          "params": [
+            "output",
+            "preflight",
+            "report",
+            "resume",
+            "reference",
+            "stop_at"
+          ],
+          "exported": true,
+          "lineCount": 182
+        },
+        {
+          "name": "equivalence",
+          "params": [],
+          "exported": true,
+          "lineCount": 63
+        },
+        {
+          "name": "main",
+          "params": [
+            "argv"
+          ],
+          "exported": true,
+          "lineCount": 37
+        }
+      ],
+      "classes": [
+        {
+          "name": "LockedDataset",
+          "methods": [
+            "__init__",
+            "__getitem__",
+            "__getattr__"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 12
+        },
+        {
+          "name": "Prefetcher",
+          "methods": [
+            "__init__",
+            "_run",
+            "_put",
+            "__iter__",
+            "__next__",
+            "close"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 38
+        },
+        {
+          "name": "BindingChanged",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 2
+        }
+      ],
+      "imports": [
+        {
+          "source": "argparse",
+          "specifiers": [
+            "argparse"
+          ]
+        },
+        {
+          "source": "contextlib",
+          "specifiers": [
+            "contextlib"
+          ]
+        },
+        {
+          "source": "gc",
+          "specifiers": [
+            "gc"
+          ]
+        },
+        {
+          "source": "hashlib",
+          "specifiers": [
+            "hashlib"
+          ]
+        },
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "queue",
+          "specifiers": [
+            "queue"
+          ]
+        },
+        {
+          "source": "random",
+          "specifiers": [
+            "random"
+          ]
+        },
+        {
+          "source": "shutil",
+          "specifiers": [
+            "shutil"
+          ]
+        },
+        {
+          "source": "subprocess",
+          "specifiers": [
+            "subprocess"
+          ]
+        },
+        {
+          "source": "threading",
+          "specifiers": [
+            "threading"
+          ]
+        },
+        {
+          "source": "time",
+          "specifiers": [
+            "time"
+          ]
+        },
+        {
+          "source": "types",
+          "specifiers": [
+            "SimpleNamespace"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "experiments.xvla_trial.assets",
+          "specifiers": [
+            "safe_error"
+          ]
+        },
+        {
+          "source": ".",
+          "specifiers": [
+            "c"
+          ]
+        }
+      ],
+      "exports": [
+        "parse_args",
+        "verify_precision_fast",
+        "LockedDataset",
+        "serial_fetch",
+        "Prefetcher",
+        "one_update",
+        "gpu_telemetry",
+        "parse_telemetry",
+        "too_hot",
+        "cool_down",
+        "should_pause",
+        "state_digest",
+        "require_disk",
+        "require_resources",
+        "failure",
+        "statistics_json",
+        "processor_check",
+        "check",
+        "load_fresh_policy",
+        "adam_roundtrip",
+        "_reload_and_verify",
+        "save_checkpoint",
+        "BindingChanged",
+        "capture_rng",
+        "restore_rng",
+        "save_snapshot",
+        "load_snapshot",
+        "quarantine",
+        "compare_with_reference",
+        "train",
+        "equivalence",
+        "main"
+      ],
+      "totalLines": 823,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/xvla_props_p3/tests/test_contract.py": {
+      "filePath": "experiments/xvla_props_p3/tests/test_contract.py",
+      "contentHash": "751c4929fcfe6e307d11a0b0f76b7f48518be730df28f9e095099679fd2f5f0f",
+      "functions": [
+        {
+          "name": "metadata",
+          "params": [],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "frame",
+          "params": [
+            "episode"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "task_table",
+          "params": [
+            "order"
+          ],
+          "exported": true,
+          "lineCount": 2
+        }
+      ],
+      "classes": [
+        {
+          "name": "_DS",
+          "methods": [
+            "__init__"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "ContractTests",
+          "methods": [
+            "setUp",
+            "_require_parent",
+            "_copy_parent",
+            "_binding_with",
+            "test_counts_last_offset_and_no_validation_sampling",
+            "test_split_comes_from_the_plan_not_from_lerobot",
+            "test_reject_malformed_metadata_and_other_packages",
+            "test_train_statistics_use_exactly_the_training_rows",
+            "test_sampler_yields_exactly_the_203040_training_starts_and_only_those",
+            "test_task_index_map_is_exactly_the_fixed_prompt_at_index_zero",
+            "test_task_index_map_rejects_anything_else",
+            "test_load_data_maps_tasks_through_the_dataset_table_only",
+            "test_real_dataset_task_table_is_the_fixed_prompt",
+            "test_approved_set_is_exactly_the_fixed_prompt",
+            "test_planned_instructions_must_all_be_the_fixed_prompt",
+            "test_the_split_has_the_four_trained_objects_in_both_parts_and_no_other",
+            "test_whitelist_real_state_action_padding_and_train_membership",
+            "test_policy_row_accepts_an_episode_of_every_trained_object",
+            "test_one_microbatch_of_four_different_objects_carries_one_prompt",
+            "test_approved_instruction_restores_the_shared_task",
+            "test_seal_record_matches_the_collection_report",
+            "test_current_binding_accepts_the_real_parent",
+            "test_a_copy_of_the_parent_files_binds_and_each_tamper_is_rejected",
+            "test_changed_plan_json_is_rejected",
+            "test_substitutions_must_match_the_sealed_record",
+            "test_drifted_provenance_is_rejected_both_ways",
+            "test_wrong_validation_values_are_rejected",
+            "test_parent_fingerprint_recomputes_to_the_seal",
+            "test_cpu_binding_semantic_stats_and_processor_tampering_rejected",
+            "test_later_admission_rehashes_without_full_fingerprint_repeat",
+            "test_output_existing_mount_claim_is_exclusive",
+            "test_snapshot_schedule_excludes_the_final_update",
+            "test_resume_claim_needs_the_original_mount_and_numbers_each_resume",
+            "test_require_assets_accepts_real_bundle_and_rejects_tamper",
+            "test_checkpoint_naming_is_step_prefixed_and_rejects_legacy",
+            "test_recipe_and_checkpoint_schedule",
+            "test_make_config_stretches_the_decay_horizon",
+            "test_verify_checkpoints_requires_step_dirs_and_rejects_legacy",
+            "test_forbidden_imports_absent",
+            "test_explicit_source_files_only"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 493
+        }
+      ],
+      "imports": [
+        {
+          "source": "copy",
+          "specifiers": [
+            "copy"
+          ]
+        },
+        {
+          "source": "importlib",
+          "specifiers": [
+            "importlib"
+          ]
+        },
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "shutil",
+          "specifiers": [
+            "shutil"
+          ]
+        },
+        {
+          "source": "tempfile",
+          "specifiers": [
+            "tempfile"
+          ]
+        },
+        {
+          "source": "unittest",
+          "specifiers": [
+            "unittest"
+          ]
+        },
+        {
+          "source": "unittest.mock",
+          "specifiers": [
+            "patch"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data",
+          "specifiers": [
+            "p3_plan"
+          ]
+        }
+      ],
+      "exports": [
+        "metadata",
+        "frame",
+        "task_table",
+        "_DS",
+        "ContractTests"
+      ],
+      "totalLines": 547,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/xvla_props_p3/tests/test_fork_hygiene.py": {
+      "filePath": "experiments/xvla_props_p3/tests/test_fork_hygiene.py",
+      "contentHash": "a9d8e57c5e46c6f40a8175b97bb0542609c72a7496b984e3e9d4c773366bfd4a",
+      "functions": [
+        {
+          "name": "package_files",
+          "params": [],
+          "exported": true,
+          "lineCount": 4
+        }
+      ],
+      "classes": [
+        {
+          "name": "UndefinedNameTests",
+          "methods": [
+            "test_no_module_reads_a_name_that_is_never_bound",
+            "test_nothing_imports_or_patches_the_fork_source",
+            "test_no_residue_names_survive_anywhere_in_the_package",
+            "test_readme_describes_this_package"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 41
+        },
+        {
+          "name": "ScheduleContractTests",
+          "methods": [
+            "setUp",
+            "test_schedule_is_the_dense_half_epoch_grid",
+            "test_learning_rate_spans_the_full_horizon",
+            "test_checkpoint_count_fits_the_disk_budget",
+            "test_exposure_is_exactly_five_epochs"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 27
+        },
+        {
+          "name": "InstructionContractTests",
+          "methods": [
+            "setUp",
+            "test_one_instruction_is_expected",
+            "test_planned_instructions_cover_every_episode",
+            "test_training_and_validation_both_carry_the_prompt",
+            "test_task_index_map_rejects_a_table_that_is_not_the_prompt"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 34
+        },
+        {
+          "name": "SourceFilesTests",
+          "methods": [
+            "test_source_files_are_exactly_the_loaded_modules"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 21
+        }
+      ],
+      "imports": [
+        {
+          "source": "builtins",
+          "specifiers": [
+            "builtins"
+          ]
+        },
+        {
+          "source": "importlib",
+          "specifiers": [
+            "importlib"
+          ]
+        },
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "subprocess",
+          "specifiers": [
+            "subprocess"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "symtable",
+          "specifiers": [
+            "symtable"
+          ]
+        },
+        {
+          "source": "unittest",
+          "specifiers": [
+            "unittest"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        }
+      ],
+      "exports": [
+        "package_files",
+        "UndefinedNameTests",
+        "ScheduleContractTests",
+        "InstructionContractTests",
+        "SourceFilesTests"
+      ],
+      "totalLines": 171,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/xvla_props_p3/tests/test_runner.py": {
+      "filePath": "experiments/xvla_props_p3/tests/test_runner.py",
+      "contentHash": "6b30521189ee7ea1a3d7d61e1b1f18c5137b066acda28e100695eb3835336181",
+      "functions": [],
+      "classes": [
+        {
+          "name": "SynConfig",
+          "methods": [
+            "__init__",
+            "save_pretrained",
+            "get_optimizer_preset"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 19
+        },
+        {
+          "name": "SynTiny",
+          "methods": [
+            "__init__",
+            "forward",
+            "predict_action_chunk",
+            "save_pretrained",
+            "get_optim_params",
+            "to"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 26
+        },
+        {
+          "name": "SynProcessor",
+          "methods": [
+            "__init__",
+            "__call__",
+            "save_pretrained"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "RunnerTests",
+          "methods": [
+            "setUp",
+            "test_runner_horizon_is_taken_from_the_contract_not_hardcoded",
+            "test_cli_no_default_gpu_resume_override_or_abbreviation",
+            "test_resources_fail_below_preflight_28_and_train_65_disk_or_28_gpu",
+            "test_training_disk_guard_covers_checkpoints_and_the_snapshot_working_set",
+            "test_processor_check_uses_real_processor_no_model_construction",
+            "test_absolute_reload_marker_reject_relative_only_and_nonfinite",
+            "test_real_adam_two_updates_and_roundtrip_keep_fp32",
+            "test_load_fresh_policy_requires_expected_parameter_budget",
+            "_synthetic_checkpoint",
+            "test_scratch_admission_all_checkpoint_files_stats_and_cpu_bound",
+            "test_final_report_and_all_step_inventories_gate",
+            "test_train_two_updates_with_synthetic_policy_writes_step_prefixed_checkpoints",
+            "test_a_past_deadline_pauses_cleanly_at_the_first_snapshot",
+            "_synthetic_train",
+            "_verify_both",
+            "test_fused_checks_accept_and_reject_exactly_what_the_original_does",
+            "test_prefetcher_yields_exactly_the_serial_sequence_and_reraises",
+            "test_should_pause_only_when_the_next_snapshot_would_miss_the_deadline",
+            "test_telemetry_parse_and_heat_decision",
+            "test_cool_down_waits_for_cool_and_gives_up_after_the_limit",
+            "test_cli_equivalence_and_stop_at",
+            "test_train_requires_the_equivalence_proof_and_it_must_be_exact",
+            "test_the_update_math_lives_in_one_function_used_by_both_loops",
+            "test_check_recomputes_the_parent_fingerprint_before_anything_else",
+            "test_check_does_not_call_a_simulator_audit",
+            "test_dispatch_does_not_launch_evaluation"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 501
+        }
+      ],
+      "imports": [
+        {
+          "source": "contextlib",
+          "specifiers": [
+            "ExitStack",
+            "nullcontext"
+          ]
+        },
+        {
+          "source": "importlib",
+          "specifiers": [
+            "importlib"
+          ]
+        },
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "tempfile",
+          "specifiers": [
+            "tempfile"
+          ]
+        },
+        {
+          "source": "unittest",
+          "specifiers": [
+            "unittest"
+          ]
+        },
+        {
+          "source": "unittest.mock",
+          "specifiers": [
+            "patch"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "test_contract",
+          "specifiers": [
+            "frame",
+            "metadata"
+          ]
+        }
+      ],
+      "exports": [
+        "SynConfig",
+        "SynTiny",
+        "SynProcessor",
+        "RunnerTests"
+      ],
+      "totalLines": 579,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/xvla_props_p3_eval/README.md": {
+      "filePath": "experiments/xvla_props_p3_eval/README.md",
+      "contentHash": "5421d82f5bb6787e3d7296f69adad8c191f96f82edb776113d4bed8e7cb53fb1",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 66,
+      "hasStructuralAnalysis": false
+    },
+    "experiments/xvla_props_p3_eval/__init__.py": {
+      "filePath": "experiments/xvla_props_p3_eval/__init__.py",
+      "contentHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 1,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/xvla_props_p3_eval/analysis.py": {
+      "filePath": "experiments/xvla_props_p3_eval/analysis.py",
+      "contentHash": "bb6e98b332866aa5d0adf9d28febe8c2ec98a1382ed923a341e25f3b8d034fa8",
+      "functions": [
+        {
+          "name": "lift_tick",
+          "params": [
+            "z_series",
+            "threshold_m",
+            "sustain"
+          ],
+          "exported": true,
+          "lineCount": 10
+        },
+        {
+          "name": "classify",
+          "params": [
+            "trace",
+            "bin_colour",
+            "success"
+          ],
+          "exported": true,
+          "lineCount": 15
+        },
+        {
+          "name": "wilson",
+          "params": [
+            "k",
+            "n",
+            "z"
+          ],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "_rate",
+          "params": [
+            "rows",
+            "key"
+          ],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "bin_choice",
+          "params": [
+            "rows"
+          ],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "readouts",
+          "params": [
+            "rows",
+            "excluded_layouts"
+          ],
+          "exported": true,
+          "lineCount": 30
+        },
+        {
+          "name": "selection_count",
+          "params": [
+            "rows",
+            "excluded_layouts"
+          ],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "screen_survivors",
+          "params": [
+            "counts",
+            "tie"
+          ],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "report_winner",
+          "params": [
+            "counts"
+          ],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "criteria",
+          "params": [
+            "rows",
+            "excluded_layouts"
+          ],
+          "exported": true,
+          "lineCount": 35
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "math",
+          "specifiers": [
+            "sqrt"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        }
+      ],
+      "exports": [
+        "lift_tick",
+        "classify",
+        "wilson",
+        "_rate",
+        "bin_choice",
+        "readouts",
+        "selection_count",
+        "screen_survivors",
+        "report_winner",
+        "criteria"
+      ],
+      "totalLines": 177,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/xvla_props_p3_eval/evaluate.py": {
+      "filePath": "experiments/xvla_props_p3_eval/evaluate.py",
+      "contentHash": "62b839f78311dc1806d03dc78bd526f4c20f87b9137e285e2de561a79a437058",
+      "functions": [
+        {
+          "name": "write_json",
+          "params": [
+            "path",
+            "value"
+          ],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "training_contract",
+          "params": [],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "sha256_file",
+          "params": [
+            "path"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "load_feasibility",
+          "params": [],
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "verify_checkpoints",
+          "params": [
+            "candidates"
+          ],
+          "exported": true,
+          "lineCount": 25
+        },
+        {
+          "name": "prepare",
+          "params": [],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "load_prepared",
+          "params": [],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "check_prepared",
+          "params": [
+            "prepared",
+            "candidate"
+          ],
+          "exported": true,
+          "lineCount": 10
+        },
+        {
+          "name": "load_policy",
+          "params": [
+            "checkpoint"
+          ],
+          "exported": true,
+          "lineCount": 14
+        },
+        {
+          "name": "gpu_state",
+          "params": [],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "cool_down",
+          "params": [
+            "sleep"
+          ],
+          "exported": true,
+          "lineCount": 10
+        },
+        {
+          "name": "trial_is_complete",
+          "params": [
+            "folder"
+          ],
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "quarantine",
+          "params": [
+            "directory",
+            "path"
+          ],
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "run_job",
+          "params": [
+            "policy",
+            "pre",
+            "post",
+            "job",
+            "directory",
+            "renderer_size"
+          ],
+          "exported": true,
+          "lineCount": 19
+        },
+        {
+          "name": "worker",
+          "params": [
+            "mode",
+            "candidates",
+            "shard",
+            "shards"
+          ],
+          "exported": true,
+          "lineCount": 33
+        },
+        {
+          "name": "collect",
+          "params": [
+            "mode",
+            "candidate"
+          ],
+          "exported": true,
+          "lineCount": 29
+        },
+        {
+          "name": "load_stage",
+          "params": [
+            "mode",
+            "candidate"
+          ],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "decide",
+          "params": [
+            "stage"
+          ],
+          "exported": true,
+          "lineCount": 25
+        },
+        {
+          "name": "final",
+          "params": [],
+          "exported": true,
+          "lineCount": 19
+        },
+        {
+          "name": "parse_args",
+          "params": [
+            "argv"
+          ],
+          "exported": true,
+          "lineCount": 16
+        },
+        {
+          "name": "_ints",
+          "params": [
+            "text"
+          ],
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "main",
+          "params": [
+            "argv"
+          ],
+          "exported": true,
+          "lineCount": 15
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "argparse",
+          "specifiers": [
+            "argparse"
+          ]
+        },
+        {
+          "source": "hashlib",
+          "specifiers": [
+            "hashlib"
+          ]
+        },
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "subprocess",
+          "specifiers": [
+            "subprocess"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "time",
+          "specifiers": [
+            "time"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "experiments.xvla_props_p3_eval",
+          "specifiers": [
+            "analysis",
+            "protocol"
+          ]
+        }
+      ],
+      "exports": [
+        "write_json",
+        "training_contract",
+        "sha256_file",
+        "load_feasibility",
+        "verify_checkpoints",
+        "prepare",
+        "load_prepared",
+        "check_prepared",
+        "load_policy",
+        "gpu_state",
+        "cool_down",
+        "trial_is_complete",
+        "quarantine",
+        "run_job",
+        "worker",
+        "collect",
+        "load_stage",
+        "decide",
+        "final",
+        "parse_args",
+        "_ints",
+        "main"
+      ],
+      "totalLines": 367,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/xvla_props_p3_eval/feasibility.py": {
+      "filePath": "experiments/xvla_props_p3_eval/feasibility.py",
+      "contentHash": "c028e6c53861bb874f46c6ca92b62717305c054fc1b9730a8be4257ab8e5e14a",
+      "functions": [
+        {
+          "name": "run_one",
+          "params": [
+            "layout"
+          ],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "summarize",
+          "params": [
+            "results",
+            "layouts"
+          ],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "keys_of_shard",
+          "params": [
+            "shard",
+            "shards",
+            "keys"
+          ],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "main",
+          "params": [
+            "argv"
+          ],
+          "exported": true,
+          "lineCount": 37
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "argparse",
+          "specifiers": [
+            "argparse"
+          ]
+        },
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "time",
+          "specifiers": [
+            "time"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "experiments.xvla_props_p3_eval",
+          "specifiers": [
+            "protocol"
+          ]
+        }
+      ],
+      "exports": [
+        "run_one",
+        "summarize",
+        "keys_of_shard",
+        "main"
+      ],
+      "totalLines": 87,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/xvla_props_p3_eval/protocol.py": {
+      "filePath": "experiments/xvla_props_p3_eval/protocol.py",
+      "contentHash": "5f7ed28afba36ad954eaf61cdf1ab6b595c20b6ed240cabeca24933b0c7f53ed",
+      "functions": [
+        {
+          "name": "_plan",
+          "params": [],
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "_trial",
+          "params": [
+            "ordinal",
+            "layout_id",
+            "layout"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "_tier_trials",
+          "params": [
+            "tier"
+          ],
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "screen_trials",
+          "params": [],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "report_trials",
+          "params": [],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "confirm_trials",
+          "params": [],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "smoke_trials",
+          "params": [],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "select_trials",
+          "params": [
+            "mode"
+          ],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "jobs",
+          "params": [
+            "mode",
+            "candidates"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "shard_jobs",
+          "params": [
+            "all_jobs",
+            "shard",
+            "shards"
+          ],
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "eval_instruction",
+          "params": [
+            "text"
+          ],
+          "exported": true,
+          "lineCount": 14
+        },
+        {
+          "name": "output_dir",
+          "params": [
+            "mode",
+            "candidate"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "trial_folder",
+          "params": [
+            "directory",
+            "trial"
+          ],
+          "exported": true,
+          "lineCount": 2
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "contextlib",
+          "specifiers": [
+            "contextmanager"
+          ]
+        },
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data.plan",
+          "specifiers": [
+            "PROMPT",
+            "plan_seed"
+          ]
+        },
+        {
+          "source": "experiments.xvla_single_task",
+          "specifiers": [
+            "single_task"
+          ]
+        }
+      ],
+      "exports": [
+        "_plan",
+        "_trial",
+        "_tier_trials",
+        "screen_trials",
+        "report_trials",
+        "confirm_trials",
+        "smoke_trials",
+        "select_trials",
+        "jobs",
+        "shard_jobs",
+        "eval_instruction",
+        "output_dir",
+        "trial_folder"
+      ],
+      "totalLines": 124,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/xvla_props_p3_eval/rollout.py": {
+      "filePath": "experiments/xvla_props_p3_eval/rollout.py",
+      "contentHash": "c1ab329d14237bb0633d2d3a83b969e4e06174357ac26917b4ef9ae6680e366e",
+      "functions": [
+        {
+          "name": "seed_trial",
+          "params": [
+            "seed"
+          ],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "placed_bin_of",
+          "params": [
+            "model",
+            "data",
+            "obj"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "rollout",
+          "params": [
+            "policy",
+            "pre",
+            "post",
+            "model",
+            "data",
+            "names",
+            "renderer",
+            "trial",
+            "folder"
+          ],
+          "exported": true,
+          "lineCount": 73
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "random",
+          "specifiers": [
+            "random"
+          ]
+        },
+        {
+          "source": "time",
+          "specifiers": [
+            "time"
+          ]
+        },
+        {
+          "source": "av",
+          "specifiers": [
+            "av"
+          ]
+        },
+        {
+          "source": "mujoco",
+          "specifiers": [
+            "mujoco"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "data_collection.benchmark",
+          "specifiers": [
+            "apply_action",
+            "step_control",
+            "synchronize_observation"
+          ]
+        },
+        {
+          "source": "experiments.paired_demonstrations.media",
+          "specifiers": [
+            "CAMERAS"
+          ]
+        },
+        {
+          "source": "experiments.props_scene",
+          "specifiers": [
+            "c"
+          ]
+        },
+        {
+          "source": "experiments.props_scene.metrics",
+          "specifiers": [
+            "in_bin",
+            "placement",
+            "success_streak"
+          ]
+        },
+        {
+          "source": "experiments.xvla_props_p3_eval",
+          "specifiers": [
+            "analysis",
+            "protocol"
+          ]
+        },
+        {
+          "source": "experiments.xvla_single_task.contract",
+          "specifiers": [
+            "observation"
+          ]
+        },
+        {
+          "source": "src.robots.franka_panda.config",
+          "specifiers": [
+            "ACTIVE_JOINTS",
+            "ARM_DOF"
+          ]
+        },
+        {
+          "source": "validation.rollout_diagnostics",
+          "specifiers": [
+            "bound_action"
+          ]
+        }
+      ],
+      "exports": [
+        "seed_trial",
+        "placed_bin_of",
+        "rollout"
+      ],
+      "totalLines": 120,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/xvla_props_p3_eval/scenes.py": {
+      "filePath": "experiments/xvla_props_p3_eval/scenes.py",
+      "contentHash": "bf8bd6c6e2cc8000fca6bd3bab8659ad26a6693bddbc1832e301d4bc80c5303f",
+      "functions": [
+        {
+          "name": "_yaw_difference_deg",
+          "params": [
+            "a",
+            "b"
+          ],
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "_model",
+          "params": [
+            "obj",
+            "blue_slot"
+          ],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "restore",
+          "params": [
+            "layout_id"
+          ],
+          "exported": true,
+          "lineCount": 24
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "gc",
+          "specifiers": [
+            "gc"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "experiments.props_scene",
+          "specifiers": [
+            "props_scene"
+          ]
+        },
+        {
+          "source": "experiments.props_scene.scene",
+          "specifiers": [
+            "build_model",
+            "object_pose",
+            "present_objects",
+            "reset"
+          ]
+        },
+        {
+          "source": "experiments.xvla_props_p3_eval",
+          "specifiers": [
+            "protocol"
+          ]
+        }
+      ],
+      "exports": [
+        "_yaw_difference_deg",
+        "_model",
+        "restore"
+      ],
+      "totalLines": 62,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/xvla_props_p3_eval/tests/test_analysis.py": {
+      "filePath": "experiments/xvla_props_p3_eval/tests/test_analysis.py",
+      "contentHash": "0b7cc766ea2a726056e46f5916c294b7b4f447140b191b160b61fdcfb4827778",
+      "functions": [
+        {
+          "name": "row",
+          "params": [
+            "layout_id",
+            "obj",
+            "success",
+            "placed",
+            "slot",
+            "cause"
+          ],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "rows_for",
+          "params": [
+            "obj",
+            "n",
+            "correct",
+            "stable",
+            "start",
+            "slot"
+          ],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "trace",
+          "params": [
+            "z",
+            "placed_bin",
+            "gripper_open"
+          ],
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "trained_rows",
+          "params": [
+            "stable",
+            "wrong"
+          ],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "held_rows",
+          "params": [
+            "bottle",
+            "cereal"
+          ],
+          "exported": true,
+          "lineCount": 3
+        }
+      ],
+      "classes": [
+        {
+          "name": "LiftTests",
+          "methods": [
+            "test_lift_needs_the_height_and_the_sustained_ticks"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 10
+        },
+        {
+          "name": "ClassifyTests",
+          "methods": [
+            "test_success_wins",
+            "test_never_lifted",
+            "test_a_lifted_object_resting_in_a_bin_is_judged_by_which_bin_before_the_gripper",
+            "test_not_in_a_bin_is_carrying_or_dropped_by_the_gripper_state",
+            "test_every_cause_is_produced_and_there_is_no_wrong_object"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 24
+        },
+        {
+          "name": "WilsonTests",
+          "methods": [
+            "test_known_values",
+            "test_empty_is_none_and_the_interval_is_ordered_and_json_safe"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 24
+        },
+        {
+          "name": "BinChoiceTests",
+          "methods": [
+            "test_counts_are_over_stable_placements_only",
+            "test_a_correct_bin_without_success_still_counts_as_a_stable_correct_placement",
+            "test_no_stable_placement_gives_none_not_a_division_error"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 18
+        },
+        {
+          "name": "CriteriaTests",
+          "methods": [
+            "verdict",
+            "test_trained_gate_boundaries",
+            "test_trained_floor_makes_it_not_interpretable_even_when_perfect",
+            "test_the_gate_uses_bin_choice_not_success",
+            "test_held_out_floor_and_evidence_per_object",
+            "test_the_evidence_boundary_is_the_wilson_lower_bound_strictly_above_one_half",
+            "test_overall_held_out_verdict_needs_both_objects",
+            "test_trained_and_held_out_rows_are_kept_apart",
+            "test_excluded_layouts_are_dropped_before_the_floors",
+            "test_no_rows_is_not_interpretable_and_serialises",
+            "test_milk_is_not_special_cased_in_the_gate"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 88
+        },
+        {
+          "name": "ReadoutTests",
+          "methods": [
+            "setUp",
+            "test_overall_by_kind_slot_and_object",
+            "test_infeasible_layouts_are_dropped_and_counted",
+            "test_a_success_without_a_correct_stable_placement_is_visible",
+            "test_an_absent_object_is_not_reported_and_nothing_divides_by_zero"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 39
+        },
+        {
+          "name": "SelectionTests",
+          "methods": [
+            "test_selection_counts_only_trained_successes_on_feasible_layouts",
+            "test_screen_survivors_are_everything_within_two_of_the_best",
+            "test_report_winner_is_the_best_and_a_tie_goes_to_the_later_checkpoint"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 19
+        },
+        {
+          "name": "ConstantsTests",
+          "methods": [
+            "test_pre_registered_thresholds"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 6
+        }
+      ],
+      "imports": [
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "unittest",
+          "specifiers": [
+            "unittest"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "experiments.xvla_props_p3_eval",
+          "specifiers": [
+            "a"
+          ]
+        }
+      ],
+      "exports": [
+        "row",
+        "rows_for",
+        "trace",
+        "LiftTests",
+        "ClassifyTests",
+        "WilsonTests",
+        "BinChoiceTests",
+        "trained_rows",
+        "held_rows",
+        "CriteriaTests",
+        "ReadoutTests",
+        "SelectionTests",
+        "ConstantsTests"
+      ],
+      "totalLines": 303,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/xvla_props_p3_eval/tests/test_evaluate.py": {
+      "filePath": "experiments/xvla_props_p3_eval/tests/test_evaluate.py",
+      "contentHash": "17677574de23e41436fea151a15f8e085c1fe139e48e5b80ab5b7d1320772d19",
+      "functions": [],
+      "classes": [
+        {
+          "name": "NeedsPlan",
+          "methods": [
+            "setUp",
+            "fake_stage"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 33
+        },
+        {
+          "name": "CollectTests",
+          "methods": [
+            "test_complete_stage_collects_with_readouts_and_binding",
+            "test_incomplete_stage_is_reported_and_refused_downstream",
+            "test_a_trial_that_does_not_match_the_plan_is_refused",
+            "test_a_nonfinite_action_trial_is_refused",
+            "test_half_written_folder_is_incomplete_and_gets_quarantined_not_deleted",
+            "test_a_folder_missing_any_one_trial_file_is_incomplete_and_collected_as_missing",
+            "test_the_infeasible_layouts_of_prepare_are_dropped_from_the_readouts"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 66
+        },
+        {
+          "name": "DecideTests",
+          "methods": [
+            "test_screen_survivors_and_report_winner_follow_the_fixed_rules",
+            "test_held_out_successes_never_decide_the_winner",
+            "test_an_infeasible_layout_does_not_count_towards_the_screen",
+            "test_decide_refuses_a_missing_or_incomplete_stage_and_an_unknown_stage",
+            "test_final_reads_the_winner_with_the_confirm_tier_and_every_survivor",
+            "test_an_infeasible_layout_does_not_count_towards_the_report_winner",
+            "test_final_reads_whichever_winner_was_recorded"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 111
+        },
+        {
+          "name": "PreparedTests",
+          "methods": [
+            "test_changed_weights_are_detected",
+            "test_missing_prepare_and_feasibility_are_refused"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 36
+        },
+        {
+          "name": "FeasibilitySummaryTests",
+          "methods": [
+            "test_summary_counts_failures_by_object_and_shards_partition_the_layouts"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 17
+        },
+        {
+          "name": "ThermalTests",
+          "methods": [
+            "test_cool_down_pauses_until_cool_and_ignores_missing_telemetry"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 17
+        },
+        {
+          "name": "EntryPointTests",
+          "methods": [
+            "test_the_module_calls_main_when_run",
+            "test_arguments_and_unknown_modes"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 15
+        }
+      ],
+      "imports": [
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "tempfile",
+          "specifiers": [
+            "tempfile"
+          ]
+        },
+        {
+          "source": "unittest",
+          "specifiers": [
+            "unittest"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "unittest",
+          "specifiers": [
+            "mock"
+          ]
+        },
+        {
+          "source": "experiments.xvla_props_p3_eval",
+          "specifiers": [
+            "analysis",
+            "evaluate",
+            "feasibility",
+            "protocol"
+          ]
+        }
+      ],
+      "exports": [
+        "NeedsPlan",
+        "CollectTests",
+        "DecideTests",
+        "PreparedTests",
+        "FeasibilitySummaryTests",
+        "ThermalTests",
+        "EntryPointTests"
+      ],
+      "totalLines": 324,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/xvla_props_p3_eval/tests/test_protocol.py": {
+      "filePath": "experiments/xvla_props_p3_eval/tests/test_protocol.py",
+      "contentHash": "51366b779073e35d324690d1f39e8f483480e88ae341619284352469c88479d0",
+      "functions": [],
+      "classes": [
+        {
+          "name": "NeedsPlan",
+          "methods": [
+            "setUp"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "TrialTests",
+          "methods": [
+            "test_tier_sizes_and_ordinals",
+            "test_every_trial_has_one_seed_the_fixed_prompt_and_the_objects_container",
+            "test_rollout_seeds_are_not_the_collection_or_expert_seeds",
+            "test_the_composition_is_the_pre_registered_one",
+            "test_trials_carry_the_sealed_layouts",
+            "test_the_seed_comes_from_the_collection_seed_function_and_the_layout_id",
+            "test_smoke_trials_are_one_trained_and_one_held_out",
+            "test_select_trials_refuses_other_modes"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 67
+        },
+        {
+          "name": "JobTests",
+          "methods": [
+            "test_jobs_are_ordered_by_candidate_then_ordinal",
+            "test_unapproved_candidates_are_refused",
+            "test_shards_partition_the_jobs_interleaved_and_sorted_by_candidate",
+            "test_a_share_is_ordered_by_candidate_even_if_the_stage_was_not",
+            "test_invalid_shards_are_refused"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 36
+        },
+        {
+          "name": "InstructionTests",
+          "methods": [
+            "test_only_the_fixed_prompt_is_approved_and_the_shared_task_is_restored",
+            "test_output_dirs_and_trial_folders_are_validated"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 23
+        }
+      ],
+      "imports": [
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "unittest",
+          "specifiers": [
+            "unittest"
+          ]
+        },
+        {
+          "source": "experiments.props_p3_data",
+          "specifiers": [
+            "p3_plan"
+          ]
+        },
+        {
+          "source": "experiments.xvla_props_p3_eval",
+          "specifiers": [
+            "protocol"
+          ]
+        }
+      ],
+      "exports": [
+        "NeedsPlan",
+        "TrialTests",
+        "JobTests",
+        "InstructionTests"
+      ],
+      "totalLines": 155,
+      "hasStructuralAnalysis": true
+    },
+    "experiments/xvla_props_p3_eval/tests/test_rollout.py": {
+      "filePath": "experiments/xvla_props_p3_eval/tests/test_rollout.py",
+      "contentHash": "a75555e1f86a5575e1316e7fda21b3bb665b953d5459057c087a2bdde3a07c71",
+      "functions": [
+        {
+          "name": "expert_actions",
+          "params": [
+            "layout"
+          ],
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "run",
+          "params": [
+            "policy",
+            "trial",
+            "max_ticks",
+            "**overrides"
+          ],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "trial_of",
+          "params": [
+            "obj",
+            "tier"
+          ],
+          "exported": true,
+          "lineCount": 2
+        }
+      ],
+      "classes": [
+        {
+          "name": "Identity",
+          "methods": [
+            "__call__"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "Parked",
+          "methods": [
+            "reset",
+            "select_action"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "Replay",
+          "methods": [
+            "__init__",
+            "reset",
+            "select_action"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 12
+        },
+        {
+          "name": "SceneTests",
+          "methods": [
+            "test_every_reserved_layout_restores_within_tolerance_and_deterministically",
+            "test_unreserved_layout_is_refused",
+            "test_the_blue_bin_is_on_the_planned_side_for_the_restored_scene"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 26
+        },
+        {
+          "name": "FeasibilityTests",
+          "methods": [
+            "test_one_expert_attempt_on_a_reserved_layout_runs_and_summarises"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "RolloutTests",
+          "methods": [
+            "test_parked_policy_runs_the_real_loop_and_is_never_lifted",
+            "test_expert_actions_replayed_as_the_policy_succeed_for_every_object_group",
+            "test_a_real_wrong_bin_event_is_classified_wrong_bin",
+            "test_names_must_be_exactly_the_one_object"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 52
+        },
+        {
+          "name": "RunJobTests",
+          "methods": [
+            "setUp",
+            "run_job",
+            "test_a_fresh_trial_runs_once_and_writes_its_telemetry",
+            "test_a_complete_trial_is_never_rerun",
+            "test_a_half_written_trial_is_quarantined_and_rerun",
+            "test_a_nonfinite_action_is_an_error_not_a_retry"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 54
+        }
+      ],
+      "imports": [
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "tempfile",
+          "specifiers": [
+            "tempfile"
+          ]
+        },
+        {
+          "source": "unittest",
+          "specifiers": [
+            "unittest"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        }
+      ],
+      "exports": [
+        "Identity",
+        "Parked",
+        "Replay",
+        "expert_actions",
+        "run",
+        "trial_of",
+        "SceneTests",
+        "FeasibilityTests",
+        "RolloutTests",
+        "RunJobTests"
+      ],
+      "totalLines": 228,
+      "hasStructuralAnalysis": true
+    },
+    "scripts/code_graph_bench.py": {
+      "filePath": "scripts/code_graph_bench.py",
+      "contentHash": "fa7ecd8ee521f2bd203afe623969b968527f361ea8ffb223cea9392012fef482",
+      "functions": [
+        {
+          "name": "sh",
+          "params": [
+            "cmd"
+          ],
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "helper",
+          "params": [
+            "*args"
+          ],
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "grep_truth",
+          "params": [
+            "target"
+          ],
+          "exported": true,
+          "lineCount": 3
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "random",
+          "specifiers": [
+            "random"
+          ]
+        },
+        {
+          "source": "re",
+          "specifiers": [
+            "re"
+          ]
+        },
+        {
+          "source": "statistics",
+          "specifiers": [
+            "statistics"
+          ]
+        },
+        {
+          "source": "subprocess",
+          "specifiers": [
+            "subprocess"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        }
+      ],
+      "exports": [
+        "sh",
+        "helper",
+        "grep_truth"
+      ],
+      "totalLines": 90,
+      "hasStructuralAnalysis": true
+    },
+    "scripts/xvla_props_p3_eval.sh": {
+      "filePath": "scripts/xvla_props_p3_eval.sh",
+      "contentHash": "680b380088dae01457c37dc3d72e6095d9ecbca4202a5d5b761ccc93da7fcd81",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 119,
+      "hasStructuralAnalysis": false
+    },
+    "scripts/xvla_props_p3_night.sh": {
+      "filePath": "scripts/xvla_props_p3_night.sh",
+      "contentHash": "a8d53fd2e7fa9db1dc2bcddd31ddd9f1d24113f40dc8ab99e76384b66bd1b5c8",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 90,
+      "hasStructuralAnalysis": false
     }
   }
 }

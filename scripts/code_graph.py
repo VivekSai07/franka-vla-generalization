@@ -17,6 +17,7 @@ UA = ROOT / ".ua"
 FILE_TYPES = {"file", "config", "document", "service", "pipeline", "table", "schema", "resource", "endpoint"}
 ANALYSED = ["experiments", "src", "data_collection", "validation", "training", "inference", "scripts", "tests", "docs", ".github", "*.md"]
 STALE_AT = 10
+PLUGIN_FULL_AT = 30  # the plugin's own hardcoded limit for an incremental refresh
 
 
 def load():
@@ -46,6 +47,8 @@ def main(argv):
         print(f"graph built at {h[:8]} ({meta['lastAnalyzedAt']}), {meta['analyzedFiles']} files; {n} analysed files changed since")
         # Judgment call, not a measured limit: a few files behind is normal after merging a refresh itself.
         print(f"STALE ({n} files behind): refresh per skill using-the-code-graph, incremental cost grows with this count" if n >= STALE_AT else "up to date enough")
+        if n > PLUGIN_FULL_AT:
+            print(f"past the plugin's {PLUGIN_FULL_AT}-file limit: it will demand a full rebuild; see the skill for the cheaper override")
         return
     g, nodes, layer_of = load()
     if cmd == "layers":
