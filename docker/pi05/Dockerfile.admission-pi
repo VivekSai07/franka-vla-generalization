@@ -1,0 +1,6 @@
+# The pinned admission image plus the transformers fork LeRobot 0.4.4's pi0.5 needs, and tokenizers 0.21.x it requires.
+# Build: DOCKER_BUILDKIT=0 docker build --build-arg http_proxy=$http_proxy --build-arg https_proxy=$https_proxy \
+#          -f docker/pi05/Dockerfile.admission-pi -t vla-pi05:admission docker/pi05
+FROM sha256:08de1e09200539a26f7564bbf095fb846b8104ba07a72564b8232feb58714abc
+COPY requirements-pi.txt /tmp/requirements-pi.txt
+RUN pip install --no-cache-dir --no-deps --require-hashes -r /tmp/requirements-pi.txt && rm /tmp/requirements-pi.txt

@@ -1,0 +1,6 @@
+# The robosuite image (sha256:54d861aa...ccf27e) plus the transformers fork LeRobot 0.4.4's pi0.5 needs, and tokenizers 0.21.x it requires.
+# Build: DOCKER_BUILDKIT=0 docker build --build-arg http_proxy=$http_proxy --build-arg https_proxy=$https_proxy \
+#          -f docker/pi05/Dockerfile.robosuite-pi -t vla-pi05:robosuite docker/pi05
+FROM sha256:54d861aac79c1c8ceed09734a00bbc5d8cbf566c427e47ff23089f9bb0ccf27e
+COPY requirements-pi.txt /tmp/requirements-pi.txt
+RUN pip install --no-cache-dir --no-deps --require-hashes -r /tmp/requirements-pi.txt && rm /tmp/requirements-pi.txt
