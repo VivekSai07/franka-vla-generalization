@@ -61,6 +61,12 @@ def load_episode(index):
     return {"index": index, "episode": episode, "action": action, "state": state, **arrays}
 
 
+def objects_of(index):
+    """Prop names in the order of the sealed `props_pose` columns."""
+    episode = _plan_episode(index)
+    return list(expert_for(names_of(episode), episode["blue_slot"]).objects)
+
+
 def frames(index, on_frame):
     """Replay episode `index`; `on_frame(tick, model, data)` runs at the observation instant of every tick.
 
