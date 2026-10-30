@@ -6,7 +6,7 @@
 
 **Goal:** pi0.5 fine-tuned on the sealed P2 dataset with its own recipe at 5.0 epochs, evaluated as arm A1 by M0.
 
-**Architecture:** two new images (existing image + LeRobot's patched transformers only); hash-pinned assets; a training package
+**Architecture:** two new images (existing image + transformers@`dcddb97` and tokenizers 0.21.4 only); hash-pinned assets; a training package
 `experiments/pi05_props_p2/` with the X-VLA runner's gate structure; a `Pi05Adapter` in M0's evaluator.
 
 **Tech stack:** LeRobot 0.4.4 `pi05`; new images `admission-pi` (training, tests) and `robosuite-pi` (rollouts).
@@ -33,15 +33,23 @@
 **Files:** create `docker/pi05/Dockerfile.admission-pi`, `docker/pi05/Dockerfile.robosuite-pi`, `docker/pi05/README.md`,
 `experiments/pi05_props_p2/tests/test_image.py`.
 
-- [ ] **Step 1:** identify the transformers build LeRobot 0.4.4's pi0.5 expects (the one providing
-  `transformers.models.siglip.check`): read LeRobot's 0.4.4 release documentation for pi0.5 and record the exact git ref and its
-  commit hash in `docker/pi05/README.md`. Do not guess a ref.
+- [ ] **Step 0 (do first, it has lead time):** the user requests access to `google/paligemma-3b-pt-224` on Hugging Face
+  (gated, **manual** approval, checked 2026-10-30). Task 2 cannot start without it.
+- [ ] **Step 1 (resolved 2026-10-30 on the RTX machine; re-verify, do not re-derive):** LeRobot 0.4.4's `pi` extra pins the
+  branch `fix/lerobot_openpi`, which is commit `dcddb970176382c0fcf4521b0c0e6fc15894dfe0` (transformers 4.53.3). That commit
+  requires `tokenizers>=0.21,<0.22`; the parent image has 0.22.2. Install exactly
+  `transformers @ https://github.com/huggingface/transformers/archive/dcddb970176382c0fcf4521b0c0e6fc15894dfe0.zip` and
+  `tokenizers==0.21.4`, both `--no-deps`. A throwaway probe with these two gave `siglip check` True and a constructed
+  `PI05Policy`. Record both in `docker/pi05/README.md`. If `git ls-remote` now shows a different branch head, keep the
+  recorded commit.
 - [ ] **Step 2: failing test** `test_image.py` (run in the new image): `transformers.models.siglip.check
   .check_whether_transformers_replace_is_installed_correctly()` is true; `PI05Policy(PI05Config(...))` constructs on CPU with
-  the default variants; `pip freeze` equals the parent image's except the transformers line (the parent's freeze is captured
-  to `docker/pi05/parent_freeze_<digest>.txt` first).
-- [ ] **Step 3:** build both images FROM the existing digests, `pip install --no-deps` the pinned ref; record both new digests in
-  `docker/pi05/README.md` and `docs/OPERATIONS.md`.
+  the default variants and has 3,616,757,520 parameters with the P2 features; `pip check` passes; `pip freeze` equals the
+  parent image's except the transformers and tokenizers lines (the parent's freeze is captured to
+  `docker/pi05/parent_freeze_<digest>.txt` first).
+- [ ] **Step 3:** build both images FROM the existing digests (`DOCKER_BUILDKIT=0`, proxy build args), installing the two pinned
+  packages with `--no-deps`; record both new digests in `docker/pi05/README.md` and `docs/OPERATIONS.md`. A container that
+  runs code from `/tmp` needs `--tmpfs /tmp:rw,exec` (Docker's tmpfs is `noexec` by default; the probe failed on it once).
 - [ ] **Step 4:** run the test in both images; pass. **Physics unchanged:** run `props_p2_data.record.determinism` (12 rendered
   attempts) in `robosuite-pi` and in the robosuite image, into scratch directories; the 12 digests must be equal.
 - [ ] **Step 5:** commit `M1: pi0.5 images`.
@@ -50,9 +58,14 @@
 
 **Files:** create `experiments/pi05_props_p2/assets.py`, `tests/test_assets.py`.
 
-- [ ] **Step 1:** on the host, the user logs in to Hugging Face (accepting the PaliGemma licence first) and downloads
-  `lerobot/pi05_base` and `google/paligemma-3b-pt-224` (tokenizer files) into `outputs/research/pi05_assets/` at a recorded
-  revision. Disk: measure with `du -sh`.
+- [ ] **Step 1:** on the host, the user logs in to Hugging Face (PaliGemma access approved, Task 1 Step 0) and downloads
+  `lerobot/pi05_base` at revision `9e55186ad36e66b95cda57bc47818d9e6237ae30` (weights sha256
+  `0eb11ca9587678c1d2ef8cf32807c29f8ce53a2bfdfc1aa4a4c96f16fca59b0f`, 14,467,165,872 bytes; the latest revision's
+  preprocessor uses a `relative_actions_processor` step that LeRobot 0.4.4 lacks) and the tokenizer files of
+  `google/paligemma-3b-pt-224` into `outputs/research/pi05_assets/`. Disk: measure with `du -sh`.
+- [ ] **Step 1b:** test that the weights load into `PI05Policy` with zero missing and zero unexpected keys (the loader
+  prints missing keys and continues, so assert on the returned lists), and that processors are built from the local config
+  and P2 statistics, never from the hub's `policy_preprocessor.json`.
 - [ ] **Step 2: failing test:** `assets.require_assets()` hashes every file and compares with the pinned table; a one-byte change
   in a copied fixture fails it.
 - [ ] **Step 3–4:** write the pinned table from the downloaded files; pass.
@@ -90,16 +103,18 @@ sizes in `recipe()`.
 - [ ] **Step 1: failing tests (pure):** mutually exclusive modes; `--resume` only with `--train`; the horizon comes from
   `recipe()`; the disk guard equals the formula over measured sizes; snapshots kept = 1 plus the one being written.
 - [ ] **Step 2–4:** fail, implement, pass, mutate.
-- [ ] **Step 5 (GPU, admission-pi):** `--probe-memory` for spec D5's candidates (a)–(d): peak memory over 20 updates, seconds per
+- [ ] **Step 5 (GPU, admission-pi):** `--probe-memory` for spec D5's candidates (a) all-bf16, (b) bf16 on GPU with FP32
+  master weights and moments offloaded to CPU, (c) `train_expert_only`: peak memory over 20 updates, seconds per
   update, checkpoint and snapshot sizes, and for (a) and (b) the per-tensor fraction of elements changed by one update at the
-  peak and the floor learning rate. Write `outputs/train/pi05_props_p2_probe/probe.json`.
+  peak and the floor learning rate. FP32 on-GPU full tuning (57.9 GB before activations) and frozen-vision FP32 (~52 GB) are
+  not probed: they cannot fit. Write `outputs/train/pi05_props_p2_probe/probe.json`.
 - [ ] **Step 6:** **user decision** on the memory strategy and the time/disk projection, recorded in `README.md` and
   `recipe()`. Commit `M1: runner, memory strategy <x>`.
 
 ### Task 4b: numerical and reference-path proof
 
 - [ ] Pin installed source hashes, optimizer implementation and transformers commit; `pip check`, offline load and actual
-  forward/backward/update/inference must pass. If changing transformers alone cannot satisfy dependencies, stop and amend
+  forward/backward/update/inference must pass. If the two-package install (transformers + tokenizers) cannot satisfy dependencies, stop and amend
   the manifest before training; do not weaken the gate or mutate the old images.
 - [ ] Compare custom runner loss, gradients and update against the installed policy/processor reference on a fixed batch;
   check padding/masks, real action dimensions, camera order, prompt length and physical-action round-trip.
@@ -120,7 +135,10 @@ sizes in `recipe()`.
 
 ### Task 6: evaluation as A1
 
-**Files:** modify `experiments/pi05_props_p2/eval_adapter.py`; create `experiments/vla_inputs_eval/tests/test_pi05_adapter.py`.
+**Files:** create `experiments/pi05_props_p2/eval_adapter.py` and `experiments/pi05_props_p2/eval_tests/test_pi05_adapter.py`.
+Neither is listed in the training contract's `SOURCE_FILES` (an explicit tuple; a test asserts their absence), so writing
+them after training does not invalidate the training binding; M0's arm manifest binds them. Nothing is added to
+`experiments/vla_inputs_eval/` (its tests directory belongs to the frozen core).
 
 - [ ] **Step 1: failing test (robosuite-pi, GPU):** `Pi05Adapter(checkpoint, state_p2)` returns (8,) actions; with the
   checkpoint's statistics the unnormalised action of a fixed observation equals the policy's own `select_action` →

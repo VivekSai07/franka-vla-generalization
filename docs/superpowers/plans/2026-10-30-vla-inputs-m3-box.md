@@ -39,8 +39,10 @@ output paths only), `README.md`; adapt tests.
 
 ### Task 2: zero-equivalence and parity
 
-**Files:** modify `runner.py`; modify `experiments/xvla_p2_box/eval_adapter.py` (add `state_box`; M0 core unchanged); create
-`tests/test_zero_equivalence.py`, `experiments/vla_inputs_eval/tests/test_box_parity.py`.
+**Files:** modify `runner.py`; create `experiments/xvla_p2_box/eval_adapter.py` (`state_box`; M0 core unchanged) and
+`tests/test_zero_equivalence.py`, `experiments/xvla_p2_box/eval_tests/test_box_parity.py`. The adapter and its tests are not
+listed in the training `SOURCE_FILES` (asserted by a test) and are bound by M0's arm manifest; nothing is added to
+`experiments/vla_inputs_eval/`.
 
 - [ ] `--zero-equivalence` against P2's runner, columns 9–18 forced to 0 after normalisation: equal over 30 updates; mutation run
   recorded.

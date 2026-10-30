@@ -23,6 +23,9 @@ On one set of fresh P2-style layouts, how does each new arm (A1–A4) compare wi
 | two seeds of one layout correlate (ICC 0.56): one seed on more layouts is the better use of rollouts | P2 re-test design |
 | the bundle re-evaluation reproduced recorded trials bit for bit in a clean container: rollouts are deterministic | TODO (P2 bundle smoke) |
 | median trial 82 s; 8 pinned workers; ~7.3 GiB GPU per X-VLA worker after a checkpoint switch | P2 evaluation, FAILURES #57 |
+| P3 ran 8 pinned workers (5 cores each) at **about 4.2 GB GPU each** through a six-checkpoint screen and a four-checkpoint report, no worker failure; P2's 7.3 GiB peak appeared in workers that switched checkpoint (4 such workers filled the 47 GB card; cause of the growth not isolated) | PROPS_P3_EVALUATION_20261027, FAILURES #57 |
+| one P2 trial folder (video, trace, json) is about 1.4 MB (120 report trials = 169 MB) | `outputs/xvla_props_p2_eval/report_p2_step_101520`, measured 2026-10-30 |
+| RTX machine 2026-10-30: 48 cores, 125 GB RAM, GPU idle (363 MiB used, no other compute process) | `nproc`, `free`, `nvidia-smi` |
 
 ## Design
 
@@ -118,6 +121,17 @@ for D=.19/.30/.40, power is .540/.330/.238 at +6 points and .980/.851/.708 at +1
 Formula and full comparison with .05: [audit R4](../../VLA_INPUTS_AUDIT_20261030.md).
 These are marginal sensitivities, not exact joint Holm power.
 
+**C size is a decision for the user before Task 1 writes `plan.json` (never after any outcome).** Exact enumeration on the RTX
+machine (2026-10-30, the audit's formula) for a 10-point effect at α = 0.0125:
+
+| C layouts | D = 0.30 | D = 0.40 | extra rollouts per arm vs 384 (C + matched-phase) |
+|---|---|---|---|
+| 384 (48 × 8) | 0.851 | 0.708 | — |
+| 480 (48 × 10) | 0.931 | 0.822 | up to +192 |
+| 576 (48 × 12) | 0.970 | 0.897 | up to +384 |
+
+At α = 0.05 the same rows are 0.943/0.861, 0.979/0.929, 0.992/0.964. Default stays 384 unless the user changes it.
+
 ## Reported, not gated
 
 Per object (milk read separately), trained-pair against held-out-pair, by distractor count, by blue-bin side, failure
@@ -126,10 +140,13 @@ the discordant layouts, and A0's C-tier rate next to its P2 report (context only
 
 ## Costs (throughput arithmetic from P2's measured 82 s median, conditional on 8 workers)
 
-Eight workers at the reported 7.3 GiB peak require 58.4 GiB and cannot fit on the 48 GiB GPU. The table is not a feasible
-resource reservation. Choose workers from measured switch/load peaks and available memory with headroom, then recompute
-wall time including the matched-phase contrast. Only layout generation/feasibility are CPU-only; GPU rollouts must be
-scheduled separately from M1 training unless their measured combined peaks fit. Include videos in disk planning.
+Eight workers at the 7.3 GiB post-switch peak would need 58.4 GiB and cannot fit; eight workers that never switch
+checkpoint ran at about 4.2 GB each in P3 (about 34 GB). So **no worker switches checkpoint**: the A0 run on C is one
+checkpoint (8 workers); the selection tier gives each of the six candidates its own worker (6 workers, 80 trials each);
+the C runs of a new arm give the S winner and the matched-phase checkpoint separate worker pools. The smoke still measures
+peak memory at the planned concurrency before the pool is fixed. Only layout generation/feasibility are CPU-only; GPU
+rollouts must be scheduled separately from M1 training unless their measured combined peaks fit. Videos: about 1.4 MB per
+trial, so under 3 GB per arm.
 
 | run | rollouts | wall-clock |
 |---|---|---|

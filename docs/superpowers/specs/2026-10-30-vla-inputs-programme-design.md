@@ -129,8 +129,10 @@ without an architecture change.
 
 | item | finding | where it lands |
 |---|---|---|
-| pi0.5 cannot be constructed in the pinned image | `PI05Pytorch.__init__` requires `transformers.models.siglip.check` (LeRobot's patched transformers); the image has transformers 4.57.6 and the import fails | M1 Task 1: a new image, its own digest |
-| pi0.5 base weights and the PaliGemma tokenizer are not in the image | `google/paligemma-3b-pt-224` is a gated Hugging Face repo (licence acceptance, token); containers run offline | M1 Task 1: fetched on the host through the proxy, hash-pinned, token never committed |
-| disk | 123 GB free (2026-10-30), `/var/log/syslog` grows ~30 GB/day and the user is not in sudoers | every training plan has a disk gate; pi0.5's working set is larger than X-VLA's (M1) |
-| GPU | shared; another user's job held 37 of 48 GiB on 2026-10-23 | the runners' free-memory guards stay; not relaxed |
+| pi0.5 cannot be constructed in the pinned image | `PI05Pytorch.__init__` requires `transformers.models.siglip.check` (LeRobot's patched transformers); the image has transformers 4.57.6 and the import fails. **Resolved in a throwaway probe (2026-10-30):** transformers@`dcddb970176382c0fcf4521b0c0e6fc15894dfe0` (4.53.3) plus tokenizers 0.21.4 pass the check and construct pi0.5 (3,616,757,520 parameters) | M1 Task 1: two new images, own digests |
+| pi0.5 base weights and the PaliGemma tokenizer are not in the image | `lerobot/pi05_base` is public (pin revision `9e55186a…`, weights `0eb11ca9…`, 14.5 GB); `google/paligemma-3b-pt-224` is gated with **manual** approval; containers run offline | M1 Task 1 Step 0: request access now; Task 2: fetched on the host through the proxy, hash-pinned, token never committed |
+| disk | 123 GB free on 2026-10-30 evening. The `/var/log/syslog` growth (~30 GB/day, October) is no longer visible: only `syslog.1` (32 MB, 2026-10-25) exists. Re-measure before every gate | every training plan has a disk gate; pi0.5's working set is larger than X-VLA's (M1) |
+| GPU | idle on 2026-10-30 (363 MiB used, no other compute process); shared, and another user's job held 37 of 48 GiB on 2026-10-23 | the runners' free-memory guards stay; not relaxed |
+| evaluation memory | 8 X-VLA workers that never switch checkpoint ran at ~4.2 GB each (P3); workers that switched reached 7.3 GiB and one died (P2) | M0: one checkpoint per worker pool |
+| host | 48 cores, 125 GB RAM | worker pinning; CPU-offloaded optimizer is feasible for M1 (≈ 43 GB) |
 | X-VLA training time | 0.524 s/update raw, ~0.9 effective with thermal pauses → about 32 h per X-VLA arm | M2, M3, M4a |

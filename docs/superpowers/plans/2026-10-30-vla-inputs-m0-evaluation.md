@@ -131,7 +131,8 @@ admission image `sha256:08de1e09200539a26f7564bbf095fb846b8104ba07a72564b8232feb
 manifests, runtime digest, processor/statistics/weights hashes, and S0 provenance; core equality with A0 is mandatory); `worker --arm A --tier T --checkpoint N --shard k --shards n` (interleaved jobs, one
 folder per trial, skip existing complete trials); `collect --arm A --tier T`; `select --arm A` (S only); `compare --arm A`
 (C, against A0; shared-core hashes must match A0 and each arm must match its own adapter/runtime manifest); `final`.
-- [ ] **Step 1: failing tests (pure):** a resumed worker skips complete trials and redoes incomplete ones; `compare` refuses on a
+- [ ] **Step 1: failing tests (pure):** a resumed worker skips complete trials and redoes incomplete ones; a worker only ever
+  loads the one checkpoint it was launched with (no in-process switch; FAILURES #57); `compare` refuses on a
   module-hash mismatch; `select` reads only S; `compare` reads only C; held-out layouts never reach `select`.
 - [ ] **Step 2–4:** fail, implement, pass, mutate. Fork hygiene: grep for `xvla_props_p2_eval` outside the deliberate read-only
   imports; symtable dead-name scan.
@@ -159,7 +160,9 @@ folder per trial, skip existing complete trials); `collect --arm A --tier T`; `s
 - [ ] `plan` → `feasibility` (CPU, sharded) → merge; record dropped layouts.
 - [ ] `verify_bundle.py` on the P2 bundle; `prepare --arm A0 --checkpoints 101520`.
 - [ ] Smoke: measure peak memory including checkpoint switches and loading, not only two steady-state trials (use a separate resource probe or selection-tier jobs; never rerun completed C trials).
-  Worker count must fit actual available GPU/RAM/CPU with headroom. Eight times 7.3 GiB exceeds this GPU.
+  Worker count must fit actual available GPU/RAM/CPU with headroom. Evidence (spec, What is established): 8 non-switching
+  X-VLA workers ran at ~4.2 GB each in P3; switching workers reached 7.3 GiB in P2 and one died. **Never let a worker switch
+  checkpoint:** one checkpoint per worker pool (A0: 8 workers; selection: one worker per candidate).
   Schedule GPU rollouts separately from M1 training unless combined measured peaks fit. Budget video storage.
 - [ ] A0 on C (384 minus dropped). Poll. `collect`.
 - [ ] Write `docs/VLA_INPUTS_M0_<date>.md` (plan, feasibility, A0 per object, per cell, failure causes, signals recorded), update

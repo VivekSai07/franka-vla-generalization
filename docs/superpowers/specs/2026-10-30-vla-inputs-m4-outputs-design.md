@@ -35,7 +35,10 @@ P2's 9 values, does it recover some of what A3 gains from being **given** the bo
 ### Review requirements before training
 
 [Audit R2](../../VLA_INPUTS_AUDIT_20261030.md): the inspected X-VLA source sends only the first view through
-`vlm_features`; the second view is separate. Verify the installed source and keep both features in the head, with
+`vlm_features`; the second view is separate. **Confirmed on the installed source (2026-10-30, `modeling_xvla.py` sha256
+`d8fc952243f764a33157be2518fddd38ebc071d53fa66a5f9dea8d775f787dbf`, lines 157–192):** every view goes through the Florence-2
+image encoder, but only view 0 (`image_features[:, 0]`) is merged with the instruction tokens and run through the language
+encoder (`vlm_features`); views 1+ are returned as image-encoder features only (`aux_visual_inputs`). Keep both features in the head, with
 camera order and token masks explicit. Assert each view can affect the output, auxiliary gradients reach shared trainable
 visual parameters, and all head parameters are included exactly once in the optimizer with the intended LR. Preserve the
 base model's random stream and avoid a second VLM forward that changes dropout/noise draws.

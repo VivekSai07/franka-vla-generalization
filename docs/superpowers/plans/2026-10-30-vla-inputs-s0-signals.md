@@ -78,8 +78,9 @@ docker run --rm --runtime runc --network none --read-only --user "$(id -u):$(id 
   `mj_forward` from the same pre-forward integration state/warm start used for the scratch reference path, compare `sensordata` with `wrist_wrench` to 1e-9 absolute. Controlled static known-load fixtures test sensor sign, torque reference-point translation and gravity contribution;
   controlled no-contact and known-contact fixtures test each finger and robot/external filtering. Real trajectory forces
   and moving-pose load differences are descriptive, not universal pass/fail laws. An elevated object may have been released.
-  Inspect sealed NPZ keys for `phase_index` (the collector declares it); use verified phases if present, otherwise document
-  pre-close / closed-and-lifted / after-release inference from actions and height.
+  The sealed NPZ has **no** `phase_index` (verified 2026-10-30: keys are `qpos, ctrl, props_pose, initial_state, final_qpos,
+  object, bin, blue_slot, start, distractors, distractor_poses`; `Committer` never saves it). Use the documented
+  pre-close / closed-and-lifted / after-release inference from actions and height; do not search for recorded phases.
   `test_signals_do_not_write_data`: `qpos`, `qvel`,
   `qacc_warmstart`, `efc_force` unchanged after calling both.
 - [ ] **Step 2:** run; expect failure.
