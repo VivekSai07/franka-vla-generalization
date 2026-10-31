@@ -19,7 +19,7 @@ numpy, MuJoCo `MjSpec`, `mujoco.Renderer` segmentation (OSMesa).
 
 - Branch `feat/vla-inputs` in worktree `.worktrees/feat-vla-inputs` (create once, from `main`, per
   [branching-for-an-experiment-axis](../../../.github/skills/branching-for-an-experiment-axis/SKILL.md)); `docker ps` first.
-- Never edit any file in P2's `provenance()` (76 files; list in `outputs/props_p2_data/props_p2_20261013/provenance.json`).
+- Never edit any file in P2's `provenance()` (142 files, not 76; list in `outputs/props_p2_data/props_p2_20261013/provenance.json`).
 - Mount the sealed P2 root **read-only**. Never write under `datasets/` or the P2 root.
 - Sealed P2 seal fingerprint: `b1d642b3edeebe15d462709ebeb8b92afa6d7eabcca3be5514e5deeecaf4d898`.
 - No tolerance in G1: byte equality only.
@@ -70,7 +70,7 @@ docker run --rm --runtime runc --network none --read-only --user "$(id -u):$(id 
 - Produces: `signals.wrist_wrench(model, data) -> np.ndarray (6,)` (force N, torque N·m, hand frame `robot0_right_hand`, MuJoCo
   force/torque-sensor convention); `signals.finger_force(model, data) -> np.ndarray (2,)` (left, right; sum of normal
   components of `mj_contactForce` over contacts between the finger body and any geom whose body is not part of the robot);
-  `signals.scratch(model, data) -> MjData` (a `mj_copyData` copy). Neither function writes to `data`.
+  `signals.scratch(model, data) -> MjData` (a `copy.copy(data)` copy: the Python bindings have no `mj_copyData`). Neither function writes to `data`.
 
 - [ ] **Step 1: failing tests.** `test_wrench_matches_mujoco_sensor` (G3): build a sensor model from the same XML with `MjSpec`,
   add a site at the hand body origin and `force` + `torque` sensors on it; for every 10th frame of episodes 0, 271, 539 (via

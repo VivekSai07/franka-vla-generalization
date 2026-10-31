@@ -24,7 +24,7 @@ P2's 9 values, does it recover some of what A3 gains from being **given** the bo
 | id | decision | reason |
 |---|---|---|
 | D1 | **Run M4a only if M3 shows the box helps:** A3 beats A0 on M0's primary test, or A3's `wrong_object` count is lower than A0's at p < 0.05 (paired, exact). Otherwise M4a is not run, and the user may override with the reason recorded | budget heuristic only; input conditioning and auxiliary supervision are distinct hypotheses, and a null M3 does not rule out M4a |
-| D2 | Head: concatenate separately mean-pooled `vlm_features` (front view + language) and `aux_visual_inputs` (wrist view) in fixed order → 2-layer MLP (hidden 256, GELU) → 10 outputs; loss = L1 on the four coordinates of each camera where `in_frame` = 1, plus binary cross-entropy on the two `in_frame` flags | small, attached where the action transformer reads, no change to the action path |
+| D2 | Head: concatenate separately mean-pooled `vlm_features` (front view + language) and `aux_visual_inputs` (wrist view) in fixed order → 2-layer MLP (hidden 256, GELU) → 8 outputs; loss = L1 on the four coordinates of each camera. **No `in_frame` term:** S0 found it 1 on every training frame, so a classification target would be constant | small, attached where the action transformer reads, no change to the action path |
 | D3 | Total loss = action loss + λ · box loss, with **λ fixed before training**: on the first training batch at initialisation (a probe run before `--check`), λ = 0.1 × (action loss / box loss), then frozen and recorded. No tuning on rollouts or on offline metrics | one value chosen a priori; tuning would need a selection set this programme does not have |
 | D4 | Head parameters initialised from a **separate, seeded generator** so the global torch random stream is unchanged | needed for the equivalence gate below |
 | D5 | Inputs at training and test time: P2's 9-value state, sealed images, P2 instructions (as A0). The head is discarded at test time | deployable without a box |
@@ -43,8 +43,8 @@ camera order and token masks explicit. Assert each view can affect the output, a
 visual parameters, and all head parameters are included exactly once in the optimizer with the intended LR. Preserve the
 base model's random stream and avoid a second VLM forward that changes dropout/noise draws.
 
-Define loss reductions: per-camera coordinate L1 mean over its four coordinates and valid rows, zero for an empty mask;
-mean the two camera coordinate terms, then add mean BCE over both validity logits and batch. Compute reductions in FP32.
+Define loss reductions: per-camera coordinate L1 mean over its four coordinates and rows; mean the two camera terms
+(S0: `in_frame` = 1 on every training frame, so no mask and no BCE term). Compute reductions in FP32.
 For D3 record batch identity, RNG seed, loss reductions, finite/nonzero denominator and shared-parameter gradient norms;
 matching scalar loss magnitudes does not guarantee a 10% gradient contribution. No outcome-driven lambda adjustment.
 Verify save/load through the ordinary inference adapter after dropping only the declared head keys, never broad

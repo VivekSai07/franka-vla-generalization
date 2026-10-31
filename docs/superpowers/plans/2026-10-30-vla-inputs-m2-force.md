@@ -52,12 +52,15 @@ image for rollouts.
 
 **Files:** modify `contract.py`; create `tests/test_inputs.py`.
 
-**Interfaces:** `contract.selected_stats(...)` over 17 state values; `contract.check_model_inputs(policy, batch, raw_state)` — a
-local copy of the shared check with `REAL_STATE_DIM = 17`: proprio shape (n, 20), `proprio[:, :17]` equals the normalised
-state, `proprio[:, 17:]` is zero, domain id 0, image and token shapes as P2.
-- [ ] **Step 1: failing tests:** the check passes on a real batch; it fails if a 17-value state is truncated to 9; statistics
-  shapes are (17,) for state, (8,) for action; the first 9 entries of the state statistics equal P2's admission statistics
-  byte for byte.
+**Interfaces:** `contract.selected_stats(...)` over 17 state values; `contract.extra_transform` (clip bounds from S0's
+sealed `report.json`, mean/std of the clipped training rows; applied in the loader and the rollout state builder);
+`contract.check_model_inputs(policy, batch, raw_state)` — a local copy of the shared check with `REAL_STATE_DIM = 17`:
+proprio shape (n, 20), `proprio[:, :9]` equals the raw state, `proprio[:, 9:17]` equals the transformed extras,
+`proprio[:, 17:]` is zero, domain id 0, image and token shapes as P2.
+- [ ] **Step 1: failing tests:** `make_config` still has `STATE` normalisation `IDENTITY` (as P2); the check passes on a real
+  batch; it fails if a 17-value state is truncated to 9 or if the extras are left raw; the transform's mean/std come from
+  clipped training rows only (count them); statistics shapes are (17,) for state, (8,) for action; the first 9 entries of the
+  state statistics equal P2's admission statistics byte for byte.
 - [ ] **Step 2–4:** fail, implement, pass, mutate.
 - [ ] **Step 5:** commit `M2: statistics and input check`.
 

@@ -36,12 +36,12 @@ subclass adding an MLP head on separately pooled `vlm_features` and `aux_visual_
 `contract.py` (targets from the S0 sidecar), `runner.py` (loss, λ).
 
 **Interfaces:** `head.BoxHead(hidden: int = 256)` — separately mean-pool front/language and wrist features, concatenate
-in fixed camera order → Linear → GELU → Linear(10);
-`head.box_loss(pred (n, 10), target (n, 10)) -> Tensor` = L1 on coordinates where the camera's `in_frame` is 1 + BCE-with-logits
-on the two `in_frame` entries; `head.AuxBoxXVLA(XVLAPolicy)` whose `forward(batch)` returns
+in fixed camera order → Linear → GELU → Linear(8);
+`head.box_loss(pred (n, 8), target (n, 8)) -> Tensor` = L1 over the four coordinates of each camera, averaged over the two
+cameras (no `in_frame` term: constant 1 in S0's training rows); `head.AuxBoxXVLA(XVLAPolicy)` whose `forward(batch)` returns
 `action_loss + LAMBDA * box_loss` and logs both; the head initialised from `torch.Generator().manual_seed(HEAD_SEED)`.
-- [ ] **Step 1: failing tests:** coordinates for a camera with in_frame = 0 do not contribute to the loss (gradient zero on those
-  outputs); the global torch random state after building `AuxBoxXVLA` equals the state after building `XVLAPolicy`;
+- [ ] **Step 1: failing tests:** the loss weights both cameras equally and both views reach the head (zeroing either view
+  changes the prediction); the global torch random state after building `AuxBoxXVLA` equals the state after building `XVLAPolicy`;
   `select_action` output with the head present equals the plain policy's for the same weights and seed; recipe equals P2's.
 - [ ] **Step 2:** forking-skill pass.
 - [ ] **Step 3–4:** implement, pass, mutate (head drawn from the global generator; mask removed).

@@ -33,7 +33,7 @@
 **Files:** create `docker/pi05/Dockerfile.admission-pi`, `docker/pi05/Dockerfile.robosuite-pi`, `docker/pi05/README.md`,
 `experiments/pi05_props_p2/tests/test_image.py`.
 
-- [ ] **Step 0 (do first, it has lead time):** the user requests access to `google/paligemma-3b-pt-224` on Hugging Face
+- [x] **Step 0 (done 2026-10-30; tokenizer files downloaded, `pi05_base` weights not yet):** the user requests access to `google/paligemma-3b-pt-224` on Hugging Face
   (gated, **manual** approval, checked 2026-10-30). Task 2 cannot start without it.
 - [ ] **Step 1 (resolved 2026-10-30 on the RTX machine; re-verify, do not re-derive):** LeRobot 0.4.4's `pi` extra pins the
   branch `fix/lerobot_openpi`, which is commit `dcddb970176382c0fcf4521b0c0e6fc15894dfe0` (transformers 4.53.3). That commit

@@ -95,7 +95,7 @@ without an architecture change.
 
 - **One variable per arm.** A1 changes the model (and its recipe), A2 only the state contents, A3 only the state contents, A4
   only the training loss. Renderer stays OSMesa (EGL is not adopted; A0 must not be evaluated under EGL).
-- **Nothing sealed is edited.** P2's `provenance()` hashes 76 files (`experiments/props_p2_data/**`, `experiments/props_scene/*.py`,
+- **Nothing sealed is edited.** P2's `provenance()` hashes 142 files (`experiments/props_p2_data/**`, `experiments/props_scene/*.py`,
   `experiments/robosuite_scene/*.py`, `src/**`, the P2 spec and plan, shared helpers). They are imported read-only; where
   behaviour must differ the code is forked into the new package, never patched on disk.
 - **Every new training package proves equality before it trains:** with its extra inputs set to zero it reproduces P2's
@@ -114,8 +114,9 @@ without an architecture change.
   A gain around the wrong-object rate (about 6 points) is a hypothesis, not an upper bound; boxes may also change alignment.
   M0 has low unadjusted power at that effect size.
 - **M2 (F/T):** an arm intended to help the hold, sampled at 30 Hz but used at 3 Hz replanning (ten queued actions). But the state already contains both finger positions, so the
-  policy already "knows" the gripper closed; the new information is load (object weight 0.5–2 N at the wrist, masses
-  0.05–0.20 kg) and grip force. The expert never fails a grasp, so demonstrations contain no recovery. **A null is plausible.**
+  policy already "knows" the gripper closed. S0 (2026-10-30) showed the object's weight is not readable from the mean wrist
+  force (the hand's own ~10 N dominates); the new information is grip force (separates objects in the hold, 4.1–6.6 N) and
+  contact transients. The expert never fails a grasp, so demonstrations contain no recovery. **A null is plausible.**
 - **M1 (pi0.5):** no confident prediction; larger VLM, different action head, state given as text tokens.
 
 ## What this programme cannot show
