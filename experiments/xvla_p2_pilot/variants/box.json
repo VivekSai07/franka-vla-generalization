@@ -1,0 +1,8 @@
+{
+  "loss_term": null,
+  "loss_weight": 0.0,
+  "name": "box",
+  "note": "M3 (arm A3) in a pilot: the target box in both cameras, (u_min, v_min, u_max, v_max, in_frame) x 2, raw, from the sealed S0 sidecar.",
+  "schema": "vla_inputs_pilot_variant_v1",
+  "state_builder": "box"
+}

@@ -1,0 +1,8 @@
+{
+  "loss_term": null,
+  "loss_weight": 0.0,
+  "name": "control",
+  "note": "Shared control: every extra state value is zero, so this is checkpoint 101,520 continued under the pilot recipe (P2 input unchanged).",
+  "schema": "vla_inputs_pilot_variant_v1",
+  "state_builder": "control"
+}
