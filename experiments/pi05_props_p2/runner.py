@@ -27,6 +27,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
+from . import assets
 from . import contract as c
 from . import strategy as st
 
@@ -35,6 +36,7 @@ HOT_C, COOL_C, HOT_LIMIT_S = 83, 75, 1800  # firmware target is 85 C on this car
 SNAPSHOT_WRITE_S = 600  # a 14 to 43 GB write; the probe measures it and the pause decision keeps this margin
 SNAPSHOT_FILES = ('model.pt', 'optimizer.pt', 'rng.pt', 'report.json')
 PROBE_UPDATES = 20
+PROBE_CPU_THREADS = 24  # of the CPU optimizer in `bf16_cpu_master`; the host has 48 cores
 PEAK_LR, FLOOR_LR = 2.5e-5, 2.5e-6
 X_VLA_EFFECTIVE_OVER_RAW = 0.9/0.524  # what thermal pauses and data waits made of X-VLA's raw pace
 
@@ -442,7 +444,7 @@ def measure_changes(strategy, step, label, lr):
                             for dtype in sorted({r['dtype'] for r in rows})}, per_tensor=rows)
     if small is not None:
         master_rows = st.changed_fractions(small, {n: strategy.masters[n].detach() for n in small})
-        result['fp32_masters_small_tensors'] = dict(tensors=len(master_rows), **st.summarize_changes(master_rows))
+        result['fp32_masters_small_tensors'] = st.summarize_changes(master_rows)
     del before, small
     return result
 
@@ -481,7 +483,10 @@ def project(name, microbatch, seconds_per_update, sizes, peak_bytes):
                 disk_peak_gib=c.disk_requirement_bytes(False, decision)/1024**3,
                 disk_at_end_bytes=checkpoints*sizes['checkpoint_bytes']+sizes['final_state_bytes']
                 + c.KEEP_SNAPSHOTS*sizes['snapshot_bytes'],
-                checkpoints=checkpoints)
+                # --preflight and --resume-proof outputs stay on disk (the proof re-verifies the scratch run)
+                gate_artifacts_bytes=2*(len(c.checkpoint_updates(True))*sizes['checkpoint_bytes']
+                                        + sizes['final_state_bytes'] + c.KEEP_SNAPSHOTS*sizes['snapshot_bytes']),
+                assets_bytes=sum(size for size, _ in assets.FILES.values()), checkpoints=checkpoints)
 
 
 def probe_one(name, microbatch, updates, ds, starts, stats, out, threads):
@@ -583,7 +588,7 @@ def probe_memory(args):
         thermal = gpu_telemetry()
         if too_hot(thermal):
             summary.setdefault('thermal_pauses', []).append(cool_down())
-        result = probe_one(name, microbatch, updates, ds, starts, stats, out, args.cpu_threads)
+        result = probe_one(name, microbatch, updates, ds, starts, stats, out, args.cpu_threads or PROBE_CPU_THREADS)
         summary['results'].append({k: v for k, v in result.items()
                                    if k not in ('rows', 'changed_per_update', 'losses', 'grad_norms')})
         print('PROBE', json.dumps({k: result.get(k) for k in ('strategy', 'microbatch', 'status', 'peak_allocated_gib',

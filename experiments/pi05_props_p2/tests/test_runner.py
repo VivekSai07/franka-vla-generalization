@@ -323,6 +323,77 @@ class ProjectionTests(unittest.TestCase):
                          + 2*sizes['snapshot_bytes'] + 2*1024**3)
         self.assertEqual(p['disk_at_end_bytes'], 7*sizes['checkpoint_bytes'] + sizes['final_state_bytes']
                          + sizes['snapshot_bytes'])
+        self.assertEqual(p['gate_artifacts_bytes'], 2*(2*sizes['checkpoint_bytes'] + sizes['final_state_bytes']
+                                                       + sizes['snapshot_bytes']))
+        self.assertEqual(p['assets_bytes'], sum(size for size, _ in r.assets.FILES.values()))
+
+
+class ProbeMeasurementTests(unittest.TestCase):
+    def test_changed_fractions_at_peak_and_floor_learning_rate_on_a_bf16_model(self):
+        from experiments.pi05_props_p2.tests.test_strategy import Tiny, batches, masters_of
+        from experiments.pi05_props_p2 import strategy as st
+        model = Tiny()
+        strategy = st.make_strategy('bf16_all', model, masters_of(model), 'cpu')
+        counter = [0]
+
+        def step(lr):
+            counter[0] += 1
+            strategy.zero_grad()
+            model(batches()[0]).backward()
+            strategy.step(counter[0]+20, lr)
+
+        for _ in range(3):
+            step(1e-3)
+        peak = r.measure_changes(strategy, step, 'peak_lr', 1e-2)
+        floor = r.measure_changes(strategy, step, 'floor_lr', 1e-7)
+        self.assertEqual(peak['label'], 'peak_lr')
+        self.assertEqual(set(peak), {'label', 'forced_learning_rate', 'view', 'overall', 'by_group', 'by_dtype',
+                                     'per_tensor'})
+        self.assertEqual({row['name'] for row in peak['per_tensor']}, set(strategy.params))
+        self.assertGreater(peak['by_dtype']['torch.bfloat16']['element_weighted'],
+                           floor['by_dtype']['torch.bfloat16']['element_weighted'])
+        self.assertEqual(floor['by_dtype']['torch.bfloat16']['element_weighted'], 0.0)
+        self.assertGreater(floor['by_dtype']['torch.float32']['element_weighted'], 0.0)
+
+    def test_cpu_master_reports_its_fp32_masters_as_moving_when_the_bf16_view_does_not(self):
+        from experiments.pi05_props_p2.tests.test_strategy import Tiny, batches, masters_of
+        from experiments.pi05_props_p2 import strategy as st
+        model = Tiny()
+        strategy = st.CpuMasterAdam(model, masters_of(model), fused=False)
+
+        def step(lr):
+            strategy.zero_grad()
+            model(batches()[0]).backward()
+            strategy.step(30, lr)
+
+        result = r.measure_changes(strategy, step, 'floor_lr', 1e-7)
+        self.assertEqual(result['by_dtype']['torch.bfloat16']['element_weighted'], 0.0)
+        self.assertEqual(result['fp32_masters_small_tensors']['tensors'], 6)
+        self.assertGreater(result['fp32_masters_small_tensors']['element_weighted'], 0.9)
+
+    def test_sizes_are_written_measured_and_removed(self):
+        class FakePolicy:
+            def save_pretrained(self, path):
+                path = Path(path)
+                path.mkdir()
+                save_file({'w': torch.zeros(1000)}, str(path/'model.safetensors'))
+                (path/'config.json').write_text('{}')
+
+        with tempfile.TemporaryDirectory() as tmp:
+            scratch = Path(tmp)/'sizes'
+            sizes = r.measure_sizes(FakePolicy(), FakeStrategy(), scratch)
+            self.assertFalse(scratch.exists())
+        self.assertEqual(sizes['checkpoint_bytes'], sizes['checkpoint_files']['model.safetensors'])
+        self.assertGreater(sizes['checkpoint_bytes'], 4000)
+        self.assertEqual(sizes['snapshot_bytes'], sum(sizes['snapshot_files'].values()))
+        self.assertEqual(sizes['final_state_bytes'], sizes['snapshot_files']['optimizer.pt'])
+        self.assertEqual(set(sizes['snapshot_files']), set(r.SNAPSHOT_FILES))
+
+    def test_tensor_groups(self):
+        self.assertEqual(r.tensor_group('model.paligemma_with_expert.paligemma.model.vision_tower.x'), 'vision')
+        self.assertEqual(r.tensor_group('model.paligemma_with_expert.paligemma.model.language_model.layers.0.x'), 'language')
+        self.assertEqual(r.tensor_group('model.paligemma_with_expert.gemma_expert.model.layers.0.x'), 'expert')
+        self.assertEqual(r.tensor_group('model.action_in_proj.weight'), 'projections')
 
 
 if __name__ == '__main__':

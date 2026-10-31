@@ -106,9 +106,10 @@ and `action` (8)); `contract.recipe(preflight: bool)`; `contract.make_config(dev
 `--resume-proof`, `--train [--stop-at T] [--resume]`. The loop, prefetcher, snapshot/resume, thermal guard and pause-at-snapshot
 follow `experiments/xvla_props_p2/runner.py` (copied and adapted, not imported). Disk and GPU guards derived from measured
 sizes in `recipe()`.
-- [ ] **Step 1: failing tests (pure):** mutually exclusive modes; `--resume` only with `--train`; the horizon comes from
+- [x] **Step 1: failing tests (pure):** mutually exclusive modes; `--resume` only with `--train`; the horizon comes from
   `recipe()`; the disk guard equals the formula over measured sizes; snapshots kept = 1 plus the one being written.
-- [ ] **Step 2–4:** fail, implement, pass, mutate.
+- [x] **Step 2–4:** fail, implement, pass, mutate. *Done 2026-10-31* (tests were written with or just before the code, not run red
+  first; seven mutations each fail the suite). The runner also has the gate modes, unexercised until a decision exists.
 - [ ] **Step 5 (GPU, admission-pi):** `--probe-memory` for spec D5's candidates (a) all-bf16, (b) bf16 on GPU with FP32
   master weights and moments offloaded to CPU, (c) `train_expert_only`: peak memory over 20 updates, seconds per
   update, checkpoint and snapshot sizes, and for (a) and (b) the per-tensor fraction of elements changed by one update at the
@@ -122,7 +123,7 @@ sizes in `recipe()`.
 - [ ] Pin installed source hashes, optimizer implementation and transformers commit; `pip check`, offline load and actual
   forward/backward/update/inference must pass. If the two-package install (transformers + tokenizers) cannot satisfy dependencies, stop and amend
   the manifest before training; do not weaken the gate or mutate the old images.
-- [ ] Compare custom runner loss, gradients and update against the installed policy/processor reference on a fixed batch;
+- [x] *(CPU, done 2026-10-31; the real-model optimizer update is measured by the probe)* Compare custom runner loss, gradients and update against the installed policy/processor reference on a fixed batch;
   check padding/masks, real action dimensions, camera order, prompt length and physical-action round-trip.
 - [ ] Record parameter/gradient/moment/master-weight dtypes. Both bf16-weight candidates can lose sub-ULP updates;
   fraction-changed is diagnostic only. Verify the optimizer supports its actual dtype configuration and resumes exactly.

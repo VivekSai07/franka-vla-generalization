@@ -8,6 +8,9 @@
   (tokenizer files) in the arm manifest (a core change, so a re-prepare), the worker count (8 workers reach 84 C and pause),
   then `stage A0 comparison 101520`. Not pushed.
 
+- **M1 Task 4 runner and CPU parts of 4b written (2026-10-31, branch `feat/vla-inputs-m1`); `--probe-memory` waits for the GPU
+  (the M0 A0 comparison holds it), then the user decides the memory strategy.**
+  Detail in [BENCHMARK_STATUS.md](docs/BENCHMARK_STATUS.md).
 - **M1 Tasks 1-3 done (2026-10-30, branch `feat/vla-inputs-m1`, merged into `main` 2026-10-31):** the two pi0.5 images are built and tested
   (`docker/pi05/README.md`), the `pi05_base` weights (revision `9e55186a`, 14.5 GB) and PaliGemma tokenizer are downloaded and
   hash-pinned, and the training contract `experiments/pi05_props_p2/` is written and tested (69 tests). **Next: Task 4**, the GPU

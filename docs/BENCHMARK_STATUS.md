@@ -1,5 +1,22 @@
 # Franka benchmark: start here
 
+## M1 Task 4 runner and CPU parts of Task 4b written; memory probe waiting for an idle GPU - 2026-10-31
+
+Branch `feat/vla-inputs-m1` (not pushed). `experiments/pi05_props_p2/` now has the runner (`--probe-memory`, `--check`,
+`--preflight`, `--resume-proof`, `--train`), a tie-aware weight loader (never `from_pretrained`) and the three D5 candidates behind
+one interface (`bf16_all`, `bf16_cpu_master`, `expert_only`); every mode except the probe refuses while `contract.DECISION` is
+`None`. CPU evidence, in `admission-pi`: the learning-rate schedule equals LeRobot's scheduler at 11 updates of the real horizon;
+accumulation over microbatches of 1, 2, 4 and 8 gives the same update as one batch of 8; the CPU-master update equals an FP32
+reference AdamW and its bf16 copy is exactly that rounding; both snapshot-resume paths are bit-exact on a tiny model; with real
+rows and the real 3.6 B policy the runner's loss and all 812 gradient tensors equal a hand-written reference with explicit noise
+and time (the loss excludes the 24 padded action dimensions), camera order, padding, prompt length and the physical-action round
+trip pass. Measured facts: the policy has 812 unique parameter tensors (the tied embedding is one); `expert_only` trains
+693,422,112 parameters (the expert 691,256,320 plus the action and time projections 2,165,792; the 2,361,344 of PaliGemma's
+multi-modal projector in the spec's "other" figure are frozen there). Seven mutations (typed horizon, two snapshots kept, no loss
+division by the accumulation, no copy-back of the CPU master, no clipping, no dtype check in the loader, probe allowed after
+`--check`) each fail the suite. **No GPU work was done:** eight `m0-A0-comparison-101520-*` containers were running (33.6 GB and
+97% of the GPU in use), so `--probe-memory` was not started.
+
 ## M0 evaluator built, frozen, A0 prepared and smoked; stopped before the A0 comparison run - 2026-10-31
 
 Branch `feat/vla-inputs` (`experiments/vla_inputs_eval/`, `experiments/vla_inputs_arm_xvla/`, `scripts/vla_inputs_eval.sh`; core
