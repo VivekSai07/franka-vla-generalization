@@ -1,0 +1,4 @@
+# The two packages that make the images differ from their parents; installed with --no-deps --require-hashes.
+# transformers is LeRobot 0.4.4's `pi` extra (branch fix/lerobot_openpi), pinned by commit, 4.53.3.
+tokenizers==0.21.4 --hash=sha256:51b7eabb104f46c1c50b486520555715457ae833d5aee9ff6ae853d1130506ff
+transformers @ https://github.com/huggingface/transformers/archive/dcddb970176382c0fcf4521b0c0e6fc15894dfe0.zip --hash=sha256:87a4dc40543efab2d52e5579574169e561ecc29b1fe8d3edadf962df6f062155

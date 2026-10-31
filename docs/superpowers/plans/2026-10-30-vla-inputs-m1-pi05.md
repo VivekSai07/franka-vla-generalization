@@ -35,41 +35,46 @@
 
 - [x] **Step 0 (done 2026-10-30; tokenizer files downloaded, `pi05_base` weights not yet):** the user requests access to `google/paligemma-3b-pt-224` on Hugging Face
   (gated, **manual** approval, checked 2026-10-30). Task 2 cannot start without it.
-- [ ] **Step 1 (resolved 2026-10-30 on the RTX machine; re-verify, do not re-derive):** LeRobot 0.4.4's `pi` extra pins the
+- [x] **Step 1 (resolved 2026-10-30 on the RTX machine; re-verify, do not re-derive):** LeRobot 0.4.4's `pi` extra pins the
   branch `fix/lerobot_openpi`, which is commit `dcddb970176382c0fcf4521b0c0e6fc15894dfe0` (transformers 4.53.3). That commit
   requires `tokenizers>=0.21,<0.22`; the parent image has 0.22.2. Install exactly
   `transformers @ https://github.com/huggingface/transformers/archive/dcddb970176382c0fcf4521b0c0e6fc15894dfe0.zip` and
   `tokenizers==0.21.4`, both `--no-deps`. A throwaway probe with these two gave `siglip check` True and a constructed
   `PI05Policy`. Record both in `docker/pi05/README.md`. If `git ls-remote` now shows a different branch head, keep the
   recorded commit.
-- [ ] **Step 2: failing test** `test_image.py` (run in the new image): `transformers.models.siglip.check
+- [x] **Step 2: failing test** `test_image.py` (run in the new image): `transformers.models.siglip.check
   .check_whether_transformers_replace_is_installed_correctly()` is true; `PI05Policy(PI05Config(...))` constructs on CPU with
   the default variants and has 3,616,757,520 parameters with the P2 features; `pip check` passes; `pip freeze` equals the
   parent image's except the transformers and tokenizers lines (the parent's freeze is captured to
   `docker/pi05/parent_freeze_<digest>.txt` first).
-- [ ] **Step 3:** build both images FROM the existing digests (`DOCKER_BUILDKIT=0`, proxy build args), installing the two pinned
+- [x] **Step 3:** build both images FROM the existing digests (`DOCKER_BUILDKIT=0`, proxy build args), installing the two pinned
   packages with `--no-deps`; record both new digests in `docker/pi05/README.md` and `docs/OPERATIONS.md`. A container that
   runs code from `/tmp` needs `--tmpfs /tmp:rw,exec` (Docker's tmpfs is `noexec` by default; the probe failed on it once).
-- [ ] **Step 4:** run the test in both images; pass. **Physics unchanged:** run `props_p2_data.record.determinism` (12 rendered
+- [x] **Step 4:** run the test in both images; pass. **Physics unchanged:** run `props_p2_data.record.determinism` (12 rendered
   attempts) in `robosuite-pi` and in the robosuite image, into scratch directories; the 12 digests must be equal.
-- [ ] **Step 5:** commit `M1: pi0.5 images`.
+- [x] **Step 5:** commit `M1: pi0.5 images`. *Done 2026-10-30:* `vla-pi05:admission` `sha256:a229f2fb…290eae`, `vla-pi05:robosuite`
+  `sha256:2abb18a5…b21`; installed with `--require-hashes` (the freeze shows `#sha256=` on the transformers line); the test
+  fails in the unmodified parents; 12 of 12 determinism digests equal. `docker/pi05/README.md`.
 
 ### Task 2: assets
 
 **Files:** create `experiments/pi05_props_p2/assets.py`, `tests/test_assets.py`.
 
-- [ ] **Step 1:** on the host, the user logs in to Hugging Face (PaliGemma access approved, Task 1 Step 0) and downloads
+- [x] **Step 1:** on the host, the user logs in to Hugging Face (PaliGemma access approved, Task 1 Step 0) and downloads
   `lerobot/pi05_base` at revision `9e55186ad36e66b95cda57bc47818d9e6237ae30` (weights sha256
   `0eb11ca9587678c1d2ef8cf32807c29f8ce53a2bfdfc1aa4a4c96f16fca59b0f`, 14,467,165,872 bytes; the latest revision's
   preprocessor uses a `relative_actions_processor` step that LeRobot 0.4.4 lacks) and the tokenizer files of
   `google/paligemma-3b-pt-224` into `outputs/research/pi05_assets/`. Disk: measure with `du -sh`.
-- [ ] **Step 1b:** test that the weights load into `PI05Policy` with zero missing and zero unexpected keys (the loader
+- [x] **Step 1b:** test that the weights load into `PI05Policy` with zero missing and zero unexpected keys (the loader
   prints missing keys and continues, so assert on the returned lists), and that processors are built from the local config
   and P2 statistics, never from the hub's `policy_preprocessor.json`.
-- [ ] **Step 2: failing test:** `assets.require_assets()` hashes every file and compares with the pinned table; a one-byte change
+- [x] **Step 2: failing test:** `assets.require_assets()` hashes every file and compares with the pinned table; a one-byte change
   in a copied fixture fails it.
-- [ ] **Step 3–4:** write the pinned table from the downloaded files; pass.
-- [ ] **Step 5:** commit `M1: pinned pi0.5 assets` (hashes only; never the weights).
+- [x] **Step 3–4:** write the pinned table from the downloaded files; pass.
+- [x] **Step 5:** commit `M1: pinned pi0.5 assets` (hashes only; never the weights). *Done 2026-10-30:* downloaded anonymously (the
+  repository is public), 14 GB. Step 1b: `from_pretrained(strict=True)` always lists the tied `embed_tokens.weight` as missing and only
+  prints a warning, so the test asserts on the key sets (a missing key is accepted only if it shares storage with a loaded one) and
+  on every tensor. The processor half of Step 1b is in Task 3's `test_processor.py`.
 
 ### Task 3: contract
 
@@ -82,15 +87,16 @@ tested against the original on the real dataset; `contract.windows()` (start fra
 episode); `contract.statistics()` (training rows only: `mean`, `std`, `min`, `max`, `q01`, `q99` for `observation.state` (9)
 and `action` (8)); `contract.recipe(preflight: bool)`; `contract.make_config(device)` (a `PI05Config` with the spec's values,
 `n_action_steps` 10, the two image features, `max_state_dim` 32); `contract.current_binding()`.
-- [ ] **Step 1: failing tests:** `len(windows()) == 193_440`; `recipe(False)["max_optimizer_updates"] == 120_900` computed as
+- [x] **Step 1: failing tests:** `len(windows()) == 193_440`; `recipe(False)["max_optimizer_updates"] == 120_900` computed as
   `round(5.0 * len(windows()) / 8)`; checkpoint grid equals the fractions (0.4, 0.6, 0.7, 0.8, 0.9, 1.0) of the run plus 1;
   statistics read no validation row (count the rows); the copied dataset checks accept the sealed P2 dataset and reject a
   fixture with one instruction changed; on CPU, the processor matches the installed reference prompt for a real training frame and quantile-boundary/tail
   fixtures (including values below q01), has 32 state tokens, and preserves the full P2 instruction without truncation.
   Do not assume quantile scaling clips; record native out-of-range token behavior and any explicit recipe deviation. Fork hygiene as the forking skill (residue grep,
   symtable scan).
-- [ ] **Step 2–4:** fail, implement, pass, mutate (typed 120900, validation rows in statistics, chunk 30 windows).
-- [ ] **Step 5:** README written now (it is in `SOURCE_FILES`; confirm non-zero size). Commit `M1: contract`.
+- [x] **Step 2–4:** fail, implement, pass, mutate (typed 120900, validation rows in statistics, chunk 30 windows).
+- [x] **Step 5 (done 2026-10-30; 69 tests OK in `admission-pi`; mutations of the typed horizon, validation rows in the statistics and chunk 30 each
+  fail the suite):** README written now (it is in `SOURCE_FILES`; confirm non-zero size). Commit `M1: contract`.
 
 ### Task 4: runner and the memory probe
 

@@ -2,18 +2,22 @@
 
 ## Where things stand (2026-10-30)
 
-- **M0 built and frozen; A0 prepared and smoked, comparison run not started (2026-10-31, branch `feat/vla-inputs`, not merged).**
+- **M0 built and frozen; A0 prepared and smoked, comparison run not started (2026-10-31, branch `feat/vla-inputs`, merged into `main` 2026-10-31).**
   Equivalence gate passed (4 of 4 recorded P2 trials byte-equal); feasibility 652 of 656 (comparison 573, selection 79); power
   recomputed at 573; core hash `3cc8c623…`. **Open before the A0 run:** decide whether to bind the X-VLA base bundle
   (tokenizer files) in the arm manifest (a core change, so a re-prepare), the worker count (8 workers reach 84 C and pause),
-  then `stage A0 comparison 101520`. Nothing merged or pushed.
+  then `stage A0 comparison 101520`. Not pushed.
 
-- **S0 built and sealed (2026-10-30, branch `feat/vla-inputs`, not merged):** wrist wrench, finger forces and target/prop boxes
+- **M1 Tasks 1-3 done (2026-10-30, branch `feat/vla-inputs-m1`, merged into `main` 2026-10-31):** the two pi0.5 images are built and tested
+  (`docker/pi05/README.md`), the `pi05_base` weights (revision `9e55186a`, 14.5 GB) and PaliGemma tokenizer are downloaded and
+  hash-pinned, and the training contract `experiments/pi05_props_p2/` is written and tested (69 tests). **Next: Task 4**, the GPU
+  memory probe, which needs an idle GPU (no M0 rollout container) and ends in a user decision on the memory strategy.
+- **S0 built and sealed (2026-10-30, branch `feat/vla-inputs`, merged into `main`):** wrist wrench, finger forces and target/prop boxes
   for all 540 sealed P2 episodes by exact action replay (244,080 frames, seal `7e2e06db…f58e6c`, re-verified in a second
   container). [Report](docs/VLA_INPUTS_S0_20261030.md). Consequences for later plans: object weight is not readable from the
   mean wrist `fz` (the hand's own 10 N dominates), finger force does separate objects, `in_frame` is always 1, and the M2 clip
-  percentiles are fixed in the report. **Open:** merge `feat/vla-inputs` to `main`; M0 core and the M1 images are next.
-  PaliGemma access is granted and its tokenizer files are downloaded (pinned revision `35e4f464`); the `pi05_base` weights are not.
+  percentiles are fixed in the report. **Open:** M0 core.
+  PaliGemma access is granted and its tokenizer files are downloaded (pinned revision `35e4f464`); the `pi05_base` weights were downloaded later the same day (M1 bullet above).
 
 - **Plans revised with RTX evidence (2026-10-30, after the audit):** no phase index in the sealed P2 NPZ; pi0.5 needs
   transformers@`dcddb970` **plus** tokenizers 0.21.x and has 3.617 B parameters (FP32 full tuning cannot fit); pin `pi05_base`
