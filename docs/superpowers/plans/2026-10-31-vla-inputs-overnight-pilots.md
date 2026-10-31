@@ -30,10 +30,25 @@ variant; the GPU free of M1 training for Task 6.
 
 ### Task 1: can M0's frozen core run a second campaign? (check before building)
 
-- [ ] Read `experiments/vla_inputs_eval/{evaluate,feasibility,protocol,plan}.py`. Confirm that `plan`/`feasibility`/`prepare`/
-  `worker`/`collect`/`compare` accept a campaign root whose `plan/plan.json` was written by another generator with the same
-  schema, that `comparison` can hold the 192 pilot layouts and `selection` can be empty, and that nothing pins the M0 plan
-  digest. Write the finding into this plan. If any of it fails, stop and propose a versioned wrapper (no core edit).
+- [x] **Done 2026-10-31 (CPU, admission image): yes, with no core edit.** Read `plan`, `feasibility`, `protocol`, `contract`,
+  `evaluate`, `adapters`, `scenes`, `stats`; then ran a scratch check (a repository copy and the core's own fake-arm harness)
+  on a pilot-shaped plan built from M0's layouts (192 comparison layouts, 4 per cell, an **empty** selection tier, 2 smoke
+  layouts) through `load_manifests`, `prepare` (A0, A1), `worker`/`collect` on smoke and comparison, an empty selection
+  stage, `select` and `compare`: all passed; `compare` reported 192 layouts and role "primary and matched-phase"; the core hash
+  in this worktree is `c4f6c303f2ae…`, equal to A0's recorded one. What it needs, all outside the core:
+  1. `plan/plan.json` + `plan/plan.sha256` (`props_p2_data.plan.digest`) in the new campaign root, with `tiers` holding `smoke`,
+     `selection` (empty) and `comparison` (192), the layout schema of M0's `plan.py`, and layout `tier` values `smoke` /
+     `comparison`; `contract.digest(plan)` must equal `p2.digest(plan)` (tested). Nothing pins M0's plan digest or namespace.
+  2. **Adapters must live under `experiments/vla_inputs_arm_*`** (`adapters._IDENTIFIER`), so each pilot arm package is a thin
+     module there that imports `xvla_p2_pilot.eval_adapter`, as M2's `vla_inputs_arm_xvla_force` does; it declares the variant
+     JSON files in `EXTRA_SOURCE` so they are in the arm hash.
+  3. **`compare` requires `arms/<arm>/selection.json`**, which `select` writes from collected selection stages. With one
+     checkpoint and an empty selection tier the driver runs, per arm, an empty `worker` pass (it verifies the checkpoint and
+     runs no trial), `collect`, `select` (winner = the only checkpoint, `tied` lists it) and declares that checkpoint as the
+     matched-phase one at `prepare`. Ceremony, not selection: the report says so.
+  4. **Arm names are `A0`..`A9` per campaign root** and `compare` is always against `A0`. In a pilot root: `A0` = the shared
+     continuation control, `A9` = the untouched bundle checkpoint 101,520 (context), `A1`..`A8` = variants.
+  5. Selection-tier `kind` checks and `final` (Holm over A1-A4) are never used by pilots.
 
 ### Task 2: pilot layout plan
 
