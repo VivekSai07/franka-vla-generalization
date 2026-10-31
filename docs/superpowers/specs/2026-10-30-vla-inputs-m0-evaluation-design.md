@@ -1,7 +1,7 @@
 # M0 — common evaluation protocol and the control arm — design
 
 **Date:** 2026-10-30. **Status: draft for external review.** Part of the
-[VLA inputs programme](2026-10-30-vla-inputs-programme-design.md). No code exists. Everything here is fixed before the first
+[VLA inputs programme](2026-10-30-vla-inputs-programme-design.md). Built 2026-10-30/31 (feasibility: 573 comparison and 79 selection layouts remain). Everything here is fixed before the first
 rollout and not moved afterwards.
 
 **Review revision:** [audit R1/R4/R5](../../VLA_INPUTS_AUDIT_20261030.md). This is a selected-system,

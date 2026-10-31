@@ -2,7 +2,13 @@
 
 ## Where things stand (2026-10-30)
 
-- **M1 Tasks 1-3 done (2026-10-30, branch `feat/vla-inputs-m1`, not merged):** the two pi0.5 images are built and tested
+- **M0 built and frozen; A0 prepared and smoked, comparison run not started (2026-10-31, branch `feat/vla-inputs`, merged into `main` 2026-10-31).**
+  Equivalence gate passed (4 of 4 recorded P2 trials byte-equal); feasibility 652 of 656 (comparison 573, selection 79); power
+  recomputed at 573; core hash `3cc8c623…`. **Open before the A0 run:** decide whether to bind the X-VLA base bundle
+  (tokenizer files) in the arm manifest (a core change, so a re-prepare), the worker count (8 workers reach 84 C and pause),
+  then `stage A0 comparison 101520`. Not pushed.
+
+- **M1 Tasks 1-3 done (2026-10-30, branch `feat/vla-inputs-m1`, merged into `main` 2026-10-31):** the two pi0.5 images are built and tested
   (`docker/pi05/README.md`), the `pi05_base` weights (revision `9e55186a`, 14.5 GB) and PaliGemma tokenizer are downloaded and
   hash-pinned, and the training contract `experiments/pi05_props_p2/` is written and tested (69 tests). **Next: Task 4**, the GPU
   memory probe, which needs an idle GPU (no M0 rollout container) and ends in a user decision on the memory strategy.
