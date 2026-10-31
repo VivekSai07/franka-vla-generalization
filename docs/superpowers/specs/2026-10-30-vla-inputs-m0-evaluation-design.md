@@ -1,6 +1,7 @@
 # M0 — common evaluation protocol and the control arm — design
 
-**Date:** 2026-10-30. **Status: draft for external review.** Part of the
+**Date:** 2026-10-30. **Status: built and run for the control arm.** A0 was run on the comparison tier on 2026-10-31
+([report](../../VLA_INPUTS_M0_20261031.md)); A1–A4 are not run. Part of the
 [VLA inputs programme](2026-10-30-vla-inputs-programme-design.md). Built 2026-10-30/31 (feasibility: 573 comparison and 79 selection layouts remain). Everything here is fixed before the first
 rollout and not moved afterwards.
 

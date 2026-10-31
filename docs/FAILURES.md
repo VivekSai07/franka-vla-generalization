@@ -187,6 +187,21 @@ bound. **Lessons:** assert that the condition a test relies on exists (a force i
 earlier check is bypassed); and derive "what is bound" from what actually loads, not from a list. See
 [VLA_INPUTS_S0_20261030.md](VLA_INPUTS_S0_20261030.md).
 
+66. **The evaluator's thermal guard paused three of eight workers for about an hour each, because it waited for a card
+that the other workers kept hot.** `cool_down` pauses a worker at 83 °C until the GPU reads 75 °C. With eight workers
+sharing one card the temperature sat at 76–81 °C for the whole run, so a paused worker could not reach 75 until the others
+had finished: pauses of 4,440 s, 3,810 s and 3,345 s (two more of 150 s and 75 s), 11,820 s in total, ended only at
+12:42–12:57 when other workers ran out of trials, and the run took 2 h 46 min instead of about 1 h 50 min. Outcomes were
+not affected (a pause precedes a trial; no trial was re-run), and the 8-worker probe's 585 s had not shown it. Nothing was
+changed in the frozen core. **Lessons:** a guard on a shared resource must not wait on a condition that its own peers keep
+false; the sampler log (GPU 76–81 °C at 4–90% utilisation) showed the guard could not release long before the run ended, and
+the per-trial `cooled_seconds` in `telemetry.json` is the place to check. Before another multi-worker run, use fewer workers
+or make the guard cross-worker as a recorded core change. See [VLA_INPUTS_M0_20261031.md](VLA_INPUTS_M0_20261031.md).
+
+(Also caught before the run, no failure: the first A0 preparation did not bind the X-VLA base bundle the adapter reads at
+rollout. It was bound as a recorded core change with no comparison trial run, and a closure test now fails if the adapter
+reads an undeclared `.cache` or `/bundle` file.)
+
 Broader lessons — every "just increment a counter" or "just leave state alone on retry" assumption in the fixed-layout pipeline broke under broad_workspace retries. Rejections need explicit cleanup for every piece of shared state (LeRobot buffer + PNG dir + attempts dir semantics + admit-count invariant). And a result is only interpretable once you know what the *absence* of the treatment scores on the same protocol.
 
 **Recurring meta-lesson — a green test suite is not evidence.** Six separate times (#10, #15, #20, #24, and twice while porting eval packages) the tests passed while the thing that actually runs was broken, because the tests exercised a *fixture*, a *constant*, the *wrong module*, or every path *except* the one the job takes. When adding a regression test, confirm it fails against the unfixed code. When forking a package, run the `symtable` undefined-name check from #24 before spending GPU time.

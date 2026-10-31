@@ -1,6 +1,21 @@
 # Franka benchmark: start here
 
+## M0 control arm A0 run on the comparison tier: 451 of 573, 78.7% - 2026-10-31
+
+[Report](VLA_INPUTS_M0_20261031.md). The P2 X-VLA checkpoint 101,520 (language and two cameras only), 573 feasible
+layouts, one trial each, 8 workers, 2 h 46 min; core `c4f6c303f2ae`, arm `75104fca7bf7`. **Success 451/573 = 78.7%
+[75.4, 82.0]; trained pairs 80.5%, held-out pairs 69.8%; milk 53.1% against 77.7-88.5% for the other five objects, in both
+bins** (so the trained/held-out gap is mostly object composition: within an object it is +2 points for milk and -6 for
+bread). 95 of 122 failures are never-lifted or timeouts while carrying; wrong bin 7, wrong object 4 (all with two
+distractors); 0 non-finite outputs. The gripper-camera target box left the frame in 26 of 122 failures and 0 of 451
+successes (it was constant 1 on the demonstrations). **Before the run, the X-VLA base bundle (tokenizer files) was bound in
+the arm manifest**: a core change confined to `evaluate.py` (`3cc8c6239067` -> `c4f6c303f2ae`), the old smoke archived. **The
+thermal guard cost about an hour:** three workers paused 56-74 minutes at 83 C waiting for 75 C while the other workers kept
+the card at 76-81 C ([FAILURES #66](FAILURES.md)); outcomes unaffected. The GPU is free. A1-A4 are not run.
+
 ## M0 evaluator built, frozen, A0 prepared and smoked; stopped before the A0 comparison run - 2026-10-31
+
+*Superseded the same day by the entry above: the core hash below is the pre-change one, and the comparison run has been done.*
 
 Branch `feat/vla-inputs` (`experiments/vla_inputs_eval/`, `experiments/vla_inputs_arm_xvla/`, `scripts/vla_inputs_eval.sh`; core
 hash `3cc8c623…`). Equivalence gate passed: the new rollout and X-VLA adapter reproduce the two lowest-ordinal successes and

@@ -6,6 +6,26 @@ failures and lessons in [FAILURES.md](FAILURES.md).
 
 Download corresponding datasets/checkpoints: [HF artifact index](HUGGING_FACE_ARTIFACTS.md).
 
+## VLA inputs M0, control arm A0 on the comparison tier (2026-10-31) — measured, not sealed
+
+Report: [VLA_INPUTS_M0_20261031.md](VLA_INPUTS_M0_20261031.md). The P2 X-VLA checkpoint 101,520 (language and two cameras
+only) on 573 feasible layouts of a fixed 48-cell plan (576 planned, 3 expert-infeasible dropped), one trial per layout,
+robosuite 1.5.2 / MuJoCo 3.4.0, OSMesa. **Same scene as P2 but new layouts and trial counts: context, not a comparison with
+P2's 120-trial report tier.** One training seed, one selected checkpoint; intervals resample layouts.
+
+| set | success | 95% interval |
+|---|---|---|
+| **overall** | **451/573 = 78.7%** | 75.4 – 82.0 |
+| trained pairs / held-out pairs (milk→blue, bread→orange) | 384/477 = 80.5% / 67/96 = 69.8% | 76.9 – 84.1 / 60.4 – 79.2 |
+| can / bread / bottle / cereal / lemon / **milk** | 88.5% / 88.4% / 83.3% / 81.3% / 77.7% / **53.1%** | milk 42.7 – 63.5 |
+| milk→orange (trained) / milk→blue (held out) | 25/48 = 52.1% / 26/48 = 54.2% | – |
+| bread→blue (trained) / bread→orange (held out) | 43/47 = 91.5% / 41/48 = 85.4% | – |
+| 1 / 2 distractors | 234/287 = 81.5% / 217/286 = 75.9% | 77.0 – 85.7 / 70.6 – 80.8 |
+
+Failures (122): never lifted 59, timeout while carrying 36, dropped outside 11, wrong bin 7, unstable in target 5, wrong
+object 4 (all with two distractors); 0 non-finite outputs. Gripper-camera target box left the frame in 26 of 122 failures and
+0 of 451 successes. Core `c4f6c303f2ae`, arm `75104fca7bf7`, S0 seal `7e2e06db…f58e6c`.
+
 ## Props P3 X-VLA, Food vs Drinks with a fixed prompt (2026-10-27) — measured, not sealed
 
 Dataset: [P3 collection](PROPS_P3_COLLECTION_20261020.md) (544 episodes, seal `6430d34e…d151acf`); report: [PROPS_P3_EVALUATION_20261027.md](PROPS_P3_EVALUATION_20261027.md). One seed per reserved layout,

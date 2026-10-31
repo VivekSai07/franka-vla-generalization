@@ -164,6 +164,6 @@ folder per trial, skip existing complete trials); `collect --arm A --tier T`; `s
   X-VLA workers ran at ~4.2 GB each in P3; switching workers reached 7.3 GiB in P2 and one died. **Never let a worker switch
   checkpoint:** one checkpoint per worker pool (A0: 8 workers; selection: one worker per candidate).
   Schedule GPU rollouts separately from M1 training unless combined measured peaks fit. Budget video storage.
-- [ ] A0 on C (576 minus dropped). Poll. `collect`.
-- [ ] Write `docs/VLA_INPUTS_M0_<date>.md` (plan, feasibility, A0 per object, per cell, failure causes, signals recorded), update
+- [x] A0 on C (576 minus dropped). Poll. `collect`. (2026-10-31, 573 of 573, 451 successes.)
+- [x] Write `docs/VLA_INPUTS_M0_<date>.md` (plan, feasibility, A0 per object, per cell, failure causes, signals recorded), update
   `docs/RESULTS.md`, `docs/BENCHMARK_STATUS.md`, `TODO.md`, `docs/INDEX.md`; commit `Docs: M0 control arm`.
