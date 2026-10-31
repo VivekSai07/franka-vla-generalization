@@ -1,8 +1,9 @@
 # M2 — wrist force/torque and finger forces in the robot state — design
 
-**Date:** 2026-10-30. **Status: draft for external review.** Part of the
+**Date:** 2026-10-30. **Status: draft for external review; Tasks 1, 2 and 4 of the plan are built on the CPU (2026-10-31), training and
+the GPU gates are not.** Part of the
 [VLA inputs programme](2026-10-30-vla-inputs-programme-design.md). Depends on S0 (sealed sidecar) and M0 (evaluator, A0).
-No code exists.
+The code is `experiments/xvla_p2_force/`; D2's constants are derived at run time from the sealed sidecar and pinned by digest.
 
 ## Question
 

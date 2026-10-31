@@ -8,12 +8,18 @@
   for output changes. Full M2 still runs, to calibrate the pilots.
   [Spec](docs/superpowers/specs/2026-10-31-vla-inputs-overnight-pilots-design.md) ·
   [plan](docs/superpowers/plans/2026-10-31-vla-inputs-overnight-pilots.md).
+- **M2 Tasks 1, 2 and 4 done, CPU only (2026-10-31, branch `feat/vla-inputs`, not pushed):** `experiments/xvla_p2_force/` (fork of
+  `xvla_props_p2`, 17-value state from the sealed S0 sidecar, local input check, 129 tests + 14 rollout-side tests + 6 arm tests),
+  `eval_adapter.py` and a thin arm package `experiments/vla_inputs_arm_xvla_force/`; the shared M0 core hash is unchanged. A CPU
+  `--check` run into a scratch directory reproduced P2's recorded statistics for the first nine state values. **Next: Task 3**
+  (zero-equivalence, GPU) and **Task 5** (gates and training) once the GPU is free of M1; 4b's inference-boundary proof also needs a
+  policy. No admission artefact exists yet (the package README and tests are bound; edit them before `--check`, not after).
 
 - **M0 control arm A0 done (2026-10-31, branch `feat/vla-inputs`, not pushed):** 451 of 573 comparison layouts = 78.7%
   [75.4, 82.0] (trained 80.5%, held-out 69.8%, milk 53.1%); core `c4f6c303f2ae` (X-VLA base bundle now bound). The GPU is free.
-  [Report](docs/VLA_INPUTS_M0_20261031.md). **Open:** A1-A4 need trained checkpoints (M2-M4), and before another 8-worker run
-  decide the thermal guard: it paused three workers for about an hour each ([FAILURES #66](docs/FAILURES.md)); use fewer
-  workers, or a cross-worker guard as a recorded core change.
+  [Report](docs/VLA_INPUTS_M0_20261031.md). **Open:** A1-A4 need trained checkpoints (M2-M4). **Decided 2026-10-31: future M0 runs use 6
+  workers** (the thermal guard paused three of eight workers for about an hour each, [FAILURES #66](docs/FAILURES.md)); a cross-worker
+  guard stays an option as a recorded core change.
 
 - **M1 Task 4 runner and CPU parts of 4b written (2026-10-31, branch `feat/vla-inputs-m1`); `--probe-memory` run (2026-10-31); the user decides
   the memory strategy.**

@@ -162,7 +162,7 @@ folder per trial, skip existing complete trials); `collect --arm A --tier T`; `s
 - [ ] Smoke: measure peak memory including checkpoint switches and loading, not only two steady-state trials (use a separate resource probe or selection-tier jobs; never rerun completed C trials).
   Worker count must fit actual available GPU/RAM/CPU with headroom. Evidence (spec, What is established): 8 non-switching
   X-VLA workers ran at ~4.2 GB each in P3; switching workers reached 7.3 GiB in P2 and one died. **Never let a worker switch
-  checkpoint:** one checkpoint per worker pool (A0: 8 workers; selection: one worker per candidate).
+  checkpoint:** one checkpoint per worker pool (A0: 8 workers; selection: one worker per candidate; **later arms: 6 workers**, decided 2026-10-31 after the thermal guard cost A0 about an hour, FAILURES #66).
   Schedule GPU rollouts separately from M1 training unless combined measured peaks fit. Budget video storage.
 - [x] A0 on C (576 minus dropped). Poll. `collect`. (2026-10-31, 573 of 573, 451 successes.)
 - [x] Write `docs/VLA_INPUTS_M0_<date>.md` (plan, feasibility, A0 per object, per cell, failure causes, signals recorded), update

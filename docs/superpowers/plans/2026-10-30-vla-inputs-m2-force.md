@@ -30,6 +30,17 @@ image for rollouts.
 - Test commands: admission image, `-m unittest discover -s experiments/xvla_p2_force/tests -t experiments/xvla_p2_force/tests`,
   mounting `outputs/props_p2_data` and `outputs/vla_inputs_signals` read-only.
 
+**Status (2026-10-31): Tasks 1, 2 and 4 are done and committed (`M2: fork, sidecar join, statistics and input check`, `M2: rollout
+state builder, parity`), CPU only; Tasks 3 and 5 need the GPU and are not started; 4b's inference-boundary proof needs a real policy.**
+What was built differs from the interface sketches below in these ways: the pure extras logic is `forces.py` (not
+`contract.extra_state`), with `extra_state`, `expected_extras`, `standardise`, `constants`, `clipping_rates`; the constants are
+derived at run time from the sealed sidecar with exactly rounded sums and **pinned by `forces.CONSTANTS_SHA256`**;
+`check_model_inputs(policy, batch, raw_state, rows)` takes the dataset row indices and recomputes the expected extras from the
+sidecar (a three-argument check cannot tell raw extras from standardised ones); `JoinedDataset` joins by (episode, frame).
+The plan placed the adapter in `xvla_p2_force/eval_adapter.py` for M0 to load, but M0's loader accepts only modules named
+`experiments.vla_inputs_arm_*` and its core is frozen, so a thin arm package `experiments/vla_inputs_arm_xvla_force/` re-exports it
+([FAILURES #67](../../FAILURES.md)).
+
 ---
 
 ### Task 1: fork and sidecar join
@@ -39,14 +50,14 @@ image for rollouts.
 
 **Interfaces:** `contract.SIDECAR` (S0 root and seal record), `contract.extra_state(episode_index, frame_index) -> np.ndarray (8,)`
 (clipped, float32), `contract.OBS = {"observation.state": (17,), ...}`, `contract.collate_rows` producing 17-value states.
-- [ ] **Step 1: failing tests:** the joined row for (episode 0, frame 0) equals `concat(sealed state, clipped sidecar values)`;
+- [x] **Step 1: failing tests:** the joined row for (episode 0, frame 0) equals `concat(sealed state, clipped sidecar values)`;
   the loader refuses a sidecar whose seal does not verify; every training row has a sidecar row (452 × 480); clip ranges equal
   S0's `report.json` values; the recipe equals P2's (`xvla_p2_force.contract.recipe(False) == xvla_props_p2.contract.recipe(False)`
   apart from output paths and the purpose string).
-- [ ] **Step 2:** forking-skill pass: grep `xvla_props_p2` in the fork (only the deliberate reference import for the
+- [x] **Step 2:** forking-skill pass: grep `xvla_props_p2` in the fork (only the deliberate reference import for the
   equivalence gate may remain), symtable dead-name scan.
-- [ ] **Step 3–4:** implement, pass, mutate (unclipped values; validation rows in statistics; wrong column order).
-- [ ] **Step 5:** commit `M2: fork, sidecar join`.
+- [x] **Step 3–4:** implement, pass, mutate (unclipped values; validation rows in statistics; wrong column order).
+- [x] **Step 5:** commit `M2: fork, sidecar join`.
 
 ### Task 2: statistics and the model-input check
 
@@ -57,12 +68,13 @@ sealed `report.json`, mean/std of the clipped training rows; applied in the load
 `contract.check_model_inputs(policy, batch, raw_state)` — a local copy of the shared check with `REAL_STATE_DIM = 17`:
 proprio shape (n, 20), `proprio[:, :9]` equals the raw state, `proprio[:, 9:17]` equals the transformed extras,
 `proprio[:, 17:]` is zero, domain id 0, image and token shapes as P2.
-- [ ] **Step 1: failing tests:** `make_config` still has `STATE` normalisation `IDENTITY` (as P2); the check passes on a real
+- [x] **Step 1: failing tests:** `make_config` still has `STATE` normalisation `IDENTITY` (as P2); the check passes on a real
   batch; it fails if a 17-value state is truncated to 9 or if the extras are left raw; the transform's mean/std come from
   clipped training rows only (count them); statistics shapes are (17,) for state, (8,) for action; the first 9 entries of the
-  state statistics equal P2's admission statistics byte for byte.
-- [ ] **Step 2–4:** fail, implement, pass, mutate.
-- [ ] **Step 5:** commit `M2: statistics and input check`.
+  state statistics equal P2's admission statistics byte for byte. (Also checked on the real dataset: a CPU `--check` into a scratch
+  directory reproduced P2's recorded action and first-nine state statistics exactly; extras mean 0 / std 1.)
+- [x] **Step 2–4:** fail, implement, pass, mutate.
+- [x] **Step 5:** commit `M2: statistics and input check` (committed together with Task 1, the code being intertwined).
 
 ### Task 3: zero-equivalence gate
 
@@ -85,19 +97,23 @@ binding; M0's arm manifest binds them. Nothing is added to `experiments/vla_inpu
 
 **Interfaces:** `adapters.state_force(model, data, target) -> np.ndarray (17,)` = `qpos[:9]`, `signals.wrist_wrench`,
 `signals.finger_force`, clipped with the same S0 ranges.
-- [ ] **Step 1: failing test (robosuite image):** for episodes 0, 271, 539 replayed with S0's `replay.frames`, `state_force` at
-  every frame, cast to float32, equals `xvla_p2_force.contract`'s joined training row byte for byte.
-- [ ] **Step 2–4:** fail, implement, pass, mutate (unclipped; reordered).
-- [ ] **Step 5:** README of `xvla_p2_force` written (non-zero size checked); commit `M2: rollout state builder, parity`.
+- [x] **Step 1: failing test (robosuite image):** for episodes 0, 18 (45 clipped frames, so the clip is exercised), 271 and 539
+  replayed with S0's `replay.frames`, `state_force` at every frame, cast to float32, equals `xvla_p2_force.contract`'s joined
+  training row byte for byte (1,808 frames), and equals an oracle that shares nothing with `forces.standardise`.
+- [x] **Step 2–4:** fail, implement, pass, mutate (unclipped; reordered; wrong joints; no 17-value check; float64 state).
+- [x] **Step 5:** README of `xvla_p2_force` written (non-zero size checked); commit `M2: rollout state builder, parity`.
 
 ### Task 4b: timing, normalization and binding proof
 
-- [ ] Extend parity to the normalized/padded tensor seen by the policy, not only raw concatenation. Compute extra-state
-  statistics after clipping; prove original nine stats unchanged. Join by episode/frame identity and reject missing,
-  duplicate and shifted rows; report clipping rates without changing the frozen thresholds from rollout results.
+- [x] Parity of the normalized/padded tensor seen by the policy (real processors, byte-equal `proprio` for four frames), extra-state
+  statistics after clipping with the original nine unchanged (byte-equal to P2's), join by episode/frame identity rejecting
+  missing, duplicate, shifted and extra rows, per-dimension clipping rates for training and validation rows recorded by `--check`
+  (training 0.2% per wrench dimension and 0.1% per finger, as the percentile bounds imply).
 - [ ] Prove queued calls do not recompute actions: observations at 30 Hz yield 3 Hz replanning with ten executed actions.
   Log timestamps/inference boundaries. Interpret M2 as instantaneous boundary conditioning, not fast force feedback.
-- [ ] Bind the arm adapter/state builder separately and keep M0's shared-core hash identical to A0.
+  **Needs a real policy (GPU): not done.**
+- [x] Bind the arm adapter/state builder separately (`vla_inputs_arm_xvla_force`, `tests/test_closure.py`) and keep M0's shared-core
+  hash identical to A0 (the test compares it with A0's `prepared.json`).
 
 ### Task 5: gates and training
 

@@ -161,7 +161,7 @@ trial, so under 3 GB per arm.
 
 | run | rollouts | wall-clock |
 |---|---|---|
-| A0 on C | 576 | ~1.7 h (8 workers) |
+| A0 on C | 576 | ~1.7 h (8 workers) planned; **measured 2 h 46 min for 573 trials** (three workers lost about an hour each to the thermal guard, FAILURES #66). New arms: **6 workers** (decided 2026-10-31); the estimates below were made for 8 and are not re-measured at 6 |
 | one new X-VLA arm (S × 6 checkpoints, one worker each; C winner and matched-phase checkpoint, separate pools) | 480 + 576 + up to 576 = up to 1,632 | ~5–6 h |
 | pi0.5 arm | 864 | unknown: GPU memory per worker and inference time measured in its smoke |
 
