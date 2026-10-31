@@ -16,6 +16,8 @@ from experiments.xvla_props_p2_eval.evaluate import load_policy
 from experiments.xvla_single_task.contract import observation
 
 IMAGE_KEYS = tuple(CAMERAS)
+# The base bundle (BART tokenizer files, base model config) the processors read at run time; bound by `prepare`.
+INPUT_DIRS = (".cache/xvla_trial/bundle",)
 
 
 class XVLAAdapter:

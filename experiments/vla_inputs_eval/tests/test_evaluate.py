@@ -335,6 +335,135 @@ class Worker(Campaign):
         self.assertEqual((report["status"], len(report["episodes"])), ("complete", 2))
 
 
+class ArmInputs(Campaign):
+    """An arm's input directories (the X-VLA base bundle: tokenizer files) are bound in its manifest."""
+
+    def setUp(self):
+        super().setUp()
+        bundle = self.repo / "assets/bundle"
+        (bundle / "tokenizer").mkdir(parents=True)
+        (bundle / "tokenizer/tokenizer.json").write_text('{"vocab": 1}')
+        (bundle / "manifest.json").write_text("{}")
+        self.add_arm("vla_inputs_arm_fake", FAKE_ADAPTER + 'INPUT_DIRS = ("assets/bundle",)\n')
+        self.bundle = bundle
+
+    def test_every_file_of_the_input_directory_is_recorded_with_hash_size_and_mtime(self):
+        record = self.prepare()
+        files = record["arm"]["inputs"]["assets/bundle"]
+        self.assertEqual(sorted(files), ["manifest.json", "tokenizer/tokenizer.json"])
+        self.assertEqual(files["manifest.json"]["sha256"], hashlib.sha256(b"{}").hexdigest())
+        self.assertEqual(files["manifest.json"]["bytes"], 2)
+        self.assertIn("mtime_ns", files["manifest.json"])
+
+    def test_an_arm_without_input_directories_records_none(self):
+        self.add_arm("vla_inputs_arm_fake2")
+        self.assertEqual(self.prepare("A0", "vla_inputs_arm_fake2")["arm"]["inputs"], {})
+
+    def test_the_arm_hash_covers_the_inputs(self):
+        a0 = self.prepare("A0")
+        (self.bundle / "manifest.json").write_text('{"x":1}')
+        a1 = self.prepare("A1")
+        self.assertEqual(a0["core"]["sha256"], a1["core"]["sha256"])
+        self.assertNotEqual(a0["arm"]["sha256"], a1["arm"]["sha256"])
+
+    def test_a_missing_or_empty_input_directory_is_refused(self):
+        shutil.rmtree(self.bundle)
+        with self.assertRaises(ValueError):
+            self.prepare()
+        self.bundle.mkdir(parents=True)
+        with self.assertRaises(ValueError):
+            self.prepare()
+
+    def test_a_symlink_in_an_input_directory_is_refused(self):
+        (self.bundle / "link.json").symlink_to(self.bundle / "manifest.json")
+        with self.assertRaises(ValueError):
+            self.prepare()
+
+    def test_a_worker_rejects_a_changed_added_or_removed_input_file(self):
+        self.prepare()
+        target = self.bundle / "tokenizer/tokenizer.json"
+        original = target.read_text()
+        target.write_text('{"vocab": 2}')  # same size, different bytes
+        with self.assertRaises(ValueError):
+            self.run_worker()
+        target.write_text(original)
+        (self.bundle / "extra.txt").write_text("new")
+        with self.assertRaises(ValueError):
+            self.run_worker()
+        (self.bundle / "extra.txt").unlink()
+        target.unlink()
+        with self.assertRaises(ValueError):
+            self.run_worker()
+        target.write_text(original)
+        self.assertEqual(len(self.run_worker(tier="smoke")), 2)
+
+    def test_large_files_get_a_cheap_worker_check_and_a_full_hash_in_the_comparison(self):
+        import os
+        record = self.prepare()
+        original_limit = evaluate.LARGE_BYTES
+        evaluate.LARGE_BYTES = 1  # treat every file as large
+        try:
+            target = self.bundle / "tokenizer/tokenizer.json"
+            stat = target.stat()
+            target.write_text('{"vocab": 2}')
+            os.utime(target, ns=(stat.st_atime_ns, stat.st_mtime_ns))  # same size, same mtime, other bytes
+            evaluate.verify_arm(record, self.repo)  # the worker's cheap check does not see it
+            with self.assertRaises(ValueError):
+                evaluate.verify_arm(record, self.repo, deep=True)
+            target.write_text('{"vocab": 1}')
+            os.utime(target, ns=(stat.st_atime_ns, stat.st_mtime_ns + 1_000_000))
+            with self.assertRaises(ValueError):  # a new mtime is caught cheaply
+                evaluate.verify_arm(record, self.repo)
+        finally:
+            evaluate.LARGE_BYTES = original_limit
+
+    def test_a_size_change_with_an_unchanged_mtime_is_caught_cheaply_on_a_large_file(self):
+        import os
+        record = self.prepare()
+        original_limit = evaluate.LARGE_BYTES
+        evaluate.LARGE_BYTES = 1
+        try:
+            target = self.bundle / "tokenizer/tokenizer.json"
+            stat = target.stat()
+            target.write_text('{"vocab": 11}')
+            os.utime(target, ns=(stat.st_atime_ns, stat.st_mtime_ns))
+            with self.assertRaises(ValueError):
+                evaluate.verify_arm(record, self.repo)
+        finally:
+            evaluate.LARGE_BYTES = original_limit
+
+    def _compared_with_silent_edit(self, edited):
+        """Both arms prepared with their own input directory; one file there changes bytes only (size and mtime kept)."""
+        import os
+        bundle2 = self.repo / "assets/bundle2"
+        bundle2.mkdir(parents=True)
+        (bundle2 / "manifest.json").write_text("{}")
+        self.add_arm("vla_inputs_arm_fake2", FAKE_ADAPTER.replace("scale=1.0", "scale=2.0") + 'INPUT_DIRS = ("assets/bundle2",)\n')
+        self.prepare("A0")
+        self.prepare("A1", "vla_inputs_arm_fake2")
+        self.fake_selection("A1")
+        self.stage("A0", "comparison", 1000, rule=lambda t: False)
+        self.stage("A1", "comparison", 1000, rule=lambda t: True)
+        target = (self.bundle if edited == "control" else bundle2) / "manifest.json"
+        stat = target.stat()
+        original_limit = evaluate.LARGE_BYTES
+        evaluate.LARGE_BYTES = 1  # every input file counts as large: only the comparison's full hash can see the edit
+        try:
+            target.write_text("[]")
+            os.utime(target, ns=(stat.st_atime_ns, stat.st_mtime_ns))
+            return evaluate.compare(self.root, "A1", 1000, repo=self.repo)
+        finally:
+            evaluate.LARGE_BYTES = original_limit
+
+    def test_the_comparison_hashes_the_control_inputs_in_full(self):
+        with self.assertRaises(ValueError):
+            self._compared_with_silent_edit("control")
+
+    def test_the_comparison_hashes_the_new_arms_inputs_in_full(self):
+        with self.assertRaises(ValueError):
+            self._compared_with_silent_edit("new")
+
+
 class Collect(Campaign):
     def setUp(self):
         super().setUp()
