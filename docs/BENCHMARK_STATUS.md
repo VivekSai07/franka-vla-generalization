@@ -1,5 +1,26 @@
 # Franka benchmark: start here
 
+## Overnight pilots built on the CPU (plan Tasks 1-5) - 2026-10-31
+
+Branch `feat/vla-inputs-pilots` (from `main` at `f3f231b`, `main` merged in once; not merged back, not pushed), CPU only while M2
+trains on the GPU. **Task 1 first: M0's frozen core can serve a second campaign root** with a 192-layout comparison tier and an empty
+selection tier, with no core edit: tested with the core's own fake-arm harness through prepare, worker, collect, select and compare
+(the core hash `c4f6c303f2ae` equals A0's). It needs thin arm packages under `experiments/vla_inputs_arm_*` and an empty selection
+stage before `select` (which `compare` requires). **Task 2:** `experiments/vla_inputs_pilot_plan/`: 192 comparison layouts (48 cells x
+4), 2 extra smoke layouts, namespace `vla_inputs:pilot`, every seed and pose disjoint from P2, its re-test and both M0 tiers (16 tests,
+mutation-checked). **Task 3:** `experiments/xvla_p2_pilot/`: 10,000 updates from the bundle's checkpoint 101,520 (hash-pinned; the
+action statistics must equal the ones saved with it), fresh AdamW, 200-update warm-up to a constant 1e-5, M2's sampler and loop
+(copied by AST, asserted equal), data-defined variants (`control`, `force` = M2's transform, `box` = S0's `target_box`, pinned table),
+state of 19 values for all, no snapshots (one 3.3 GB checkpoint); 80 tests, 8 mutations caught; **a real CPU `--check` passed for all
+three variants on the real data** (both fingerprints recomputed, start weights strict-loaded, fresh optimizer). **Task 4:** one adapter
+class serves every variant by reading the variant and its file hash from the checkpoint's marker; the live state equals the training
+row byte for byte on replayed sealed episodes for all three builders (3 x 452 frames x 3 episodes) and the policy's `proprio` is
+identical; 5 mutations caught. **Task 5:** `scripts/vla_inputs_pilot_night.sh` (the night root is the campaign root; refuses a busy
+GPU; polls `docker ps`; never retries a failed gate or training; resumes an evaluation) and `summary.py` (exact integer decision rule,
+tested at 4.9 and 5.0 points and at 192 layouts: 9 more successes drop, 10 promote); 20 driver tests against a fake `docker`, 17
+summary tests, 12 mutations caught. **What has not run:** anything on a GPU. Plan Task 6 (zero-equivalence, the dry night, night 1)
+waits for M2's training to end; expect GPU-only defects there. All pilot drops stay provisional until calibration (Task 7).
+
 ## M2 gates passed, Task 3 and 4b proofs, training launched without a deadline - 2026-10-31
 
 Detached worktree `.worktrees/m2-run` at `f1c49b3` (never switched; clean; outputs bind-mounted from the main checkout; launch

@@ -12,12 +12,17 @@
   force, box) **before** M2 is evaluated on M0's comparison tier, so the pilot decision is recorded blind to the full result
   (calibration); then M2's evaluation night. Free disk 137 GB after the pi0.5 cleanup.
 
-- **Overnight pilots designed (2026-10-31, user approved the approach; spec and plan under review, nothing built):** continuation
-  pilots from A0 (10,000 updates at a constant 1e-5, shared zero-input control) screen input and loss ideas on 192 fresh paired
-  layouts in one night (launch evening, judge morning); promote to a full run if Δ ≥ +5 points. Small-task pilots from scratch only
-  for output changes. Full M2 still runs, to calibrate the pilots.
-  [Spec](docs/superpowers/specs/2026-10-31-vla-inputs-overnight-pilots-design.md) ·
-  [plan](docs/superpowers/plans/2026-10-31-vla-inputs-overnight-pilots.md).
+- **Overnight pilots built on the CPU (2026-10-31, branch `feat/vla-inputs-pilots`, not merged into `main`, not pushed):** plan Tasks
+  1-5 done, test first. Continuation pilots from A0 (10,000 updates, 200-update warm-up to a constant 1e-5, fresh optimizer, shared
+  zero-input control) screen input ideas on 192 fresh paired layouts in one night; promote iff Δ ≥ +5 points. Packages
+  `experiments/vla_inputs_pilot_plan/` (192 + 2 smoke layouts, disjoint from P2, the re-test and both M0 tiers),
+  `experiments/xvla_p2_pilot/` (runner, data-defined variants `control`/`force`/`box`, rollout adapter, `summary.py`), thin arm
+  `experiments/vla_inputs_arm_xvla_pilot/`, driver `scripts/vla_inputs_pilot_night.sh`; M0's frozen core is unchanged (hash
+  `c4f6c303f2ae`). Real `--check` of all three variants passed on the real data (no GPU). **Not yet run: anything on a GPU**
+  (zero-equivalence gate, a real update, checkpoint save/reload, the dry night): plan Task 6, after M2 training; the driver refuses to
+  start while the GPU is in use. Merge `feat/vla-inputs-pilots` into `main` with `--no-ff` when convenient (main's checkout is not
+  what M2 trains from). [Spec](docs/superpowers/specs/2026-10-31-vla-inputs-overnight-pilots-design.md) ·
+  [plan](docs/superpowers/plans/2026-10-31-vla-inputs-overnight-pilots.md) · [package README](experiments/xvla_p2_pilot/README.md).
 - **M2 Tasks 1, 2 and 4 done, CPU only (2026-10-31, branch `feat/vla-inputs`, not pushed):** `experiments/xvla_p2_force/` (fork of
   `xvla_props_p2`, 17-value state from the sealed S0 sidecar, local input check, 129 tests + 14 rollout-side tests + 6 arm tests),
   `eval_adapter.py` and a thin arm package `experiments/vla_inputs_arm_xvla_force/`; the shared M0 core hash is unchanged. A CPU
