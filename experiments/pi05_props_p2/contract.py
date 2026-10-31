@@ -19,11 +19,13 @@ What differs from the X-VLA contract:
 """
 import hashlib
 import json
+import math
 from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
 
 import torch
+from torch.utils.data import default_collate
 
 from experiments.pi05_props_p2 import assets
 from experiments.props_p2_data import contract as p2_contract
@@ -36,6 +38,11 @@ IMAGE = 'sha256:a229f2fbe98f589caaca37068c1ba4a8761d111c6e4855b2360f783c1f290eae
 PARENT = ROOT/'outputs/props_p2_data/props_p2_20261013'
 DATA = PARENT/'dataset'
 OUTPUT = ROOT/'outputs/train/pi05_props_p2_v1'
+SCRATCH = OUTPUT.with_name(OUTPUT.name+'_preflight')
+PROOF = OUTPUT.with_name(OUTPUT.name+'_resumeproof')
+ADMISSION = OUTPUT.with_name(OUTPUT.name+'_admission')
+CPU_ADMISSION = ADMISSION/'result.json'
+PROBE = ROOT/'outputs/train/pi05_props_p2_probe'  # scratch of `--probe-memory`; never a gate
 SEAL = 'b1d642b3edeebe15d462709ebeb8b92afa6d7eabcca3be5514e5deeecaf4d898'
 SEAL_RECORD = {
     'fingerprint': SEAL,
@@ -70,11 +77,14 @@ SOURCE_FILES = (
     'experiments/props_p2_data/contract.py', 'experiments/props_p2_data/validate.py',
     'experiments/props_scene/__init__.py', 'experiments/props_scene/constants.py',
     'experiments/pi05_props_p2/__init__.py', 'experiments/pi05_props_p2/assets.py',
-    'experiments/pi05_props_p2/contract.py',
+    'experiments/pi05_props_p2/contract.py', 'experiments/pi05_props_p2/weights.py',
+    'experiments/pi05_props_p2/strategy.py', 'experiments/pi05_props_p2/runner.py',
     'experiments/pi05_props_p2/tests/test_assets.py', 'experiments/pi05_props_p2/tests/test_contract.py',
     'experiments/pi05_props_p2/tests/test_fork_hygiene.py', 'experiments/pi05_props_p2/tests/test_image.py',
     'experiments/pi05_props_p2/tests/test_p2_parity.py', 'experiments/pi05_props_p2/tests/test_processor.py',
-    'experiments/pi05_props_p2/tests/test_weights_load.py',
+    'experiments/pi05_props_p2/tests/test_weights_load.py', 'experiments/pi05_props_p2/tests/test_runner.py',
+    'experiments/pi05_props_p2/tests/test_strategy.py', 'experiments/pi05_props_p2/tests/test_weights.py',
+    'experiments/pi05_props_p2/tests/test_reference_path.py',
     'experiments/pi05_props_p2/README.md',
 ) + tuple('installed/lerobot/'+name for name in (
     'policies/pi05/__init__.py', 'policies/pi05/configuration_pi05.py', 'policies/pi05/modeling_pi05.py',
@@ -219,6 +229,11 @@ def statistics_json(stats):
 
 # --- parent binding -------------------------------------------------------------------------------------------
 
+def semantic_gate():
+    """The collection's own semantic proof (counts, balance, no held-out pair), bound by digest."""
+    return json.loads((PARENT/'validation.json').read_text())
+
+
 def parent_fingerprint():
     """Full recomputation over every file in the parent; `--check` only (it reads ~1.1 GB)."""
     return p2_validate.fingerprint(PARENT)
@@ -276,6 +291,79 @@ def load_data():
 
 # --- recipe, config, processors -------------------------------------------------------------------------------
 
+# D5's three candidates. FP32 on-GPU full tuning (57.9 GB before activations) cannot fit and is not listed.
+STRATEGIES = {
+    'bf16_all': dict(dtype='bfloat16', train_expert_only=False, gradient_checkpointing=True),
+    'bf16_cpu_master': dict(dtype='bfloat16', train_expert_only=False, gradient_checkpointing=True),
+    'expert_only': dict(dtype='bfloat16', train_expert_only=True, gradient_checkpointing=False),
+}
+KEEP_SNAPSHOTS = 1
+SNAPSHOT_SLOTS = KEEP_SNAPSHOTS+1  # the kept ones plus the one being written
+DISK_MARGIN_BYTES = 2*1024**3
+DECISION_KEYS = ('strategy', 'microbatch', 'snapshot_every', 'checkpoint_bytes', 'snapshot_bytes',
+                 'final_state_bytes', 'gpu_peak_bytes')
+GPU_MARGIN_BYTES = 2*1024**3
+# The user's decision after `--probe-memory`; None until it is made, and `--check` refuses while it is None.
+DECISION = None
+
+
+def validate_decision(decision):
+    if not isinstance(decision, dict) or set(decision) != set(DECISION_KEYS):
+        raise ValueError(f'Decision needs exactly {DECISION_KEYS}')
+    if decision['strategy'] not in STRATEGIES:
+        raise ValueError(f'Unknown memory strategy {decision["strategy"]!r}')
+    if decision['microbatch'] not in (1, 2, 4, 8):
+        raise ValueError('Microbatch must divide the effective batch of 8')
+    for key in DECISION_KEYS[2:]:
+        if type(decision[key]) is not int or decision[key] <= 0:
+            raise ValueError(f'{key} must be a positive integer')
+    return decision
+
+
+def gpu_requirement_bytes(decision=None):
+    return (decision or require_decision())['gpu_peak_bytes']+GPU_MARGIN_BYTES
+
+
+def require_decision():
+    if DECISION is None:
+        raise RuntimeError('The memory strategy is not decided: run --probe-memory and record the decision')
+    return validate_decision(DECISION)
+
+
+def accumulation(decision=None):
+    return EFFECTIVE_BATCH//(decision or require_decision())['microbatch']
+
+
+def snapshot_updates(preflight, decision=None):
+    """Updates after which a resume snapshot is written; the final update has the final checkpoint."""
+    every, maximum = (1, 2) if preflight else ((decision or require_decision())['snapshot_every'], TOTAL_UPDATES)
+    return list(range(every, maximum, every))
+
+
+def disk_requirement_bytes(preflight, decision=None):
+    """Checkpoints, the final optimizer state, the kept snapshots plus the one being written, and a margin."""
+    d = decision or require_decision()
+    return (len(checkpoint_updates(preflight))*d['checkpoint_bytes'] + d['final_state_bytes']
+            + SNAPSHOT_SLOTS*d['snapshot_bytes'] + DISK_MARGIN_BYTES)
+
+
+def learning_rate(update):
+    """LeRobot's cosine-with-warmup lambda at scheduler step `update - 1` (its scheduler steps after each update)."""
+    if type(update) is not int or not 1 <= update <= TOTAL_UPDATES:
+        raise ValueError(f'Update must be integer in [1,{TOTAL_UPDATES}]')
+    peak, decay, warmup = 2.5e-5, 2.5e-6, 1000
+    step = update-1
+    if step < warmup:
+        return peak*((1/(warmup+1)-1)*(1-step/warmup)+1)
+    alpha = decay/peak
+    return peak*((1-alpha)*.5*(1+math.cos(math.pi*min(step, TOTAL_UPDATES)/TOTAL_UPDATES))+alpha)
+
+
+def set_learning_rate(optimizer, update, lr=None):
+    for group in optimizer.param_groups:
+        group['lr'] = learning_rate(update) if lr is None else lr
+
+
 def checkpoint_updates(preflight):
     return [1, 2] if preflight else [1] + [round(f*TOTAL_UPDATES) for f in CHECKPOINT_FRACTIONS]
 
@@ -288,17 +376,19 @@ def recipe(preflight):
                 schedule=dict(warmup=1000, total=TOTAL_UPDATES, decay_lr=2.5e-6),
                 normalization='quantiles_train_only_q01_q99_no_clipping',
                 deviations=['effective_batch_8', 'decay_spans_run', 'n_action_steps_10'],
-                train_episodes=list(TRAIN), validation_episodes=list(VAL), exposure=exposure())
+                train_episodes=list(TRAIN), validation_episodes=list(VAL), exposure=exposure(), decision=DECISION)
 
 
-def make_config(device):
+def make_config(device, strategy=None):
+    """The spec's config; `strategy` (a key of STRATEGIES) adds only the dtype/freezing/checkpointing it names."""
     from lerobot.configs.types import FeatureType, PolicyFeature
     from lerobot.policies.pi05.configuration_pi05 import PI05Config
+    extra = {} if strategy is None else dict(STRATEGIES[strategy])
     return PI05Config(
         device=device, chunk_size=CHUNK_SIZE, n_action_steps=N_ACTION_STEPS, scheduler_decay_steps=TOTAL_UPDATES,
         input_features={'observation.state': PolicyFeature(FeatureType.STATE, (9,)),
                         **{key: PolicyFeature(FeatureType.VISUAL, (3, 512, 512)) for key in CAMERAS}},
-        output_features={'action': PolicyFeature(FeatureType.ACTION, (8,))})
+        output_features={'action': PolicyFeature(FeatureType.ACTION, (8,))}, **extra)
 
 
 @contextmanager
@@ -323,3 +413,208 @@ def make_processors(config, stats):
     from lerobot.policies.pi05.processor_pi05 import make_pi05_pre_post_processors
     with local_tokenizer():
         return make_pi05_pre_post_processors(config, stats)
+
+
+# --- rows and sampling ----------------------------------------------------------------------------------------
+
+def policy_row(row, training=True):
+    """One dataset row as the policy may see it: approved episode and instruction, whitelisted keys, real chunk."""
+    ids = TRAIN if training else TRAIN+VAL
+    episode = row.get('episode_index')
+    if isinstance(episode, torch.Tensor):
+        if episode.ndim != 0 or episode.dtype != torch.int64:
+            raise ValueError('Episode identity must be a scalar integer')
+        episode = episode.item()
+    if (type(episode) is not int or episode not in ids or row.get('task') != planned_instructions()[episode]
+            or {key for key in row if key.startswith('observation.')} != set(OBS)):
+        raise ValueError('Unapproved episode/instruction/observation')
+    require_instruction(row['task'])
+    for key, shape in OBS.items():
+        value = row[key]
+        if (not isinstance(value, torch.Tensor) or tuple(value.shape) != shape or value.dtype != torch.float32
+                or not torch.isfinite(value).all()):
+            raise ValueError(f'{key}: finite FP32 tensor of shape {shape} required')
+    for key in CAMERAS:
+        if row[key].min() < 0 or row[key].max() > 1:
+            raise ValueError(f'{key} must lie in [0, 1]')
+    action, pad = row.get('action'), row.get('action_is_pad')
+    if (not isinstance(action, torch.Tensor) or tuple(action.shape) != (CHUNK_SIZE, 8)
+            or action.dtype != torch.float32 or not torch.isfinite(action).all()
+            or not isinstance(pad, torch.Tensor) or tuple(pad.shape) != (CHUNK_SIZE,)
+            or pad.dtype != torch.bool or pad.any()):
+        raise ValueError('Finite real chunk actions and a complete unpadded chunk required')
+    return {key: row[key] for key in (*OBS, 'task', 'action', 'action_is_pad')}
+
+
+def collate_rows(rows):
+    if not 1 <= len(rows) <= EFFECTIVE_BATCH:
+        raise ValueError('A microbatch holds between 1 and the effective batch of rows')
+    return default_collate([policy_row(row, True) for row in rows])
+
+
+def sample_updates(starts):
+    """Endless stream of effective-batch groups of window starts, a fresh permutation per epoch, fixed by SEED."""
+    if starts != windows():
+        raise ValueError(f'Exactly {len(windows())} complete ordered training windows required')
+    if len(starts) % EFFECTIVE_BATCH:
+        raise ValueError('An epoch must be a whole number of updates')
+    generator = torch.Generator().manual_seed(SEED)
+    while True:
+        order = torch.randperm(len(starts), generator=generator).tolist()
+        for offset in range(0, len(order), EFFECTIVE_BATCH):
+            yield [starts[j] for j in order[offset:offset+EFFECTIVE_BATCH]]
+
+
+# --- claims, checkpoints and gate proofs ----------------------------------------------------------------------
+
+def inventory(directory):
+    directory = Path(directory)
+    if any(path.is_symlink() for path in (directory, *directory.parents)):
+        raise ValueError('Artifact directory symlinks forbidden')
+    result = {}
+    for path in sorted(directory.rglob('*')):
+        if path.is_symlink():
+            raise ValueError('Artifact symlinks forbidden')
+        if path.is_file():
+            result[str(path.relative_to(directory))] = sha256(path)
+    if not result:
+        raise ValueError('Artifact directory is empty')
+    return result
+
+
+def write_json(path, value):
+    Path(path).write_text(json.dumps(value, indent=2, allow_nan=False)+'\n')
+
+
+def claim_directory(path):
+    path = Path(path).absolute()
+    if any(p.is_symlink() for p in (path, *path.parents)):
+        raise ValueError('Symlink output forbidden')
+    path.mkdir(parents=True, exist_ok=False)
+
+
+def is_mountpoint(path):
+    return str(path) in {line.split()[4] for line in Path('/proc/self/mountinfo').read_text().splitlines()}
+
+
+def claim_output(path):
+    """Exclusive token; an existing path is allowed only as a newly created, empty Docker output bind mount."""
+    path = Path(path).absolute()
+    if any(item.is_symlink() for item in (path, *path.parents)):
+        raise ValueError('Symlink output forbidden')
+    if path.exists():
+        if not path.is_dir() or not is_mountpoint(path) or any(path.iterdir()):
+            raise FileExistsError('Preserve existing output; no overwrite; resume only via --resume')
+    else:
+        claim_directory(path)
+    with (path/'run_claim.json').open('x') as stream:
+        json.dump({'purpose': 'pi05_props_p2', 'resume': False, 'required_image': IMAGE}, stream)
+
+
+def claim_resume(path):
+    path = Path(path).absolute()
+    if any(item.is_symlink() for item in (path, *path.parents)):
+        raise ValueError('Symlink output forbidden')
+    claim = path/'run_claim.json'
+    if not path.is_dir() or not is_mountpoint(path) or not claim.is_file():
+        raise FileExistsError('Resume needs the original bind-mounted output holding run_claim.json')
+    if json.loads(claim.read_text()) != {'purpose': 'pi05_props_p2', 'resume': False, 'required_image': IMAGE}:
+        raise ValueError('run_claim.json is not this package\'s claim')
+    number = len(list(path.glob('resume_claim_*.json')))+1
+    with (path/f'resume_claim_{number:02d}.json').open('x') as stream:
+        json.dump({'purpose': 'pi05_props_p2', 'resume': number, 'required_image': IMAGE}, stream)
+    return number
+
+
+def checkpoint_directory(update):
+    if type(update) is not int or update < 1:
+        raise ValueError('Positive integer update required')
+    return f'step_{update:06d}'
+
+
+def require_marker(marker, update):
+    require_fields(marker, dict(status='complete', update=update, reload_weights_exact=True),
+                   'Strict checkpoint marker required')
+    error = marker.get('reload_max_action_error')
+    if type(error) not in (int, float) or not 0 <= error <= 1e-5:
+        raise ValueError('Absolute reload action error must be finite and <=1e-5')
+
+
+def cpu_proof(binding, semantic, stats, processor, parent_fingerprint):
+    return dict(status='passed', gpu_executed=False, optimizer_updates=0, binding=binding,
+                semantic_gate=semantic, training_rows=TRAINING_ROWS, complete_training_windows=len(windows()),
+                train_episodes=list(TRAIN), validation_episodes=list(VAL),
+                parent_fingerprint_recomputed=parent_fingerprint == SEAL,
+                training_stats=stats, training_stats_digest=digest_json(stats),
+                processor_check=processor, processor_digest=digest_json(processor))
+
+
+def validate_cpu(report, binding):
+    require_fields(report, dict(status='passed', gpu_executed=False, optimizer_updates=0, binding=binding,
+                   training_rows=TRAINING_ROWS, complete_training_windows=len(windows()),
+                   train_episodes=list(TRAIN), validation_episodes=list(VAL), parent_fingerprint_recomputed=True),
+                   'Current full CPU admission required')
+    if (digest_json(report.get('semantic_gate')) != binding.get('validation_sha256')
+            or not report.get('training_stats') or not report.get('processor_check')
+            or digest_json(report['training_stats']) != report.get('training_stats_digest')
+            or digest_json(report['processor_check']) != report.get('processor_digest')):
+        raise ValueError('CPU semantic/statistics/processor proof changed')
+
+
+def admission():
+    binding = current_binding()
+    validate_cpu(json.loads(CPU_ADMISSION.read_text()), binding)
+    return binding
+
+
+def verify_checkpoints(report, output, preflight):
+    updates = checkpoint_updates(preflight)
+    keys = [checkpoint_directory(i) for i in updates]
+    if [m.get('update') for m in report.get('checkpoints', [])] != updates:
+        raise ValueError('Checkpoint schedule changed')
+    if set(report.get('checkpoint_files', {})) != set(keys):
+        raise ValueError('All checkpoint inventories required')
+    if {p.name for p in (output/'checkpoints').iterdir()} != set(keys):
+        raise ValueError('Unlisted/missing checkpoint')
+    for marker in report['checkpoints']:
+        update = marker['update']
+        require_marker(marker, update)
+        directory = output/'checkpoints'/checkpoint_directory(update)
+        files = inventory(directory)
+        required = {'model.safetensors', 'config.json', 'checkpoint_result.json'}
+        if update == updates[-1]:
+            required |= {'training_state.pt'}
+        if (files != report['checkpoint_files'][checkpoint_directory(update)] or not required <= files.keys()
+                or files['model.safetensors'] != marker.get('model_sha256')
+                or json.loads((directory/'checkpoint_result.json').read_text()) != marker):
+            raise ValueError('Checkpoint byte inventory changed')
+        if update != updates[-1] and 'training_state.pt' in files:
+            raise ValueError('Intermediate checkpoint must not persist optimizer state')
+
+
+def validate_scratch(report, binding, output, stats, cpu_hash):
+    require_fields(report, {**recipe(True), 'status': 'complete', 'completed_updates': 2, 'binding': binding,
+                   'training_rows': TRAINING_ROWS, 'complete_training_windows': len(windows()),
+                   'cpu_admission_sha256': cpu_hash, 'final_data_binding_passed': True,
+                   'selected_checkpoint_update': None, 'rollouts': 0},
+                   'Exact current two-update scratch proof required')
+    if (report.get('training_stats_sha256') != sha256(output/'training_stats.json')
+            or json.loads((output/'training_stats.json').read_text()) != stats):
+        raise ValueError('Scratch training statistics changed')
+    verify_checkpoints(report, output, True)
+
+
+def validate_resume_proof(report, binding, scratch_report, output):
+    """A resumed run reproduced the uninterrupted run's second update bit for bit."""
+    require_fields(report, {**recipe(True), 'status': 'complete', 'completed_updates': 2, 'binding': binding,
+                   'final_data_binding_passed': True, 'rollouts': 0}, 'Exact current resume proof required')
+    scratch_model = scratch_report['checkpoints'][-1]['model_sha256']
+    require_fields(report.get('resume_proof') or {},
+                   dict(from_update=1, compared_update=2, metrics_equal=True, model_sha256_equal=True,
+                        training_state_sha256_equal=True, scratch_model_sha256=scratch_model),
+                   'Resumed run must reproduce the uninterrupted second update exactly')
+    if report['checkpoints'][-1]['model_sha256'] != scratch_model:
+        raise ValueError('Resumed final weights differ from the uninterrupted run')
+    if report.get('training_stats_sha256') != sha256(output/'training_stats.json'):
+        raise ValueError('Resume-proof training statistics changed')
+    verify_checkpoints(report, output, True)

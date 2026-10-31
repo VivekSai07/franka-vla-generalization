@@ -5,9 +5,25 @@ Part of the [VLA inputs programme](../../docs/superpowers/specs/2026-10-30-vla-i
 [M1 plan](../../docs/superpowers/plans/2026-10-30-vla-inputs-m1-pi05.md). Question: on the same 540 sealed P2 episodes and the
 same inputs, does pi0.5 fine-tuned with its own recipe at 5.0 epochs beat X-VLA checkpoint 101,520?
 
-**Status: Tasks 1-3 only (images, assets, contract).** There is no runner yet: the memory strategy (spec D5) is decided by
-the Task 4 probe and is fixed in `recipe()` before `--check`. Nothing here has trained. The run's output will be
-`outputs/train/pi05_props_p2_v1`.
+**Status: Tasks 1-3 done; Task 4 runner written and its CPU tests pass; the memory strategy is not decided.** `contract.DECISION`
+is `None`, and `--check`, `--preflight`, `--resume-proof` and `--train` refuse while it is: the user decides after
+`--probe-memory` (spec D5), and the decision (strategy, microbatch, snapshot interval, measured checkpoint / snapshot /
+final-state / GPU-peak bytes) is then written into `contract.py` before `--check`. Nothing here has trained; the gate modes
+have not been run. The run's output will be `outputs/train/pi05_props_p2_v1`.
+
+## Modules
+
+| file | what |
+|---|---|
+| `contract.py` | binding, windows, statistics, recipe, config per strategy, lr schedule (equal to LeRobot's scheduler), row validation, sampler, claims, gate proofs |
+| `assets.py` | pinned weights and tokenizer files |
+| `weights.py` | tie-aware loader (never `from_pretrained`); optionally returns the exact FP32 masters |
+| `strategy.py` | the three D5 candidates behind one interface: `bf16_all`, `bf16_cpu_master` (FP32 masters, gradients and Adam on the CPU), `expert_only` |
+| `runner.py` | `--probe-memory`, `--check`, `--preflight`, `--resume-proof`, `--train [--stop-at T] [--resume]` |
+
+The three strategies share one update (`runner.one_update`: `8 / microbatch` forward and backward passes, loss divided by the
+accumulation, FP32-accumulated global-norm clip at 1.0, step). Checkpoints are saved with `save_pretrained` and verified
+tensor by tensor against the live policy; a second 3.6 B model does not fit next to the first for a prediction comparison.
 
 ## What is bound
 
