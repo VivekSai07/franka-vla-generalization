@@ -1,5 +1,18 @@
 # Franka benchmark: start here
 
+## M0 evaluator built, frozen, A0 prepared and smoked; stopped before the A0 comparison run - 2026-10-31
+
+Branch `feat/vla-inputs` (`experiments/vla_inputs_eval/`, `experiments/vla_inputs_arm_xvla/`, `scripts/vla_inputs_eval.sh`; core
+hash `3cc8c623…`). Equivalence gate passed: the new rollout and X-VLA adapter reproduce the two lowest-ordinal successes and
+failures of P2's recorded report trials of 101,520 byte for byte (702, 719, 900, 900 ticks), and an expert replay through the
+real loop records the S0 signals byte-equal to the sealed sidecar. **Feasibility (unrendered expert, 656 layouts): 652
+feasible, 4 dropped for every arm** (comparison 573 of 576: bread-blue-right-d1 11/12, lemon-orange-right-d2 10/12; selection 79
+of 80: lemon-blue-left-d2 1/2; reasons `grasp` x3, `lost_in_carry` x1). Power recomputed at N = 573 before any policy outcome:
+at alpha .0125 and a 10-point gain 0.999 / 0.969 / 0.895 for D = .19 / .30 / .40, at 8 points 0.972 / 0.831 / 0.684, at 6 points
+0.771 / 0.524 / 0.387 (exact enumeration, Monte Carlo agrees within 0.0012). A0 smoke 2/2; an 8-worker one-checkpoint probe on
+the selection layouts used 33.6 GB of the 48 GB card, hit 84 C and paused workers for 585 s in total. A0 has not been run on
+the comparison tier. Details: the M0 report to be written after A0.
+
 ## M2/M3/M4 specs corrected after S0; S0 merged to main - 2026-10-30
 
 Two corrections before any M2 code. (1) **P2's X-VLA recipe does not normalise the state** (`STATE` is `IDENTITY`, enforced by
