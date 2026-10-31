@@ -2,8 +2,13 @@
 
 ## Where things stand (2026-10-31)
 
-- **Order revised (user, 2026-10-31): input/output arms first, pi0.5 (M1) last.** Next on the GPU: M2 Task 3 (zero-equivalence) and
-  Task 5 (gates, full M2 training); in parallel the overnight-pilot build (CPU); then pilot night 1 (control, A0 on the pilot tier,
+- **M2 training running (started 2026-10-31 17:02, no deadline, `.worktrees/m2-run`, container `xvla-p2-force-train`):** all gates and
+  the Task 3 and 4b proofs passed (see the status log). About 18-20 h. A supervisor resumes after a death; poll `docker ps` and
+  `outputs/train/xvla_p2_force_v1/result.json`. Do not edit `experiments/xvla_p2_force/**` (bound) or switch that worktree. **Next:** M2's
+  evaluation (Task 6) only after pilot night 1 has recorded its decision; free disk was 87 GB after the gates (about 26 GB at the run's peak).
+
+- **Order revised (user, 2026-10-31): input/output arms first, pi0.5 (M1) last.** Next on the GPU: ~~M2 Task 3 (zero-equivalence) and
+  Task 5 (gates, full M2 training)~~ done as above; in parallel the overnight-pilot build (CPU); then pilot night 1 (control, A0 on the pilot tier,
   force, box) **before** M2 is evaluated on M0's comparison tier, so the pilot decision is recorded blind to the full result
   (calibration); then M2's evaluation night. Free disk 137 GB after the pi0.5 cleanup.
 

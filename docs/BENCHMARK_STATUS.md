@@ -1,5 +1,26 @@
 # Franka benchmark: start here
 
+## M2 gates passed, Task 3 and 4b proofs, training launched without a deadline - 2026-10-31
+
+Detached worktree `.worktrees/m2-run` at `f1c49b3` (never switched; clean; outputs bind-mounted from the main checkout; launch
+script `outputs/train/xvla_p2_force_gate.sh`). Gates in order, each bound to the same sources and data: `--check` passed (both
+fingerprints recomputed, 17-value processor check); `--preflight` 2 GPU updates, FP32 weight and Adam round trip exact;
+`--resume-proof` update 2 reproduced byte for byte; `--equivalence` 30 updates, metrics, weights and Adam moments byte-equal (serial loop
+0.843 s, fast loop 0.530 s per update); **`--zero-equivalence` (Task 3): P2's own loop (its runner, bound as `REFERENCE_FILES`) on P2's
+9-value data and this loop on the 17-value data with the 8 extras forced to 0 agree byte for byte over 30 updates** (model sha256
+`2165eb26…`, 0.533 s and 0.503 s per update). Its mutation check, one extra column left un-zeroed, was reported unequal on all three
+counts (run through a wrapper that replaces the hook, no bound file edited). **Task 4b:** with the preflight checkpoint
+(`step_000002`, 17-value config) and `XVLAForceAdapter`, over 30 ticks the policy ran at ticks 0, 10, 20 only (3 Hz, ten queued actions);
+replacing the observation (extras and images) on every other tick left all 30 actions byte-equal; changing the observation at tick 10
+changed the second chunk only; the checkpoint's saved processor gives the training processor's `proprio` byte for byte
+(`eval_tests/test_inference_boundary.py`). So M2 is instantaneous conditioning at chunk boundaries, as designed. **Training:** `--train`
+without `--stop-at` started 17:02 local (update 1's loss 1.10818 equals the preflight's), 0.52 s per update so about 18-20 h for
+126,900 updates plus checkpoints and snapshots; the runner's thermal guard sleeps at 83 C until 75 C, and a detached supervisor
+(`outputs/train/xvla_p2_force_supervisor.sh`, log beside it) resumes from the newest verified snapshot after a death, at most 5 times.
+**Disk:** the gates left 87 GB free (preflight and resume proof 23 GB each, which `--train` re-audits and must keep); the run peaks at
+about 61 GB, so expect about 26 GB free at the worst moment. **M2 is not evaluated on M0's comparison tier until pilot night 1 has
+recorded its decision.**
+
 ## pi0.5 training stopped and its storage freed; input/output arms first - 2026-10-31
 
 User decision: M1 (pi0.5) moves to the end of the programme. `pi05-train` was stopped at update 220 (of 120,900; container log
