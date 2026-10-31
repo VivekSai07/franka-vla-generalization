@@ -68,6 +68,11 @@ Plans: [M0](../plans/2026-10-30-vla-inputs-m0-evaluation.md) · [S0](../plans/20
 [M1](../plans/2026-10-30-vla-inputs-m1-pi05.md) · [M2](../plans/2026-10-30-vla-inputs-m2-force.md) ·
 [M3](../plans/2026-10-30-vla-inputs-m3-box.md) · [M4](../plans/2026-10-30-vla-inputs-m4-outputs.md).
 
+**Added 2026-10-31: overnight pilots** ([spec](2026-10-31-vla-inputs-overnight-pilots-design.md),
+[plan](../plans/2026-10-31-vla-inputs-overnight-pilots.md)). Input and loss ideas are screened as continuation pilots from A0
+(10,000 updates, 192 fresh paired layouts, promote if Δ ≥ +5 points) in one night before any full run; full M2 runs
+regardless, to calibrate the pilots. It revises the order after M1: A1 evaluation, pilot night 1 (force, box), full M2.
+
 ```mermaid
 flowchart LR
   M0[M0 evaluator + A0] --> A1E[A1 eval]

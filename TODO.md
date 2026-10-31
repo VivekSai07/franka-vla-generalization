@@ -2,6 +2,13 @@
 
 ## Where things stand (2026-10-30)
 
+- **Overnight pilots designed (2026-10-31, user approved the approach; spec and plan under review, nothing built):** continuation
+  pilots from A0 (10,000 updates at a constant 1e-5, shared zero-input control) screen input and loss ideas on 192 fresh paired
+  layouts in one night (launch evening, judge morning); promote to a full run if Δ ≥ +5 points. Small-task pilots from scratch only
+  for output changes. Full M2 still runs, to calibrate the pilots.
+  [Spec](docs/superpowers/specs/2026-10-31-vla-inputs-overnight-pilots-design.md) ·
+  [plan](docs/superpowers/plans/2026-10-31-vla-inputs-overnight-pilots.md).
+
 - **M0 control arm A0 done (2026-10-31, branch `feat/vla-inputs`, not pushed):** 451 of 573 comparison layouts = 78.7%
   [75.4, 82.0] (trained 80.5%, held-out 69.8%, milk 53.1%); core `c4f6c303f2ae` (X-VLA base bundle now bound). The GPU is free.
   [Report](docs/VLA_INPUTS_M0_20261031.md). **Open:** A1-A4 need trained checkpoints (M2-M4), and before another 8-worker run
