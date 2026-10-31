@@ -53,9 +53,8 @@ class ModeTests(unittest.TestCase):
                 r.parse_configs(bad)
 
     def test_every_other_mode_refuses_while_the_decision_is_open(self):
-        self.assertIsNone(c.DECISION)
         for argv in (['--check'], ['--preflight'], ['--resume-proof'], ['--train']):
-            with self.subTest(argv), self.assertRaisesRegex(RuntimeError, 'not decided'):
+            with self.subTest(argv), patch.object(c, 'DECISION', None), self.assertRaisesRegex(RuntimeError, 'not decided'):
                 r.main(argv)
 
     def test_the_probe_does_not_need_a_decision_and_never_runs_after_check(self):

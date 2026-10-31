@@ -1,5 +1,16 @@
 # Franka benchmark: start here
 
+## pi0.5 training stopped and its storage freed; input/output arms first - 2026-10-31
+
+User decision: M1 (pi0.5) moves to the end of the programme. `pi05-train` was stopped at update 220 (of 120,900; container log
+saved as `container_log_aborted.txt`), and 64 GB of pi0.5 weights were deleted: the run's update-1 checkpoint, the preflight and
+resume-proof checkpoints and optimizer states (50 GB, single-link files) and the downloaded `pi05_base` weights (14.5 GB, public
+and hash-pinned as `0eb11ca9…`, so re-downloadable). Every JSON record was kept; the four folders were renamed
+`outputs/train/pi05_props_p2_v1*_aborted_20261031` so a later fresh start is not blocked. Free disk 76 → 137 GB. The pi0.5 images,
+the PaliGemma tokenizer, the contract and the runner stay; **restarting M1 later needs the weights re-downloaded and all gates
+(`--check`, `--preflight`, `--resume-proof`) run again from scratch.** A1 is unaffected scientifically: its recipe was frozen
+before any arm but A0 was evaluated, and until it runs it enters the A1–A4 Holm family as p = 1.
+
 ## M2 Tasks 1, 2 and 4 done on the CPU: force/torque fork, input check, rollout state builder - 2026-10-31
 
 Branch `feat/vla-inputs` (not pushed), no GPU used (M1 holds it). `experiments/xvla_p2_force/` forks `xvla_props_p2` with one
@@ -13,6 +24,24 @@ CPU `--check` into a scratch directory on the real dataset reproduced P2's recor
 exactly (extras mean 0, std 1; clipping 0.2% per wrench dimension and 0.1% per finger on training rows). **Not done:** Task 3
 (zero-equivalence, GPU), Task 5 (gates, training), 4b's inference-boundary proof; no admission artefact was written. A planning error
 found on the way is [FAILURES #67](FAILURES.md); future M0 runs use 6 workers.
+
+## M1 arm "pi0.5, action expert fine-tuned (VLM frozen)": gates passed, training started - 2026-10-31
+
+User decision (2026-10-31): `expert_only`, microbatch 8, effective batch 8, snapshot every 2,600 updates, one kept plus the one
+being written (contract commit `e9b7678`). Disk was the constraint: `--train` re-hashes every checkpoint file of the preflight and
+resume-proof outputs (never their `resume/` snapshots), so after the resume-proof passed those two snapshots (12 GiB each) were
+deleted, as authorised; with five unused Docker images removed (about 14 GiB; the EGL check image among them) and the pre-P2 P1
+staging bundle and two evaluation output directories (about 1 GiB; most of that was hardlinks to data kept elsewhere) free space
+was 84.0 GiB against the 83.9 GiB guard, so there is **no disk margin** and the run ends with about 71 GiB of its own files.
+Gates, from a detached worktree (`.worktrees/m1-run`, never to be switched): `--check` passed (parent fingerprint recomputed,
+real-row processor check: prompts of 143 to 144 tokens of 200, camera order, physical-action round trip); `--preflight` 2 updates
+with two weight-verified checkpoints (812 tensors each); `--resume-proof` reproduced update 2 from the update-1 snapshot with
+identical metrics, weights hash and optimizer-state hash. Training started 2026-10-31 16:23, about 0.73 s per update at 80 C, to
+pause at the last snapshot before 2026-11-01 06:00 (`outputs/train/pi05_props_p2_gate.sh .worktrees/m1-run train-resume
+"tomorrow 06:00"` continues it). Loss, grad norm and the rest are logged in `outputs/train/pi05_props_p2_v1/metrics.jsonl`; no
+offline metric is used for any decision. Task 4b CPU items are done: installed-source hashes bound, loss and 812 gradient tensors
+equal to a hand-written reference, inference queues 10 physical actions per replan, and the GPU probe and gates recorded the
+parameter, gradient and moment dtypes. *(Superseded the same day: training stopped at update 220, entry above.)*
 
 ## M0 control arm A0 run on the comparison tier: 451 of 573, 78.7% - 2026-10-31
 

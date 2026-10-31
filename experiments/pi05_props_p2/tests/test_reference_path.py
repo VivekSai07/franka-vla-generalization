@@ -147,6 +147,26 @@ class RealBatchTests(unittest.TestCase):
             self.assertTrue(torch.equal(value, expected[name]), name)
         self.assertTrue(all(torch.isfinite(g).all() for g in grads.values()))
 
+    def test_inference_queues_ten_physical_actions_per_replan_and_stays_finite(self):
+        p = self.policy
+        p.eval()
+        try:
+            p.reset()
+            torch.manual_seed(5)
+            with torch.no_grad():
+                first = p.select_action(self.batch)
+            self.assertEqual(tuple(first.shape), (2, 8))
+            self.assertEqual(len(p._action_queue), c.N_ACTION_STEPS-1)
+            physical = self.post(first)
+            self.assertEqual(tuple(physical.shape), (2, 8))
+            self.assertTrue(torch.isfinite(first).all() and torch.isfinite(physical).all())
+            with torch.no_grad():
+                chunk = p.predict_action_chunk(self.batch)
+            self.assertEqual(tuple(chunk.shape), (2, c.CHUNK_SIZE, 8))
+            self.assertTrue(torch.isfinite(chunk).all())
+        finally:
+            p.train()
+
 
 if __name__ == '__main__':
     unittest.main()
