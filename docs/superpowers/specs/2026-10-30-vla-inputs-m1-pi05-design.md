@@ -1,5 +1,10 @@
 # M1 — pi0.5 on the P2 dataset, against X-VLA — design
 
+**Decision 2026-10-31 (user, after `--probe-memory`):** D5 is settled as `expert_only`: arm **"pi0.5, action expert fine-tuned
+(VLM frozen)"**, microbatch 8, effective batch 8, a snapshot every 2,600 updates (one kept plus the one being written). It is a
+named restriction of full tuning, not equivalent to it. Measurements: [BENCHMARK_STATUS.md](../../BENCHMARK_STATUS.md). Wherever
+this document says "pi0.5" for the trained arm it means this arm.
+
 **Date:** 2026-10-30. **Status: draft for external review.** Part of the
 [VLA inputs programme](2026-10-30-vla-inputs-programme-design.md). No code exists. The checks below were read-only.
 

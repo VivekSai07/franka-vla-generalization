@@ -303,8 +303,11 @@ DISK_MARGIN_BYTES = 2*1024**3
 DECISION_KEYS = ('strategy', 'microbatch', 'snapshot_every', 'checkpoint_bytes', 'snapshot_bytes',
                  'final_state_bytes', 'gpu_peak_bytes')
 GPU_MARGIN_BYTES = 2*1024**3
-# The user's decision after `--probe-memory`; None until it is made, and `--check` refuses while it is None.
-DECISION = None
+# The user's decision after `--probe-memory` (2026-10-31): the action expert is fine-tuned, the VLM is frozen, microbatch 8 of an
+# effective batch of 8, a snapshot every 2,600 updates. Byte counts are the probe's measurements for this strategy.
+ARM_NAME = 'pi0.5, action expert fine-tuned (VLM frozen)'
+DECISION = {'strategy': 'expert_only', 'microbatch': 8, 'snapshot_every': 2600, 'checkpoint_bytes': 8_622_597_928,
+            'snapshot_bytes': 12_063_804_506, 'final_state_bytes': 3_440_963_403, 'gpu_peak_bytes': 32_088_522_752}
 
 
 def validate_decision(decision):
@@ -375,7 +378,7 @@ def recipe(preflight):
                 optimizer=dict(peak_lr=2.5e-5, betas=[.9, .95], eps=1e-8, weight_decay=.01, clip=1.0),
                 schedule=dict(warmup=1000, total=TOTAL_UPDATES, decay_lr=2.5e-6),
                 normalization='quantiles_train_only_q01_q99_no_clipping',
-                deviations=['effective_batch_8', 'decay_spans_run', 'n_action_steps_10'],
+                deviations=['effective_batch_8', 'decay_spans_run', 'n_action_steps_10', 'vlm_frozen_expert_only'], arm=ARM_NAME,
                 train_episodes=list(TRAIN), validation_episodes=list(VAL), exposure=exposure(), decision=DECISION)
 
 

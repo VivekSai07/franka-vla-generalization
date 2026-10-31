@@ -115,7 +115,7 @@ sizes in `recipe()`.
   update, checkpoint and snapshot sizes, and for (a) and (b) the per-tensor fraction of elements changed by one update at the
   peak and the floor learning rate. FP32 on-GPU full tuning (57.9 GB before activations) and frozen-vision FP32 (~52 GB) are
   not probed: they cannot fit. Write `outputs/train/pi05_props_p2_probe/probe.json`.
-- [ ] **Step 6:** **user decision** on the memory strategy and the time/disk projection, recorded in `README.md` and
+- [x] **Step 6 (done 2026-10-31):** **user decision** on the memory strategy and the time/disk projection, recorded in `README.md` and
   `recipe()`. Commit `M1: runner, memory strategy <x>`.
 
 ### Task 4b: numerical and reference-path proof
@@ -134,6 +134,12 @@ sizes in `recipe()`.
   disk projections, plus temporary atomic writes and the final optimizer save.
 
 ### Task 5: gates and training
+
+**Decision (user, 2026-10-31):** arm "pi0.5, action expert fine-tuned (VLM frozen)", strategy `expert_only`, microbatch 8,
+effective batch 8, snapshot every 2,600 updates. **Disk:** `--train` re-hashes the checkpoint files of both gate outputs but never
+reads their `resume/` snapshots, so each gate's snapshot is deleted once the resume-proof has passed (authorised 2026-10-31);
+checkpoints are kept. Disk freed for this on 2026-10-31: five images (about 14 GiB) and pre-P2 evaluation outputs (about 1 GiB).
+Run from a detached worktree that is never switched.
 
 - [ ] Pre-launch checklist ([launching-a-run](../../../.github/skills/launching-a-run/SKILL.md) section 1); disk decision by the user.
 - [ ] `--check` → `--preflight` (2 updates, weight and optimizer round trip) → `--resume-proof` (a resumed process reproduces
