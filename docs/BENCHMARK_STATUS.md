@@ -1,5 +1,19 @@
 # Franka benchmark: start here
 
+## M2 Tasks 1, 2 and 4 done on the CPU: force/torque fork, input check, rollout state builder - 2026-10-31
+
+Branch `feat/vla-inputs` (not pushed), no GPU used (M1 holds it). `experiments/xvla_p2_force/` forks `xvla_props_p2` with one
+change, the robot state: 9 joint positions plus the wrist wrench (6) and finger forces (2) from the sealed S0 sidecar, joined by
+(episode, frame), clipped to S0's training-row 0.1/99.9 percentiles and standardised with fixed constants (mean/std of the clipped
+training rows, pinned by digest `98d86821…`); LeRobot's state normalisation stays `IDENTITY`. A local `check_model_inputs` proves the
+policy sees 17 real values and 3 zeros. **Evidence:** 129 training-package tests, 14 rollout-side tests (train/rollout state parity
+byte-equal on 1,808 replayed frames of 4 sealed episodes, one with 45 clipped frames, and on the normalised/padded `proprio` tensor), 6
+arm tests (M0's shared-core hash equals A0's); mutation checks killed every non-equivalent mutant (two equivalent ones recorded); and a
+CPU `--check` into a scratch directory on the real dataset reproduced P2's recorded action statistics and first nine state statistics
+exactly (extras mean 0, std 1; clipping 0.2% per wrench dimension and 0.1% per finger on training rows). **Not done:** Task 3
+(zero-equivalence, GPU), Task 5 (gates, training), 4b's inference-boundary proof; no admission artefact was written. A planning error
+found on the way is [FAILURES #67](FAILURES.md); future M0 runs use 6 workers.
+
 ## M0 control arm A0 run on the comparison tier: 451 of 573, 78.7% - 2026-10-31
 
 [Report](VLA_INPUTS_M0_20261031.md). The P2 X-VLA checkpoint 101,520 (language and two cameras only), 573 feasible

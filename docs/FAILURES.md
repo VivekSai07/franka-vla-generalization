@@ -202,6 +202,18 @@ or make the guard cross-worker as a recorded core change. See [VLA_INPUTS_M0_202
 rollout. It was bound as a recorded core change with no comparison trial run, and a closure test now fails if the adapter
 reads an undeclared `.cache` or `/bundle` file.)
 
+**Decision (2026-10-31): future M0 runs use 6 workers**, not 8; the guard itself stays as it is (changing it is a recorded core change).
+
+67. **The M2 plan put the evaluation adapter where M0 cannot load it.** The plan asked for `experiments/xvla_p2_force/eval_adapter.py`
+(outside the training `SOURCE_FILES`, so a later fix never invalidates training), but M0's frozen core loads an arm only from a
+module named `experiments.vla_inputs_arm_*` (`adapters.load_adapter`'s identifier check), and the core may not change after A0.
+Found while writing the adapter, before any run. Fix: the code stays in `eval_adapter.py`; a thin package
+`experiments/vla_inputs_arm_xvla_force/` re-exports it, so M0's arm closure binds both. Also recorded: an extra-state check taking
+only the collated state cannot tell raw extras from standardised ones, so `check_model_inputs` takes the dataset row indices and
+recomputes the expected extras from the sealed sidecar; and in mutation testing a mutant that reorders columns by a permutation
+that undoes itself was equivalent (the first mutation of column order survived for that reason, not because the test was weak).
+**Lesson:** check a plan's file placement against the loader that will consume it, not only against the binding rules.
+
 Broader lessons — every "just increment a counter" or "just leave state alone on retry" assumption in the fixed-layout pipeline broke under broad_workspace retries. Rejections need explicit cleanup for every piece of shared state (LeRobot buffer + PNG dir + attempts dir semantics + admit-count invariant). And a result is only interpretable once you know what the *absence* of the treatment scores on the same protocol.
 
 **Recurring meta-lesson — a green test suite is not evidence.** Six separate times (#10, #15, #20, #24, and twice while porting eval packages) the tests passed while the thing that actually runs was broken, because the tests exercised a *fixture*, a *constant*, the *wrong module*, or every path *except* the one the job takes. When adding a regression test, confirm it fails against the unfixed code. When forking a package, run the `symtable` undefined-name check from #24 before spending GPU time.
