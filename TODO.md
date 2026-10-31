@@ -8,8 +8,10 @@
   decide the thermal guard: it paused three workers for about an hour each ([FAILURES #66](docs/FAILURES.md)); use fewer
   workers, or a cross-worker guard as a recorded core change.
 
-- **M1 Task 4 runner and CPU parts of 4b written (2026-10-31, branch `feat/vla-inputs-m1`); `--probe-memory` run (2026-10-31); the user decides
-  the memory strategy.**
+- **M1 arm "pi0.5, action expert fine-tuned (VLM frozen)" training since 2026-10-31 16:23 (container `pi05-train`, detached worktree
+  `.worktrees/m1-run` at `e9b7678`, never switch it; branch `feat/vla-inputs-m1`).** Gates passed; pauses at the last snapshot before
+  2026-11-01 06:00; continue with `outputs/train/pi05_props_p2_gate.sh .worktrees/m1-run train-resume "tomorrow 06:00"`. Disk has no
+  margin (84.0 GiB free against an 83.9 GiB guard). See [BENCHMARK_STATUS.md](docs/BENCHMARK_STATUS.md).
   Detail in [BENCHMARK_STATUS.md](docs/BENCHMARK_STATUS.md).
 - **M1 Tasks 1-3 done (2026-10-30, branch `feat/vla-inputs-m1`, merged into `main` 2026-10-31):** the two pi0.5 images are built and tested
   (`docker/pi05/README.md`), the `pi05_base` weights (revision `9e55186a`, 14.5 GB) and PaliGemma tokenizer are downloaded and

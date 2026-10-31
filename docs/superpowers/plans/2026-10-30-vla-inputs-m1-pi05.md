@@ -120,16 +120,16 @@ sizes in `recipe()`.
 
 ### Task 4b: numerical and reference-path proof
 
-- [ ] Pin installed source hashes, optimizer implementation and transformers commit; `pip check`, offline load and actual
+- [x] Pin installed source hashes, optimizer implementation and transformers commit; `pip check`, offline load and actual
   forward/backward/update/inference must pass. If the two-package install (transformers + tokenizers) cannot satisfy dependencies, stop and amend
   the manifest before training; do not weaken the gate or mutate the old images.
 - [x] *(CPU, done 2026-10-31; the real-model optimizer update is measured by the probe)* Compare custom runner loss, gradients and update against the installed policy/processor reference on a fixed batch;
   check padding/masks, real action dimensions, camera order, prompt length and physical-action round-trip.
-- [ ] Record parameter/gradient/moment/master-weight dtypes. Both bf16-weight candidates can lose sub-ULP updates;
+- [x] Record parameter/gradient/moment/master-weight dtypes. Both bf16-weight candidates can lose sub-ULP updates;
   fraction-changed is diagnostic only. Verify the optimizer supports its actual dtype configuration and resumes exactly.
-- [ ] Decide effective batch independently from microbatch memory (accumulation can retain 32); freeze the chosen recipe
+- [x] *(effective batch 8 kept, user 2026-10-31)* Decide effective batch independently from microbatch memory (accumulation can retain 32); freeze the chosen recipe
   before check. A supported LoRA/frozen-backbone fallback is a named different arm recipe, not full-tuning equivalence.
-- [ ] Report complete-window starts, observation samples, action-target positions and schedule phase. Different chunks have
+- [x] Report complete-window starts, observation samples, action-target positions and schedule phase. Different chunks have
   different start support despite five epochs each. Include all retained gate artifacts and image/assets/video storage in
   disk projections, plus temporary atomic writes and the final optimizer save.
 
@@ -141,10 +141,10 @@ reads their `resume/` snapshots, so each gate's snapshot is deleted once the res
 checkpoints are kept. Disk freed for this on 2026-10-31: five images (about 14 GiB) and pre-P2 evaluation outputs (about 1 GiB).
 Run from a detached worktree that is never switched.
 
-- [ ] Pre-launch checklist ([launching-a-run](../../../.github/skills/launching-a-run/SKILL.md) section 1); disk decision by the user.
-- [ ] `--check` → `--preflight` (2 updates, weight and optimizer round trip) → `--resume-proof` (a resumed process reproduces
+- [x] Pre-launch checklist ([launching-a-run](../../../.github/skills/launching-a-run/SKILL.md) section 1); disk decision by the user.
+- [x] (all three passed 2026-10-31; each gate's `resume/` snapshot deleted after the resume-proof, authorised) `--check` → `--preflight` (2 updates, weight and optimizer round trip) → `--resume-proof` (a resumed process reproduces
   update 2 byte for byte) → `--train --stop-at <deadline>` in nights from a detached worktree that is never switched.
-- [ ] Each night: status entry in `docs/BENCHMARK_STATUS.md` (updates, pace, pauses; no offline metric used for anything).
+- [ ] (training started 2026-10-31 16:23) Each night: status entry in `docs/BENCHMARK_STATUS.md` (updates, pace, pauses; no offline metric used for anything).
 
 ### Task 6: evaluation as A1
 
