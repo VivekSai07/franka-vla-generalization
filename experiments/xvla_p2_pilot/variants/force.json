@@ -1,0 +1,8 @@
+{
+  "loss_term": null,
+  "loss_weight": 0.0,
+  "name": "force",
+  "note": "M2 (arm A2) in a pilot: wrist wrench (6) and finger forces (2) from the sealed S0 sidecar, clipped and standardised by xvla_p2_force.forces.",
+  "schema": "vla_inputs_pilot_variant_v1",
+  "state_builder": "force"
+}
