@@ -56,6 +56,7 @@ OUTPUT = ROOT/'outputs/train/xvla_p2_force_v1'
 SCRATCH = OUTPUT.with_name(OUTPUT.name+'_preflight')
 PROOF = OUTPUT.with_name(OUTPUT.name+'_resumeproof')
 EQUIVALENCE = OUTPUT.with_name(OUTPUT.name+'_equivalence')
+ZERO_EQUIVALENCE = OUTPUT.with_name(OUTPUT.name+'_zeroequivalence')
 ADMISSION = OUTPUT.with_name(OUTPUT.name+'_admission')
 CPU_ADMISSION = ADMISSION/'result.json'
 SEAL = 'b1d642b3edeebe15d462709ebeb8b92afa6d7eabcca3be5514e5deeecaf4d898'
@@ -82,6 +83,11 @@ REAL_STATE_DIM, JOINT_DIM = 17, 9  # 9 joint positions, then the 8 extras
 DATASET_OBS = {'observation.state': (JOINT_DIM,), **{key: (3, 512, 512) for key in CAMERAS}}
 OBS = {'observation.state': (REAL_STATE_DIM,), **{key: (3, 512, 512) for key in CAMERAS}}
 
+# The reference loop of the zero-equivalence gate: P2's runner, imported only inside `runner.zero_equivalence`. Bound, so the
+# proof is of equality with exactly these bytes; `tests/test_fork_hygiene.py` checks that importing it loads exactly these files.
+REFERENCE_FILES = ('experiments/xvla_props_p2/__init__.py', 'experiments/xvla_props_p2/contract.py',
+                   'experiments/xvla_props_p2/runner.py')
+
 # Explicit consumed helpers; X-VLA base weights binding is via require_assets from xvla_trial.
 # Do not call old recursive experiment scans or copy the SmolVLA adapter. The list is exact:
 # `tests/test_fork_hygiene.py` asserts it equals the repo modules that importing the contract and
@@ -105,8 +111,9 @@ SOURCE_FILES = (
     'experiments/xvla_p2_force/tests/test_sidecar_join.py',
     'experiments/xvla_p2_force/tests/test_inputs.py',
     'experiments/xvla_p2_force/tests/test_p2_reference.py',
+    'experiments/xvla_p2_force/tests/test_zero_equivalence.py',
     'experiments/xvla_p2_force/README.md',
-) + tuple('installed/lerobot/'+name for name in (
+) + REFERENCE_FILES + tuple('installed/lerobot/'+name for name in (
     'policies/xvla/__init__.py', 'policies/xvla/action_hub.py', 'policies/xvla/configuration_florence2.py',
     'policies/xvla/configuration_xvla.py', 'policies/xvla/modeling_florence2.py',
     'policies/xvla/modeling_xvla.py', 'policies/xvla/processor_xvla.py',
@@ -645,6 +652,14 @@ def validate_equivalence(report, binding):
     require_fields(report, dict(status='complete', binding=binding, updates=30, metrics_equal=True,
                                 model_state_equal=True, optimizer_state_equal=True),
                    'Byte-exact loop equivalence proof required before --train')
+
+
+def validate_zero_equivalence(report, binding):
+    """P2's own loop on P2's own data and this loop on the 17-value data with the extras forced to 0 agree bit for bit."""
+    require_fields(report, dict(status='complete', binding=binding, updates=30, metrics_equal=True,
+                                model_state_equal=True, optimizer_state_equal=True,
+                                extras_forced_to_zero=list(range(JOINT_DIM, REAL_STATE_DIM))),
+                   'Byte-exact zero-extras equivalence with P2\'s loop required before --train')
 
 
 def validate_resume_proof(report, binding, scratch_report, output):
