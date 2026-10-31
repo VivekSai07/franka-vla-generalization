@@ -2,6 +2,12 @@
 
 ## Where things stand (2026-10-30)
 
+- **M0 built and frozen; A0 prepared and smoked, comparison run not started (2026-10-31, branch `feat/vla-inputs`, not merged).**
+  Equivalence gate passed (4 of 4 recorded P2 trials byte-equal); feasibility 652 of 656 (comparison 573, selection 79); power
+  recomputed at 573; core hash `3cc8c623…`. **Open before the A0 run:** decide whether to bind the X-VLA base bundle
+  (tokenizer files) in the arm manifest (a core change, so a re-prepare), the worker count (8 workers reach 84 C and pause),
+  then `stage A0 comparison 101520`. Nothing merged or pushed.
+
 - **S0 built and sealed (2026-10-30, branch `feat/vla-inputs`, not merged):** wrist wrench, finger forces and target/prop boxes
   for all 540 sealed P2 episodes by exact action replay (244,080 frames, seal `7e2e06db…f58e6c`, re-verified in a second
   container). [Report](docs/VLA_INPUTS_S0_20261030.md). Consequences for later plans: object weight is not readable from the
