@@ -39,8 +39,8 @@ def trainable(policy):
 
 def clip_gradients(params, clip=CLIP):
     grads = [p.grad for p in params if p.grad is not None]
-    if len(grads) != len(params):
-        raise ValueError('Every trainable parameter needs a gradient')
+    if not grads:
+        raise ValueError('No trainable parameter has a gradient')
     norms = torch.stack([torch.linalg.vector_norm(g, dtype=torch.float32) for g in grads])
     norm = torch.linalg.vector_norm(norms)
     if not bool(torch.isfinite(norm)):
@@ -68,6 +68,16 @@ class Strategy:
         for p in self.params.values():
             p.grad = None
 
+    def check_unused(self):
+        """Trainable tensors the loss never reaches (pi0.5's unused heads and last prefix layer) get no gradient and, as in
+        LeRobot's own training, no Adam step and no weight decay. The set must be the same on every update."""
+        names = sorted(n for n, p in self.params.items() if p.grad is None)
+        if getattr(self, 'unused', None) is None:
+            self.unused = names
+        elif names != self.unused:
+            raise ValueError('The set of trainable tensors without a gradient changed between updates')
+        return names
+
     def autocast(self):
         return contextlib.nullcontext()
 
@@ -91,6 +101,7 @@ class GpuAdam(Strategy):
 
     def step(self, update, lr=None):
         c.set_learning_rate(self.optimizer, update, lr)
+        self.check_unused()
         norm = clip_gradients(list(self.params.values()))
         self.optimizer.step()
         return dict(grad_norm=norm)
@@ -125,7 +136,8 @@ class CpuMasterAdam(Strategy):
             if value.dtype != torch.float32 or value.device.type != 'cpu' or value.shape != self.params[name].shape:
                 raise ValueError(f'Master {name} must be a CPU FP32 tensor of the parameter\'s shape')
             self.masters[name] = torch.nn.Parameter(value, requires_grad=True)
-            self.masters[name].grad = torch.zeros_like(value)
+            self.grad_buffers = getattr(self, 'grad_buffers', {})
+            self.grad_buffers[name] = torch.zeros_like(value)
         if threads:
             torch.set_num_threads(threads)
         self.optimizer = torch.optim.AdamW(list(self.masters.values()), lr=c.learning_rate(1), betas=BETAS, eps=EPS,
@@ -140,11 +152,16 @@ class CpuMasterAdam(Strategy):
     def step(self, update, lr=None):
         began = time.perf_counter()
         c.set_learning_rate(self.optimizer, update, lr)
+        self.check_unused()
         norm = clip_gradients(list(self.params.values()))
         began = self._tick('clip', began)
         with torch.no_grad():
             for name, p in self.params.items():
-                self.masters[name].grad.copy_(p.grad)
+                if p.grad is None:
+                    self.masters[name].grad = None  # skipped by the optimizer, like a parameter without a gradient
+                else:
+                    self.grad_buffers[name].copy_(p.grad)
+                    self.masters[name].grad = self.grad_buffers[name]
             began = self._tick('grad_to_cpu', began)
             self.optimizer.step()
             began = self._tick('cpu_adam', began)
@@ -169,7 +186,7 @@ class CpuMasterAdam(Strategy):
 
     def dtype_report(self):
         moments = [s[k] for s in self.optimizer.state.values() for k in ('exp_avg', 'exp_avg_sq') if k in s]
-        grads = [m.grad for m in self.masters.values()]
+        grads = [g for n, g in self.grad_buffers.items() if n not in (self.unused or ())]
         return dict(parameters=dtype_counts(self.params.values()), gradients=dtype_counts(grads),
                     moments=dtype_counts(moments), masters=dtype_counts(self.masters.values()),
                     gpu_gradients=dtype_counts([p.grad for p in self.params.values() if p.grad is not None]))

@@ -29,6 +29,12 @@ class Tiny(torch.nn.Module):
         return self.frozen(self.head(h)).pow(2).mean()
 
 
+class WithSpare(Tiny):
+    def __init__(self):
+        super().__init__()
+        self.spare = torch.nn.Linear(2, 2)
+
+
 def masters_of(model):
     return {n: p.detach().float().clone() for n, p in model.named_parameters() if p.requires_grad}
 
@@ -105,7 +111,7 @@ class UpdateMathTests(unittest.TestCase):
             else:
                 self.assertAlmostEqual(after, reference, delta=1e-2*reference)
 
-    def test_a_missing_gradient_or_a_nonfinite_norm_is_an_error(self):
+    def test_no_gradient_at_all_or_a_nonfinite_norm_is_an_error(self):
         model = Tiny()
         strategy = s.GpuAdam(model, 'bf16_all', 'cpu')
         with self.assertRaises(ValueError):
@@ -114,6 +120,26 @@ class UpdateMathTests(unittest.TestCase):
         next(iter(strategy.params.values())).grad.fill_(float('inf'))
         with self.assertRaises(ValueError):
             s.clip_gradients(list(strategy.params.values()))
+
+    def test_a_trainable_tensor_the_loss_never_reaches_is_neither_stepped_nor_decayed(self):
+        for name in ('bf16_all', 'bf16_cpu_master'):
+            model = WithSpare()
+            before = model.spare.weight.detach().clone()
+            strategy = s.make_strategy(name, model, masters_of(model), 'cpu')
+            run(strategy, model, 3, lr=1e-2)
+            self.assertEqual(strategy.unused, ['spare.bias', 'spare.weight'])
+            self.assertTrue(torch.equal(model.spare.weight.detach(), before), name)
+            if name == 'bf16_cpu_master':
+                self.assertTrue(torch.equal(strategy.masters['spare.weight'].detach(), before))
+
+    def test_the_unused_set_must_not_change_between_updates(self):
+        model = WithSpare()
+        strategy = s.GpuAdam(model, 'bf16_all', 'cpu')
+        run(strategy, model, 1)
+        strategy.zero_grad()
+        (model(batches()[0]) + model.spare(torch.zeros(2)).sum()).backward()
+        with self.assertRaisesRegex(ValueError, 'changed between updates'):
+            strategy.step(2)
 
 
 class StructureTests(unittest.TestCase):

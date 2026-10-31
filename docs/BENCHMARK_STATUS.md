@@ -1,5 +1,29 @@
 # Franka benchmark: start here
 
+## M1 memory probe run (all three D5 candidates, microbatch 8, 20 updates); decision pending - 2026-10-31
+
+Raw files `outputs/train/pi05_props_p2_probe/probe_<strategy>_mb8.json` (idle GPU, no other container; no thermal throttling,
+peak 73 C). A first attempt failed at update 1 because pi0.5 leaves about 368 M trainable elements without a gradient (the
+expert's unused `lm_head` and the last prefix layer); the strategies now skip them as LeRobot's training does (no step, no weight
+decay) and require the same set on every update, and the failed attempt is kept in `attempt_1_no_gradient_check/`.
+
+| | `bf16_all` | `bf16_cpu_master` | `expert_only` |
+|---|---|---|---|
+| GPU peak allocated (training / with diagnostics) | 32.3 / 39.2 GiB | 15.4 / 24.7 GiB | 29.7 / 32.3 GiB |
+| host RSS peak | 21.5 GB | 55.4 GB | 61.3 GB |
+| seconds per update (median of 18) | 1.75 | 8.86 (grad to CPU 3.4, CPU Adam 2.2, weights to GPU 1.7) | 0.67 |
+| 120,900 updates, raw | 58.7 h | 297.6 h (12.4 days) | 22.6 h |
+| same x 1.72 (X-VLA's effective over raw) | 101 h | 511 h | 39 h |
+| checkpoint (bf16 weights) | 6.96 GiB | 6.96 GiB (FP32 masters would be 13.5 GiB) | 8.03 GiB |
+| snapshot / final optimizer state | 19.5 / 12.6 GiB | 37.7 / 24.2 GiB | 11.2 / 3.2 GiB |
+| disk peak of the main run / kept at its end | 102 / 81 GiB | 150 / 111 GiB | 84 / 71 GiB |
+| preflight + resume-proof outputs that stay on disk | 92 GiB | 152 GiB | 61 GiB |
+| bf16 elements changed by one update, peak / floor lr | 5.0% / 0.5% | 6.0% / 1.3% (FP32 masters: 99.5% / 95.9%) | none in bf16; FP32 trainable tensors change |
+
+Free disk is 108 GiB and the assets (13.5 GiB) are already on it, so only `expert_only` fits the main run without reclaiming, and no
+candidate fits the main run plus the retained gate outputs. The fractions are diagnostics at update 21 and 22 with the learning
+rate forced, in an early Adam state, over all elements including the unused 10%; they do not prove or disprove training fidelity.
+
 ## M1 Task 4 runner and CPU parts of Task 4b written; memory probe waiting for an idle GPU - 2026-10-31
 
 Branch `feat/vla-inputs-m1` (not pushed). `experiments/pi05_props_p2/` now has the runner (`--probe-memory`, `--check`,

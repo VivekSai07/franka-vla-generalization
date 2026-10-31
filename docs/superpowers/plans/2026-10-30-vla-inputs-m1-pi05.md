@@ -110,7 +110,7 @@ sizes in `recipe()`.
   `recipe()`; the disk guard equals the formula over measured sizes; snapshots kept = 1 plus the one being written.
 - [x] **Step 2–4:** fail, implement, pass, mutate. *Done 2026-10-31* (tests were written with or just before the code, not run red
   first; seven mutations each fail the suite). The runner also has the gate modes, unexercised until a decision exists.
-- [ ] **Step 5 (GPU, admission-pi):** `--probe-memory` for spec D5's candidates (a) all-bf16, (b) bf16 on GPU with FP32
+- [x] **Step 5 (GPU, admission-pi; done 2026-10-31, results in `docs/BENCHMARK_STATUS.md`; microbatch 8 only):** `--probe-memory` for spec D5's candidates (a) all-bf16, (b) bf16 on GPU with FP32
   master weights and moments offloaded to CPU, (c) `train_expert_only`: peak memory over 20 updates, seconds per
   update, checkpoint and snapshot sizes, and for (a) and (b) the per-tensor fraction of elements changed by one update at the
   peak and the floor learning rate. FP32 on-GPU full tuning (57.9 GB before activations) and frozen-vision FP32 (~52 GB) are
