@@ -1,15 +1,30 @@
-# pi0.5 on the sealed P2 dataset (M1, arm A1)
+# pi0.5, action expert fine-tuned (VLM frozen), on the sealed P2 dataset (M1, arm A1)
 
 Part of the [VLA inputs programme](../../docs/superpowers/specs/2026-10-30-vla-inputs-programme-design.md); design in the
 [M1 spec](../../docs/superpowers/specs/2026-10-30-vla-inputs-m1-pi05-design.md), tasks in the
 [M1 plan](../../docs/superpowers/plans/2026-10-30-vla-inputs-m1-pi05.md). Question: on the same 540 sealed P2 episodes and the
-same inputs, does pi0.5 fine-tuned with its own recipe at 5.0 epochs beat X-VLA checkpoint 101,520?
+same inputs, does pi0.5 with its action expert fine-tuned and the vision-language model frozen, at 5.0 epochs, beat X-VLA
+checkpoint 101,520?
 
-**Status: Tasks 1-3 done; Task 4 runner written and its CPU tests pass; the memory strategy is not decided.** `contract.DECISION`
-is `None`, and `--check`, `--preflight`, `--resume-proof` and `--train` refuse while it is: the user decides after
-`--probe-memory` (spec D5), and the decision (strategy, microbatch, snapshot interval, measured checkpoint / snapshot /
-final-state / GPU-peak bytes) is then written into `contract.py` before `--check`. Nothing here has trained; the gate modes
-have not been run. The run's output will be `outputs/train/pi05_props_p2_v1`.
+**The arm is "pi0.5, action expert fine-tuned (VLM frozen)", not full fine-tuning.** SigLIP and PaliGemma stay at their
+`pi05_base` values (bf16); the action expert and the action and time projections train in FP32 with FP32 Adam under bf16
+autocast: 693,422,112 of 3,616,757,520 parameters (the expert's unused `lm_head`, 263 M, gets no gradient, so 430 M move). Any
+difference from A0 is a difference of model, recipe and this restriction together. Decided by the user on 2026-10-31 from the
+`--probe-memory` measurements (docs/BENCHMARK_STATUS.md): full tuning in bf16 loses most updates (5% of bf16 elements change
+per update at the peak learning rate), FP32 masters on the CPU take 12 days, this takes about 23 h raw.
+
+**Status: Tasks 1-4 written; decision recorded in `contract.DECISION` (strategy `expert_only`, microbatch 8 of an effective
+batch of 8, a snapshot every 2,600 updates, one snapshot kept plus the one being written).** The measured bytes in it come from
+the probe. Nothing here has trained until the gates in the plan's Task 5 have passed. The run's output will be
+`outputs/train/pi05_props_p2_v1`.
+
+### Disk, and what `--train` re-verifies from the gate outputs
+
+`--train` recomputes the hash of every file in every checkpoint directory of the preflight and resume-proof outputs (weights,
+config, marker, and `training_state.pt` on the final one), requires exactly `step_000001` and `step_000002`, compares the two
+weights hashes, and re-hashes both `result.json` at the end. It never reads the `resume/` snapshots. Those are therefore
+deleted once the resume-proof has passed (the resume-proof itself reads the preflight's), which the user authorised on
+2026-10-31; the checkpoints stay.
 
 ## Modules
 

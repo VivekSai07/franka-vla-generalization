@@ -1,6 +1,11 @@
 # SmolVLA / X-VLA Franka TODO
 
-## Where things stand (2026-10-30)
+## Where things stand (2026-10-31)
+
+- **Order revised (user, 2026-10-31): input/output arms first, pi0.5 (M1) last.** Next on the GPU: M2 Task 3 (zero-equivalence) and
+  Task 5 (gates, full M2 training); in parallel the overnight-pilot build (CPU); then pilot night 1 (control, A0 on the pilot tier,
+  force, box) **before** M2 is evaluated on M0's comparison tier, so the pilot decision is recorded blind to the full result
+  (calibration); then M2's evaluation night. Free disk 137 GB after the pi0.5 cleanup.
 
 - **Overnight pilots designed (2026-10-31, user approved the approach; spec and plan under review, nothing built):** continuation
   pilots from A0 (10,000 updates at a constant 1e-5, shared zero-input control) screen input and loss ideas on 192 fresh paired
@@ -12,7 +17,7 @@
   `xvla_props_p2`, 17-value state from the sealed S0 sidecar, local input check, 129 tests + 14 rollout-side tests + 6 arm tests),
   `eval_adapter.py` and a thin arm package `experiments/vla_inputs_arm_xvla_force/`; the shared M0 core hash is unchanged. A CPU
   `--check` run into a scratch directory reproduced P2's recorded statistics for the first nine state values. **Next: Task 3**
-  (zero-equivalence, GPU) and **Task 5** (gates and training) once the GPU is free of M1; 4b's inference-boundary proof also needs a
+  (zero-equivalence, GPU) and **Task 5** (gates and training); the GPU is free (M1 stopped 2026-10-31); 4b's inference-boundary proof also needs a
   policy. No admission artefact exists yet (the package README and tests are bound; edit them before `--check`, not after).
 
 - **M0 control arm A0 done (2026-10-31, branch `feat/vla-inputs`, not pushed):** 451 of 573 comparison layouts = 78.7%
@@ -21,13 +26,14 @@
   workers** (the thermal guard paused three of eight workers for about an hour each, [FAILURES #66](docs/FAILURES.md)); a cross-worker
   guard stays an option as a recorded core change.
 
-- **M1 Task 4 runner and CPU parts of 4b written (2026-10-31, branch `feat/vla-inputs-m1`); `--probe-memory` run (2026-10-31); the user decides
-  the memory strategy.**
-  Detail in [BENCHMARK_STATUS.md](docs/BENCHMARK_STATUS.md).
+- **M1 arm "pi0.5, action expert fine-tuned (VLM frozen)": stopped and deferred to the end (user, 2026-10-31).** Training ran
+  2026-10-31 16:23 to update 220, then was stopped; its weights, gate checkpoints and the 14.5 GB `pi05_base` weights were deleted
+  (JSON records kept in `outputs/train/pi05_props_p2_v1*_aborted_20261031`). Images, tokenizer, contract, runner and the
+  `expert_only` decision stay. **To restart:** re-download `pi05_base` at `9e55186a` (hash-pinned), then run `--check`,
+  `--preflight`, `--resume-proof` and `--train` from scratch into fresh output folders. See [BENCHMARK_STATUS.md](docs/BENCHMARK_STATUS.md).
 - **M1 Tasks 1-3 done (2026-10-30, branch `feat/vla-inputs-m1`, merged into `main` 2026-10-31):** the two pi0.5 images are built and tested
-  (`docker/pi05/README.md`), the `pi05_base` weights (revision `9e55186a`, 14.5 GB) and PaliGemma tokenizer are downloaded and
-  hash-pinned, and the training contract `experiments/pi05_props_p2/` is written and tested (69 tests). **Next: Task 4**, the GPU
-  memory probe, which needs an idle GPU (no M0 rollout container) and ends in a user decision on the memory strategy.
+  (`docker/pi05/README.md`), the `pi05_base` weights (revision `9e55186a`, 14.5 GB; deleted 2026-10-31, re-downloadable) and PaliGemma tokenizer are downloaded and
+  hash-pinned, and the training contract `experiments/pi05_props_p2/` is written and tested (69 tests).
 - **S0 built and sealed (2026-10-30, branch `feat/vla-inputs`, merged into `main`):** wrist wrench, finger forces and target/prop boxes
   for all 540 sealed P2 episodes by exact action replay (244,080 frames, seal `7e2e06db…f58e6c`, re-verified in a second
   container). [Report](docs/VLA_INPUTS_S0_20261030.md). Consequences for later plans: object weight is not readable from the

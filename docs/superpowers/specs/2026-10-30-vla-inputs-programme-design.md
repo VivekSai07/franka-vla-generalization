@@ -71,7 +71,8 @@ Plans: [M0](../plans/2026-10-30-vla-inputs-m0-evaluation.md) · [S0](../plans/20
 **Added 2026-10-31: overnight pilots** ([spec](2026-10-31-vla-inputs-overnight-pilots-design.md),
 [plan](../plans/2026-10-31-vla-inputs-overnight-pilots.md)). Input and loss ideas are screened as continuation pilots from A0
 (10,000 updates, 192 fresh paired layouts, promote if Δ ≥ +5 points) in one night before any full run; full M2 runs
-regardless, to calibrate the pilots. It revises the order after M1: A1 evaluation, pilot night 1 (force, box), full M2.
+regardless, to calibrate the pilots. **Order revised 2026-10-31 (user): pi0.5 (M1) moves to the end;** next are full M2
+(gates and training), the pilot build in parallel, pilot night 1 (force, box) before M2's evaluation on C, then M2's evaluation.
 
 ```mermaid
 flowchart LR
@@ -87,7 +88,7 @@ flowchart LR
 | arm | model | state | images | data | trained by |
 |---|---|---|---|---|---|
 | A0 | X-VLA, P2 checkpoint 101,520 (bundle) | 9 | sealed P2 | P2 | existing (2026-10-16) |
-| A1 | pi0.5 | 9 | sealed P2 | P2 | M1 |
+| A1 | pi0.5, action expert fine-tuned (VLM frozen) | 9 | sealed P2 | P2 | M1 |
 | A2 | X-VLA | 9 + 8 (F/T 6, finger forces 2) = 17 | sealed P2 | P2 + S0 | M2 |
 | A3 | X-VLA | 9 + 10 (box 4 + in_frame 1, per camera) = 19 | sealed P2 | P2 + S0 | M3 |
 | A4 | X-VLA + auxiliary box head | 9 | sealed P2 | P2 + S0 (targets only) | M4a |
@@ -129,7 +130,7 @@ without an architecture change.
 - That a deployable robot benefits: the extra signals are exact simulator quantities (an upper bound). F/T has a real-robot
   analogue (estimated external wrench); a detector-fed box policy needs its own error-distribution evaluation; M4a separately tests auxiliary supervision.
 - Anything about other tasks, objects, or more data. The data is P2's, unchanged.
-- That pi0.5 is a better *model* in general: A1 is pi0.5 with its recipe on the 480 training episodes (60 validation episodes), against X-VLA with P2's recipe.
+- That pi0.5 is a better *model* in general: A1 is pi0.5 with its action expert fine-tuned (VLM frozen) and its recipe on the 480 training episodes (60 validation episodes), against X-VLA with P2's recipe.
 
 ## Known blockers and costs (measured or read, 2026-10-30)
 

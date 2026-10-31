@@ -122,12 +122,13 @@ class ExposureAndScheduleTests(ContractTestCase):
                                  x_vla_supervised_action_positions=1_015_200*30))
         self.assertEqual(self.c.recipe(False)['exposure'], e)
 
-    def test_recipe_is_the_native_one_with_the_two_named_deviations(self):
+    def test_recipe_is_the_native_one_with_the_named_deviations(self):
         r = self.c.recipe(False)
         self.assertEqual((r['effective_batch'], r['chunk_size'], r['n_action_steps']), (8, 50, 10))
         self.assertEqual(r['optimizer'], dict(peak_lr=2.5e-5, betas=[.9, .95], eps=1e-8, weight_decay=.01, clip=1.0))
         self.assertEqual(r['schedule'], dict(warmup=1000, total=120_900, decay_lr=2.5e-6))
-        self.assertEqual(r['deviations'], ['effective_batch_8', 'decay_spans_run', 'n_action_steps_10'])
+        self.assertEqual(r['deviations'], ['effective_batch_8', 'decay_spans_run', 'n_action_steps_10', 'vlm_frozen_expert_only'])
+        self.assertEqual(r['arm'], 'pi0.5, action expert fine-tuned (VLM frozen)')
         self.assertEqual(r['normalization'], 'quantiles_train_only_q01_q99_no_clipping')
         self.assertEqual(r['train_episodes'], list(range(480)))
         self.assertEqual(r['validation_episodes'], list(range(480, 540)))
@@ -363,6 +364,10 @@ class BindingTests(ContractTestCase):
             self.assertIn(needed, names)
 
 
+def c_root(contract):
+    return contract.ROOT
+
+
 class RunStructureTests(ContractTestCase):
     def test_learning_rate_is_the_installed_cosine_with_warmup_scheduler(self):
         c = self.c
@@ -444,14 +449,42 @@ class RunStructureTests(ContractTestCase):
         with self.assertRaises(KeyError):
             c.make_config('cpu', 'fp32_everything')
 
-    def test_the_decision_is_open_and_the_recipe_records_it(self):
+    def test_the_users_decision_is_recorded_and_the_recipe_carries_it(self):
         c = self.c
-        self.assertIsNone(c.DECISION)
-        self.assertIsNone(c.recipe(False)['decision'])
-        with self.assertRaisesRegex(RuntimeError, 'not decided'):
-            c.require_decision()
-        with self.assertRaisesRegex(RuntimeError, 'not decided'):
-            c.snapshot_updates(False)
+        self.assertEqual(c.DECISION, {'strategy': 'expert_only', 'microbatch': 8, 'snapshot_every': 2600,
+                                      'checkpoint_bytes': 8_622_597_928, 'snapshot_bytes': 12_063_804_506,
+                                      'final_state_bytes': 3_440_963_403, 'gpu_peak_bytes': 32_088_522_752})
+        self.assertEqual(c.require_decision(), c.DECISION)
+        self.assertEqual(c.recipe(False)['decision'], c.DECISION)
+        self.assertEqual(c.recipe(True)['decision'], c.DECISION)
+        self.assertEqual(c.accumulation(), 1)
+        self.assertEqual(c.snapshot_updates(False)[:3], [2600, 5200, 7800])
+        self.assertEqual(c.snapshot_updates(False)[-1], 2600*46)
+        self.assertEqual(c.snapshot_updates(True), [1])
+        self.assertEqual((c.KEEP_SNAPSHOTS, c.SNAPSHOT_SLOTS), (1, 2))
+        self.assertEqual(c.disk_requirement_bytes(False), 7*c.DECISION['checkpoint_bytes'] + c.DECISION['final_state_bytes']
+                         + 2*c.DECISION['snapshot_bytes'] + 2*1024**3)
+        self.assertEqual(c.gpu_requirement_bytes(), c.DECISION['gpu_peak_bytes'] + 2*1024**3)
+
+    def test_the_decision_matches_the_probes_measurements(self):
+        probe = Path(c_root(self.c))/'outputs/train/pi05_props_p2_probe/probe_expert_only_mb8.json'
+        if not probe.exists():
+            self.skipTest('probe output not mounted')
+        d = json.loads(probe.read_text())
+        self.assertEqual(self.c.DECISION['checkpoint_bytes'], d['sizes']['checkpoint_bytes'])
+        self.assertEqual(self.c.DECISION['snapshot_bytes'], d['sizes']['snapshot_bytes'])
+        self.assertEqual(self.c.DECISION['final_state_bytes'], d['sizes']['final_state_bytes'])
+        self.assertEqual(self.c.DECISION['gpu_peak_bytes'], d['memory_peak']['peak_reserved'])
+        self.assertEqual(d['strategy'], self.c.DECISION['strategy'])
+
+    def test_with_no_decision_everything_that_needs_one_refuses(self):
+        c = self.c
+        with patch.object(c, 'DECISION', None):
+            self.assertIsNone(c.recipe(False)['decision'])
+            for call in (c.require_decision, lambda: c.snapshot_updates(False), c.accumulation,
+                         lambda: c.disk_requirement_bytes(False), c.gpu_requirement_bytes):
+                with self.assertRaisesRegex(RuntimeError, 'not decided'):
+                    call()
 
     def test_claims_are_exclusive_and_resume_needs_the_original_claim(self):
         c = self.c

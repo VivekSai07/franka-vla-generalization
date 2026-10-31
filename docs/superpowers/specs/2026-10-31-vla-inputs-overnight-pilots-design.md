@@ -86,14 +86,15 @@ Training and evaluation are sequential (X-VLA training ~28 GiB plus 6 evaluation
 morning summary (`summary.json` + a short `SUMMARY.md` in the night's root) lists each pilot's Δ, the decision, the mechanism
 counts and any failure, so the judgement takes minutes.
 
-## Revised programme order (proposed)
+## Revised programme order (user, 2026-10-31: pi0.5 last)
 
-1. M1 training (running) → one or two nights of A1 evaluation on M0.
-2. **Pilot night 1:** control, A0 on the pilot tier, force (M2 variant), target box (M3 variant).
-3. Full M2 (calibration, regardless of its pilot) over nights or a weekend → M0 evaluation night.
+1. Full M2: zero-equivalence and gates, then training (~32–39 h); the pilot code is built on the CPU meanwhile.
+2. **Pilot night 1:** control, A0 on the pilot tier, force (M2 variant), target box (M3 variant), **before** M2 is evaluated on
+   M0's comparison tier, so the force pilot's decision is recorded blind to the full result.
+3. M2's evaluation night on M0 (selection, comparison, matched phase); calibration check against the force pilot.
 4. Full M3 only if its pilot promotes; M4a as a continuation pilot (auxiliary loss variant) before any full run.
-5. Further ideas from the audit's research list enter as pilots, a few per night, each needing only a variant file or, for new
-   code, a package version.
+5. Further ideas from the audit's research list enter as pilots, a few per night.
+6. M1 (pi0.5, `expert_only`) at the end: re-download the pinned weights, re-run every gate, train, evaluate.
 
 ## What pilots cannot show
 
