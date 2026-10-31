@@ -93,6 +93,27 @@ package's tests and README (`tests/test_fork_hygiene.py` asserts it).
 fixing an evaluation adapter after training must not invalidate the training binding. The evaluator binds them per arm (through
 `experiments/vla_inputs_arm_xvla_pilot`).
 
+## The night: driver, evaluation, morning summary
+
+`scripts/vla_inputs_pilot_night.sh <night_root> <variant>...` (run from a dedicated worktree; it refuses to start while the GPU is in
+use) queues, strictly sequentially: the pilot plan and expert feasibility (once), the control continuation, the evaluation of the control
+(`A0`) and of the untouched bundle checkpoint (`A9`, context) on the 192-layout pilot tier, then per variant (`A1`..): the
+zero-equivalence gate, the continuation, M0's `prepare`, an empty selection stage (M0's `compare` needs `select`; the pilot has no
+selection tier), the pilot-tier evaluation (6 workers, one checkpoint per worker) and `compare` against the control. The night root is
+the campaign root of M0's frozen core (`plan/`, `feasibility/`, `arms/`), with `training/`, `events.jsonl` and `night.json` beside them. A failed
+gate, training or evaluation skips that variant, is recorded and is never retried silently; `UPDATES=300` runs a dry night, `PILOT_SMOKE=1`
+runs the two smoke layouts of every arm first.
+
+`summary.py` (not bound) writes `summary.json` and `SUMMARY.md`: per variant Δ in points over the paired layouts, the decision of the
+fixed rule (**promote iff Δ ≥ +5 points**, exact integer arithmetic), McNemar p, discordant counts, the paired effect interval, every
+mechanism count beside the control's, wall clock and failures. A variant whose gate, training or evaluation did not complete has **no
+decision**. Every drop is provisional until the force pilot has been calibrated against M2's full result (plan Task 7).
+
+**Status (2026-10-31): built and tested on the CPU only.** The zero-equivalence gate, a real update, the checkpoint save and
+byte-exact reload and the dry night have not run (they need the GPU, which M2's training holds); expect to find GPU-only defects there.
+**Bound files** (this README, `contract.py`, `runner.py`, the three bound tests and everything in `SOURCE_FILES`) must not be edited once
+the first pilot has started to train: the run records their hashes.
+
 ## What a pilot cannot show
 
 A continuation asks whether information helps a policy that already works, not what training from scratch would do; effects

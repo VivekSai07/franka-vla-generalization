@@ -22,7 +22,8 @@
 # bundle, default $MAIN/outputs/downloads_20261017/props_p2; its runtime/xvla_base_bundle holds the X-VLA base files for training
 # and for the evaluator alike), WORKERS (6), CORES
 # (8 each), FEAS_SHARDS (12) FEAS_CORES (4), UPDATES (a dry run: that many updates, checkpoint step_<N>), CONTROL_DIR (a
-# trained control of this recipe version to reuse), PILOT_SKIP_CONTEXT=1, PILOT_ALLOW_BUSY=1 (start although the GPU is
+# trained control of this recipe version to reuse), PILOT_SMOKE=1 (run the 2 smoke layouts of every arm before its pilot tier),
+# PILOT_SKIP_CONTEXT=1, PILOT_ALLOW_BUSY=1 (start although the GPU is
 # in use), PILOT_NO_RUN=1 (print the docker commands, run nothing).
 # Mountpoints: the driver creates the empty gitignored directories the read-only mounts need inside WT, before anything starts.
 # Polling: containers are watched with `docker ps`; `docker wait` is never used (it has failed to notify here).
@@ -156,8 +157,11 @@ stage_done() {  # stage_done <arm> <tier> <ckpt>
   [ "$NO_RUN" != 1 ] && [ "$(result_status "$NIGHT/arms/$1/$2/step_$(printf '%06d' "$3")/result.json")" = complete ]
 }
 
-evaluate_arm() {  # evaluate_arm <arm> <ckpt>: the pilot tier at one checkpoint, six workers
+evaluate_arm() {  # evaluate_arm <arm> <ckpt>: the pilot tier at one checkpoint, six workers (PILOT_SMOKE=1: the 2 smoke layouts first)
   if stage_done "$1" comparison "$2"; then echo "skip stage $1 comparison: complete"; return 0; fi
+  if [ "${PILOT_SMOKE:-0}" = 1 ] && ! stage_done "$1" smoke "$2"; then
+    OUT="$NIGHT" WT="$WT" MAIN="$MAIN" BUNDLE="$BUNDLE" bash "$M0" stage "$1" smoke "$2" 1 "$CORES" || return 1
+  fi
   OUT="$NIGHT" WT="$WT" MAIN="$MAIN" BUNDLE="$BUNDLE" bash "$M0" stage "$1" comparison "$2" "$WORKERS" "$CORES"
 }
 

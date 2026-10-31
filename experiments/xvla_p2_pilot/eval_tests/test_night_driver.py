@@ -7,6 +7,7 @@ what is never retried), not that a real pilot trains.
 import json
 import os
 import re
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -138,6 +139,17 @@ class OrderTests(Night):
         self.assertTrue(trains and all('--updates 300' in c for c in trains))
         gates = [c for c in self.calls() if 'runner --zero-equivalence' in c]
         self.assertTrue(gates and all('--updates' not in c for c in gates))
+
+    def test_the_smoke_layouts_run_first_for_every_arm_only_when_asked(self):
+        self.assertEqual(self.run_night('force').returncode, 0)
+        self.assertEqual([c for c in self.calls() if '--tier smoke' in c], [])
+        self.log.write_text('')
+        shutil.rmtree(self.night)
+        self.assertEqual(self.run_night('force', PILOT_SMOKE='1').returncode, 0)
+        calls = self.calls()
+        for arm, ckpt in (('A0', 300), ('A9', 101520), ('A1', 300)):
+            smoke = self.index(rf'worker --arm {arm} --tier smoke --checkpoint {ckpt}', 0, calls)
+            self.index(rf'worker --arm {arm} --tier comparison --checkpoint {ckpt}', smoke, calls)
 
     def test_the_summary_is_written_at_the_end(self):
         self.assertEqual(self.run_night('force').returncode, 0)
