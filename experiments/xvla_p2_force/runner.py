@@ -12,12 +12,14 @@ import argparse
 import contextlib
 import gc
 import hashlib
+import importlib
 import json
 import os
 import queue
 import random
 import shutil
 import subprocess
+import sys
 import threading
 import time
 from types import SimpleNamespace
@@ -31,6 +33,9 @@ from . import contract as c
 EXPECTED_PARAM_TENSORS = 901
 EXPECTED_PARAM_NUMEL = 879482456
 EQUIVALENCE_UPDATES = 30
+ZERO_EQUIVALENCE_UPDATES = 30
+# P2's runner: the reference loop of `--zero-equivalence`, imported only there. Its files are bound (`contract.REFERENCE_FILES`).
+REFERENCE_RUNNER = 'experiments.xvla_props_p2.runner'
 TELEMETRY_EVERY = 20
 HOT_C, COOL_C, HOT_LIMIT_S = 83, 75, 1800  # firmware target is 85 C on this card (300 W hard cap)
 SNAPSHOT_WRITE_S = 60  # measured ~16 s; margin for the pause decision
@@ -39,7 +44,7 @@ SNAPSHOT_WRITE_S = 60  # measured ~16 s; margin for the pause decision
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     mode = parser.add_mutually_exclusive_group(required=True)
-    for name in ('check', 'preflight', 'resume-proof', 'equivalence', 'train'):
+    for name in ('check', 'preflight', 'resume-proof', 'equivalence', 'zero-equivalence', 'train'):
         mode.add_argument('--'+name, action='store_true')
     parser.add_argument('--resume', action='store_true',
                         help='continue a paused or failed --train from its newest verified snapshot')
@@ -555,6 +560,7 @@ def train(output, preflight, report, resume=0, reference=None, stop_at=None):
         proof_hash = c.sha256(c.PROOF/'result.json')
         c.validate_resume_proof(json.loads((c.PROOF/'result.json').read_text()), binding, proof, c.PROOF)
         c.validate_equivalence(json.loads((c.EQUIVALENCE/'result.json').read_text()), binding)
+        c.validate_zero_equivalence(json.loads((c.ZERO_EQUIVALENCE/'result.json').read_text()), binding)
         if json.loads((c.SCRATCH/'training_stats.json').read_text()) != encoded_stats:
             raise ValueError('Scratch training statistics changed')
     elif reference is not None:
@@ -783,6 +789,97 @@ def equivalence():
     print('EQUIVALENCE', json.dumps({k: v for k, v in report.items() if k != 'binding'}), flush=True)
 
 
+def zero_extras(pre):
+    """`pre` with the 8 extra state values (columns 9-16) forced to exactly 0 after normalisation; the batch it gets is not written."""
+    def forced(raw):
+        batch = dict(pre(raw))
+        state = batch['observation.state']
+        if state.ndim != 2 or state.shape[1] != c.REAL_STATE_DIM:
+            raise ValueError('Expected the processed state to be (n, 17)')
+        state = state.clone()
+        state[:, c.JOINT_DIM:c.REAL_STATE_DIM] = 0
+        batch['observation.state'] = state
+        return batch
+    return forced
+
+
+def optimizer_digest(optimizer):
+    digest = hashlib.sha256()
+    for group in optimizer.param_groups:
+        for p in group['params']:
+            for key in ('exp_avg', 'exp_avg_sq'):
+                digest.update(optimizer.state[p][key].cpu().numpy().tobytes())
+    return digest.hexdigest()
+
+
+def thirty_updates(mod, ds, starts, stats, wrap):
+    """30 updates of `mod`'s own loop (its `one_update`, prefetcher, sampler and config) from a fresh seeded state."""
+    from lerobot.policies.xvla.processor_xvla import make_xvla_pre_post_processors
+    random.seed(mod.c.SEED)
+    np.random.seed(mod.c.SEED)
+    torch.manual_seed(mod.c.SEED)
+    config = mod.c.make_config('cpu')
+    policy, params = mod.load_fresh_policy(config)
+    policy = policy.to('cuda')
+    config.device = 'cuda'
+    pre, _ = make_xvla_pre_post_processors(config, stats)
+    pre = wrap(pre)
+    optimizer = config.get_optimizer_preset().build(params)
+    policy.train()
+    fetch = mod.Prefetcher(mod.LockedDataset(ds), mod.c.sample_batches(starts))
+    rows, seconds = [], []
+    try:
+        for update in range(1, ZERO_EQUIVALENCE_UPDATES+1):
+            tick = time.monotonic()
+            rows.append(mod.one_update(update, policy, params, optimizer, pre, fetch, mod.verify_precision_fast))
+            seconds.append(time.monotonic()-tick)
+    finally:
+        fetch.close()
+    result = dict(rows=rows, model=state_digest(policy), optimizer=optimizer_digest(optimizer),
+                  seconds_per_update=float(np.median(seconds[5:])))
+    del policy, params, optimizer, pre
+    gc.collect()
+    torch.cuda.empty_cache()
+    return result
+
+
+def zero_equivalence():
+    """P2's own loop on P2's 9-value data, then this loop on the 17-value data with the 8 extras forced to 0 after
+    normalisation, 30 updates each from the same fresh state: byte-equal metrics, weights and Adam moments, or fail.
+
+    With the extras zero the model inputs equal P2's (the first 9 values raw, then zeros), so the real run differs from P2's
+    only by those 8 values. The reference is P2's runner itself (`REFERENCE_RUNNER`, bound), fed the raw dataset rows.
+    """
+    reference = importlib.import_module(REFERENCE_RUNNER)
+    c.claim_output(c.ZERO_EQUIVALENCE)
+    report = dict(status='preparing', stage='zero_equivalence', updates=ZERO_EQUIVALENCE_UPDATES,
+                  extras_forced_to_zero=list(range(c.JOINT_DIM, c.REAL_STATE_DIM)), reference=REFERENCE_RUNNER)
+    try:
+        c.write_json(c.ZERO_EQUIVALENCE/'result.json', report)
+        ds, starts, stats, binding = c.prepare_data()
+        if not torch.cuda.is_available() or not torch.cuda.is_bf16_supported():
+            raise RuntimeError('CUDA BF16 required; no fallback')
+        require_resources(c.ZERO_EQUIVALENCE, True)
+        torch.backends.cudnn.benchmark = False
+        torch.use_deterministic_algorithms(True)
+        reference_stats = {'observation.state': {k: v[:c.JOINT_DIM] for k, v in stats['observation.state'].items()},
+                           'action': stats['action']}
+        a = thirty_updates(reference, ds.ds, starts, reference_stats, lambda pre: pre)
+        b = thirty_updates(sys.modules[__name__], ds, starts, stats, lambda pre: zero_extras(pre))
+        report.update(status='complete', binding=binding,
+                      metrics_equal=a['rows'] == b['rows'], model_state_equal=a['model'] == b['model'],
+                      optimizer_state_equal=a['optimizer'] == b['optimizer'],
+                      p2_loop_seconds_per_update=a['seconds_per_update'],
+                      force_loop_seconds_per_update=b['seconds_per_update'],
+                      model_sha256=b['model'], final_loss=b['rows'][-1]['loss'])
+        c.write_json(c.ZERO_EQUIVALENCE/'result.json', report)
+        c.validate_zero_equivalence(report, binding)
+    except BaseException as exc:
+        failure(c.ZERO_EQUIVALENCE, report, exc)
+        raise
+    print('ZERO_EQUIVALENCE', json.dumps({k: v for k, v in report.items() if k != 'binding'}), flush=True)
+
+
 def main(argv=None):
     args = parse_args(argv)
     os.environ.update(HF_HUB_OFFLINE='1', TRANSFORMERS_OFFLINE='1', HF_DATASETS_OFFLINE='1',
@@ -794,6 +891,9 @@ def main(argv=None):
         return
     if args.equivalence:
         equivalence()
+        return
+    if args.zero_equivalence:
+        zero_equivalence()
         return
     preflight = args.preflight or args.resume_proof
     output = c.PROOF if args.resume_proof else c.SCRATCH if args.preflight else c.OUTPUT

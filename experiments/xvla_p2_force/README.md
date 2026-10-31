@@ -57,7 +57,8 @@ recomputes both fingerprints (P2's parent and S0's sidecar) and refuses unless t
 from the plan, and tasks are matched by text.
 
 `SOURCE_FILES` lists exactly the repository modules that importing `contract` and `runner` loads, plus this package's tests and
-README. **The rollout side is deliberately not bound:** `eval_adapter.py` and `eval_tests/` are outside `SOURCE_FILES`, so
+README, plus P2's `__init__`, contract and runner (`REFERENCE_FILES`: loaded only by the zero-equivalence gate, so the proof is of
+equality with exactly those bytes). **The rollout side is deliberately not bound:** `eval_adapter.py` and `eval_tests/` are outside `SOURCE_FILES`, so
 fixing an evaluation adapter after training never invalidates the training binding; M0's arm manifest binds them.
 
 ## Recipe and horizon (P2's, unchanged)
@@ -88,11 +89,11 @@ In order, each with its own output directory, in the admission image
 | `--preflight` | `..._v1_preflight` | 2 GPU updates, FP32 weight + Adam round trip, one snapshot |
 | `--resume-proof` | `..._v1_resumeproof` | a resumed process reproduces update 2 exactly |
 | `--equivalence` | `..._v1_equivalence` | the fast loop equals the serial loop byte for byte over 30 updates |
-| zero-equivalence (not written yet) | | with the 8 extras forced to 0 the loop reproduces P2's byte for byte, so the run differs only by those values |
-| `--train [--resume] [--stop-at T]` | `outputs/train/xvla_p2_force_v1` | the run |
+| `--zero-equivalence` | `..._v1_zeroequivalence` | P2's own loop (its runner, imported lazily, bound as `contract.REFERENCE_FILES`) on P2's 9-value data and this loop on the 17-value data with the 8 extras forced to 0 after normalisation agree byte for byte over 30 updates (metrics, weights, Adam moments), so the real run differs from P2's only by those 8 values |
+| `--train [--resume] [--stop-at T]` | `outputs/train/xvla_p2_force_v1` | the run; refuses without the other five proofs, each bound to the same sources and data |
 
 ```bash
-python -m experiments.xvla_p2_force.runner --check | --preflight | --resume-proof | --equivalence | --train [--resume] [--stop-at T]
+python -m experiments.xvla_p2_force.runner --check | --preflight | --resume-proof | --equivalence | --zero-equivalence | --train [--resume] [--stop-at T]
 ```
 
 ## Files

@@ -4,7 +4,8 @@ Forked from `experiments.xvla_props_p2`. Two classes of bug have shipped from fo
 a name left dangling after a rename (#24), and tests that import the *source* package and
 therefore pass while the fork is broken (#20). Both are statically detectable. The only files
 that may reach into the source package are `tests/test_p2_reference.py` (it compares the recipe
-with the source's) and, from the zero-equivalence gate on, the runner.
+with the source's) and the runner, which names P2's runner once (`REFERENCE_RUNNER`) and imports it lazily, inside the
+zero-equivalence gate; the files that import loads are bound (`contract.REFERENCE_FILES`).
 """
 import builtins
 import importlib
@@ -21,7 +22,7 @@ PACKAGE = Path(__file__).resolve().parents[1]
 ROOT = PACKAGE.parents[1]
 MODULES = ('contract.py', 'forces.py', 'runner.py')
 BOUND_TESTS = ('test_contract.py', 'test_runner.py', 'test_fork_hygiene.py', 'test_forces.py',
-               'test_sidecar_join.py', 'test_inputs.py', 'test_p2_reference.py')
+               'test_sidecar_join.py', 'test_inputs.py', 'test_p2_reference.py', 'test_zero_equivalence.py')
 TESTS = tuple('tests/'+name for name in BOUND_TESTS if name not in ('test_fork_hygiene.py', 'test_p2_reference.py'))
 MODULE_DUNDERS = {'__file__', '__name__', '__doc__', '__package__', '__spec__', '__loader__',
                   '__builtins__', '__path__', '__debug__'}
@@ -62,7 +63,11 @@ class UndefinedNameTests(unittest.TestCase):
         pattern = re.compile(r'(from|import) +' + re.escape(SOURCE_PACKAGE) + r'\b|[\'"]' + re.escape(SOURCE_PACKAGE) + r'\b')
         for name in MODULES + TESTS:
             source = (PACKAGE / name).read_text()
-            self.assertIsNone(pattern.search(source), f'{name} still reaches into {SOURCE_PACKAGE}')
+            allowed = 1 if name == 'runner.py' else 0  # the runner's one named reference, imported lazily
+            self.assertEqual(len(list(pattern.finditer(source))), allowed, f'{name} reaches into {SOURCE_PACKAGE}')
+        runner = (PACKAGE / 'runner.py').read_text()
+        self.assertIn(f"REFERENCE_RUNNER = '{SOURCE_PACKAGE}.runner'", runner)
+        self.assertNotRegex(runner, r'(from|import) +' + re.escape(SOURCE_PACKAGE) + r'\b')
 
     def test_the_reference_test_really_reaches_the_fork_source(self):
         # Without this the exemption above would also hide a reference test that stopped testing anything.
@@ -167,12 +172,25 @@ class SourceFilesTests(unittest.TestCase):
                 loaded.add(str(Path(file).resolve().relative_to(ROOT.resolve())))
         own_extra = {'experiments/xvla_p2_force/README.md'} | {
             f'experiments/xvla_p2_force/tests/{name}' for name in BOUND_TESTS}
-        listed = {name for name in c.SOURCE_FILES if not name.startswith('installed/')} - own_extra
+        listed = {name for name in c.SOURCE_FILES if not name.startswith('installed/')} - own_extra - set(c.REFERENCE_FILES)
         self.assertEqual(sorted(loaded - listed), [], 'loaded repo modules missing from SOURCE_FILES')
         self.assertEqual(sorted(listed - loaded), [], 'SOURCE_FILES entries that nothing loads')
         for name in own_extra:
             self.assertIn(name, c.SOURCE_FILES)
             self.assertTrue((ROOT/name).is_file(), name)
+
+    def test_importing_the_reference_runner_loads_exactly_the_bound_reference_files(self):
+        """The gate proves equality with P2's loop; the bytes of that loop must be exactly what is bound."""
+        c = importlib.import_module('experiments.xvla_p2_force.contract')
+        script = ("import sys, json, importlib, experiments.xvla_p2_force.contract, experiments.xvla_p2_force.runner as r;"
+                  "files = lambda: {getattr(m, '__file__', None) or '' for m in sys.modules.values()};"
+                  "before = files(); importlib.import_module(r.REFERENCE_RUNNER);"
+                  "print(json.dumps(sorted(files() - before)))")
+        out = subprocess.run([sys.executable, '-c', script], cwd=ROOT, capture_output=True, text=True,
+                             env={**os.environ, 'PYTHONPATH': str(ROOT)}, check=True)
+        added = {str(Path(f).resolve().relative_to(ROOT.resolve())) for f in json.loads(out.stdout.strip().splitlines()[-1])
+                 if f and Path(f).is_absolute() and Path(f).resolve().is_relative_to(ROOT.resolve())}
+        self.assertEqual(sorted(added), sorted(c.REFERENCE_FILES))
 
     def test_the_rollout_side_is_not_bound_by_the_training_contract(self):
         """Fixing the evaluation adapter after training must never invalidate the training binding."""
