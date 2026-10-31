@@ -13,6 +13,47 @@ the arm manifest**: a core change confined to `evaluate.py` (`3cc8c6239067` -> `
 thermal guard cost about an hour:** three workers paused 56-74 minutes at 83 C waiting for 75 C while the other workers kept
 the card at 76-81 C ([FAILURES #66](FAILURES.md)); outcomes unaffected. The GPU is free. A1-A4 are not run.
 
+## M1 memory probe run (all three D5 candidates, microbatch 8, 20 updates); decision pending - 2026-10-31
+
+Raw files `outputs/train/pi05_props_p2_probe/probe_<strategy>_mb8.json` (idle GPU, no other container; no thermal throttling,
+peak 73 C). A first attempt failed at update 1 because pi0.5 leaves about 368 M trainable elements without a gradient (the
+expert's unused `lm_head` and the last prefix layer); the strategies now skip them as LeRobot's training does (no step, no weight
+decay) and require the same set on every update, and the failed attempt is kept in `attempt_1_no_gradient_check/`.
+
+| | `bf16_all` | `bf16_cpu_master` | `expert_only` |
+|---|---|---|---|
+| GPU peak allocated (training / with diagnostics) | 32.3 / 39.2 GiB | 15.4 / 24.7 GiB | 29.7 / 32.3 GiB |
+| host RSS peak | 21.5 GB | 55.4 GB | 61.3 GB |
+| seconds per update (median of 18) | 1.75 | 8.86 (grad to CPU 3.4, CPU Adam 2.2, weights to GPU 1.7) | 0.67 |
+| 120,900 updates, raw | 58.7 h | 297.6 h (12.4 days) | 22.6 h |
+| same x 1.72 (X-VLA's effective over raw) | 101 h | 511 h | 39 h |
+| checkpoint (bf16 weights) | 6.96 GiB | 6.96 GiB (FP32 masters would be 13.5 GiB) | 8.03 GiB |
+| snapshot / final optimizer state | 19.5 / 12.6 GiB | 37.7 / 24.2 GiB | 11.2 / 3.2 GiB |
+| disk peak of the main run / kept at its end | 102 / 81 GiB | 150 / 111 GiB | 84 / 71 GiB |
+| preflight + resume-proof outputs that stay on disk | 92 GiB | 152 GiB | 61 GiB |
+| bf16 elements changed by one update, peak / floor lr | 5.0% / 0.5% | 6.0% / 1.3% (FP32 masters: 99.5% / 95.9%) | none in bf16; FP32 trainable tensors change |
+
+Free disk is 108 GiB and the assets (13.5 GiB) are already on it, so only `expert_only` fits the main run without reclaiming, and no
+candidate fits the main run plus the retained gate outputs. The fractions are diagnostics at update 21 and 22 with the learning
+rate forced, in an early Adam state, over all elements including the unused 10%; they do not prove or disprove training fidelity.
+
+## M1 Task 4 runner and CPU parts of Task 4b written; memory probe waiting for an idle GPU - 2026-10-31
+
+Branch `feat/vla-inputs-m1` (not pushed). `experiments/pi05_props_p2/` now has the runner (`--probe-memory`, `--check`,
+`--preflight`, `--resume-proof`, `--train`), a tie-aware weight loader (never `from_pretrained`) and the three D5 candidates behind
+one interface (`bf16_all`, `bf16_cpu_master`, `expert_only`); every mode except the probe refuses while `contract.DECISION` is
+`None`. CPU evidence, in `admission-pi`: the learning-rate schedule equals LeRobot's scheduler at 11 updates of the real horizon;
+accumulation over microbatches of 1, 2, 4 and 8 gives the same update as one batch of 8; the CPU-master update equals an FP32
+reference AdamW and its bf16 copy is exactly that rounding; both snapshot-resume paths are bit-exact on a tiny model; with real
+rows and the real 3.6 B policy the runner's loss and all 812 gradient tensors equal a hand-written reference with explicit noise
+and time (the loss excludes the 24 padded action dimensions), camera order, padding, prompt length and the physical-action round
+trip pass. Measured facts: the policy has 812 unique parameter tensors (the tied embedding is one); `expert_only` trains
+693,422,112 parameters (the expert 691,256,320 plus the action and time projections 2,165,792; the 2,361,344 of PaliGemma's
+multi-modal projector in the spec's "other" figure are frozen there). Seven mutations (typed horizon, two snapshots kept, no loss
+division by the accumulation, no copy-back of the CPU master, no clipping, no dtype check in the loader, probe allowed after
+`--check`) each fail the suite. **No GPU work was done:** eight `m0-A0-comparison-101520-*` containers were running (33.6 GB and
+97% of the GPU in use), so `--probe-memory` was not started.
+
 ## M0 evaluator built, frozen, A0 prepared and smoked; stopped before the A0 comparison run - 2026-10-31
 
 *Superseded the same day by the entry above: the core hash below is the pre-change one, and the comparison run has been done.*

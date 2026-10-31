@@ -363,5 +363,127 @@ class BindingTests(ContractTestCase):
             self.assertIn(needed, names)
 
 
+class RunStructureTests(ContractTestCase):
+    def test_learning_rate_is_the_installed_cosine_with_warmup_scheduler(self):
+        c = self.c
+        config = c.make_config('cpu')
+        optimizer = torch.optim.AdamW([torch.nn.Parameter(torch.zeros(1))], lr=config.optimizer_lr)
+        scheduler = config.get_scheduler_preset().build(optimizer, c.TOTAL_UPDATES)
+        checked = {1, 2, 500, 999, 1000, 1001, 1002, 5000, 60_000, c.TOTAL_UPDATES-1, c.TOTAL_UPDATES}
+        for update in range(1, c.TOTAL_UPDATES+1):
+            if update in checked:
+                self.assertAlmostEqual(optimizer.param_groups[0]['lr'], c.learning_rate(update), delta=1e-15, msg=update)
+            optimizer.step()
+            scheduler.step()
+        self.assertAlmostEqual(c.learning_rate(1), 2.5e-5/1001, delta=1e-15)
+        self.assertAlmostEqual(c.learning_rate(1001), 2.5e-5, delta=1e-8)
+        self.assertAlmostEqual(c.learning_rate(c.TOTAL_UPDATES), 2.5e-6, delta=2e-9)
+        for bad in (0, c.TOTAL_UPDATES+1, 1.0, '1'):
+            with self.assertRaises(ValueError):
+                c.learning_rate(bad)
+
+    def test_the_epoch_sampler_covers_every_window_once_and_is_deterministic(self):
+        import itertools
+        c = self.c
+        starts = c.windows()
+        per_epoch = len(starts)//c.EFFECTIVE_BATCH
+        self.assertEqual(per_epoch, 24_180)
+        groups = list(itertools.islice(c.sample_updates(starts), 2*per_epoch))
+        for epoch in (groups[:per_epoch], groups[per_epoch:]):
+            flat = list(itertools.chain.from_iterable(epoch))
+            self.assertEqual(sorted(flat), starts)
+        self.assertNotEqual(groups[:per_epoch], groups[per_epoch:])
+        self.assertTrue(all(len(g) == 8 for g in groups))
+        self.assertEqual(list(itertools.islice(c.sample_updates(starts), 50)), groups[:50])
+        for bad in (starts[:-1], starts[::-1], starts+[0]):
+            with self.assertRaises(ValueError):
+                next(c.sample_updates(bad))
+
+    def test_policy_row_accepts_every_trained_instruction_and_rejects_everything_else(self):
+        c = self.c
+        def row(episode, **change):
+            base = {'episode_index': torch.tensor(episode), 'task': PLANNED[episode],
+                    'observation.state': torch.zeros(9), 'observation.images.image': torch.zeros(3, 512, 512),
+                    'observation.images.image2': torch.zeros(3, 512, 512), 'action': torch.zeros(50, 8),
+                    'action_is_pad': torch.zeros(50, dtype=torch.bool)}
+            return {**base, **change}
+        with patch.object(c, 'planned_instructions', return_value=PLANNED):
+            seen = set()
+            for episode in c.TRAIN:
+                if PLANNED[episode] not in seen:
+                    seen.add(PLANNED[episode])
+                    self.assertEqual(c.policy_row(row(episode))['task'], PLANNED[episode])
+            self.assertEqual(seen, set(TRAINED))
+            self.assertEqual(set(c.policy_row({**row(0), 'success': True})), set(c.OBS)|{'task', 'action', 'action_is_pad'})
+            c.policy_row(row(539), training=False)
+            for label, change in {
+                    'validation episode': dict(episode_index=torch.tensor(480)),
+                    'wrong task': dict(task='wrong'), 'extra observation': {'observation.objects': torch.ones(3)},
+                    'chunk 30': dict(action=torch.zeros(30, 8), action_is_pad=torch.zeros(30, dtype=torch.bool)),
+                    'padded': dict(action_is_pad=torch.ones(50, dtype=torch.bool)),
+                    'state 32': {'observation.state': torch.zeros(32)}, 'nan action': dict(action=torch.full((50, 8), float('nan'))),
+                    'image out of range': {'observation.images.image': torch.full((3, 512, 512), 2.0)},
+                    'image dtype': {'observation.images.image2': torch.zeros(3, 512, 512, dtype=torch.float64)},
+                    'image size': {'observation.images.image': torch.zeros(3, 224, 224)},
+                    'float episode': dict(episode_index=torch.tensor(1.0))}.items():
+                with self.subTest(label), self.assertRaises(ValueError):
+                    c.policy_row(row(0, **change))
+            with self.assertRaises(ValueError):
+                c.policy_row(row(539), training=True)
+
+    def test_every_strategy_changes_only_what_it_names(self):
+        c = self.c
+        base = c.make_config('cpu')
+        for name, extra in c.STRATEGIES.items():
+            config = c.make_config('cpu', name)
+            for key, value in extra.items():
+                self.assertEqual(getattr(config, key), value, (name, key))
+            for key in ('chunk_size', 'n_action_steps', 'max_state_dim', 'optimizer_lr', 'scheduler_decay_steps',
+                        'tokenizer_max_length', 'image_resolution', 'empty_cameras'):
+                self.assertEqual(getattr(config, key), getattr(base, key), (name, key))
+        with self.assertRaises(KeyError):
+            c.make_config('cpu', 'fp32_everything')
+
+    def test_the_decision_is_open_and_the_recipe_records_it(self):
+        c = self.c
+        self.assertIsNone(c.DECISION)
+        self.assertIsNone(c.recipe(False)['decision'])
+        with self.assertRaisesRegex(RuntimeError, 'not decided'):
+            c.require_decision()
+        with self.assertRaisesRegex(RuntimeError, 'not decided'):
+            c.snapshot_updates(False)
+
+    def test_claims_are_exclusive_and_resume_needs_the_original_claim(self):
+        c = self.c
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp)/'run'
+            c.claim_output(path)
+            self.assertEqual(json.loads((path/'run_claim.json').read_text())['purpose'], 'pi05_props_p2')
+            with self.assertRaises(FileExistsError):
+                c.claim_output(path)
+            with self.assertRaises(FileExistsError):
+                c.claim_resume(path)  # a plain directory is not the bind-mounted output the claim requires
+
+    def test_gate_validators_reject_a_changed_binding(self):
+        c = self.c
+        binding = {'validation_sha256': c.digest_json({'a': 1})}
+        report = c.cpu_proof(binding, {'a': 1}, {'s': 1}, {'p': 1}, parent_fingerprint=c.SEAL)
+        c.validate_cpu(report, binding)
+        for key, value in (('status', 'failed'), ('gpu_executed', True), ('binding', {'x': 1}),
+                           ('training_stats', {'s': 2}), ('processor_check', {'p': 2}),
+                           ('parent_fingerprint_recomputed', False), ('complete_training_windows', 203_040)):
+            with self.subTest(key), self.assertRaises(ValueError):
+                c.validate_cpu({**report, key: value}, binding)
+
+    def test_marker_requires_an_exact_complete_reload(self):
+        c = self.c
+        good = dict(status='complete', update=3, reload_weights_exact=True, reload_max_action_error=0.0)
+        c.require_marker(good, 3)
+        for change in ({'status': 'x'}, {'update': 4}, {'reload_weights_exact': False},
+                       {'reload_max_action_error': 1e-3}, {'reload_max_action_error': float('nan')}):
+            with self.assertRaises(ValueError):
+                c.require_marker({**good, **change}, 3)
+
+
 if __name__ == '__main__':
     unittest.main()
