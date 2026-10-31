@@ -2,11 +2,11 @@
 
 ## Where things stand (2026-10-30)
 
-- **M0 built and frozen; A0 prepared and smoked, comparison run not started (2026-10-31, branch `feat/vla-inputs`, merged into `main` 2026-10-31).**
-  Equivalence gate passed (4 of 4 recorded P2 trials byte-equal); feasibility 652 of 656 (comparison 573, selection 79); power
-  recomputed at 573; core hash `3cc8c623…`. **Open before the A0 run:** decide whether to bind the X-VLA base bundle
-  (tokenizer files) in the arm manifest (a core change, so a re-prepare), the worker count (8 workers reach 84 C and pause),
-  then `stage A0 comparison 101520`. Not pushed.
+- **M0 control arm A0 done (2026-10-31, branch `feat/vla-inputs`, not pushed):** 451 of 573 comparison layouts = 78.7%
+  [75.4, 82.0] (trained 80.5%, held-out 69.8%, milk 53.1%); core `c4f6c303f2ae` (X-VLA base bundle now bound). The GPU is free.
+  [Report](docs/VLA_INPUTS_M0_20261031.md). **Open:** A1-A4 need trained checkpoints (M2-M4), and before another 8-worker run
+  decide the thermal guard: it paused three workers for about an hour each ([FAILURES #66](docs/FAILURES.md)); use fewer
+  workers, or a cross-worker guard as a recorded core change.
 
 - **M1 Task 4 runner and CPU parts of 4b written (2026-10-31, branch `feat/vla-inputs-m1`); `--probe-memory` run (2026-10-31); the user decides
   the memory strategy.**

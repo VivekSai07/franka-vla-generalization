@@ -11,3 +11,8 @@ core. Its source closure, weights, processors and runtime are recorded by `prepa
 
 Tests (robosuite image, GPU, the P2 bundle at `/bundle`): `tests/test_parity.py` — the adapter's actions equal P2's own code
 path byte for byte for 12 consecutive steps (two chunk inferences), and are sensitive to the image order and observation.
+
+`INPUT_DIRS` declares `.cache/xvla_trial/bundle` (the base bundle: tokenizer files, base config): `prepare` records every file's
+sha256, size and mtime, workers re-check them (size and mtime for files of 64 MB or more, full hash below), and `compare`
+re-hashes everything. `tests/test_closure.py` checks that the adapter reads nothing under `.cache` or `/bundle` outside the
+checkpoint and this directory.

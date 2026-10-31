@@ -31,6 +31,7 @@ from experiments.xvla_props_p2_eval import analysis
 
 ROOT = contract.ROOT
 HOT_C, COOL_C = 83, 75
+LARGE_BYTES = 64 << 20  # input files this large get a size+mtime check in workers and a full hash in `compare`
 ARM_NAME = re.compile(r"^A[0-9]$")
 CONTROL = "A0"
 
@@ -95,13 +96,41 @@ def checkpoint_facts(checkpoint):
                 files=others)
 
 
-def arm_files(identifier, root=ROOT):
-    """The arm's source closure: its package (non-test modules and README), the extra repository files it declares
-    (`EXTRA_SOURCE`), and every other repository module its import loads that the core does not already bind."""
+def _arm_module(identifier):
     match = _IDENTIFIER.match(identifier)
     if not match or not match.group(1).startswith(adapters.ARM_PREFIX):
         raise ValueError(f"adapter identifier {identifier!r} is not an arm module")
-    module = importlib.import_module(match.group(1))
+    return importlib.import_module(match.group(1))
+
+
+def _input_files(directory):
+    """{relative path: Path} of every file under `directory`; symlinks are refused."""
+    files = {}
+    for path in sorted(Path(directory).rglob("*")):
+        if path.is_symlink():
+            raise ValueError(f"symlink in an arm input directory: {path}")
+        if path.is_file():
+            files[path.relative_to(directory).as_posix()] = path
+    return files
+
+
+def arm_inputs(identifier, repo=ROOT):
+    """The arm's declared input directories (`INPUT_DIRS`, relative to the repository root): every file with its sha256,
+    size and mtime. The X-VLA base bundle (tokenizer files) is one."""
+    out = {}
+    for rel in getattr(_arm_module(identifier), "INPUT_DIRS", ()):
+        files = _input_files(Path(repo) / rel)
+        if not files:
+            raise ValueError(f"arm input directory {rel} is missing or empty")
+        out[rel] = {name: dict(sha256=contract.file_hash(p), bytes=p.stat().st_size, mtime_ns=p.stat().st_mtime_ns)
+                    for name, p in files.items()}
+    return out
+
+
+def arm_files(identifier, root=ROOT):
+    """The arm's source closure: its package (non-test modules and README), the extra repository files it declares
+    (`EXTRA_SOURCE`), and every other repository module its import loads that the core does not already bind."""
+    module = _arm_module(identifier)
     root = Path(root)
     package = Path(module.__file__).resolve().parent
     files = {p.relative_to(root).as_posix() for p in package.glob("*.py")} | {(package / "README.md").relative_to(root).as_posix()}
@@ -132,14 +161,16 @@ def prepare(root, arm, identifier, checkpoints, repo=ROOT, phase_checkpoint=None
     contract.s0.check_p2_frozen(repo)
     core = contract.core_provenance(repo)
     record = dict(
-        arm=dict(name=arm, adapter=identifier, files=arm_files(identifier, repo), runtime=runtime()),
+        arm=dict(name=arm, adapter=identifier, files=arm_files(identifier, repo), inputs=arm_inputs(identifier, repo),
+                 runtime=runtime()),
         core=dict(provenance=core, sha256=contract.digest(core)),
         plan_sha256=contract.file_hash(root / "plan/plan.json"), feasibility_sha256=contract.file_hash(root / "feasibility/feasibility.json"),
         dropped=feas["dropped"], dropped_by_cell=feas["dropped_by_cell"], s0_seal=sidecar_fingerprint,
         phase_checkpoint=phase_checkpoint,
         checkpoints={str(k): checkpoint_facts(v) for k, v in sorted(checkpoints.items())},
         prepared_at=time.strftime("%Y-%m-%dT%H:%M:%S%z"))
-    record["arm"]["sha256"] = contract.digest([record["arm"]["adapter"], record["arm"]["files"]])
+    record["arm"]["sha256"] = contract.digest([record["arm"]["adapter"], record["arm"]["files"],
+                                               {d: {n: f["sha256"] for n, f in fs.items()} for d, fs in record["arm"]["inputs"].items()}])
     if arm != CONTROL:
         control = read_json(root / "arms" / CONTROL / "prepared.json")
         if control["core"]["sha256"] != record["core"]["sha256"]:
@@ -165,11 +196,22 @@ def verify_core(prepared, repo=ROOT):
         raise ValueError(f"the shared core changed since prepare: {changed[:5]}")
 
 
-def verify_arm(prepared, repo=ROOT):
-    """Raises unless the arm's adapter closure is what it was when the arm was prepared."""
+def verify_arm(prepared, repo=ROOT, deep=False):
+    """Raises unless the arm's adapter closure and input directories are what they were when the arm was prepared.
+    Input files of LARGE_BYTES or more are checked by size and mtime unless `deep` (workers: cheap; `compare`: full)."""
     changed = sorted(r for r, h in prepared["arm"]["files"].items() if contract.file_hash(Path(repo) / r) != h)
     if changed:
         raise ValueError(f"arm {prepared['arm']['name']} changed since prepare: {changed[:5]}")
+    for rel, recorded in prepared["arm"].get("inputs", {}).items():
+        now = _input_files(Path(repo) / rel)
+        if set(now) != set(recorded):
+            raise ValueError(f"arm {prepared['arm']['name']}: files of input directory {rel} were added or removed")
+        for name, record in recorded.items():
+            stat = now[name].stat()
+            full = deep or record["bytes"] < LARGE_BYTES
+            if stat.st_size != record["bytes"] or (full and contract.file_hash(now[name]) != record["sha256"]) \
+                    or (not full and stat.st_mtime_ns != record["mtime_ns"]):
+                raise ValueError(f"arm {prepared['arm']['name']}: input file {rel}/{name} changed since prepare")
 
 
 def verify_manifests(root, prepared):
@@ -373,8 +415,8 @@ def compare(root, arm, checkpoint, repo=ROOT, seed=0):
     for name, prepared in ((CONTROL, control), (arm, mine)):
         verify_core(prepared, repo)
         verify_manifests(root, prepared)
-    verify_arm(mine, repo)
-    verify_arm(control, repo)
+    verify_arm(mine, repo, deep=True)
+    verify_arm(control, repo, deep=True)
     if control["core"]["sha256"] != mine["core"]["sha256"]:
         raise ValueError("the arm's shared core differs from A0's")
     control_checkpoint = int(next(iter(control["checkpoints"])))
