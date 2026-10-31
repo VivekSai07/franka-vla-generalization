@@ -15,7 +15,7 @@ from pathlib import Path
 
 PACKAGE = Path(__file__).resolve().parents[1]
 ROOT = PACKAGE.parents[1]
-MODULES = ('contract.py', 'assets.py')
+MODULES = ('contract.py', 'assets.py', 'weights.py', 'strategy.py', 'runner.py')
 OWN = ('README.md', *(f'tests/{p.name}' for p in sorted((PACKAGE/'tests').glob('*.py'))))
 MODULE_DUNDERS = {'__file__', '__name__', '__doc__', '__package__', '__spec__', '__loader__',
                   '__builtins__', '__path__', '__debug__'}
@@ -94,7 +94,7 @@ class ForkResidueTests(unittest.TestCase):
 class SourceFilesTests(unittest.TestCase):
     def loaded(self):
         script = ("import sys, json, torch\n"
-                  "import experiments.pi05_props_p2.contract as c, experiments.pi05_props_p2.assets\n"
+                  "import experiments.pi05_props_p2.contract as c, experiments.pi05_props_p2.assets, experiments.pi05_props_p2.runner\n"
                   "from lerobot.policies.pi05.modeling_pi05 import PI05Policy\n"
                   "from lerobot.datasets.lerobot_dataset import LeRobotDataset\n"
                   "from lerobot.datasets.utils import dataset_to_policy_features\n"
