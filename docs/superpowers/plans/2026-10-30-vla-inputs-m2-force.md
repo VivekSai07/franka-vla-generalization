@@ -83,10 +83,10 @@ proprio shape (n, 20), `proprio[:, :9]` equals the raw state, `proprio[:, 9:17]`
 **Interfaces:** `runner.py --zero-equivalence`: in one process, run 30 updates of P2's loop (`experiments.xvla_props_p2.runner`,
 imported read-only) and 30 updates of this loop with the 8 extra values forced to 0 after normalisation, from the same seed;
 compare metrics, weights and Adam moments byte for byte; write `zero_equivalence.json`.
-- [ ] **Step 1: failing test (pure part):** the forcing helper zeroes exactly columns 9–16 after normalisation.
-- [ ] **Step 2–4:** implement; on GPU, run `--zero-equivalence`: equal. Mutation: leave one extra column un-zeroed → the gate
-  must report unequal (run once, record, restore).
-- [ ] **Step 5:** commit `M2: zero-equivalence gate`.
+- [x] **Step 1: failing test (pure part):** the forcing helper zeroes exactly columns 9–16 after normalisation.
+- [x] **Step 2–4:** implement; on GPU, run `--zero-equivalence`: equal (2026-10-31, byte-equal over 30 updates against P2's own runner,
+  bound as `contract.REFERENCE_FILES`). Mutation: column 16 left un-zeroed → reported unequal (a wrapper replaces the hook; no bound file edited).
+- [x] **Step 5:** commit `M2: zero-equivalence gate`.
 
 ### Task 4: train/rollout parity
 
@@ -111,15 +111,17 @@ binding; M0's arm manifest binds them. Nothing is added to `experiments/vla_inpu
   (training 0.2% per wrench dimension and 0.1% per finger, as the percentile bounds imply).
 - [ ] Prove queued calls do not recompute actions: observations at 30 Hz yield 3 Hz replanning with ten executed actions.
   Log timestamps/inference boundaries. Interpret M2 as instantaneous boundary conditioning, not fast force feedback.
-  **Needs a real policy (GPU): not done.**
+  **Done 2026-10-31 with the preflight checkpoint** (`eval_tests/test_inference_boundary.py`): inferences at ticks 0, 10, 20 of 30; mid-chunk
+  observations do not change the queued actions; the tick-10 observation changes the second chunk; saved processor equals the training one.
 - [x] Bind the arm adapter/state builder separately (`vla_inputs_arm_xvla_force`, `tests/test_closure.py`) and keep M0's shared-core
   hash identical to A0 (the test compares it with A0's `prepared.json`).
 
 ### Task 5: gates and training
 
 - [ ] Pre-launch checklist; `docker ps`; `nvidia-smi`; `df -h .` (65 GiB guard).
-- [ ] `--check` → `--preflight` → `--resume-proof` → `--equivalence` (inherited fast-vs-serial loop) → `--zero-equivalence` →
-  `--train --stop-at <deadline>` nights from a detached worktree.
+- [x] `--check` → `--preflight` → `--resume-proof` → `--equivalence` (inherited fast-vs-serial loop) → `--zero-equivalence` all passed
+  (2026-10-31) from the detached worktree `.worktrees/m2-run` at `f1c49b3`; `--train` runs **without a deadline** (user decision: to the end,
+  thermal guard pauses, supervisor resumes after a death) from the same worktree.
 - [ ] Night status entries in `docs/BENCHMARK_STATUS.md`.
 
 ### Task 6: evaluation as A2
