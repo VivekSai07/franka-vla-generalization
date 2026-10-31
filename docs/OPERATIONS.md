@@ -19,14 +19,14 @@ a source/dataset binding by itself. Follow the linked model card and verify the 
 ## Our Docker images on the RTX machine
 
 The machine is shared; about thirty other images on it belong to other people and projects.
-**Only these (two run images, two pi0.5 images and one check-only image) are ours. Never remove, retag or prune anything else** (no `docker image prune`,
+**Only these (two run images, two pi0.5 images; the check-only EGL image was removed 2026-10-31) are ours. Never remove, retag or prune anything else** (no `docker image prune`,
 no `docker system prune`).
 
 | local tag | image id | what it is | runs |
 |---|---|---|---|
 | `smolvla:rtc-offline` | `sha256:08de1e09…714abc` | the pinned (admission) image, MuJoCo 3.13.0 | everything sealed: collection, training, evaluation — including B3 **training** (`xvla_b3_robosuite`) and props P1 **training** (`xvla_props_p1`), which need no simulator |
 | `vla-robosuite:1.5.2-mj3.4.0` | `sha256:54d861aa…ccf27e` | the image above + robosuite 1.5.2, MuJoCo 3.4.0 | everything that builds the robosuite scene: `robosuite_scene`, `robosuite_sim2sim`, `b3_robosuite_data` collection, `xvla_b3_robosuite_eval` rollouts, `props_scene` (props P0: scene, expert, gate), `props_p1_data` (props P1: sealed instruction-sorting collection), `xvla_props_p1_eval` (props P1 feasibility + rollouts) |
-| `vla-robosuite:1.5.2-mj3.4.0-egl` | `sha256:fec83621…ade5` | the robosuite image + `libegl1` (GPU rendering). **Check-only: not admitted for any dataset, training or evaluation run** (no phase has adopted EGL); see [EGL_RENDERING_CHECK_20261019.md](EGL_RENDERING_CHECK_20261019.md); built from `experiments/egl_rendering/Dockerfile` on branch `feat/egl-rendering` | the EGL side-by-side check only |
+| `vla-robosuite:1.5.2-mj3.4.0-egl` | `sha256:fec83621…ade5` | **Removed from the RTX machine on 2026-10-31 at the user's instruction to reclaim disk (2 MB unique); rebuild from the Dockerfile on `feat/egl-rendering` if needed.** The robosuite image + `libegl1` (GPU rendering). **Check-only: not admitted for any dataset, training or evaluation run** (no phase has adopted EGL); see [EGL_RENDERING_CHECK_20261019.md](EGL_RENDERING_CHECK_20261019.md); built from `experiments/egl_rendering/Dockerfile` on branch `feat/egl-rendering` | the EGL side-by-side check only |
 | `vla-pi05:admission` | `sha256:a229f2fb…290eae` | the admission image + transformers@`dcddb970` + tokenizers 0.21.4 (pi0.5 needs LeRobot's patched transformers; X-VLA is not run here); built from `docker/pi05/Dockerfile.admission-pi`, see `docker/pi05/README.md` | pi0.5 training and offline tests (`pi05_props_p2`), M1 |
 | `vla-pi05:robosuite` | `sha256:2abb18a5…b21` | the robosuite image + the same two packages; `docker/pi05/Dockerfile.robosuite-pi` | pi0.5 rollouts (M1 Task 6). Determinism check: 12 of 12 trace digests equal the robosuite image's |
 
