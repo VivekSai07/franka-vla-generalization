@@ -384,6 +384,12 @@ def compare(root, arm, checkpoint, repo=ROOT, seed=0):
     if set(new_by) != set(old_by) or len(new_by) != new["planned_trials"]:
         raise ValueError("incomplete pairs: both arms need a trial on every feasible comparison layout")
     ids = sorted(new_by)
+    plan, _ = load_manifests(root)
+    dropped = sorted(i for i in new["dropped_layouts"] if plan["layouts"][i]["tier"] == "comparison")
+    dropped_by_cell = {}
+    for lid in dropped:
+        key = "-".join(map(str, plan["layouts"][lid]["cell"]))
+        dropped_by_cell[key] = dropped_by_cell.get(key, 0) + 1
     rows = [dict(layout_id=i, object=new_by[i]["object"], new=new_by[i]["task_success"], control=old_by[i]["task_success"]) for i in ids]
     b = sum(1 for r in rows if r["new"] and not r["control"])
     c = sum(1 for r in rows if r["control"] and not r["new"])
@@ -392,9 +398,9 @@ def compare(root, arm, checkpoint, repo=ROOT, seed=0):
         arm=arm, checkpoint=checkpoint, role=role, control_checkpoint=control_checkpoint, layouts=len(ids), new_successes=sum(r["new"] for r in rows),
         control_successes=sum(r["control"] for r in rows), discordant=dict(new_only=b, control_only=c), mcnemar_exact_p=p,
         effect=stats.paired_effect(rows, seed=seed), core_sha256=mine["core"]["sha256"], arm_sha256=mine["arm"]["sha256"],
-        control_arm_sha256=control["arm"]["sha256"], dropped_layouts=new["dropped_layouts"],
-        dropped_by_cell=new["dropped_by_cell"],
-        population=f"{len(ids)} feasible comparison layouts of 576 planned; {len(new['dropped_layouts'])} dropped for every arm "
+        control_arm_sha256=control["arm"]["sha256"], dropped_layouts=dropped,
+        dropped_by_cell=dict(sorted(dropped_by_cell.items())),
+        population=f"{len(ids)} feasible comparison layouts of {len(plan['tiers']['comparison'])} planned; {len(dropped)} dropped for every arm "
                    f"(expert could not solve them), counted by cell and never replaced",
         discordant_layouts=dict(new_only=[r["layout_id"] for r in rows if r["new"] and not r["control"]],
                                 control_only=[r["layout_id"] for r in rows if r["control"] and not r["new"]]),
