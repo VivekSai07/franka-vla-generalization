@@ -1,5 +1,21 @@
 # Franka benchmark: start here
 
+## M2 evaluation prepared while training runs (nothing evaluated) - 2026-11-01
+
+Training was at update 83,479 of 126,900 (pace unchanged by what follows). **Dry run of the whole A2 path in a scratch campaign**
+(`outputs/vla_inputs_eval/m2_dryrun`, a copy of M0's plan, feasibility and A0 preparation; the preflight checkpoints stand in for the
+candidates): `prepare` for arm A2 passed with the shared core `c4f6c303f2ae`, equal to A0's, and the arm closure and inputs (base bundle,
+sealed S0 sidecar) recorded; a 2-trial smoke on one pinned worker ran end to end beside the training (about 4 min, 3.6 GiB torch
+reserved and 7.6 GB host memory per worker, the same as A0; training stayed at 0.51 s per update), and its traces hold the 17-value state
+and the recorded signals (the near-base checkpoint never lifts anything, as expected). **Driver:** `scripts/vla_inputs_eval.sh` takes
+`CKPTS` (a checkpoint directory mounted at `/ckpt`) and `PHASE` (the matched-phase checkpoint `prepare` requires for every arm but A0);
+new `scripts/vla_inputs_m2_eval.sh` runs the steps `prepare` (six candidates 50,760-126,900, phase 101,520; refuses until all exist),
+`selection` (six candidates at once, one 8-core worker each), `select`, `comparison` (6 workers, 7 cores, one checkpoint pool after
+the other; **refuses unless `PILOT_DECISION_RECORDED=1`**) and `compare`, from a dedicated detached worktree. Expected GPU time after
+training ends: about 1.5 h for the selection tier and about 3 h per comparison checkpoint (two checkpoints unless the winner is
+101,520), so 7-8 h, videos about 2.5 GB. **Order stays:** pilot night 1 and its recorded decision first, then M2's evaluation; the pilots'
+own GPU parts (zero-equivalence gate, a real update, the dry night) are not yet run.
+
 ## Overnight pilots built on the CPU (plan Tasks 1-5) - 2026-10-31
 
 Branch `feat/vla-inputs-pilots` (from `main` at `f3f231b`, `main` merged in once; not merged back, not pushed), CPU only while M2

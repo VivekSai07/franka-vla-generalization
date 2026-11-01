@@ -127,5 +127,7 @@ binding; M0's arm manifest binds them. Nothing is added to `experiments/vla_inpu
 ### Task 6: evaluation as A2
 
 - [ ] `prepare --arm A2` (six candidates) → smoke → S → `select` → C with the winner plus fixed 4.0-epoch secondary checkpoint (deduplicate) → `compare --arm A2`.
+  **Prepared 2026-11-01:** the sequence is `scripts/vla_inputs_m2_eval.sh` (`prepare`, `selection`, `select`, `comparison`, `compare`; see its header and
+  the status log); the A2 path was dry-run in a scratch campaign. `comparison` needs `PILOT_DECISION_RECORDED=1`.
 - [ ] `docs/VLA_INPUTS_M2_<date>.md`: primary result, `never_lifted` and milk (exploratory), force traces of failing milk trials
   for A0 and A2, against the spec's prediction; docs pass; commit.

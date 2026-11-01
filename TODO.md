@@ -6,6 +6,8 @@
   the Task 3 and 4b proofs passed (see the status log). About 18-20 h. A supervisor resumes after a death; poll `docker ps` and
   `outputs/train/xvla_p2_force_v1/result.json`. Do not edit `experiments/xvla_p2_force/**` (bound) or switch that worktree. **Next:** M2's
   evaluation (Task 6) only after pilot night 1 has recorded its decision; free disk was 87 GB after the gates (about 26 GB at the run's peak).
+  **Evaluation is prepared (2026-11-01):** `scripts/vla_inputs_m2_eval.sh` (steps `prepare`, `selection`, `select`, `comparison`, `compare`; the
+  comparison step refuses without `PILOT_DECISION_RECORDED=1`), dry-run through `prepare` and a 2-trial smoke; about 7-8 h of GPU after training.
 
 - **Order revised (user, 2026-10-31): input/output arms first, pi0.5 (M1) last.** Next on the GPU: ~~M2 Task 3 (zero-equivalence) and
   Task 5 (gates, full M2 training)~~ done as above; in parallel the overnight-pilot build (CPU); then pilot night 1 (control, A0 on the pilot tier,
