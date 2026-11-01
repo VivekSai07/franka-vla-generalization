@@ -24,7 +24,8 @@
 # (8 each), FEAS_SHARDS (12) FEAS_CORES (4), UPDATES (a dry run: that many updates, checkpoint step_<N>), CONTROL_DIR (a
 # trained control of this recipe version to reuse), PILOT_SMOKE=1 (run the 2 smoke layouts of every arm before its pilot tier),
 # PILOT_SKIP_CONTEXT=1, PILOT_ALLOW_BUSY=1 (start although the GPU is
-# in use), PILOT_NO_RUN=1 (print the docker commands, run nothing).
+# in use), PILOT_SMOKE_ONLY=1 (a dry night: the 2 smoke layouts of each arm prove the GPU path; no pilot tier, no compare, so the
+# summary has nothing to judge), PILOT_NO_RUN=1 (print the docker commands, run nothing).
 # Mountpoints: the driver creates the empty gitignored directories the read-only mounts need inside WT, before anything starts.
 # Polling: containers are watched with `docker ps`; `docker wait` is never used (it has failed to notify here).
 set -uo pipefail
@@ -158,6 +159,10 @@ stage_done() {  # stage_done <arm> <tier> <ckpt>
 }
 
 evaluate_arm() {  # evaluate_arm <arm> <ckpt>: the pilot tier at one checkpoint, six workers (PILOT_SMOKE=1: the 2 smoke layouts first)
+  if [ "${PILOT_SMOKE_ONLY:-0}" = 1 ]; then
+    if stage_done "$1" smoke "$2"; then echo "skip stage $1 smoke: complete"; return 0; fi
+    OUT="$NIGHT" WT="$WT" MAIN="$MAIN" BUNDLE="$BUNDLE" bash "$M0" stage "$1" smoke "$2" 1 "$CORES"; return
+  fi
   if stage_done "$1" comparison "$2"; then echo "skip stage $1 comparison: complete"; return 0; fi
   if [ "${PILOT_SMOKE:-0}" = 1 ] && ! stage_done "$1" smoke "$2"; then
     OUT="$NIGHT" WT="$WT" MAIN="$MAIN" BUNDLE="$BUNDLE" bash "$M0" stage "$1" smoke "$2" 1 "$CORES" || return 1
@@ -243,7 +248,7 @@ for v in "${VARIANTS[@]}"; do
   ev start evaluate "$v"
   if prepare_arm "$arm" "$PILOT_ADAPTER" "$vckpt" "/out/training/$v/checkpoints/$vdir" "$vckpt" \
      && selection_ceremony "$arm" "$vckpt" && evaluate_arm "$arm" "$vckpt"; then
-    if [ "$NO_RUN" = 1 ] || [ -f "$NIGHT/arms/$arm/compare_step_$(printf '%06d' "$vckpt").json" ]; then :; else
+    if [ "$NO_RUN" = 1 ] || [ "${PILOT_SMOKE_ONLY:-0}" = 1 ] || [ -f "$NIGHT/arms/$arm/compare_step_$(printf '%06d' "$vckpt").json" ]; then :; else
       OUT="$NIGHT" WT="$WT" MAIN="$MAIN" BUNDLE="$BUNDLE" bash "$M0" compare "$arm" "$vckpt" || { ev fail evaluate "$v" "compare failed"; fail_variant; continue; }
     fi
     ev end evaluate "$v" ok

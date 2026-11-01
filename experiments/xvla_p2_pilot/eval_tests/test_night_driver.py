@@ -155,6 +155,24 @@ class OrderTests(Night):
         self.assertEqual(self.run_night('force').returncode, 0)
         self.assertIn('experiments.xvla_p2_pilot.summary /out', self.calls()[-1])
 
+    def test_a_smoke_only_night_proves_the_gpu_path_and_never_runs_the_pilot_tier_or_the_comparison(self):
+        result = self.run_night('force', PILOT_SMOKE_ONLY='1', PILOT_SKIP_CONTEXT='1', UPDATES='40')
+        self.assertEqual(result.returncode, 0, result.stderr+result.stdout)
+        calls = self.calls()
+        for arm in ('A0', 'A1'):
+            self.index(rf'worker --arm {arm} --tier smoke --checkpoint 300', 0, calls)
+        self.assertEqual([c for c in calls if '--tier comparison' in c], [])
+        self.assertEqual([c for c in calls if re.search(r'evaluate --root /out compare ', c)], [])
+        self.index(r'runner --zero-equivalence --variant force', 0, calls)  # the GPU-only parts all ran
+        self.index(r'runner --train --variant force .*--updates 40', 0, calls)
+        self.index(r'worker --arm A1 --tier selection', 0, calls)
+        self.assertEqual([e for e in self.events() if e['event'] == 'fail'], [])
+
+    def test_the_pilot_tier_still_runs_without_the_smoke_only_knob(self):
+        self.assertEqual(self.run_night('force', PILOT_SKIP_CONTEXT='1').returncode, 0)
+        self.index(r'worker --arm A1 --tier comparison', 0)
+        self.index(r'evaluate --root /out compare --arm A1', 0)
+
 
 class SafetyTests(Night):
     def test_every_container_mounts_the_worktree_read_only_and_only_the_night_or_a_run_directory_writable(self):
