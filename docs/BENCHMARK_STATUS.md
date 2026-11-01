@@ -1,5 +1,20 @@
 # Franka benchmark: start here
 
+## Overnight chain armed: break, pilot dry night, pilot night 1, M2 selection - 2026-11-01
+
+`scripts/vla_inputs_overnight_chain.sh` (16 tests, `experiments/xvla_p2_force/eval_tests/test_overnight_chain.py`, ten
+mutations of the script, one survivor killed by a new test) was started from a copy (`/tmp/m2_chain.sh`) at 20:30 with the
+deadline 2026-11-02 08:00. It waits for M2 training to complete (status `complete` and the `step_126900` marker), takes a
+3600 s break, then: (1) a pilot dry night (`PILOT_SMOKE_ONLY=1`, 40 updates, the GPU path only), (2) only if it passed,
+pilot night 1 (`force`) reusing the dry night's plan and feasibility, (3) the M2 selection tier (`prepare`, `selection`,
+`select`). Each phase starts only if its estimated time fits before the deadline; a failed dry night skips the pilots and
+falls back to the selection. It never starts the M2 comparison tier (that needs the pilot decision recorded), never deletes
+or kills, and aborts on a dead training, a busy GPU or less than 60 GB free. Cancel by creating
+`outputs/train/m2_overnight_chain.cancel`. Logs: `outputs/train/m2_overnight_chain*.log`. Results:
+`outputs/vla_inputs_eval/m0_pilot_night1_<date>/SUMMARY.md`, `outputs/vla_inputs_eval/m0_20261030/arms/A2/selection.json`.
+Nothing is evaluated yet; the GPU parts of the pilot driver have never run, so a GPU-only defect is expected on the dry
+night. The box pilot is deferred to the next night.
+
 ## M2 evaluation prepared while training runs (nothing evaluated) - 2026-11-01
 
 Training was at update 83,479 of 126,900 (pace unchanged by what follows). **Dry run of the whole A2 path in a scratch campaign**
