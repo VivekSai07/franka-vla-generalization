@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # M0 driver. Run from the worktree that holds the code (it is mounted read-only), with:
 #   OUT=<campaign dir, writable>  BUNDLE=<P2 bundle>  M0_NO_RUN=1 to print the docker commands instead of running them
+#   CKPTS=<host dir holding step_NNNNNN checkpoints>  mounted read-only at /ckpt (arms trained outside the P2 bundle)
+#   PHASE=<update>  the 4.0-epoch checkpoint, passed to `prepare` (required for every arm but A0)
 #
 #   plan                                   layouts (admission image)
 #   feasibility <shards> <cores-each>      unrendered expert on every layout, sharded, then merged (robosuite image, CPU)
@@ -30,6 +32,7 @@ docker_run() {  # docker_run <image> <gpu:0|1> <name-or-""> <detach:0|1> <cpuset
     -v "$OUT:/out:rw" -w /vla --entrypoint python)
   [ "$gpu" = 1 ] && args+=(--runtime nvidia --gpus all -e CUBLAS_WORKSPACE_CONFIG=:4096:8) || args+=(--runtime runc -e NVIDIA_VISIBLE_DEVICES=void)
   [ -n "$name" ] && args+=(--name "$name")
+  [ -n "${CKPTS:-}" ] && args+=(-v "$CKPTS:/ckpt:ro")
   [ -n "$cpuset" ] && args+=(--cpuset-cpus "$cpuset")
   [ "$detach" = 1 ] && args+=(-d) || args+=(--rm)
   args+=("$image" "$@")
@@ -53,7 +56,7 @@ case "$cmd" in
     docker_run "$ROB" 0 "" 0 "" 1 -- -m experiments.vla_inputs_eval.feasibility --out /out/feasibility --plan /out/plan --merge ;;
   prepare)
     arm="$1"; adapter="$2"; ckpts="$3"
-    docker_run "$ROB" 1 "" 0 "" 1 -- -m experiments.vla_inputs_eval.evaluate --root /out prepare --arm "$arm" --adapter "$adapter" --checkpoints "$ckpts" ;;
+    docker_run "$ROB" 1 "" 0 "" 1 -- -m experiments.vla_inputs_eval.evaluate --root /out prepare --arm "$arm" --adapter "$adapter" --checkpoints "$ckpts" ${PHASE:+--phase-checkpoint "$PHASE"} ;;
   stage)
     arm="$1"; tier="$2"; ckpt="$3"; workers="$4"; cores="$5"; first="${6:-0}"
     for k in $(seq 0 $((workers - 1))); do
