@@ -8,6 +8,9 @@
   evaluation (Task 6) only after pilot night 1 has recorded its decision; free disk was 87 GB after the gates (about 26 GB at the run's peak).
   **Evaluation is prepared (2026-11-01):** `scripts/vla_inputs_m2_eval.sh` (steps `prepare`, `selection`, `select`, `comparison`, `compare`; the
   comparison step refuses without `PILOT_DECISION_RECORDED=1`), dry-run through `prepare` and a 2-trial smoke; about 7-8 h of GPU after training.
+  **Overnight chain armed (2026-11-01 20:30, deadline 11-02 08:00):** `scripts/vla_inputs_overnight_chain.sh` waits for training, breaks 1 h,
+  runs the pilot dry night, pilot night 1 (`force` only; box deferred) if the dry night passed, then the M2 selection tier. It never starts the
+  comparison tier. Cancel: `outputs/train/m2_overnight_chain.cancel`; logs `outputs/train/m2_overnight_chain*.log`; see the status log.
 
 - **Order revised (user, 2026-10-31): input/output arms first, pi0.5 (M1) last.** Next on the GPU: ~~M2 Task 3 (zero-equivalence) and
   Task 5 (gates, full M2 training)~~ done as above; in parallel the overnight-pilot build (CPU); then pilot night 1 (control, A0 on the pilot tier,
