@@ -1,5 +1,16 @@
 # Franka benchmark: start here
 
+## Pilot night 1 decision recorded before M2's comparison tier - 2026-11-02
+
+Force pilot (A1, 10,000 updates from checkpoint 101,520, `pilot_v1`) against the shared continuation control (A0) on the 190
+feasible pilot layouts: 142/190 (74.7%) against 136/190 (71.6%), delta +3.16 points, discordant 13/7, exact McNemar p = 0.263.
+Rule (promote iff delta >= +5 points): **drop**, provisional, because the calibration against M2's full result has not been
+done and a pilot may only promote until it has. Caveats: a screen, one seed, 10,000 updates (about 8% of M2's 126,900), 190
+layouts; never-lifted 22 to 23 and wrong-object 5 to 4 show no mechanism difference. Wall clock 6.6 h (force training 2.4 h,
+evaluation 0.9 h). The A9 context arm was skipped. Recorded here before the M2 comparison tier was started
+(`PILOT_DECISION_RECORDED=1`, 2026-11-02 15:50): that tier at 88,830 and 101,520 against A0 (451/573 = 78.7%) is the
+test that answers whether force in the state helps; its result will be compared with this prediction.
+
 ## Overnight chain outcome: dry night failed on a file list, M2 selection done, pilot night 1 relaunched - 2026-11-02
 
 Training finished 2026-11-01 21:42 (126,900 updates, 28.6 h). The dry night failed after 4 minutes on the pilot contract's
