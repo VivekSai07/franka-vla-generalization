@@ -1,5 +1,14 @@
 # Franka benchmark: start here
 
+## Overnight chain outcome: dry night failed on a file list, M2 selection done, pilot night 1 relaunched - 2026-11-02
+
+Training finished 2026-11-01 21:42 (126,900 updates, 28.6 h). The dry night failed after 4 minutes on the pilot contract's
+checkpoint file list (FAILURES #68); the chain skipped the pilots and ran the M2 selection tier (79 trials per checkpoint,
+done 00:51): successes 56 (50,760), 61 (76,140), 70 (88,830), 69 (101,520), 69 (114,210), 65 (126,900), so the comparison
+tier will run at 88,830 and 101,520. This is a screening count, not a comparison with A0. Fix merged (`96fb9d8`), dry night
+re-run green (`m0_pilot_dry2_20261102`), pilot night 1 (`force`, context arm skipped) started 09:02 in
+`m0_pilot_night1_20261102`. The M2 comparison tier has not run, so whether force in the state helps is not yet known.
+
 ## Overnight chain armed: break, pilot dry night, pilot night 1, M2 selection - 2026-11-01
 
 `scripts/vla_inputs_overnight_chain.sh` (16 tests, `experiments/xvla_p2_force/eval_tests/test_overnight_chain.py`, ten
