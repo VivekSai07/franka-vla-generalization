@@ -681,7 +681,7 @@ class OutputTests(unittest.TestCase):
             out = Path(tmp)
             folder = out/'checkpoints'/c.CHECKPOINT
             folder.mkdir(parents=True)
-            for name in ('model.safetensors', 'config.json', 'policy_preprocessor.json', 'policy_postprocessor.json'):
+            for name in sorted(c.CHECKPOINT_FILES-{'checkpoint_result.json'}):
                 (folder/name).write_bytes(b'bytes')
             marker = dict(status='complete', update=10_000, reload_fp32_weights_exact=True, reload_max_action_error=0.,
                           model_sha256=c.sha256(folder/'model.safetensors'), optimizer_saved=False, start_update=101_520,
@@ -701,6 +701,10 @@ class OutputTests(unittest.TestCase):
             (folder/'policy_postprocessor.json').unlink()
             with self.assertRaises(ValueError):
                 c.verify_checkpoint(report, out, variant)
+
+    def test_the_accepted_files_are_exactly_the_files_the_real_checkpoint_has(self):
+        # The dry night failed here: the runner writes the two processor safetensors and the contract did not list them.
+        self.assertEqual(self.c.CHECKPOINT_FILES, set(self.c.START_FILES) | {'model.safetensors'})
 
 
 class BindingTests(unittest.TestCase):

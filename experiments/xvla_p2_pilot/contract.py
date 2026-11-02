@@ -80,7 +80,9 @@ def checkpoint_directory(updates=UPDATES):
 
 CHECKPOINT = checkpoint_directory(UPDATES)
 CHECKPOINT_FILES = {'model.safetensors', 'config.json', 'checkpoint_result.json',
-                    'policy_preprocessor.json', 'policy_postprocessor.json'}
+                    'policy_preprocessor.json', 'policy_postprocessor.json',
+                    'policy_preprocessor_step_7_normalizer_processor.safetensors',
+                    'policy_postprocessor_step_0_unnormalizer_processor.safetensors'}
 
 # The start: the bundle's P2 checkpoint 101,520 (weights only), pinned file by file from A0's prepared record.
 START_UPDATE = 101_520
