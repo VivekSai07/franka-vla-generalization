@@ -1,16 +1,13 @@
 # SmolVLA / X-VLA Franka TODO
 
-## Where things stand (2026-10-31)
+## Where things stand (2026-11-03)
 
-- **M2 training running (started 2026-10-31 17:02, no deadline, `.worktrees/m2-run`, container `xvla-p2-force-train`):** all gates and
-  the Task 3 and 4b proofs passed (see the status log). About 18-20 h. A supervisor resumes after a death; poll `docker ps` and
-  `outputs/train/xvla_p2_force_v1/result.json`. Do not edit `experiments/xvla_p2_force/**` (bound) or switch that worktree. **Next:** M2's
-  evaluation (Task 6) only after pilot night 1 has recorded its decision; free disk was 87 GB after the gates (about 26 GB at the run's peak).
-  **Evaluation is prepared (2026-11-01):** `scripts/vla_inputs_m2_eval.sh` (steps `prepare`, `selection`, `select`, `comparison`, `compare`; the
-  comparison step refuses without `PILOT_DECISION_RECORDED=1`), dry-run through `prepare` and a 2-trial smoke; about 7-8 h of GPU after training.
-  **Overnight chain armed (2026-11-01 20:30, deadline 11-02 08:00):** `scripts/vla_inputs_overnight_chain.sh` waits for training, breaks 1 h,
-  runs the pilot dry night, pilot night 1 (`force` only; box deferred) if the dry night passed, then the M2 selection tier. It never starts the
-  comparison tier. Cancel: `outputs/train/m2_overnight_chain.cancel`; logs `outputs/train/m2_overnight_chain*.log`; see the status log.
+- **M2 done and evaluated (2026-11-03):** force/torque in the state raises success on M0's comparison tier from 78.7% (A0,
+  451/573) to 91.3% (checkpoint 88,830, p = 1.1e-10) and 90.2% (matched-phase 101,520); one training seed. The pre-run
+  prediction (small or no effect) was wrong; the 10,000-update force pilot (+3.2, dropped) under-called it. See the status log
+  and [RESULTS.md](docs/RESULTS.md). **Open:** a second training seed for A2 would bound seed-to-seed variation; M3 (box in the
+  state) and M4 next per the programme order; M1 (pi0.5) last. Disk: the M2 run keeps 6 checkpoints (about 30 GB each), delete
+  nothing without the user.
 
 - **Order revised (user, 2026-10-31): input/output arms first, pi0.5 (M1) last.** Next on the GPU: ~~M2 Task 3 (zero-equivalence) and
   Task 5 (gates, full M2 training)~~ done as above; in parallel the overnight-pilot build (CPU); then pilot night 1 (control, A0 on the pilot tier,

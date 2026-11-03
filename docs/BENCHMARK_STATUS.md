@@ -1,5 +1,18 @@
 # Franka benchmark: start here
 
+## M2 evaluated on the comparison tier: force in the state helps, +11.5 to +12.6 points; the pilot under-called it - 2026-11-03
+
+A2 against A0 (451/573 = 78.7%) on the same 573 layouts: 523/573 = 91.3% at the selected checkpoint 88,830 (+12.6 points,
+95% interval 8.9 to 16.4, discordant 100/28, exact McNemar p = 1.1e-10, Holm over A1-A4 at most 4.4e-10) and 517/573 = 90.2%
+at the matched-phase checkpoint 101,520 (+11.5 points, 7.9 to 15.4, 100/34, p = 9.9e-9). Held-out pairs 67/96 to 84/96 and
+82/96; milk 51/96 to 77/96 and 74/96. Failures fell in every cause except wrong object: never lifted 59 to 33/41, timeout
+while carrying 36 to 8/6, wrong bin 7 to 0. Full table and caveats: [RESULTS.md](RESULTS.md). Caveat: one training seed, so the
+test says the difference is not layout noise, not that it is seed-proof. The spec's prediction ("small or no effect is
+plausible") was wrong. **Calibration (plan Task 7):** the force pilot measured +3.2 points (p = 0.26) and was dropped by the
++5 rule; the full result is about four times larger. Keep the rule that a pilot may promote but must not drop; the likely
+cause is that a 10,000-update continuation of a model trained without the signal adapts to it only partly, which is a
+reading, not a measurement. The comparison took about 11 h (both checkpoints, 6 workers).
+
 ## Pilot night 1 decision recorded before M2's comparison tier - 2026-11-02
 
 Force pilot (A1, 10,000 updates from checkpoint 101,520, `pilot_v1`) against the shared continuation control (A0) on the 190

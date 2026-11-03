@@ -6,6 +6,36 @@ failures and lessons in [FAILURES.md](FAILURES.md).
 
 Download corresponding datasets/checkpoints: [HF artifact index](HUGGING_FACE_ARTIFACTS.md).
 
+## VLA inputs M2, force and torque in the robot state (2026-11-03) — measured, not sealed
+
+Arm A2 on M0's frozen comparison tier (core `c4f6c303f2ae`, arm `c04a8145c120`): P2's X-VLA recipe unchanged (126,900
+updates, same data, images, instructions, sampler), robot state widened from 9 to 17 values by the 6 wrist wrench and 2 finger
+forces (clipped to S0's 0.1/99.9 percentiles, standardised). Same 573 layouts as A0, paired. **One training seed**; the
+interval and test treat layouts as the units, so they do not include seed-to-seed variation of training. Checkpoint 88,830 is
+the selection winner (the primary test); 101,520 is the matched-phase secondary (A0's checkpoint). Selection tier (79 trials
+each): 56 / 61 / 70 / 69 / 69 / 65 at 50,760 / 76,140 / 88,830 / 101,520 / 114,210 / 126,900.
+
+| | A0 (101,520) | A2 at 88,830 (primary) | A2 at 101,520 (matched phase) |
+|---|---|---|---|
+| overall | 451/573 = 78.7% | **523/573 = 91.3%** (88.8 – 93.5) | **517/573 = 90.2%** (87.8 – 92.5) |
+| paired difference, 95% interval | – | +12.6 points (8.9 – 16.4) | +11.5 points (7.9 – 15.4) |
+| discordant layouts (A2 only / A0 only) | – | 100 / 28 | 100 / 34 |
+| exact McNemar p | – | 1.1 × 10⁻¹⁰ (Holm over A1–A4: at most 4.4 × 10⁻¹⁰) | 9.9 × 10⁻⁹ |
+| trained pairs | 384/477 = 80.5% | 439/477 = 92.0% | 435/477 = 91.2% |
+| held-out pairs (milk→blue, bread→orange) | 67/96 = 69.8% | 84/96 = 87.5% | 82/96 = 85.4% |
+| milk | 51/96 = 53.1% | 77/96 = 80.2% | 74/96 = 77.1% |
+| bottle / cereal / lemon / can / bread | 83% / 81% / 78% / 89% / 88% | 96% / 98% / 89% / 93% / 92% | 99% / 99% / 85% / 93% / 88% |
+
+Failures: never lifted 59 → 33 (88,830) / 41 (101,520); timeout while carrying 36 → 8 / 6; wrong bin 7 → 0 / 0; dropped
+outside 11 → 3 / 3; wrong object 4 → 4 / 5; unstable in target 5 → 2 / 1. Paired never-lifted layouts, A0 only / A2 only /
+both: 50 / 24 / 9 at 88,830 and 47 / 29 / 12 at 101,520 (exploratory, untested), so A2 also fails layouts A0 lifted. Milk
+never-lifted 22 → 12 / 14. The Holm figure is a bound: only A2 has been evaluated, and the smallest p-value is multiplied by
+the family size 4. **Prediction (2026-10-30): "small or no effect is plausible".** It was wrong by a wide margin. The pilot
+(a 10,000-update continuation of checkpoint 101,520 with force, the same 8 values) measured +3.2 points and was dropped by its
+rule; the full run is +11.5 to +12.6, so that pilot under-called a real effect (see [BENCHMARK_STATUS.md](BENCHMARK_STATUS.md)).
+Not shown: which of the 8 values matters, whether history or another normalisation does better, and anything about a real
+sensor (these are exact simulator forces). Replanning is 3 Hz, so this is force at chunk boundaries, not reactive control.
+
 ## VLA inputs M0, control arm A0 on the comparison tier (2026-10-31) — measured, not sealed
 
 Report: [VLA_INPUTS_M0_20261031.md](VLA_INPUTS_M0_20261031.md). The P2 X-VLA checkpoint 101,520 (language and two cameras
