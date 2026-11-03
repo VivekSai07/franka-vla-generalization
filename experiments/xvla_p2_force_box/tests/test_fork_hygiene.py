@@ -34,7 +34,8 @@ ALLOWED = (SOURCE_PACKAGE + ' import forces', SOURCE_PACKAGE + '.forces', SOURCE
            SOURCE_PATH + '/forces.py', SOURCE_PATH + '/__init__.py', SOURCE_PATH + '/contract.py', SOURCE_PATH + '/runner.py')
 # The source's output names and purpose strings, and its own fork source: no reason to appear in the fork. The README may
 # name the source package as the fork source; imports are caught precisely above.
-RESIDUE = ("'xvla_p2_" + "force'", 'xvla_p2_' + 'force_v1', 'xvla_p2_' + 'force_preflight', 'xvla_props_' + 'p2')
+RESIDUE = (re.escape("'xvla_p2_" + "force'"), re.escape('xvla_p2_' + 'force_v1'), re.escape('xvla_p2_' + 'force_preflight'),
+           r'xvla_props_' + r'p2(?![A-Za-z0-9_])')  # the word boundary keeps `xvla_props_p2_eval` (the rollout protocol) out
 
 
 def package_files():
@@ -101,7 +102,7 @@ class UndefinedNameTests(unittest.TestCase):
         for path in package_files():
             source = path.read_text()
             for needle in RESIDUE:
-                self.assertNotIn(needle, source, f'{path.relative_to(PACKAGE)} still names {needle!r}')
+                self.assertIsNone(re.search(needle, source), f'{path.relative_to(PACKAGE)} still names {needle!r}')
 
     def test_readme_describes_this_package(self):
         # An absence-only residue check passes on an empty README; this one does not.

@@ -85,5 +85,6 @@ case "$cmd" in
   select)  cli select --arm "$1" ;;
   compare) cli compare --arm "$1" --checkpoint "$2" ;;
   final)   cli final ;;
+  module)  docker_run "$ROB" 0 "" 0 "" 1 -- -m "$@" ;;  # any module of the repository, robosuite image, no GPU (M3's A3-against-A2 test)
   *) echo "unknown command $cmd" >&2; exit 2 ;;
 esac
