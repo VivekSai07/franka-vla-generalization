@@ -1,5 +1,20 @@
 # Franka benchmark: start here
 
+## M3 built, tested and merged; CPU admission started - 2026-11-03
+
+`experiments/xvla_p2_force_box/` (fork of the frozen M2 package; M2's `forces` imported, not copied), the arm
+`experiments/vla_inputs_arm_xvla_force_box/`, `eval_adapter.py`, `eval_compare.py` (A3 against A2, amended Holm family) and
+`scripts/vla_inputs_m3_eval.sh` merged into `main` as `d4752a4`. Tests: 184 in the training package (admission image), 58 rollout-side
+(robosuite image, 1 skipped: the sheet writer) and 7 arm-closure tests, run again from the gated worktree `.worktrees/m3-run`; the
+overlay, boxes, loader, input check, colour check, zero-equivalence flow, adapter, replay parity, comparison and driver were each mutated
+and every mutation was caught except one equivalent mutant (numpy slicing clips the band at the image edge without an explicit clip).
+Parity on replayed sealed episodes 0, 18, 271 and 539: the live `signals.target_box` equals the sidecar row byte for byte at all 1,808 frames,
+the builder returns M2's training row byte for byte, the frames the processors receive are the render drawn with the sidecar box, and the
+processed `image_input` and `proprio` equal the training pipeline's for the same drawn frames. Frozen dirs untouched (diff against
+`1945bb1` empty for `xvla_p2_force`, `vla_inputs_signals`, `vla_inputs_eval`, `xvla_props_p2`, `xvla_single_task`, A0's and A2's arms). Box table
+pinned `d1689776...a2a1d7`; `in_frame` is 1 on all 540 episodes. Pre-launch: no containers, GPU 359 MiB used and idle, 233 GB free.
+`--check` started 22:26 (container `xvla-p2-force-box-check`); nothing trained yet.
+
 ## M2 download bundle staged for Windows - 2026-11-03
 
 `outputs/downloads_20261103/vla_inputs_m2/` (P2's pattern; hardlinks, no extra disk: 233 GB free before and after): checkpoints

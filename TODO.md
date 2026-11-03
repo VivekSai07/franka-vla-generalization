@@ -9,8 +9,9 @@
   seed-to-seed variation; M3 is under way, then M3b, M4; M1 (pi0.5) last. Disk: the M2 run keeps 6 checkpoints (about 30 GB
   each), delete nothing without the user.
 
-- **M3 redesigned and approved (user, 2026-11-03); build started the same day** (branch `feat/vla-inputs-m3`, worktree
-  `.worktrees/feat-vla-inputs-m3`, nothing committed or run yet): the target's box is **drawn on both camera images** (magenta 4 px band,
+- **M3 redesigned and approved (user, 2026-11-03); built, tested and merged into `main` the same day (`d4752a4`); gates started 22:26**
+  (branch `feat/vla-inputs-m3`, gated detached worktree `.worktrees/m3-run`; `--check` running as container `xvla-p2-force-box-check`,
+  then the user approves the overlay PNGs before `--preflight`; training output `outputs/train/xvla_p2_force_box_v1`): the target's box is **drawn on both camera images** (magenta 4 px band,
   outside the box) on top of **M2's 17-value force state**, and A3 is tested **against A2** (Holm family amended to
   {A1 vs A0, A2 vs A0, A3 vs A2, A4 vs A0} before any result). A numeric box no longer fits X-VLA's 20 state slots beside M2's
   17. No box pilot. Package `experiments/xvla_p2_force_box/` (fork of the frozen `xvla_p2_force`), arm
