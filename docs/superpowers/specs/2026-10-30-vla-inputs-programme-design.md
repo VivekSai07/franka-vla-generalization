@@ -19,6 +19,14 @@ trials per arm when the selected checkpoint differs; budget this before launchin
 Only M0 preparation/feasibility and S0 are CPU work. M0 GPU rollouts need separate scheduling from M1 training unless
 measured combined peaks fit. Historical workstation free-space and GPU figures below must be remeasured, not assumed.
 
+## Revision — 2026-11-03 (user): M3 redesigned, M3b added
+
+After M2 (A2 91.3% against A0 78.7%), M3 builds on A2: the target's box is **drawn on both camera images** over M2's
+17-value state and tested **against A2**, with the Holm family amended to {A1 vs A0, A2 vs A0, A3 vs A2, A4 vs A0} before any
+M3 result. A numeric box no longer fits X-VLA's 20 state slots beside M2's 17 values. GraspVLA, the reference, predicts boxes
+rather than drawing them; that variant is **M3b**, scoped in the [M3 spec](2026-10-30-vla-inputs-m3-box-design.md) and specified
+only if A3 helps. Order: M3 → M3b → M4 → M1. No box pilot (pilots may promote, never drop, since M2's calibration).
+
 ## Question
 
 Every phase so far changed the **dataset**. This programme holds the data fixed and changes **what the model sees** (and,
@@ -26,7 +34,8 @@ later, what it emits). With the 540 sealed P2 episodes unchanged:
 
 1. Does a different VLA family (pi0.5) do better than X-VLA on the same data and inputs? (M1)
 2. Does contact information in the robot state (wrist force/torque, finger contact forces) improve success? (M2)
-3. Does the target's 2D bounding box in the robot state improve success? (M3)
+3. Does the target's 2D bounding box improve success? (M3; redesigned 2026-11-03: drawn on the images, on top of M2's force
+   state, against A2. M3b, if A3 helps: the policy predicts the box and acts on its prediction)
 4. Can the box be learned as an auxiliary output, so it is not needed at test time? (M4a). Later: action outputs that carry
    force (M4b, scoped only).
 
@@ -39,7 +48,7 @@ later, what it emits). With the 540 sealed P2 episodes unchanged:
 | pi variant | pi0.5 (`pi05` in the pinned LeRobot 0.4.4), base weights `pi05_base` |
 | pi recipe | each model's own recipe at matched exposure (epochs), stated as "model plus its recipe" |
 | F/T signals | wrist 6-axis force/torque + 2 finger contact forces, per frame at 30 Hz, per-dimension normalisation, no history |
-| box form | numbers in the state, target object only, both cameras, normalised to [0, 1]; drawn-on-image later as a variant |
+| box form | numbers in the state, target object only, both cameras, normalised to [0, 1]; drawn-on-image later as a variant. **Superseded 2026-11-03 (user):** drawn on both images (target only, magenta 4 px band) on top of M2's state; see the revision above |
 | framing | M2 and M3 are information upper bounds (privileged simulator signals at test time), not deployable gains |
 | evaluation | fresh reserved layouts disjoint from every P2 layout, size from a power analysis, every arm on the same layouts, McNemar, per-object tables, pre-registered criteria per sub-project |
 | where | specs and plans committed on `main` for review first (user, 2026-10-30); work happens later on `feat/vla-inputs` in a worktree |
@@ -61,7 +70,8 @@ model is trained on stay the sealed ones.
 | S0 | [s0 signal sidecar](2026-10-30-vla-inputs-s0-signals-design.md) | P2 seal | none | sealed per-frame F/T, finger forces, boxes for all 540 episodes; the same signal code for rollouts |
 | M1 | [m1 pi0.5 on P2](2026-10-30-vla-inputs-m1-pi05-design.md) | M0 (for evaluation) | training | arm A1 |
 | M2 | [m2 force/torque in state](2026-10-30-vla-inputs-m2-force-design.md) | S0, M0 | training | arm A2 |
-| M3 | [m3 box in state](2026-10-30-vla-inputs-m3-box-design.md) | S0, M0, M2's package | training | arm A3 |
+| M3 | [m3 box drawn on the images, over M2's state](2026-10-30-vla-inputs-m3-box-design.md) | S0, M0, M2 (A2 evaluated) | training | arm A3, tested against A2 |
+| M3b | scoped in the M3 spec; own spec after A3 | A3 helps | to be decided | predicted box conditioning the actions |
 | M4 | [m4 output side](2026-10-30-vla-inputs-m4-outputs-design.md) | M3 result | training | arm A4 (M4a); M4b scoped only |
 
 Plans: [M0](../plans/2026-10-30-vla-inputs-m0-evaluation.md) · [S0](../plans/2026-10-30-vla-inputs-s0-signals.md) ·
@@ -79,8 +89,9 @@ flowchart LR
   M0[M0 evaluator + A0] --> A1E[A1 eval]
   S0[S0 sidecar] --> M2[M2 train] --> A2E[A2 eval]
   M1[M1 image + train] --> A1E
-  M2 --> M3[M3 train] --> A3E[A3 eval]
-  A3E --> M4a[M4a aux box head]
+  M2 --> M3[M3 train] --> A3E[A3 eval vs A2]
+  A3E --> M3b[M3b predicted box]
+  M3b --> M4a[M4a aux box head]
 ```
 
 ## Arms (all evaluated by M0 on the same layouts)
@@ -90,22 +101,22 @@ flowchart LR
 | A0 | X-VLA, P2 checkpoint 101,520 (bundle) | 9 | sealed P2 | P2 | existing (2026-10-16) |
 | A1 | pi0.5, action expert fine-tuned (VLM frozen) | 9 | sealed P2 | P2 | M1 |
 | A2 | X-VLA | 9 + 8 (F/T 6, finger forces 2) = 17 | sealed P2 | P2 + S0 | M2 |
-| A3 | X-VLA | 9 + 10 (box 4 + in_frame 1, per camera) = 19 | sealed P2 | P2 + S0 | M3 |
+| A3 | X-VLA | A2's 17 (redesigned 2026-11-03; was 9 + 10 box values) | sealed P2 with the target box drawn on both cameras | P2 + S0 | M3 |
 | A4 | X-VLA + auxiliary box head | 9 | sealed P2 | P2 + S0 (targets only) | M4a |
 
 A2, A3 and A4 use P2's recipe unchanged (126,900 updates = 5.0 epochs, effective batch 8, the same checkpoint grid and the
-same sample order). X-VLA has 20 proprioception slots (`check_model_inputs` pads 9 to 20 with zeros), so 17 and 19 fit
-without an architecture change.
+same sample order). X-VLA has 20 proprioception slots (`check_model_inputs` pads 9 to 20 with zeros), so 17 fits
+without an architecture change; 17 + 10 box values would not, which is one reason M3 draws the box instead.
 
 ## Rules that hold in every sub-project
 
-- **One variable per arm.** A1 changes the model (and its recipe), A2 only the state contents, A3 only the state contents, A4
-  only the training loss. Renderer stays OSMesa (EGL is not adopted; A0 must not be evaluated under EGL).
+- **One variable per arm.** A1 changes the model (and its recipe), A2 only the state contents, A3 only the images relative to
+  A2 (its control), A4 only the training loss. Renderer stays OSMesa (EGL is not adopted; A0 must not be evaluated under EGL).
 - **Nothing sealed is edited.** P2's `provenance()` hashes 142 files (`experiments/props_p2_data/**`, `experiments/props_scene/*.py`,
   `experiments/robosuite_scene/*.py`, `src/**`, the P2 spec and plan, shared helpers). They are imported read-only; where
   behaviour must differ the code is forked into the new package, never patched on disk.
-- **Every new training package proves equality before it trains:** with its extra inputs set to zero it reproduces P2's
-  training byte for byte over 30 updates (M2, M3, M4a). That makes the extra inputs the only difference in the real run.
+- **Every new training package proves equality before it trains:** with its extra inputs set to zero it reproduces its
+  parent's training byte for byte over 30 updates (M2 and M4a against P2's runner, M3 with the overlay off against M2's). That makes the extra inputs the only difference in the real run.
 - **Selection never touches the comparison tier.** Checkpoints are chosen on M0's selection tier; the comparison tier evaluates the S winner and the predeclared fixed-phase secondary checkpoint,
   deduplicated if identical. C never chooses between them. Recipes/analysis freeze before C; C-informed redesign needs fresh confirmation.
 - **Offline metrics are never used** to choose, stop, or claim.
@@ -118,7 +129,8 @@ without an architecture change.
   target), with milk the weakest object (57.6% on 118 fresh trained-bin layouts). Wrong object is 7 of 120.
 - **M3 (box):** wrong-object choices should fall toward zero (the target box says which object); little effect on milk's hold.
   A gain around the wrong-object rate (about 6 points) is a hypothesis, not an upper bound; boxes may also change alignment.
-  M0 has low unadjusted power at that effect size.
+  M0 has low unadjusted power at that effect size. *(Written for the numeric-state design against A0; replaced on 2026-11-03 by
+  the M3 spec's prediction for the drawn box against A2: 0 to +4 points, wrong-object worth at most 0.7.)*
 - **M2 (F/T):** an arm intended to help the hold, sampled at 30 Hz but used at 3 Hz replanning (ten queued actions). But the state already contains both finger positions, so the
   policy already "knows" the gripper closed. S0 (2026-10-30) showed the object's weight is not readable from the mean wrist
   force (the hand's own ~10 N dominates); the new information is grip force (separates objects in the hold, 4.1–6.6 N) and

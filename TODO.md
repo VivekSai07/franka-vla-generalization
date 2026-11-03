@@ -5,9 +5,17 @@
 - **M2 done and evaluated (2026-11-03):** force/torque in the state raises success on M0's comparison tier from 78.7% (A0,
   451/573) to 91.3% (checkpoint 88,830, p = 1.1e-10) and 90.2% (matched-phase 101,520); one training seed. The pre-run
   prediction (small or no effect) was wrong; the 10,000-update force pilot (+3.2, dropped) under-called it. See the status log
-  and [RESULTS.md](docs/RESULTS.md). **Open:** a second training seed for A2 would bound seed-to-seed variation; M3 (box in the
-  state) and M4 next per the programme order; M1 (pi0.5) last. Disk: the M2 run keeps 6 checkpoints (about 30 GB each), delete
+  and [RESULTS.md](docs/RESULTS.md). **Open:** a second training seed for A2 would bound seed-to-seed variation; M3 next, then
+  M3b, M4; M1 (pi0.5) last. Disk: the M2 run keeps 6 checkpoints (about 30 GB each), delete
   nothing without the user.
+
+- **M3 redesigned and approved (user, 2026-11-03):** the target's box is **drawn on both camera images** (magenta 4 px band,
+  outside the box) on top of **M2's 17-value force state**, and A3 is tested **against A2** (Holm family amended to
+  {A1 vs A0, A2 vs A0, A3 vs A2, A4 vs A0} before any result). A numeric box no longer fits X-VLA's 20 state slots beside M2's
+  17. No box pilot. Package `experiments/xvla_p2_force_box/` (fork of the frozen `xvla_p2_force`), arm
+  `experiments/vla_inputs_arm_xvla_force_box/`, branch `feat/vla-inputs-m3`. Prediction: 0 to +4 points. **M3b** (GraspVLA-style:
+  the policy predicts the box and acts on it) follows if A3 helps, before M4.
+  [Spec](docs/superpowers/specs/2026-10-30-vla-inputs-m3-box-design.md) · [plan](docs/superpowers/plans/2026-10-30-vla-inputs-m3-box.md).
 
 - **Order revised (user, 2026-10-31): input/output arms first, pi0.5 (M1) last.** Next on the GPU: ~~M2 Task 3 (zero-equivalence) and
   Task 5 (gates, full M2 training)~~ done as above; in parallel the overnight-pilot build (CPU); then pilot night 1 (control, A0 on the pilot tier,
@@ -69,7 +77,8 @@
 - **Next: the VLA inputs programme — specs and plans drafted 2026-10-30, under external review; only S0 is built (first bullet).** The data stays
   P2's 540 sealed episodes; what changes is what the model sees: M0 a common paired evaluation (fresh layouts, A0 = X-VLA 101,520
   as control), S0 a sealed sidecar of wrist force/torque, finger forces and target boxes for every P2 frame, M1 pi0.5 against
-  X-VLA, M2 force/torque in the state, M3 the target box in the state, M4 an auxiliary box head (M4b force outputs scoped only).
+  X-VLA, M2 force/torque in the state, M3 the target box in the state (redesigned 2026-11-03: drawn on the images over M2's
+  state, against A2; see the M3 bullet above), M4 an auxiliary box head (M4b force outputs scoped only).
   Broad order approved: M0/S0 preparation alongside M1, then M2, M3, M4a; the audit corrects M0 GPU scheduling. Overview:
   [docs/superpowers/specs/2026-10-30-vla-inputs-programme-design.md](docs/superpowers/specs/2026-10-30-vla-inputs-programme-design.md)
   (links every spec and plan). Two facts measured while writing it: replaying the sealed P2 actions from the sealed initial state

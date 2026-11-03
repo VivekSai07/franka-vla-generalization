@@ -1,5 +1,15 @@
 # Franka benchmark: start here
 
+## M3 redesigned: box drawn on the images, on top of force, tested against A2 - 2026-11-03
+
+Approved by the user. A3 = A2's 17-value state plus the target's box drawn on both cameras (magenta, 4 px, outside the box,
+from S0's sealed boxes in training and S0's `signals.target_box` at rollout); control A2, already evaluated on the comparison
+tier, so the box is the only difference. Why not the original numeric box: 17 + 10 values exceed X-VLA's 20 state slots. Why
+not a pilot: M2's calibration showed pilots under-call, so they may promote but not drop. GraspVLA, the reference, predicts
+boxes rather than drawing them; that is M3b, after M3 and only if A3 helps. Headroom is small: A2 fails 50 of 573 layouts
+(never lifted 33, wrong object 4), so wrong-object can add at most 0.7 points. Prediction: 0 to +4 points. Spec and plan
+rewritten; nothing built or run.
+
 ## M2 evaluated on the comparison tier: force in the state helps, +11.5 to +12.6 points; the pilot under-called it - 2026-11-03
 
 A2 against A0 (451/573 = 78.7%) on the same 573 layouts: 523/573 = 91.3% at the selected checkpoint 88,830 (+12.6 points,
