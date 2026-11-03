@@ -74,7 +74,12 @@ Windows copy): `outputs/downloads_20261001/b2_distractor/`,
 `outputs/downloads_20261009/props_p1/` (complete),
 `outputs/downloads_20261017/props_p2/` (complete; adds `reevaluate/infer_example.py`, a one-observation inference
 check, and `bundle_evaluate.py --shard/--shards/--collect-only` for a parallel re-evaluation. Its smoke re-run in a clean
-container, run alone, matched originals that had run in 8-way parallel workers bit for bit).
+container, run alone, matched originals that had run in 8-way parallel workers bit for bit),
+`outputs/downloads_20261103/vla_inputs_m2/` (complete; M2's data is P2's, so `dataset*/`, `runtime/` and `control_checkpoint/` are
+hardlinks of the props_p2 bundle's and **optional to transfer** (`verify_bundle.py --p2-bundle`); adds `sidecar/`, the S0 sealed
+sidecar a force-state checkpoint's constants derive from, `training/gates/`, and a `bundle_evaluate.py` that wraps M0's frozen
+`prepare`/`worker`/`collect`/`compare` instead of replacing parts of an evaluator: its `prepare` re-derives the core and arm hashes
+from `code/` and refuses unless they equal the recorded ones).
 
 **Never rename trial folders in an evaluation output** to make them easier to browse: the
 evaluators find trials by `trial_NNN_<layout_id>` for `--resume` and re-analysis. Build a

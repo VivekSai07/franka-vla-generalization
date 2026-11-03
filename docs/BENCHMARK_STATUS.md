@@ -1,5 +1,19 @@
 # Franka benchmark: start here
 
+## M2 download bundle staged for Windows - 2026-11-03
+
+`outputs/downloads_20261103/vla_inputs_m2/` (P2's pattern; hardlinks, no extra disk: 233 GB free before and after): checkpoints
+88,830 (selection winner), 101,520 (matched phase) and 126,900 (final) without `training_state.pt`, the A0 control checkpoint, the
+S0 sidecar (the force-state constants derive from it), the whole M0 campaign (A0 and A2 trials), training record and gate records,
+the P2 data sections, the base bundle, a `git archive` of `018cac6`, re-evaluation scripts, and an `hf_upload/` view with a model card
+and the state-transform constants. **Verified on RTX:** `verify_bundle.py` all checks passed (weights, S0 and P2 seals, base bundle,
+573/573 trials for A0 and both A2 comparison checkpoints, 79/79 for six selection checkpoints, recorded successes 451/523/517
+recomputed from the trial files); in a clean container mounting only the bundle, `prepare` reproduced the recorded core
+(`c4f6c303f2ae`) and both arm hashes, two A2 comparison trials re-ran bit for bit (all 12 trace arrays), and `compare` reproduced
+the recorded 517/573 vs 451/573 result in every field. **Not run:** a retrain, a full comparison re-evaluation. **Not published, nothing
+deleted:** the three un-bundled checkpoints (50,760, 76,140, 114,210) and the 20 GB `resume/` snapshots remain only on RTX; the user
+copies, verifies, uploads and updates the main README.
+
 ## Docs pass: M2 and pilot reports written, README brought up to the VLA inputs programme - 2026-11-03
 
 The plans' report deliverables had not been written: [VLA_INPUTS_M2_20261103.md](VLA_INPUTS_M2_20261103.md) (M2 gates, training,

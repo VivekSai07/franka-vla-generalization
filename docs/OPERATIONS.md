@@ -131,6 +131,10 @@ the pinned image above on MuJoCo 3.13.0.
   leaves missing trial folders and the driver resumes once. 540 rollouts took about 3 h. Feasibility of 120 layouts,
   unrendered, takes under a minute in 12 shards. Report: [PROPS_P2_EVALUATION_20261016.md](PROPS_P2_EVALUATION_20261016.md).
   Archive bundle (hardlinks, 14 GB, re-evaluable and retrainable off RTX): `outputs/downloads_20261017/props_p2/`, README inside.
+- M2 (VLA inputs, force in the state) archive bundle, staged 2026-11-03 (hardlinks, 23 GB without the `hf_upload/` view,
+  re-evaluable and retrainable off RTX): `outputs/downloads_20261103/vla_inputs_m2/`, README inside; three checkpoints (88,830,
+  101,520, 126,900), the S0 sidecar, the whole M0 campaign (A0 and A2) and the P2 data sections (identical to props_p2's, optional
+  to transfer).
 - Props P1 training (`experiments/xvla_props_p1/`, admission image, no simulator): forked from
   `xvla_b3_robosuite` — same `--check`/`--preflight`/`--resume-proof`/`--train [--resume]` gates, each
   output subdirectory (`_admission`, `_preflight`, `_resumeproof`, the main output) **must be its own
