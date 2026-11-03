@@ -11,7 +11,7 @@ test says the difference is not layout noise, not that it is seed-proof. The spe
 plausible") was wrong. **Calibration (plan Task 7):** the force pilot measured +3.2 points (p = 0.26) and was dropped by the
 +5 rule; the full result is about four times larger. Keep the rule that a pilot may promote but must not drop; the likely
 cause is that a 10,000-update continuation of a model trained without the signal adapts to it only partly, which is a
-reading, not a measurement. The comparison took about 11 h (both checkpoints, 6 workers).
+reading, not a measurement. The comparison ran 15:50 to 21:16 on 2026-11-02 (about 5.4 h, both checkpoints, 6 workers); the GPU has been idle since.
 
 ## Pilot night 1 decision recorded before M2's comparison tier - 2026-11-02
 
