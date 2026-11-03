@@ -107,14 +107,16 @@ Also:
 ## Operations
 
 Container flags, mounts, gate sequence, storage costs: [docs/OPERATIONS.md](../docs/OPERATIONS.md).
-Nothing runs outside one of two digest-pinned images.
+Nothing runs outside one of two digest-pinned images (plus two pi0.5 images reserved for M1, see OPERATIONS.md).
 
 There are two images. The admission image (MuJoCo 3.13.0) runs everything sealed, B3 training
-(`experiments/xvla_b3_robosuite/`, no simulator needed) and every test that imports no simulator. A
+(`experiments/xvla_b3_robosuite/`, no simulator needed), X-VLA training for props and the VLA inputs arms
+(`xvla_props_p*`, `xvla_p2_force`, `xvla_p2_force_box`, `xvla_p2_pilot`) and every test that imports no simulator. A
 second image (robosuite 1.5.2, MuJoCo 3.4.0) runs everything that builds the robosuite scene: `experiments/robosuite_scene/`, the rollout stage of
 `experiments/robosuite_sim2sim/`, B3 collection (`experiments/b3_robosuite_data/`), the props P1–P3 collections
-(`experiments/props_p{1,2,3}_data/`) and B3 evaluation
-rollouts (`experiments/xvla_b3_robosuite_eval/`). Numbers from the two
+(`experiments/props_p{1,2,3}_data/`), the S0 sidecar build (`experiments/vla_inputs_signals/`), every evaluation rollout
+(`experiments/xvla_b3_robosuite_eval/`, `xvla_props_p*_eval`, M0's `experiments/vla_inputs_eval/`) and the rollout-side parity
+tests (`eval_tests/`). Numbers from the two
 are not physics-comparable. Digests, build notes and which runs need `--ulimit nofile=65536:65536` or a
 large `/tmp`: OPERATIONS.md.
 

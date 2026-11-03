@@ -4,45 +4,36 @@
 
 - **M2 done and evaluated (2026-11-03):** force/torque in the state raises success on M0's comparison tier from 78.7% (A0,
   451/573) to 91.3% (checkpoint 88,830, p = 1.1e-10) and 90.2% (matched-phase 101,520); one training seed. The pre-run
-  prediction (small or no effect) was wrong; the 10,000-update force pilot (+3.2, dropped) under-called it. See the status log
-  and [RESULTS.md](docs/RESULTS.md). **Open:** a second training seed for A2 would bound seed-to-seed variation; M3 next, then
-  M3b, M4; M1 (pi0.5) last. Disk: the M2 run keeps 6 checkpoints (about 30 GB each), delete
-  nothing without the user.
+  prediction (small or no effect) was wrong; the 10,000-update force pilot (+3.2, dropped) under-called it.
+  [Report](docs/VLA_INPUTS_M2_20261103.md) · [RESULTS.md](docs/RESULTS.md). **Open:** a second training seed for A2 would bound
+  seed-to-seed variation; M3 is under way, then M3b, M4; M1 (pi0.5) last. Disk: the M2 run keeps 6 checkpoints (about 30 GB
+  each), delete nothing without the user.
 
-- **M3 redesigned and approved (user, 2026-11-03):** the target's box is **drawn on both camera images** (magenta 4 px band,
+- **M3 redesigned and approved (user, 2026-11-03); build started the same day** (branch `feat/vla-inputs-m3`, worktree
+  `.worktrees/feat-vla-inputs-m3`, nothing committed or run yet): the target's box is **drawn on both camera images** (magenta 4 px band,
   outside the box) on top of **M2's 17-value force state**, and A3 is tested **against A2** (Holm family amended to
   {A1 vs A0, A2 vs A0, A3 vs A2, A4 vs A0} before any result). A numeric box no longer fits X-VLA's 20 state slots beside M2's
   17. No box pilot. Package `experiments/xvla_p2_force_box/` (fork of the frozen `xvla_p2_force`), arm
-  `experiments/vla_inputs_arm_xvla_force_box/`, branch `feat/vla-inputs-m3`. Prediction: 0 to +4 points. **M3b** (GraspVLA-style:
+  `experiments/vla_inputs_arm_xvla_force_box/`. Prediction: 0 to +4 points. **M3b** (GraspVLA-style:
   the policy predicts the box and acts on it) follows if A3 helps, before M4.
   [Spec](docs/superpowers/specs/2026-10-30-vla-inputs-m3-box-design.md) · [plan](docs/superpowers/plans/2026-10-30-vla-inputs-m3-box.md).
 
-- **Order revised (user, 2026-10-31): input/output arms first, pi0.5 (M1) last.** Next on the GPU: ~~M2 Task 3 (zero-equivalence) and
-  Task 5 (gates, full M2 training)~~ done as above; in parallel the overnight-pilot build (CPU); then pilot night 1 (control, A0 on the pilot tier,
-  force, box) **before** M2 is evaluated on M0's comparison tier, so the pilot decision is recorded blind to the full result
-  (calibration); then M2's evaluation night. Free disk 137 GB after the pi0.5 cleanup.
+- **Order (user, 2026-10-31, extended 2026-11-03):** M2 → M3 → M3b → M4 → M1 (pi0.5) last. Done in that order so far: M2's
+  gates and training, the pilot build, pilot night 1 (decision recorded blind to M2's full result), M2's evaluation.
 
-- **Overnight pilots built on the CPU (2026-10-31, branch `feat/vla-inputs-pilots`, not merged into `main`, not pushed):** plan Tasks
-  1-5 done, test first. Continuation pilots from A0 (10,000 updates, 200-update warm-up to a constant 1e-5, fresh optimizer, shared
-  zero-input control) screen input ideas on 192 fresh paired layouts in one night; promote iff Δ ≥ +5 points. Packages
-  `experiments/vla_inputs_pilot_plan/` (192 + 2 smoke layouts, disjoint from P2, the re-test and both M0 tiers),
-  `experiments/xvla_p2_pilot/` (runner, data-defined variants `control`/`force`/`box`, rollout adapter, `summary.py`), thin arm
-  `experiments/vla_inputs_arm_xvla_pilot/`, driver `scripts/vla_inputs_pilot_night.sh`; M0's frozen core is unchanged (hash
-  `c4f6c303f2ae`). Real `--check` of all three variants passed on the real data (no GPU). **Not yet run: anything on a GPU**
-  (zero-equivalence gate, a real update, checkpoint save/reload, the dry night): plan Task 6, after M2 training; the driver refuses to
-  start while the GPU is in use. Merge `feat/vla-inputs-pilots` into `main` with `--no-ff` when convenient (main's checkout is not
-  what M2 trains from). [Spec](docs/superpowers/specs/2026-10-31-vla-inputs-overnight-pilots-design.md) ·
+- **Overnight pilots done and calibrated (2026-11-02/03; merged into `main`):** continuation pilots from the P2 checkpoint
+  (10,000 updates, shared zero-input control, 192 fresh paired layouts, promote iff Δ ≥ +5 points). Night 1 ran `force` only:
+  +3.16 points [−1.6, +7.9], p = 0.26, dropped; full M2 then measured +12.6 [8.9, 16.4], so the pilot gave a false negative and
+  **a pilot may promote but must not drop.** The `box` pilot was never run. [Report](docs/VLA_INPUTS_PILOTS_20261102.md) ·
+  [spec](docs/superpowers/specs/2026-10-31-vla-inputs-overnight-pilots-design.md) ·
   [plan](docs/superpowers/plans/2026-10-31-vla-inputs-overnight-pilots.md) · [package README](experiments/xvla_p2_pilot/README.md).
-- **M2 Tasks 1, 2 and 4 done, CPU only (2026-10-31, branch `feat/vla-inputs`, not pushed):** `experiments/xvla_p2_force/` (fork of
-  `xvla_props_p2`, 17-value state from the sealed S0 sidecar, local input check, 129 tests + 14 rollout-side tests + 6 arm tests),
-  `eval_adapter.py` and a thin arm package `experiments/vla_inputs_arm_xvla_force/`; the shared M0 core hash is unchanged. A CPU
-  `--check` run into a scratch directory reproduced P2's recorded statistics for the first nine state values. **Next: Task 3**
-  (zero-equivalence, GPU) and **Task 5** (gates and training); the GPU is free (M1 stopped 2026-10-31); 4b's inference-boundary proof also needs a
-  policy. No admission artefact exists yet (the package README and tests are bound; edit them before `--check`, not after).
+- **M2 package built, gated, trained (2026-10-31 to 2026-11-01; merged into `main`):** `experiments/xvla_p2_force/` (fork of
+  `xvla_props_p2`, 17-value state from the sealed S0 sidecar), arm `experiments/vla_inputs_arm_xvla_force/`; zero-equivalence
+  against P2's runner byte-equal; 28.6 h of training. Frozen and hash-bound now (A2's training binding and M0 arm closure).
 
-- **M0 control arm A0 done (2026-10-31, branch `feat/vla-inputs`, not pushed):** 451 of 573 comparison layouts = 78.7%
-  [75.4, 82.0] (trained 80.5%, held-out 69.8%, milk 53.1%); core `c4f6c303f2ae` (X-VLA base bundle now bound). The GPU is free.
-  [Report](docs/VLA_INPUTS_M0_20261031.md). **Open:** A1-A4 need trained checkpoints (M2-M4). **Decided 2026-10-31: future M0 runs use 6
+- **M0 control arm A0 done (2026-10-31, merged into `main`):** 451 of 573 comparison layouts = 78.7%
+  [75.4, 82.0] (trained 80.5%, held-out 69.8%, milk 53.1%); core `c4f6c303f2ae` (X-VLA base bundle now bound).
+  [Report](docs/VLA_INPUTS_M0_20261031.md). A2 evaluated against it (above); A3 is next. **M0 runs use 6
   workers** (the thermal guard paused three of eight workers for about an hour each, [FAILURES #66](docs/FAILURES.md)); a cross-worker
   guard stays an option as a recorded core change.
 
@@ -74,7 +65,8 @@
   comparison (up to 384 additional trials per arm); runtime gates remain outstanding on the workstation. CPU preparation
   may overlap M1; GPU evaluation must be separately resource-gated. No experiment source or sealed artifacts changed.
 
-- **Next: the VLA inputs programme — specs and plans drafted 2026-10-30, under external review; only S0 is built (first bullet).** The data stays
+- **Next: the VLA inputs programme — specs and plans drafted 2026-10-30, under external review; only S0 is built (first bullet).** *(Historical
+  entry; as of 2026-11-03 S0, M0 and M2 are done and M3 is being built, bullets above.)* The data stays
   P2's 540 sealed episodes; what changes is what the model sees: M0 a common paired evaluation (fresh layouts, A0 = X-VLA 101,520
   as control), S0 a sealed sidecar of wrist force/torque, finger forces and target boxes for every P2 frame, M1 pi0.5 against
   X-VLA, M2 force/torque in the state, M3 the target box in the state (redesigned 2026-11-03: drawn on the images over M2's

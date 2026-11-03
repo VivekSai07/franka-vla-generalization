@@ -1,6 +1,7 @@
 # VLA inputs programme — same data, new information — design
 
-**Date:** 2026-10-30. **Status: draft for external review.** Direction, sub-projects and order approved by the user on
+**Date:** 2026-10-30. **Status (2026-11-03): S0, M0 and M2 done; M3 being built; M1 deferred to the end.** Originally a draft for
+external review. Direction, sub-projects and order approved by the user on
 2026-10-30; everything below the "Approved" table is proposed and open to review. Nothing has been built or run except
 the read-only checks cited here. Follows P3, closed as a failed attempt
 ([PROPS_P3_EVALUATION_20261027.md](../../PROPS_P3_EVALUATION_20261027.md)).

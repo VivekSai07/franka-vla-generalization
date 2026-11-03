@@ -118,16 +118,18 @@ binding; M0's arm manifest binds them. Nothing is added to `experiments/vla_inpu
 
 ### Task 5: gates and training
 
-- [ ] Pre-launch checklist; `docker ps`; `nvidia-smi`; `df -h .` (65 GiB guard).
+- [x] Pre-launch checklist; `docker ps`; `nvidia-smi`; `df -h .` (65 GiB guard). (87 GB free after the gates.)
 - [x] `--check` → `--preflight` → `--resume-proof` → `--equivalence` (inherited fast-vs-serial loop) → `--zero-equivalence` all passed
   (2026-10-31) from the detached worktree `.worktrees/m2-run` at `f1c49b3`; `--train` runs **without a deadline** (user decision: to the end,
   thermal guard pauses, supervisor resumes after a death) from the same worktree.
-- [ ] Night status entries in `docs/BENCHMARK_STATUS.md`.
+- [x] Night status entries in `docs/BENCHMARK_STATUS.md`. Training finished 2026-11-01 21:42 (28.6 h).
 
 ### Task 6: evaluation as A2
 
-- [ ] `prepare --arm A2` (six candidates) → smoke → S → `select` → C with the winner plus fixed 4.0-epoch secondary checkpoint (deduplicate) → `compare --arm A2`.
+- [x] `prepare --arm A2` (six candidates) → smoke → S → `select` → C with the winner plus fixed 4.0-epoch secondary checkpoint (deduplicate) → `compare --arm A2`.
   **Prepared 2026-11-01:** the sequence is `scripts/vla_inputs_m2_eval.sh` (`prepare`, `selection`, `select`, `comparison`, `compare`; see its header and
   the status log); the A2 path was dry-run in a scratch campaign. `comparison` needs `PILOT_DECISION_RECORDED=1`.
-- [ ] `docs/VLA_INPUTS_M2_<date>.md`: primary result, `never_lifted` and milk (exploratory), force traces of failing milk trials
-  for A0 and A2, against the spec's prediction; docs pass; commit.
+- [x] `docs/VLA_INPUTS_M2_<date>.md`: primary result, `never_lifted` and milk (exploratory), force traces of failing milk trials
+  for A0 and A2, against the spec's prediction; docs pass; commit. **Done 2026-11-03 as
+  [VLA_INPUTS_M2_20261103.md](../../VLA_INPUTS_M2_20261103.md)** (selection winner 88,830: 91.3% vs 78.7%, +12.6 points);
+  the force traces of failing milk trials are not in it (recorded per trial by M0, not yet analysed).

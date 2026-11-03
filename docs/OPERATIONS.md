@@ -151,6 +151,22 @@ the pinned image above on MuJoCo 3.13.0.
   reporting all 6 checkpoints in parallel (one container per checkpoint, each writing its own
   `<mode>_step_<N>/` output directory, no file collisions) cut screen from an estimated ~3 h
   sequential to under an hour, confirmed by measurement, not assumed.
+- **VLA inputs programme** (P2's data fixed; specs in `superpowers/specs/2026-10-30-vla-inputs-*`). S0 sidecar build
+  (`experiments/vla_inputs_signals/`, robosuite image, sealed; never rebuild). **Training arms** (`xvla_p2_force`, M3's
+  `xvla_p2_force_box`; admission image) use P2's gates plus `--zero-equivalence` against their parent's runner, mount
+  `outputs/props_p2_data` and `outputs/vla_inputs_signals` read-only, and run from a **detached worktree** at the gated commit
+  (`.worktrees/m2-run` for M2), never from the main checkout. M2 ran without a deadline under a detached supervisor
+  (`outputs/train/xvla_p2_force_supervisor.sh`: resumes from the newest verified snapshot, at most 5 times): 28.6 h, disk peak
+  about 61 GB, 65 GiB guard. **Evaluation** is M0's frozen evaluator (`experiments/vla_inputs_eval/`, robosuite image + GPU):
+  `scripts/vla_inputs_eval.sh` (`CKPTS` = checkpoint directory, `PHASE` = matched-phase checkpoint) driven per arm by
+  `scripts/vla_inputs_m2_eval.sh prepare|selection|select|comparison|compare` (M3: `scripts/vla_inputs_m3_eval.sh`), from a
+  dedicated detached worktree, `OUT=outputs/vla_inputs_eval/m0_20261030`. Selection tier estimated about 1.5 h (six candidates at once);
+  comparison tier **6 workers × 7 cores** (8 triggered thermal pauses, FAILURES #66), about 2.7 h per checkpoint. Arms load only
+  from `experiments.vla_inputs_arm_*` modules (FAILURES #67). **Pilots:** `scripts/vla_inputs_pilot_night.sh <night_root>
+  <variants>` from a dedicated worktree; refuses a busy GPU; dry night first (`PILOT_SMOKE=1`). Report:
+  [VLA_INPUTS_PILOTS_20261102.md](VLA_INPUTS_PILOTS_20261102.md).
+- **pi0.5 (M1, deferred to the end):** images `vla-pi05:*` above; restarting needs `pi05_base` re-downloaded at the pinned
+  revision and every gate re-run (see `TODO.md`).
 
 ## Standard container flags
 

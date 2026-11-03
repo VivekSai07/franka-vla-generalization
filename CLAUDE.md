@@ -26,7 +26,12 @@ see [docs/PROPS_P1_EVALUATION_20261009.md](docs/PROPS_P1_EVALUATION_20261009.md)
 2026-10-19, [docs/PROPS_P2_DIAGNOSTICS_20261019.md](docs/PROPS_P2_DIAGNOSTICS_20261019.md); fresh-layout re-test 2026-10-20,
 [docs/PROPS_P2_RETEST_20261020.md](docs/PROPS_P2_RETEST_20261020.md)). The P3 Food-vs-Drinks dataset (fixed prompt, 544 episodes,
 bottle and cereal never collected) was collected and sealed 2026-10-20, trained and evaluated (85% on trained objects, 5.7% on held-out, a failed attempt), and its data and checkpoints were deleted 2026-10-27 at the user's instruction, see
-[docs/PROPS_P3_COLLECTION_20261020.md](docs/PROPS_P3_COLLECTION_20261020.md). See [README.md](README.md) for results,
+[docs/PROPS_P3_COLLECTION_20261020.md](docs/PROPS_P3_COLLECTION_20261020.md). Since 2026-10-30 the **VLA inputs programme**
+holds P2's data fixed and changes what the model sees: S0 sealed sidecar of forces and boxes, M0 a frozen paired evaluator
+(A0 = P2's checkpoint, 78.7% on 573 layouts), M2 force/torque in the state (A2, 91.3%, +12.6 points, 2026-11-03), M3 the target
+box drawn on the images over M2's state (being built), then M3b, M4, and pi0.5 (M1) last; see
+[docs/superpowers/specs/2026-10-30-vla-inputs-programme-design.md](docs/superpowers/specs/2026-10-30-vla-inputs-programme-design.md)
+and [docs/VLA_INPUTS_M2_20261103.md](docs/VLA_INPUTS_M2_20261103.md). See [README.md](README.md) for results,
 [TODO.md](TODO.md) for what is open, and [HF artifacts](docs/HUGGING_FACE_ARTIFACTS.md)
 for the exact published datasets/checkpoints and re-evaluation dependencies.
 
@@ -49,7 +54,8 @@ Each experiment package pins what it consumes (dataset seal, source file hashes,
 hashes); a run that cannot reproduce its binding refuses to start.
 
 Everything runs inside one of two digest-pinned Docker images — no conda, no host Python
-dependencies. Nothing runs outside the two images below.
+dependencies. Nothing runs outside the two images below, except pi0.5 (M1), which has two images of its own
+(`vla-pi05:admission`, `vla-pi05:robosuite`; digests and build in [docs/OPERATIONS.md](docs/OPERATIONS.md)).
 
 ## Pinned image
 
@@ -145,6 +151,11 @@ results. Do not edit them even to fix a stale statement:
 - `experiments/vla_inputs_signals/` (every `.py` including tests, and its README), and through it everything P2's
   provenance hashes: the S0 sidecar seal's `provenance()` binds 157 files (sealed 2026-10-30, seal `7e2e06db…f58e6c`).
   M0's evaluator and M2/M3 call `signals.py` at rollout, so an edit here would also break train/rollout parity
+- `experiments/vla_inputs_eval/` (M0's shared core, hash `c4f6c303f2ae`): every arm's `prepare` and `compare` refuse a core
+  that differs from A0's, so any edit is a new protocol with a new control. Arm adapters live in `experiments/vla_inputs_arm_*`
+- `experiments/xvla_p2_force/` (M2, trained 2026-11-01): its `SOURCE_FILES` bind A2's training run, and M0's arm closure binds
+  its `eval_adapter.py`; M3 imports it read-only (fork, do not edit). `experiments/xvla_p2_pilot/` is bound the same way by its
+  own `SOURCE_FILES` (pilot night 1, 2026-11-02)
 
 Before editing anything under `experiments/`, check whether it is in `SOURCE_FILES` or reachable
 from `provenance()`. Package READMEs are always in both, except in `experiments/robosuite_sim2sim/`

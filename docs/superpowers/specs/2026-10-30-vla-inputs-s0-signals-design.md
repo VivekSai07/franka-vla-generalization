@@ -1,6 +1,6 @@
 # S0 — extra-signal sidecar for the sealed P2 episodes — design
 
-**Date:** 2026-10-30. **Status: draft for external review.** Part of the
+**Date:** 2026-10-30. **Status: done; sealed 2026-10-30.** Part of the
 [VLA inputs programme](2026-10-30-vla-inputs-programme-design.md). CPU only, robosuite image. Built and sealed 2026-10-30 (see the S0 report); one
 read-only probe was run (below).
 

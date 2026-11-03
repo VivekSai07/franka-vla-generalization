@@ -2,7 +2,9 @@
 
 **Date:** 2026-10-31. **Status: approved in outline by the user (2026-10-31: "I agree with your pilot designs"; launch in the
 evening, judge in the morning). Details below are proposed and open to review.** Part of the
-[VLA inputs programme](2026-10-30-vla-inputs-programme-design.md). **Built on the CPU 2026-10-31** (plan Tasks 1-5, branch
+[VLA inputs programme](2026-10-30-vla-inputs-programme-design.md). **Built on the CPU 2026-10-31; pilot night 1 (`force`) ran
+2026-11-02 and was calibrated against full M2 on 2026-11-03: pilots may promote, never drop
+([report](../../VLA_INPUTS_PILOTS_20261102.md)).** (Original note: plan Tasks 1-5, branch
 `feat/vla-inputs-pilots`; the GPU parts, plan Task 6, have not run). Where the build differs from this text, the plan's
 Task 2-5 findings say so (state of 19 values for every variant; the variant is read from the checkpoint marker; the night root is the
 campaign root; the pilot layouts add 2 smoke layouts outside any tier).

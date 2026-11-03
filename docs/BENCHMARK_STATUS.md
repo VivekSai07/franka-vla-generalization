@@ -1,5 +1,14 @@
 # Franka benchmark: start here
 
+## Docs pass: M2 and pilot reports written, README brought up to the VLA inputs programme - 2026-11-03
+
+The plans' report deliverables had not been written: [VLA_INPUTS_M2_20261103.md](VLA_INPUTS_M2_20261103.md) (M2 gates, training,
+selection and comparison tiers) and [VLA_INPUTS_PILOTS_20261102.md](VLA_INPUTS_PILOTS_20261102.md) (pilot night 1 and its
+calibration: the pilot's interval [-1.6, +7.9] does not overlap M2's [8.9, 16.4]; carrying timeouts fell in both). Both are compiled
+from the recorded outputs; no new measurement. README, CLAUDE.md, the agent instructions, OPERATIONS, INDEX, the HF artifact index,
+TODO and the specs' status lines now describe the programme as it stands: S0, M0 and M2 done, M3 being built on
+`feat/vla-inputs-m3`, M1 last.
+
 ## M3 redesigned: box drawn on the images, on top of force, tested against A2 - 2026-11-03
 
 Approved by the user. A3 = A2's 17-value state plus the target's box drawn on both cameras (magenta, 4 px, outside the box,

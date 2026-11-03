@@ -141,6 +141,13 @@ Not published and not transferred to Windows. The user closed P3 as a failed att
 from RTX; only the code and docs on `feat/props-p3` (merged to `main`) and the figures in [RESULTS.md](RESULTS.md) remain
 ([report](PROPS_P3_EVALUATION_20261027.md)).
 
+### VLA inputs programme (S0, M0, M2, pilots)
+
+Not published and not transferred to Windows (as of 2026-11-03). Everything is local to RTX: the S0 sidecar
+(`outputs/vla_inputs_signals/p2_signals_20261030`), M0's campaign (`outputs/vla_inputs_eval/m0_20261030`), M2's checkpoints
+(`outputs/train/xvla_p2_force_v1`) and the pilot nights. A0 is the published P2 model at step 101,520. Reports:
+[M0](VLA_INPUTS_M0_20261031.md), [M2](VLA_INPUTS_M2_20261103.md).
+
 ## Legacy datasets and model
 
 These belong to the archived docker-compose-era work, rather than the sealed fixed-layout/B1/B2/B3/P1 programme. The archived TODO and [DATASET_DESIGN.md](../DATASET_DESIGN.md) preserve the original alignment/design caveats. Repairing viewer metadata does not repair observation/action alignment or prove the proposed 300-episode, 12-instruction design was collected.

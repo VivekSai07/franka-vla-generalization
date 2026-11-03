@@ -36,6 +36,8 @@ later findings — add a new one and update the live documents.
 [VLA_INPUTS_AUDIT_20261030.md](VLA_INPUTS_AUDIT_20261030.md) — pre-implementation findings, primary research sources and learning roadmap.
 [VLA_INPUTS_S0_20261030.md](VLA_INPUTS_S0_20261030.md) — S0 sidecar (wrist wrench, finger forces, boxes) for the sealed P2 episodes: gates, seal, descriptive report, deviations.
 [VLA_INPUTS_M0_20261031.md](VLA_INPUTS_M0_20261031.md) — M0 common evaluation protocol and control arm A0 (P2 X-VLA 101,520) on 573 comparison layouts: feasibility, power, the one core change, per-object/cell/cause results, signals, thermal-guard cost.
+[VLA_INPUTS_PILOTS_20261102.md](VLA_INPUTS_PILOTS_20261102.md) — overnight pilot night 1 (force, +3.2 points, dropped) and its calibration against full M2: pilots may promote, never drop.
+[VLA_INPUTS_M2_20261103.md](VLA_INPUTS_M2_20261103.md) — M2, force/torque in the state (arm A2): gates, training, selection, 91.3% vs A0's 78.7% on the comparison tier.
 
 
 **Datasets and collection**

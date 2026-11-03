@@ -1,11 +1,13 @@
-# VLA fine-tuning on Franka Panda cube stacking (MuJoCo and robosuite)
+# VLA fine-tuning on a Franka Panda: cube stacking, then real-life props (MuJoCo and robosuite)
 
 Comparing [SmolVLA](https://huggingface.co/HuggingFaceVLA/smolvla_libero) and X-VLA on a
-cube-stacking task, using sealed, hash-bound datasets collected from a scripted expert — first in a
-plain MuJoCo scene, latterly in a robosuite-composed scene.
-Everything runs inside one of two digest-pinned Docker images — no conda, no host Python dependencies.
+Franka Panda, using sealed, hash-bound datasets collected from a scripted expert: cube stacking first in a
+plain MuJoCo scene, then in a robosuite-composed scene, then sorting robosuite's real-life props (milk, bread, can, ...)
+into colour-designated bins.
+Everything runs inside digest-pinned Docker images (two for all runs so far, two more for pi0.5) — no conda, no host Python dependencies.
 
-The central question: **how much and what kind of data does a VLA need to generalise spatially?**
+The central question: **how much and what kind of data does a VLA need to generalise?** Since 2026-10-30 a second one, with
+the data held fixed: **what should the model see?** (the VLA inputs programme below).
 
 ## Published datasets and checkpoints
 
@@ -28,7 +30,30 @@ manifest verification. No X-VLA local-varied or SmolVLA broad-workspace model pu
 
 ---
 
-## Latest (2026-10-27): Props P3 — Food vs Drinks evaluated, failed, deleted
+## Latest (2026-11-03): VLA inputs programme — force in the robot state, +12.6 points; M3 (box) under way
+
+Same data as Props P2 (540 sealed episodes), new information for the model. Every arm is evaluated by one frozen protocol (M0):
+573 fresh paired layouts disjoint from P2, one trial each, exact McNemar, a fixed Holm family. The extra signals (wrist
+force/torque, finger contact forces, target boxes) were reconstructed for every sealed frame by exact action replay and sealed
+as a sidecar (S0).
+
+| arm | what changes | comparison tier (573 layouts) | vs control |
+|---|---|---|---|
+| A0 (control) | P2's X-VLA checkpoint 101,520: language, two cameras, 9 joint values | 451/573 = **78.7%** [75.4, 82.0] | – |
+| A2 (M2) | state 9 → 17: + wrist force/torque (6) + finger forces (2), P2's recipe unchanged | **523/573 = 91.3%** at 88,830 (selected); 517/573 = 90.2% at 101,520 | **+12.6 points** [8.9, 16.4], p = 1.1e-10 |
+| A3 (M3) | A2 + the target's box drawn on both camera images | being built | tested against A2 |
+
+- **Force helps, far more than predicted** ("small or no effect is plausible"): milk 53% → 80%, held-out instruction pairs
+  70% → 87.5%, carrying timeouts 36 → 8, wrong-bin 7 → 0. One training seed; exact simulator forces, not a real sensor.
+- **A 10,000-update pilot measured only +3.2 points** and its rule dropped the idea; pilots may now promote, never drop
+  ([pilot report](docs/VLA_INPUTS_PILOTS_20261102.md)).
+- **Next:** M3 (box drawn on the images, on top of force; A2 has only 50 failures left, 4 of them wrong-object), then M3b (the
+  policy predicts the box itself, GraspVLA-style), M4 (output side), and pi0.5 on the same data last (M1).
+
+Reports: [M0](docs/VLA_INPUTS_M0_20261031.md) · [S0](docs/VLA_INPUTS_S0_20261030.md) · [M2](docs/VLA_INPUTS_M2_20261103.md) ·
+[programme spec](docs/superpowers/specs/2026-10-30-vla-inputs-programme-design.md). Nothing from this programme is published.
+
+## Earlier (2026-10-27): Props P3 — Food vs Drinks evaluated, failed, deleted
 
 Checkpoint 101,520 (winner by the trained-only rule): **85.0% (68/80) on trained objects, 5.7% (9/159) on the two held-out objects**, 91.7% (22/24) on
 fresh confirm layouts; trained-object bin choice 68/68 correct, held-out objects almost never reach a bin (bottle 0/79 never lifted, cereal 22 of 31
@@ -182,6 +207,9 @@ Report: [docs/B3_XVLA_EVALUATION_20261005.md](docs/B3_XVLA_EVALUATION_20261005.m
 | 2026-10-16 | Props P2, robosuite (instruction sorting + 1–2 distractors) | report 75.0% (90/120), confirm 80% (16/20), 2/4 criteria met, 0 wrong-bin |
 | 2026-10-19 | P2 failure diagnostics (replay, no new rollouts) | replay exact; taxonomy not produced (validation gate failed); never-lifted trials closed the gripper, milk fails at the hold |
 | 2026-10-20 | P2 fresh-layout re-test, milk and bread paired | unseen-pair penalty 2.5 points [−4.2, +9.2]: small, existence not shown |
+| 2026-10-27 | Props P3, robosuite (Food vs Drinks, fixed prompt, two objects never collected) | 85% on trained objects, 5.7% on held-out: failed, data deleted |
+| 2026-10-31 | VLA inputs M0: P2's checkpoint on 573 fresh paired layouts (control A0) | 78.7% [75.4, 82.0], milk 53% |
+| 2026-11-03 | VLA inputs M2: wrist force/torque + finger forces in the state | 91.3%, +12.6 points over A0, p = 1.1e-10 (one seed) |
 
 Every number with its protocol and caveats: [docs/RESULTS.md](docs/RESULTS.md).
 

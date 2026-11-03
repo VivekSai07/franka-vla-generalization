@@ -150,9 +150,12 @@ tests; 12 targeted mutations failed tests; the one survivor, a redundant control
 
 ### Task 6: dry night (after M1 training ends)
 
-- [ ] Pilot plan → feasibility (CPU) → smoke (2 trials) for control and A0 → a 300-update continuation of `force` end to end
+- [x] Pilot plan → feasibility (CPU) → smoke (2 trials) for control and A0 → a 300-update continuation of `force` end to end
   through the driver, to time each stage and confirm the summary. Then pilot night 1 for real: control, A0, `force`, `box`.
-- [ ] Morning: write `docs/VLA_INPUTS_PILOTS_<date>.md` (decisions, Δ, mechanism counts, wall-clock), status log, TODO.
+  **Done 2026-11-02 with changes:** the first dry night failed on a file list (FAILURES #68), the re-run passed; night 1 ran
+  control and `force` only (A9 skipped, `box` never run).
+- [x] Morning: write `docs/VLA_INPUTS_PILOTS_<date>.md` (decisions, Δ, mechanism counts, wall-clock), status log, TODO.
+  [VLA_INPUTS_PILOTS_20261102.md](../../VLA_INPUTS_PILOTS_20261102.md) (written 2026-11-03).
 
 **Pre-launch notes (2026-10-31):** the driver is built and tested on the CPU; the GPU is held by M2's training (started 17:02, about
 18-20 h), so nothing in this task has run, and the driver refuses to start while the GPU is in use. When it is free: create a dedicated
@@ -164,5 +167,6 @@ evaluation logs.
 
 ### Task 7: calibration
 
-- [ ] After full M2 is evaluated on M0's comparison tier, compare with the force pilot: sign of Δ, interval overlap. Record in
-  the pilot report; apply the spec's calibration rule (pilots may only promote, not drop, if they disagree).
+- [x] After full M2 is evaluated on M0's comparison tier, compare with the force pilot: sign of Δ, interval overlap. Record in
+  the pilot report; apply the spec's calibration rule (pilots may only promote, not drop, if they disagree). **Done 2026-11-03:**
+  same sign, intervals [−1.6, +7.9] and [8.9, 16.4] do not overlap; the rule applies.
