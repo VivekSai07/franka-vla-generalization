@@ -9,7 +9,7 @@
   seed-to-seed variation; M3 is under way, then M3b, M4; M1 (pi0.5) last. Disk: the M2 run keeps 6 checkpoints (about 30 GB
   each), delete nothing without the user.
 
-- **M3 redesigned and approved (user, 2026-11-03); built, tested and merged into `main` the same day (`d4752a4`); gates started 22:26**
+- **M3 redesigned and approved (user, 2026-11-03); built, tested and merged into `main` the same day (`d4752a4`); all gates passed, training running (41,600 updates by 2026-11-04 08:34, resumed to 15:00)**
   (branch `feat/vla-inputs-m3`, gated detached worktree `.worktrees/m3-run`; `--check` running as container `xvla-p2-force-box-check`,
   then the user approves the overlay PNGs before `--preflight`; training output `outputs/train/xvla_p2_force_box_v1`): the target's box is **drawn on both camera images** (magenta 4 px band,
   outside the box) on top of **M2's 17-value force state**, and A3 is tested **against A2** (Holm family amended to

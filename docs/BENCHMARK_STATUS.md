@@ -1,5 +1,20 @@
 # Franka benchmark: start here
 
+## M3 gates passed, training running (paused cleanly overnight, resumed) - 2026-11-04
+
+The user approved the overlay sheets 2026-11-03 (`--check`: 0 of 75,497,472 undrawn pixels near magenta, limit 0.01%). All four GPU gates
+passed in the chain (22:47 to 22:59, no failure): `--preflight`, `--resume-proof`, `--equivalence`, and `--zero-equivalence`, which is the
+important one: M2's own runner on M2's dataset class and this loop with the overlay replaced by the identity agree byte for byte over 30
+updates (metrics, weights, Adam moments; weights `d2c88d4a...`), and the same loop with the overlay ON is unequal in all three (weights
+`3681e70c...`, final loss 1.15632 against 1.15881), so the drawn box is the only difference from A2. Training started 22:59 (container
+`xvla-p2-force-box-train`, output `outputs/train/xvla_p2_force_box_v1`, supervisor, no deadline except the user's GPU window) with
+`--stop-at 08:55`, and paused cleanly at the last snapshot before it: **41,600 of 126,900 updates (32.8%)** after 9.5 h, 0.825 s per update
+including thermal pauses. Not a failure (the chain log reads as one only until you see `paused`): the supervisor exits on a clean pause. Resumed
+08:44 from snapshot 41,600 (`xvla-p2-force-box-train-11040844`) with `--stop-at 15:00`, which should reach about 68,000 updates; the first
+intermediate checkpoint (50,760) lands about 2 h after the resume. Expected finish at this pace: about 29 h of training in total, so two more
+GPU windows after today's. Disk 164 GB free after 9.5 h (the run keeps two snapshots, 10.5 GB each, plus checkpoints; guard 65 GiB). Nothing
+evaluated yet; the M3 comparison needs the finished checkpoints (`scripts/vla_inputs_m3_eval.sh`).
+
 ## M3 built, tested and merged; CPU admission started - 2026-11-03
 
 `experiments/xvla_p2_force_box/` (fork of the frozen M2 package; M2's `forces` imported, not copied), the arm
