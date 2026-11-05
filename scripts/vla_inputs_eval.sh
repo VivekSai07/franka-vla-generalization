@@ -2,6 +2,7 @@
 # M0 driver. Run from the worktree that holds the code (it is mounted read-only), with:
 #   OUT=<campaign dir, writable>  BUNDLE=<P2 bundle>  M0_NO_RUN=1 to print the docker commands instead of running them
 #   CKPTS=<host dir holding step_NNNNNN checkpoints>  mounted read-only at /ckpt (arms trained outside the P2 bundle)
+#   EXTRA_MOUNTS="-v host:container[:ro] ..."  extra mounts for every container (M3b: the detector directory an arm binds, the real campaign a gate reads)
 #   PHASE=<update>  the 4.0-epoch checkpoint, passed to `prepare` (required for every arm but A0)
 #
 #   plan                                   layouts (admission image)
@@ -33,6 +34,7 @@ docker_run() {  # docker_run <image> <gpu:0|1> <name-or-""> <detach:0|1> <cpuset
   [ "$gpu" = 1 ] && args+=(--runtime nvidia --gpus all -e CUBLAS_WORKSPACE_CONFIG=:4096:8) || args+=(--runtime runc -e NVIDIA_VISIBLE_DEVICES=void)
   [ -n "$name" ] && args+=(--name "$name")
   [ -n "${CKPTS:-}" ] && args+=(-v "$CKPTS:/ckpt:ro")
+  [ -n "${EXTRA_MOUNTS:-}" ] && args+=($EXTRA_MOUNTS)
   [ -n "$cpuset" ] && args+=(--cpuset-cpus "$cpuset")
   [ "$detach" = 1 ] && args+=(-d) || args+=(--rm)
   args+=("$image" "$@")
@@ -86,5 +88,6 @@ case "$cmd" in
   compare) cli compare --arm "$1" --checkpoint "$2" ;;
   final)   cli final ;;
   module)  docker_run "$ROB" 0 "" 0 "" 1 -- -m "$@" ;;  # any module of the repository, robosuite image, no GPU (M3's A3-against-A2 test)
+  gpu_module) docker_run "$ROB" 1 "" 0 "" 1 -- -m "$@" ;;  # the same with the GPU (M3b's live identity gate)
   *) echo "unknown command $cmd" >&2; exit 2 ;;
 esac

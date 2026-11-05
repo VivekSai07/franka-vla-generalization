@@ -1,0 +1,282 @@
+"""The live identity gate (spec D7 iv): comparison, the verdict file, and every way it must refuse or fail. Pure numpy and json; admission image.
+
+The rollouts themselves need the GPU and run only through `scripts/vla_inputs_m3b_eval.sh identity_gate`; here the runner is a stand-in
+that copies or alters A3's recorded trial, so what is tested is that the gate recognises identity and refuses to call anything else identical.
+"""
+import json
+import shutil
+import tempfile
+import unittest
+from pathlib import Path
+
+import numpy as np
+
+from experiments.vla_inputs_eval import protocol
+from experiments.vla_inputs_m3b_analysis import identity_gate
+
+KEYS = ("state", "raw_action", "applied_action", "props_xyz", "xy_margin_m", "z_m", "lowest_z_m", "gripper_open", "finger_contact",
+        "wrist_wrench", "finger_force", "target_box")
+CORE = identity_gate.CORE_SHA256
+
+
+class StubAdapter:
+    name = "stub"
+
+    def reset(self):
+        pass
+
+    def act(self, obs):
+        raise AssertionError("the stub runner never asks the adapter to act")
+
+
+def layout(i):
+    return dict(layout_id=f"L{i:03d}", tier="comparison", seed=1000 + i, object="milk", bin="blue", blue_slot="left", cell=["milk", "blue", "left", 1],
+                instruction="put the milk in the blue bin", distractor_count=1, distractors=[dict(object="can", pose=[0.3, 0.1, 10.0])],
+                start=[0.35, -0.1, 20.0], home_pose_jitter_deg=[0.0] * 7, held_out=False)
+
+
+def arrays(ticks=40, seed=0):
+    rng = np.random.default_rng(seed)
+    out = {key: rng.random((ticks, 3)).astype(np.float64) for key in KEYS}
+    out["gripper_open"] = rng.random(ticks) > 0.5
+    out["target_box"] = rng.random((ticks, 2, 5))
+    out["raw_action"] = rng.random((ticks, 8)).astype(np.float32)
+    return out
+
+
+class Fixture(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        base = Path(self.tmp.name)
+        self.campaign, self.out = base / "campaign", base / "scratch"
+        self.out.mkdir()
+        n = 300
+        self.plan = dict(layouts={f"L{i:03d}": layout(i) for i in range(n)}, tiers={"comparison": [f"L{i:03d}" for i in range(n)]})
+        self.feas = dict(feasible=[f"L{i:03d}" for i in range(n)])
+        self.trials = protocol.stage_trials(self.plan, self.feas, "comparison")
+        self.recorded_dir = protocol.stage_dir(self.campaign, "A3", "comparison", 101520)
+        self.recorded = {}
+        for trial in self.trials:
+            if trial["ordinal"] in (1, 291):
+                folder = protocol.trial_folder(self.recorded_dir, trial)
+                folder.mkdir(parents=True)
+                self.recorded[trial["ordinal"]] = arrays(seed=trial["ordinal"])
+                np.savez_compressed(folder / "trace.npz", **self.recorded[trial["ordinal"]])
+                (folder / "episode.json").write_text(json.dumps(dict(trial, task_success=True, ticks=40, cause="success", wall_seconds=12.5)))
+                (folder / "cameras.mp4").write_bytes(b"video-%d" % trial["ordinal"])
+        (self.campaign / "arms/A3").mkdir(parents=True, exist_ok=True)
+        (self.campaign / "arms/A3/prepared.json").write_text(json.dumps(dict(
+            core=dict(sha256=CORE), arm=dict(name="A3"), phase_checkpoint=101520,
+            checkpoints={"101520": dict(path="/ckpt/step_101520", model_sha256="x")})))
+
+    def snapshot(self, root):
+        return {p.relative_to(root).as_posix(): p.read_bytes() for p in sorted(Path(root).rglob("*")) if p.is_file()}
+
+    def copy_runner(self, change=None, wall=99.0):
+        """A runner that 'rolls out' by copying A3's recorded trial, then optionally changing it."""
+        ran = []
+
+        def runner(adapter, state_builder, layout_record, trial, folder):
+            ran.append(trial["ordinal"])
+            source = protocol.trial_folder(self.recorded_dir, trial)
+            with np.load(source / "trace.npz") as trace:
+                data = {k: trace[k].copy() for k in trace.files}
+            if change:
+                change(trial["ordinal"], data)
+            np.savez_compressed(folder / "trace.npz", **data)
+            episode = json.loads((source / "episode.json").read_text())
+            episode["wall_seconds"] = wall
+            (folder / "episode.json").write_text(json.dumps(episode))
+            (folder / "cameras.mp4").write_bytes(b"another-encoding")
+            return episode
+
+        runner.ran = ran
+        return runner
+
+    def run_gate(self, runner=None, ordinals=(1, 291), **kwargs):
+        return identity_gate.run(self.campaign, self.out, 101520, ordinals, verify=False, factory=lambda prepared, checkpoint: StubAdapter(),
+                                 runner=runner or self.copy_runner(), manifests=lambda campaign: (self.plan, self.feas), **kwargs)
+
+
+class Pinned(unittest.TestCase):
+    def test_the_gate_is_pinned_before_any_run(self):
+        self.assertEqual(identity_gate.IDENTIFIER, "experiments.vla_inputs_arm_xvla_force_box_noisy.adapter:XVLANoCorruption")
+        self.assertEqual((identity_gate.ORDINALS, identity_gate.CHECKPOINT, identity_gate.ARM), ((1, 291), 101520, "A3"))
+        self.assertEqual(identity_gate.CORE_SHA256, "c4f6c303f2ae37509530323efe7d190686b1b5258910863f041241d30bc5b39d")
+        self.assertEqual(identity_gate.IGNORED_EPISODE_FIELDS, ("wall_seconds",))
+
+    def test_the_gate_adapter_is_not_one_of_the_arms(self):
+        from experiments.vla_inputs_arm_xvla_force_box_noisy import corruption
+        self.assertNotIn(identity_gate.IDENTIFIER.split(":")[1], ("XVLAJitterSmall", "XVLAJitterLarge", "XVLADropout", "XVLASwap"))
+        self.assertEqual(sorted(corruption.ARMS), ["A6", "A7", "A8", "A9"])
+
+
+class CompareTrial(Fixture):
+    def folders(self, change=None, episode_change=None):
+        source = protocol.trial_folder(self.recorded_dir, self.trials[0])
+        mine = Path(tempfile.mkdtemp(dir=self.tmp.name)) / "mine"
+        shutil.copytree(source, mine)
+        if change:
+            with np.load(mine / "trace.npz") as trace:
+                data = {k: trace[k].copy() for k in trace.files}
+            change(data)
+            np.savez_compressed(mine / "trace.npz", **data)
+        if episode_change:
+            episode = json.loads((mine / "episode.json").read_text())
+            episode_change(episode)
+            (mine / "episode.json").write_text(json.dumps(episode))
+        return source, mine
+
+    def test_identical_trials_are_identical_and_the_wall_clock_is_ignored(self):
+        source, mine = self.folders(episode_change=lambda e: e.update(wall_seconds=1.0))
+        got = identity_gate.compare_trial(source, mine)
+        self.assertTrue(got["identical"])
+        self.assertEqual(got["differing_arrays"], [])
+        self.assertEqual(sorted(got["arrays"]), sorted(KEYS))
+
+    def test_one_ulp_in_one_array_is_a_difference_and_the_first_differing_tick_is_named(self):
+        def change(data):
+            data["raw_action"][17, 3] = np.nextafter(data["raw_action"][17, 3], np.float32(2.0))
+
+        got = identity_gate.compare_trial(*self.folders(change))
+        self.assertFalse(got["identical"])
+        self.assertEqual(got["differing_arrays"], ["raw_action"])
+        self.assertEqual(got["first_difference_tick"], 17)
+
+    def test_a_different_dtype_shape_or_key_set_is_a_difference(self):
+        for name, change in (("dtype", lambda d: d.update(state=d["state"].astype(np.float32))),
+                             ("shape", lambda d: d.update(state=d["state"][:-1])),
+                             ("same bytes, other dtype", lambda d: d.update(state=d["state"].view(np.int64))),
+                             ("missing", lambda d: d.pop("finger_force")),
+                             ("extra", lambda d: d.update(extra=np.zeros(3)))):
+            with self.subTest(name):
+                got = identity_gate.compare_trial(*self.folders(change))
+                self.assertFalse(got["identical"])
+                self.assertTrue(got["differing_arrays"] or got["key_mismatch"])
+
+    def test_nan_in_the_same_place_is_identical_and_in_another_place_is_not(self):
+        with np.load(protocol.trial_folder(self.recorded_dir, self.trials[0]) / "trace.npz") as trace:
+            base = {k: trace[k].copy() for k in trace.files}
+        episode = (protocol.trial_folder(self.recorded_dir, self.trials[0]) / "episode.json").read_text()
+
+        def make(name, nan_at):
+            data = {k: v.copy() for k, v in base.items()}
+            if nan_at is not None:
+                data["z_m"][nan_at] = np.nan
+            folder = Path(self.tmp.name) / name
+            folder.mkdir()
+            np.savez_compressed(folder / "trace.npz", **data)
+            (folder / "episode.json").write_text(episode)
+            return folder
+
+        self.assertTrue(identity_gate.compare_trial(make("a", (3, 0)), make("b", (3, 0)))["identical"])
+        self.assertFalse(identity_gate.compare_trial(make("c", (3, 0)), make("d", (3, 1)))["identical"])
+        self.assertFalse(identity_gate.compare_trial(make("e", (3, 0)), make("f", None))["identical"])
+
+    def test_a_different_outcome_or_tick_count_in_episode_json_is_a_difference(self):
+        for change in (lambda e: e.update(task_success=False), lambda e: e.update(ticks=41), lambda e: e.update(cause="timeout_carrying")):
+            got = identity_gate.compare_trial(*self.folders(episode_change=change))
+            self.assertFalse(got["identical"])
+            self.assertTrue(got["differing_episode_fields"])
+
+    def test_the_video_is_recorded_but_does_not_decide(self):
+        source, mine = self.folders()
+        (mine / "cameras.mp4").write_bytes(b"other")
+        got = identity_gate.compare_trial(source, mine)
+        self.assertTrue(got["identical"])
+        self.assertFalse(got["video_identical"])
+
+
+class Run(Fixture):
+    def test_identical_reruns_pass_and_write_the_verdict_beside_the_scratch_trials_only(self):
+        before = self.snapshot(self.campaign)
+        runner = self.copy_runner()
+        got = self.run_gate(runner)
+        self.assertTrue(got["identical"])
+        self.assertEqual(runner.ran, [1, 291])
+        self.assertEqual(sorted(t["ordinal"] for t in got["trials"]), [1, 291])
+        written = json.loads((self.out / "identity_gate/result.json").read_text())
+        self.assertTrue(written["identical"])
+        self.assertEqual((written["checkpoint"], written["adapter"]), (101520, identity_gate.IDENTIFIER))
+        self.assertEqual(self.snapshot(self.campaign), before)  # the real campaign is read, never written
+        self.assertTrue(any(p.name == "trace.npz" for p in (self.out / "identity_gate").rglob("*")))
+
+    def test_any_difference_in_any_trial_fails_the_gate(self):
+        def change(ordinal, data):
+            if ordinal == 291:
+                data["wrist_wrench"][5, 2] += 1e-9
+
+        got = self.run_gate(self.copy_runner(change))
+        self.assertFalse(got["identical"])
+        verdicts = {t["ordinal"]: t["identical"] for t in got["trials"]}
+        self.assertEqual(verdicts, {1: True, 291: False})
+        self.assertFalse(json.loads((self.out / "identity_gate/result.json").read_text())["identical"])
+
+    def test_the_command_line_exits_nonzero_on_a_difference(self):
+        self.assertEqual(identity_gate.exit_code(dict(identical=True)), 0)
+        self.assertEqual(identity_gate.exit_code(dict(identical=False)), 1)
+
+    def test_it_refuses_an_unknown_ordinal_an_incomplete_recorded_trial_and_an_existing_output(self):
+        with self.assertRaisesRegex(ValueError, "ordinal"):
+            self.run_gate(ordinals=(1, 5000))
+        (protocol.trial_folder(self.recorded_dir, self.trials[290]) / "trace.npz").unlink()
+        with self.assertRaisesRegex(RuntimeError, "recorded"):
+            self.run_gate()
+        shutil.rmtree(self.out / "identity_gate", ignore_errors=True)
+        self.setUp()
+        self.run_gate()
+        with self.assertRaises(FileExistsError):
+            self.run_gate()
+
+    def test_a_verdict_is_never_overwritten_even_by_a_run_of_other_trials(self):
+        self.run_gate(ordinals=(1,))
+        with self.assertRaises(FileExistsError):
+            self.run_gate(ordinals=(291,))
+        self.assertEqual(json.loads((self.out / "identity_gate/result.json").read_text())["ordinals"], [1])
+
+    def test_it_refuses_a_campaign_that_is_its_own_output(self):
+        with self.assertRaisesRegex(ValueError, "scratch"):
+            identity_gate.run(self.campaign, self.campaign, 101520, (1, 291), verify=False, factory=lambda p, c: StubAdapter(),
+                              runner=self.copy_runner(), manifests=lambda c: (self.plan, self.feas))
+
+    def test_it_refuses_another_core_and_a_checkpoint_a3_was_not_prepared_with(self):
+        prepared = self.campaign / "arms/A3/prepared.json"
+        record = json.loads(prepared.read_text())
+        record["core"]["sha256"] = "0" * 64
+        prepared.write_text(json.dumps(record))
+        with self.assertRaisesRegex(ValueError, "core"):
+            self.run_gate()
+        record["core"]["sha256"] = CORE
+        prepared.write_text(json.dumps(record))
+        with self.assertRaisesRegex(ValueError, "checkpoint"):
+            identity_gate.run(self.campaign, self.out, 88830, (1, 291), verify=False, factory=lambda p, c: StubAdapter(),
+                              runner=self.copy_runner(), manifests=lambda c: (self.plan, self.feas))
+
+    def test_verification_against_the_repository_runs_unless_switched_off(self):
+        calls = []
+
+        class Evaluate:
+            @staticmethod
+            def verify_core(prepared, repo):
+                calls.append("core")
+
+            @staticmethod
+            def verify_manifests(root, prepared):
+                calls.append("manifests")
+
+            @staticmethod
+            def verify_arm(prepared, repo, deep=False):
+                calls.append("arm")
+
+            @staticmethod
+            def verify_checkpoint(prepared, checkpoint):
+                calls.append("checkpoint")
+
+        identity_gate.run(self.campaign, self.out, 101520, (1, 291), verify=True, factory=lambda p, c: StubAdapter(), runner=self.copy_runner(),
+                          manifests=lambda c: (self.plan, self.feas), evaluate_module=Evaluate)
+        self.assertEqual(sorted(calls), ["arm", "checkpoint", "core", "manifests"])
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -35,9 +35,19 @@ Unless every arm was prepared with core `c4f6c303f2ae` (the prepared record and 
 repository (skipped by `--no-verify`, for tests), the layouts, objects and dropped layouts are identical, and the stages A2 at 88,830 and 101,520, A3 and A5 at
 101,520 exist and are complete.
 
+## The live identity gate
+
+`identity_gate.py` (robosuite image, GPU, through `scripts/vla_inputs_m3b_eval.sh identity_gate`) is spec D7 (iv): `XVLANoCorruption` (A3's frozen
+policy and force state, the oracle box drawn unchanged) re-runs A3's comparison trials 1 and 291 with M0's own rollout, and every trace array must equal A3's
+recorded `trace.npz` byte for byte (dtype, shape, bytes; a NaN equals a NaN in the same place), as must `episode.json` without the wall clock. The video is
+recorded, not compared. The real campaign is mounted read-only at `/campaign` and only read; the re-runs and the verdict (`identity_gate/result.json`) go to a
+scratch `--out` that must not be the campaign and is never overwritten. Any difference is a failed gate (exit code 1): no A5-A9 trial counts until it passes.
+
 ## Tests
 
 `tests/test_analyse.py` (admission image): hand-computed R (S = 559 against 523 and 571 is exactly 0.75), a bootstrap with a known stratified answer, exact McNemar, Holm over
 four, the pinned thresholds and prediction, the branches, failure classes, IoU, the detector read-out on synthetic logs, every refusal, and the command line. Every check was confirmed to fail
 against a deliberate mutation (floor and ceiling swapped, unstratified bootstrap, Holm over five, wrong control, a moved threshold, a denominator not resampled with the numerator, a
 missing arm entering as 0, the replan stride, the IoU union, misses against false alarms, each refusal removed, matching by a prefix of the oracle sequence).
+`tests/test_identity_gate.py` (a stand-in runner copies or alters A3's recorded trial: tolerance instead of bit equality, a dtype or key mismatch, the wall clock, `any` instead of `all`, an overwritten
+verdict, a skipped verification and a gate built on an arm adapter are each caught) and `tests/test_m3b_eval_script.py` (the driver's dry-run commands, `EXTRA_MOUNTS` and `gpu_module` in M0's driver).
