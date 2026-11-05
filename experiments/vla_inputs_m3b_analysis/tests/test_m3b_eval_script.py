@@ -150,6 +150,13 @@ class IdentityGate(Driver):
         self.assertIn(f"-v {self.ck}:/ckpt:ro", command)
         self.assertTrue(command.rstrip().endswith("-m experiments.vla_inputs_m3b_analysis.identity_gate --campaign /campaign --out /out --checkpoint 101520 --ordinals 1 291"))
 
+    def test_the_gate_runs_with_the_cpu_thread_settings_of_the_comparison_workers(self):
+        command = self.commands(self.run_step("identity_gate", CAMPAIGN=str(self.ck)))[0]
+        for variable in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "LP_NUM_THREADS"):
+            self.assertIn(f"{variable}=7", command)
+        command = self.commands(self.run_step("identity_gate", CAMPAIGN=str(self.ck), CORES="5"))[0]
+        self.assertIn("OMP_NUM_THREADS=5", command)
+
     def test_the_gate_refuses_a_missing_campaign_or_the_campaign_as_its_own_output(self):
         result = self.run_step("identity_gate", check=False, CAMPAIGN="/nonexistent/campaign")
         self.assertNotEqual(result.returncode, 0)
@@ -174,6 +181,13 @@ class ExtraMountsInM0sDriver(unittest.TestCase):
         base = self.run_driver()
         self.assertEqual(self.run_driver(EXTRA_MOUNTS=""), base)
         self.assertNotIn("/host/a", base)
+
+    def test_gpu_module_threads_default_to_one_and_follow_module_cores(self):
+        full = {**os.environ, "WT": str(ROOT), "OUT": "/tmp/out", "M0_NO_RUN": "1", "MAIN": str(ROOT), "BUNDLE": "/nonexistent/bundle"}
+        for extra, expected in (({}, "1"), ({"MODULE_CORES": "7"}, "7")):
+            result = subprocess.run(["bash", str(DRIVER), "gpu_module", "experiments.some_module"], env={**full, **extra}, capture_output=True,
+                                    text=True, timeout=60)
+            self.assertIn(f"OMP_NUM_THREADS={expected}", result.stdout)
 
     def test_gpu_module_runs_a_repository_module_with_the_gpu(self):
         full = {**os.environ, "WT": str(ROOT), "OUT": "/tmp/out", "M0_NO_RUN": "1", "MAIN": str(ROOT), "BUNDLE": "/nonexistent/bundle"}
