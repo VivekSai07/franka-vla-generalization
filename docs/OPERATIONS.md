@@ -364,6 +364,14 @@ pass here. Cause of the shortage: `/var/log/syslog` at 134 GB (33 GB/day), root-
 `outputs/train/xvla_props_p3_v1` and its `_admission`, `_preflight`, `_resumeproof`, `_equivalence` directories, `outputs/xvla_props_p3_eval`, the detached run worktree
 `.worktrees/p3-train` and the stopped P3 containers. None of it was on Windows or the Hub. Code and docs stay on branch `feat/props-p3`.
 
+**Reclaimed 2026-11-04 (user instruction, ~46 GB; free 165 to 211 GiB):** `~/.cache/uv` (8.7 GB listed, about 1 GB freed: uv hardlinks into environments), M2's scratch gate runs
+`outputs/train/xvla_p2_force_v1_preflight` and `outputs/train/xvla_p2_force_v1_resumeproof` (23 GB each; their `result.json` copies stay in the bundle `outputs/downloads_20261103/vla_inputs_m2/training/gates/`,
+sha256 `17e9affe…` and `cd4213ae…`, the hashes M2's `result.json` pins; M2's scratch run can no longer be re-verified or resumed), and the SmolVLA-only outputs:
+`outputs/train/smolvla_franka_stacking_localvaried_v1_20260919` (with `_admission` and `_logs`), `smolvla_fixed_layout_20260918_admission`,
+`smolvla_franka_stacking_broadworkspace_v1_20260921_admission`, `outputs/evaluation/smolvla_pilot_tuning_20260916`, and `outputs/implementation/smolvla_fixed_layout_20260918`,
+`smolvla_local_varied_20260919`, `smolvla_local_varied_20260920`, `smolvla_local_varied_eval_20260920`. The step-5,000 SmolVLA models and the fixed-layout and local-varied datasets stay on the Hub.
+`outputs/implementation/local_position_probe_20260919` was kept (its SmolVLA control jobs are 7 MB of a probe shared with X-VLA).
+
 **Disk.** As of 2026-10-17: 879 GB total, **248 GB free (71% full)** after the reclaim below (it was 59 GB, 94%; 203 GB before the
 P1/P2 intermediates went).
 As of 2026-10-05: 879 GB total, ~96 GB free (89% full). Check `df -h .` before
