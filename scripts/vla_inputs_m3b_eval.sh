@@ -29,7 +29,7 @@ CAMPAIGN="${CAMPAIGN:-$MAIN/outputs/vla_inputs_eval/m0_20261030}"
 WORKERS="${WORKERS:-6}"
 CORES="${CORES:-7}"
 CHECKPOINT=101520
-DETECTOR_REL="${DETECTOR_REL:-outputs/vla_inputs_box_detector/final}"
+DETECTOR_REL="${DETECTOR_REL:-outputs/vla_inputs_box_detector/run_v1/final}"
 DRIVER="$WT/scripts/vla_inputs_eval.sh"
 NOISY=experiments.vla_inputs_arm_xvla_force_box_noisy.adapter
 export WT MAIN OUT
