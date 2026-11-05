@@ -6,6 +6,33 @@ failures and lessons in [FAILURES.md](FAILURES.md).
 
 Download corresponding datasets/checkpoints: [HF artifact index](HUGGING_FACE_ARTIFACTS.md).
 
+## VLA inputs M3, the target's box drawn on both cameras over force (2026-11-05) — measured, not sealed
+
+Arm A3 on M0's frozen comparison tier (core `c4f6c303f2ae`, arm `150d3970b3b4`): A2's recipe, data and 17-value force state unchanged,
+plus the target's box drawn as a 4 px magenta band on both camera images, training and rollout. Same 573 layouts as A0 and A2, paired.
+**One training seed**; the interval and test treat layouts as the units. **The box is an oracle** (simulator state, perfect, amodal):
+an upper bound for a perfect detector, not a deployable result. Selection tier (79 trials each): 57 / 78 / 77 / 78 / 74 / 70 at
+50,760 / 76,140 / 88,830 / 101,520 / 114,210 / 126,900; 76,140 and 101,520 tied and the tie rule (later checkpoint) chose 101,520,
+which is also the matched-phase checkpoint, so the comparison tier ran there only.
+
+| | A2 at 88,830 (primary) | A2 at 101,520 (matched phase) | A0 |
+|---|---|---|---|
+| control successes | 523/573 = 91.3% | 517/573 = 90.2% | 451/573 = 78.7% |
+| **A3 at 101,520** | **571/573 = 99.65%** (99.1 – 100.0) | same | same |
+| paired difference, 95% interval | **+8.4 points (6.1 – 10.6)** | +9.4 (7.0 – 11.9) | +20.9 (17.8 – 24.3) |
+| discordant (A3 only / control only) | 50 / 2 | 56 / 2 | 121 / 1 |
+| exact McNemar p | 6.1 × 10⁻¹³ | 1.2 × 10⁻¹⁴ | 4.6 × 10⁻³⁵ |
+| Holm-adjusted p | **2.4 × 10⁻¹² (amended family, decides)** | secondary | 1.9 × 10⁻³⁴ (M0's family, secondary) |
+
+Pre-registered criterion (positive paired effect against A2 and amended-Holm p < 0.05): **met**. Failures A2 (88,830) → A3: never
+lifted 33 → 0, timeout while carrying 8 → 1, dropped outside 3 → 0, wrong object 4 → 0, unstable in target 2 → 1. Milk 77/96 →
+95/96, held-out pairs 84/96 → 95/96, trained pairs 439/477 → 476/477; every one of A2's 50 failures is a pass for A3 and A3's 2
+failures were passes for A2 (exploratory, unadjusted). **Prediction (2026-11-03): "0 to +4 points, probably not significant;
+wrong-object at most 0.7"** — wrong in magnitude (+8.4, nearly all of the 8.7 points of headroom); the mechanism half held (the
+gain is approach and alignment, not target choice). Not shown: box without force, a detector's or a policy's predicted box,
+another encoding, a second seed. Near the ceiling (2 failures) this layout set cannot rank a later arm above A3. Report:
+[VLA_INPUTS_M3_20261105.md](VLA_INPUTS_M3_20261105.md).
+
 ## VLA inputs M2, force and torque in the robot state (2026-11-03) — measured, not sealed
 
 Arm A2 on M0's frozen comparison tier (core `c4f6c303f2ae`, arm `c04a8145c120`): P2's X-VLA recipe unchanged (126,900

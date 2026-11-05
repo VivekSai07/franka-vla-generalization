@@ -30,7 +30,7 @@ manifest verification. No X-VLA local-varied or SmolVLA broad-workspace model pu
 
 ---
 
-## Latest (2026-11-03): VLA inputs programme — force in the robot state, +12.6 points; M3 (box) under way
+## Latest (2026-11-05): VLA inputs programme — force in the robot state +12.6 points, the drawn target box on top +8.4 more
 
 Same data as Props P2 (540 sealed episodes), new information for the model. Every arm is evaluated by one frozen protocol (M0):
 573 fresh paired layouts disjoint from P2, one trial each, exact McNemar, a fixed Holm family. The extra signals (wrist
@@ -41,16 +41,20 @@ as a sidecar (S0).
 |---|---|---|---|
 | A0 (control) | P2's X-VLA checkpoint 101,520: language, two cameras, 9 joint values | 451/573 = **78.7%** [75.4, 82.0] | – |
 | A2 (M2) | state 9 → 17: + wrist force/torque (6) + finger forces (2), P2's recipe unchanged | **523/573 = 91.3%** at 88,830 (selected); 517/573 = 90.2% at 101,520 | **+12.6 points** [8.9, 16.4], p = 1.1e-10 |
-| A3 (M3) | A2 + the target's box drawn on both camera images | being built | tested against A2 |
+| A3 (M3) | A2 + the target's box drawn on both camera images | **571/573 = 99.65%** at 101,520 (selection winner) | **+8.4 points against A2** [6.1, 10.6], p = 6.1e-13, Holm 2.4e-12; criterion met. +20.9 against A0 |
 
 - **Force helps, far more than predicted** ("small or no effect is plausible"): milk 53% → 80%, held-out instruction pairs
   70% → 87.5%, carrying timeouts 36 → 8, wrong-bin 7 → 0. One training seed; exact simulator forces, not a real sensor.
 - **A 10,000-update pilot measured only +3.2 points** and its rule dropped the idea; pilots may now promote, never drop
   ([pilot report](docs/VLA_INPUTS_PILOTS_20261102.md)).
-- **Next:** M3 (box drawn on the images, on top of force; A2 has only 50 failures left, 4 of them wrong-object), then M3b (the
-  policy predicts the box itself, GraspVLA-style), M4 (output side), and pi0.5 on the same data last (M1).
+- **The box helps on top of force, more than predicted** (prediction 0 to +4, probably not significant). Never-lifted 33 → 0,
+  wrong-object 4 → 0, milk 80% → 99%, held-out pairs 87.5% → 99%; every one of A2's 50 failures became a pass, 2 new failures.
+  The box is an oracle (simulator state, perfect), one training seed, box given force not box alone: an upper bound, not a
+  deployable gain. A3 leaves 2 failures, so the layout set has almost no headroom left.
+- **Next:** M3b (the policy predicts the box itself, GraspVLA-style; start condition met, needs the user's decision on its
+  form), M4 (output side; little headroom left on this layout set), and pi0.5 on the same data last (M1).
 
-Reports: [M0](docs/VLA_INPUTS_M0_20261031.md) · [S0](docs/VLA_INPUTS_S0_20261030.md) · [M2](docs/VLA_INPUTS_M2_20261103.md) ·
+Reports: [M0](docs/VLA_INPUTS_M0_20261031.md) · [S0](docs/VLA_INPUTS_S0_20261030.md) · [M2](docs/VLA_INPUTS_M2_20261103.md) · [M3](docs/VLA_INPUTS_M3_20261105.md) ·
 [programme spec](docs/superpowers/specs/2026-10-30-vla-inputs-programme-design.md). Nothing from this programme is published.
 
 ## Earlier (2026-10-27): Props P3 — Food vs Drinks evaluated, failed, deleted

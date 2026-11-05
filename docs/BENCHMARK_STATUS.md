@@ -1,5 +1,18 @@
 # Franka benchmark: start here
 
+## M3 trained and evaluated: the box helps on top of force, +8.4 points - 2026-11-05
+
+Training finished 2026-11-05 05:14 (126,900 updates, 29.6 h, two clean `--stop-at` pauses and a final resume, `final_data_binding_passed`
+true, all six checkpoints). The evaluation chain (`outputs/train/xvla_p2_force_box_eval_chain.sh`, from the dedicated worktree
+`.worktrees/m3-eval`, into M0's campaign `m0_20261030`) ran 09:18 to 13:07 with no failed step: prepare 22 s, smoke 126 s,
+selection 6,366 s, comparison 7,210 s. **A3 571/573 = 99.65% at 101,520 against A2's 523/573 = 91.3% at 88,830: +8.4 points
+[6.1, 10.6], 50 / 2 discordant, exact McNemar p = 6.1e-13, amended-Holm p = 2.4e-12; the pre-registered criterion is met** (matched
+phase 101,520 vs 101,520: +9.4 [7.0, 11.9]; against A0 +20.9). The recorded prediction (0 to +4 points, probably not significant) was
+wrong in magnitude: never-lifted fell 33 → 0 and wrong-object only 4 → 0, so the gain is approach and alignment, not target choice
+(a reading of the numbers, not a tested mechanism). Caveats: the box is an oracle, one training seed, box given force not box alone, and
+the layout set is nearly saturated (A3 fails 2). M3b's start condition is met; its form and whether M4 should stay on this layout set
+are open for the user. Report [VLA_INPUTS_M3_20261105.md](VLA_INPUTS_M3_20261105.md); figures in [RESULTS.md](RESULTS.md).
+
 ## M3 gates passed, training running (paused cleanly overnight, resumed) - 2026-11-04
 
 The user approved the overlay sheets 2026-11-03 (`--check`: 0 of 75,497,472 undrawn pixels near magenta, limit 0.01%). All four GPU gates

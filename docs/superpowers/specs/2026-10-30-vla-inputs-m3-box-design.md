@@ -1,6 +1,7 @@
 # M3 — the target's box drawn on both camera images, on top of M2's force state — design
 
-**Date:** 2026-10-30, **redesigned 2026-11-03** (see "What changed"). **Status: approved by the user 2026-11-03** (approach B,
+**Date:** 2026-10-30, **redesigned 2026-11-03** (see "What changed"). **Result 2026-11-05: criterion met, A3 +8.4 points over A2
+(prediction 0 to +4 was wrong), see [the report](../../VLA_INPUTS_M3_20261105.md); M3b's start condition is met.** **Status: approved by the user 2026-11-03** (approach B,
 decisions D1–D11). Part of the [VLA inputs programme](2026-10-30-vla-inputs-programme-design.md). Depends on S0 (sealed boxes),
 M0 (evaluator, frozen core `c4f6c303f2ae`) and M2 (package `experiments/xvla_p2_force/`, trained and evaluated, frozen and
 hash-bound; imported read-only, never edited). No code exists.

@@ -1,17 +1,24 @@
 # SmolVLA / X-VLA Franka TODO
 
-## Where things stand (2026-11-03)
+## Where things stand (2026-11-05)
+
+- **M3 done and evaluated (2026-11-05): the box helps on top of force.** A3 (target box drawn on both cameras over M2's force
+  state) scores 571/573 = 99.65% at 101,520 against A2's 523/573 = 91.3% at 88,830: +8.4 points [6.1, 10.6], b = 50, c = 2,
+  exact McNemar p = 6.1e-13, amended-Holm p = 2.4e-12, criterion met (matched phase 101,520 vs 101,520: +9.4 [7.0, 11.9]).
+  The prediction (0 to +4, probably not significant) was wrong; never-lifted fell 33 → 0. Oracle box, one seed, box given force.
+  [Report](docs/VLA_INPUTS_M3_20261105.md) · [RESULTS.md](docs/RESULTS.md). **Open, needs the user:** M3b's form (its start
+  condition is met; spec not written) and whether M4 should stay on layouts where A3 fails 2 of 573. The M3 training output
+  (6 checkpoints, 2 snapshots, five gate directories) stays on disk; delete nothing without the user.
 
 - **M2 done and evaluated (2026-11-03):** force/torque in the state raises success on M0's comparison tier from 78.7% (A0,
   451/573) to 91.3% (checkpoint 88,830, p = 1.1e-10) and 90.2% (matched-phase 101,520); one training seed. The pre-run
   prediction (small or no effect) was wrong; the 10,000-update force pilot (+3.2, dropped) under-called it.
   [Report](docs/VLA_INPUTS_M2_20261103.md) · [RESULTS.md](docs/RESULTS.md). **Open:** a second training seed for A2 would bound
-  seed-to-seed variation; M3 is under way, then M3b, M4; M1 (pi0.5) last. Disk: the M2 run keeps 6 checkpoints (about 30 GB
+  seed-to-seed variation; M3 is done (next bullet), then M3b, M4; M1 (pi0.5) last. Disk: the M2 run keeps 6 checkpoints (about 30 GB
   each), delete nothing without the user.
 
-- **M3 redesigned and approved (user, 2026-11-03); built, tested and merged into `main` the same day (`d4752a4`); all gates passed, training running (41,600 updates by 2026-11-04 08:34, resumed to 15:00)**
-  (branch `feat/vla-inputs-m3`, gated detached worktree `.worktrees/m3-run`; `--check` running as container `xvla-p2-force-box-check`,
-  then the user approves the overlay PNGs before `--preflight`; training output `outputs/train/xvla_p2_force_box_v1`): the target's box is **drawn on both camera images** (magenta 4 px band,
+- **M3 redesigned and approved (user, 2026-11-03); built, tested and merged into `main` the same day (`d4752a4`); trained 2026-11-03 to 11-05 (126,900 updates) and evaluated 2026-11-05 (above)**
+  (branch `feat/vla-inputs-m3` merged; training worktree `.worktrees/m3-run`, evaluation worktree `.worktrees/m3-eval`; the overlay PNGs were approved by the user; training output `outputs/train/xvla_p2_force_box_v1`): the target's box is **drawn on both camera images** (magenta 4 px band,
   outside the box) on top of **M2's 17-value force state**, and A3 is tested **against A2** (Holm family amended to
   {A1 vs A0, A2 vs A0, A3 vs A2, A4 vs A0} before any result). A numeric box no longer fits X-VLA's 20 state slots beside M2's
   17. No box pilot. Package `experiments/xvla_p2_force_box/` (fork of the frozen `xvla_p2_force`), arm
@@ -67,7 +74,7 @@
   may overlap M1; GPU evaluation must be separately resource-gated. No experiment source or sealed artifacts changed.
 
 - **Next: the VLA inputs programme — specs and plans drafted 2026-10-30, under external review; only S0 is built (first bullet).** *(Historical
-  entry; as of 2026-11-03 S0, M0 and M2 are done and M3 is being built, bullets above.)* The data stays
+  entry; as of 2026-11-03 S0, M0, M2 and M3 are done and M3b is next, bullets above.)* The data stays
   P2's 540 sealed episodes; what changes is what the model sees: M0 a common paired evaluation (fresh layouts, A0 = X-VLA 101,520
   as control), S0 a sealed sidecar of wrist force/torque, finger forces and target boxes for every P2 frame, M1 pi0.5 against
   X-VLA, M2 force/torque in the state, M3 the target box in the state (redesigned 2026-11-03: drawn on the images over M2's

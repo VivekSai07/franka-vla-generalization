@@ -1,6 +1,6 @@
 # VLA inputs programme — same data, new information — design
 
-**Date:** 2026-10-30. **Status (2026-11-03): S0, M0 and M2 done; M3 being built; M1 deferred to the end.** Originally a draft for
+**Date:** 2026-10-30. **Status (2026-11-05): S0, M0, M2 and M3 done (A3 99.65%, +8.4 points over A2, criterion met; M3b's start condition is met, its spec is not written); M1 deferred to the end.** Originally a draft for
 external review. Direction, sub-projects and order approved by the user on
 2026-10-30; everything below the "Approved" table is proposed and open to review. Nothing has been built or run except
 the read-only checks cited here. Follows P3, closed as a failed attempt
@@ -131,7 +131,9 @@ without an architecture change; 17 + 10 box values would not, which is one reaso
 - **M3 (box):** wrong-object choices should fall toward zero (the target box says which object); little effect on milk's hold.
   A gain around the wrong-object rate (about 6 points) is a hypothesis, not an upper bound; boxes may also change alignment.
   M0 has low unadjusted power at that effect size. *(Written for the numeric-state design against A0; replaced on 2026-11-03 by
-  the M3 spec's prediction for the drawn box against A2: 0 to +4 points, wrong-object worth at most 0.7.)*
+  the M3 spec's prediction for the drawn box against A2: 0 to +4 points, wrong-object worth at most 0.7. **Result 2026-11-05: +8.4
+  points (A3 99.65% against A2 91.3%), wrong-object 4 → 0, never-lifted 33 → 0; the magnitude prediction was wrong, see
+  [the M3 report](../../VLA_INPUTS_M3_20261105.md).)*
 - **M2 (F/T):** an arm intended to help the hold, sampled at 30 Hz but used at 3 Hz replanning (ten queued actions). But the state already contains both finger positions, so the
   policy already "knows" the gripper closed. S0 (2026-10-30) showed the object's weight is not readable from the mean wrist
   force (the hand's own ~10 N dominates); the new information is grip force (separates objects in the hold, 4.1–6.6 N) and

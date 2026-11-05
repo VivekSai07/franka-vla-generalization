@@ -29,9 +29,9 @@ bottle and cereal never collected) was collected and sealed 2026-10-20, trained 
 [docs/PROPS_P3_COLLECTION_20261020.md](docs/PROPS_P3_COLLECTION_20261020.md). Since 2026-10-30 the **VLA inputs programme**
 holds P2's data fixed and changes what the model sees: S0 sealed sidecar of forces and boxes, M0 a frozen paired evaluator
 (A0 = P2's checkpoint, 78.7% on 573 layouts), M2 force/torque in the state (A2, 91.3%, +12.6 points, 2026-11-03), M3 the target
-box drawn on the images over M2's state (being built), then M3b, M4, and pi0.5 (M1) last; see
+box drawn on the images over M2's state (A3, 99.65%, +8.4 points over A2, criterion met, 2026-11-05), then M3b, M4, and pi0.5 (M1) last; see
 [docs/superpowers/specs/2026-10-30-vla-inputs-programme-design.md](docs/superpowers/specs/2026-10-30-vla-inputs-programme-design.md)
-and [docs/VLA_INPUTS_M2_20261103.md](docs/VLA_INPUTS_M2_20261103.md). See [README.md](README.md) for results,
+and [docs/VLA_INPUTS_M2_20261103.md](docs/VLA_INPUTS_M2_20261103.md), [docs/VLA_INPUTS_M3_20261105.md](docs/VLA_INPUTS_M3_20261105.md). See [README.md](README.md) for results,
 [TODO.md](TODO.md) for what is open, and [HF artifacts](docs/HUGGING_FACE_ARTIFACTS.md)
 for the exact published datasets/checkpoints and re-evaluation dependencies.
 
