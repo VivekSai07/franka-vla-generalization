@@ -13,6 +13,7 @@ worktree, through `scripts/vla_inputs_m3b_eval.sh identity_gate`. Not part of an
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 
 import numpy as np
@@ -113,6 +114,14 @@ def run(campaign, out, checkpoint=CHECKPOINT, ordinals=ORDINALS, *, repo=evaluat
     return result
 
 
+def configure_runtime():
+    """What M0's `worker` sets before any trial (`vla_inputs_eval.evaluate.main`): offline mode, the cuBLAS workspace and deterministic
+    torch algorithms. Without them the policy's tick-0 action already differs from A3's recorded one (2026-11-05, first attempt)."""
+    os.environ.update(HF_HUB_OFFLINE="1", TRANSFORMERS_OFFLINE="1", HF_DATASETS_OFFLINE="1", CUBLAS_WORKSPACE_CONFIG=":4096:8")
+    import torch
+    torch.use_deterministic_algorithms(True)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     parser.add_argument("--campaign", required=True, help="M0's campaign directory (read only)")
@@ -120,6 +129,7 @@ def main(argv=None):
     parser.add_argument("--checkpoint", type=int, default=CHECKPOINT)
     parser.add_argument("--ordinals", type=int, nargs="+", default=list(ORDINALS))
     args = parser.parse_args(argv)
+    configure_runtime()
     return exit_code(run(args.campaign, args.out, args.checkpoint, tuple(args.ordinals)))
 
 

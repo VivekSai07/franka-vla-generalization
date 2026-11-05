@@ -112,6 +112,47 @@ class Pinned(unittest.TestCase):
         self.assertEqual(sorted(corruption.ARMS), ["A6", "A7", "A8", "A9"])
 
 
+class WorkerRuntime(unittest.TestCase):
+    """The gate must run under the very runtime M0's worker sets (`evaluate.main`): the first live attempt (2026-11-05) did not, and
+    its tick-0 action already differed from A3's recorded one by 3e-4, so the comparison proved nothing about the box."""
+
+    def fake_torch(self, calls):
+        import sys
+        import types
+        torch = types.ModuleType("torch")
+        torch.use_deterministic_algorithms = lambda flag: calls.append(("deterministic", flag))
+        previous = sys.modules.get("torch")
+        sys.modules["torch"] = torch
+        self.addCleanup(lambda: sys.modules.__setitem__("torch", previous) if previous is not None else sys.modules.pop("torch", None))
+
+    def test_configure_runtime_sets_what_the_worker_sets(self):
+        import os
+        calls = []
+        self.fake_torch(calls)
+        saved = {k: os.environ.get(k) for k in ("HF_HUB_OFFLINE", "TRANSFORMERS_OFFLINE", "HF_DATASETS_OFFLINE", "CUBLAS_WORKSPACE_CONFIG")}
+        self.addCleanup(lambda: [os.environ.pop(k, None) if v is None else os.environ.__setitem__(k, v) for k, v in saved.items()])
+        for key in saved:
+            os.environ.pop(key, None)
+        identity_gate.configure_runtime()
+        self.assertEqual(calls, [("deterministic", True)])
+        self.assertEqual({k: os.environ[k] for k in saved}, dict(HF_HUB_OFFLINE="1", TRANSFORMERS_OFFLINE="1", HF_DATASETS_OFFLINE="1",
+                                                                 CUBLAS_WORKSPACE_CONFIG=":4096:8"))
+
+    def test_the_command_line_configures_the_runtime_before_anything_runs(self):
+        from unittest.mock import patch
+        order = []
+        with patch.object(identity_gate, "configure_runtime", side_effect=lambda: order.append("configure")), \
+                patch.object(identity_gate, "run", side_effect=lambda *a, **k: order.append("run") or dict(identical=True)):
+            self.assertEqual(identity_gate.main(["--campaign", "/c", "--out", "/o"]), 0)
+        self.assertEqual(order, ["configure", "run"])
+
+    def test_the_worker_source_still_sets_the_same_runtime(self):
+        """If M0's worker ever stops enabling deterministic algorithms, this gate's reference runtime has to be revisited."""
+        source = (Path(identity_gate.__file__).parents[1] / "vla_inputs_eval/evaluate.py").read_text()
+        self.assertIn("torch.use_deterministic_algorithms(True)", source)
+        self.assertIn('CUBLAS_WORKSPACE_CONFIG=":4096:8"', source)
+
+
 class CompareTrial(Fixture):
     def folders(self, change=None, episode_change=None):
         source = protocol.trial_folder(self.recorded_dir, self.trials[0])

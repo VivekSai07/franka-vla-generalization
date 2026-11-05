@@ -8,7 +8,8 @@
 #
 #   identity_gate        the live equality gate (spec D7 iv): a zero-corruption adapter re-runs A3's comparison trials 1 and 291 and
 #                        every trace array must equal A3's recorded one bit for bit. OUT is a SCRATCH directory (never the campaign);
-#                        CAMPAIGN (default M0's campaign) is mounted read-only at /campaign and is only read
+#                        CAMPAIGN (default M0's campaign) is mounted read-only at /campaign and is only read. It runs under M0's
+#                        worker runtime (deterministic torch algorithms, CUBLAS_WORKSPACE_CONFIG) and the workers' CPU thread settings
 #   prepare <arm>        arm A5..A9 at checkpoint 101,520 (the single and matched-phase checkpoint)
 #   smoke <arm>          the 2 smoke layouts, one worker
 #   comparison <arm>     the comparison tier: one pool of WORKERS workers on CORES cores each (6 x 7)
@@ -54,7 +55,7 @@ case "$step" in
   identity_gate)
     [ -d "$CAMPAIGN" ] || { echo "campaign $CAMPAIGN does not exist" >&2; exit 1; }
     [ "$(cd "$CAMPAIGN" && pwd -P)" != "$(mkdir -p "$OUT" && cd "$OUT" && pwd -P)" ] || { echo "OUT must be a scratch directory, not the campaign" >&2; exit 1; }
-    EXTRA_MOUNTS="-v $CAMPAIGN:/campaign:ro" "$DRIVER" gpu_module experiments.vla_inputs_m3b_analysis.identity_gate \
+    EXTRA_MOUNTS="-v $CAMPAIGN:/campaign:ro" MODULE_CORES="$CORES" "$DRIVER" gpu_module experiments.vla_inputs_m3b_analysis.identity_gate \
       --campaign /campaign --out /out --checkpoint "$CHECKPOINT" --ordinals 1 291 ;;
   prepare)
     arm="${2:-}"; adapter="$(adapter_of "$arm")"

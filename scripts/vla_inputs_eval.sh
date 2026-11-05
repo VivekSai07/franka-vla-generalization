@@ -88,6 +88,6 @@ case "$cmd" in
   compare) cli compare --arm "$1" --checkpoint "$2" ;;
   final)   cli final ;;
   module)  docker_run "$ROB" 0 "" 0 "" 1 -- -m "$@" ;;  # any module of the repository, robosuite image, no GPU (M3's A3-against-A2 test)
-  gpu_module) docker_run "$ROB" 1 "" 0 "" 1 -- -m "$@" ;;  # the same with the GPU (M3b's live identity gate)
+  gpu_module) docker_run "$ROB" 1 "" 0 "" "${MODULE_CORES:-1}" -- -m "$@" ;;  # the same with the GPU; MODULE_CORES sets the CPU thread variables (M3b's live identity gate)
   *) echo "unknown command $cmd" >&2; exit 2 ;;
 esac
