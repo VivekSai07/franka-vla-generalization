@@ -2,6 +2,8 @@
 
 ## Where things stand (2026-11-05)
 
+- **M3b in progress (2026-11-05):** built, tested and merged (`feat/vla-inputs-m3b`, `main` at `0f286fd`); the live identity gate passed (attempt 1 failed because my gate did not share the worker's deterministic-algorithms runtime; fixed, attempt 2 identical on trials 1 and 291); night A, the comparison tier of the corrupted-box arms A6-A9 (6 workers x 7 cores, one arm after the other), started 20:57. **Open, in order:** read night A; the detector (frame stride and gate thresholds fixed in the contract first, then extraction on spare cores, training, the D5 gate); arm A5; night B; `docs/VLA_INPUTS_M3B_<date>.md` against the recorded prediction and D10; then ask the user which branch follows (M3b closes / M3b-2 / M4a). Do not start M3b-2, M4a or a download bundle without the user. [Status](docs/BENCHMARK_STATUS.md).
+
 - **M3 done and evaluated (2026-11-05): the box helps on top of force.** A3 (target box drawn on both cameras over M2's force
   state) scores 571/573 = 99.65% at 101,520 against A2's 523/573 = 91.3% at 88,830: +8.4 points [6.1, 10.6], b = 50, c = 2,
   exact McNemar p = 6.1e-13, amended-Holm p = 2.4e-12, criterion met (matched phase 101,520 vs 101,520: +9.4 [7.0, 11.9]).
