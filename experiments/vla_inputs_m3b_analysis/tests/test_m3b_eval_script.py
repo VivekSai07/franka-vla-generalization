@@ -213,6 +213,7 @@ class Safety(unittest.TestCase):
     def test_the_script_is_executable_and_pins_its_constants(self):
         self.assertTrue(os.access(SCRIPT, os.X_OK))
         text = SCRIPT.read_text()
+        self.assertIn("outputs/vla_inputs_box_detector/run_v1/final", text)  # the directory arm A5's adapter binds as an input
         for needle in ("CHECKPOINT=101520", "xvla_p2_force_box_v1/checkpoints", "m0_20261030", 'MAIN="${MAIN:-/home/utxowqr/smolvla_franka}"'):
             self.assertIn(needle, text)
         for adapter in ADAPTERS.values():

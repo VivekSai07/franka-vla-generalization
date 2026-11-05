@@ -14,6 +14,7 @@ EPISODE = 480
 
 def mounted():
     try:
+        import mujoco  # noqa: F401  (this module runs in the robosuite image)
         from experiments.xvla_p2_force_box import boxes, contract
         return (contract.DATA / "meta/info.json").is_file() and (boxes.forces.SIDECAR / "seal.json").is_file()
     except Exception:
