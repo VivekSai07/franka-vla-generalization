@@ -113,7 +113,7 @@ tier, then the comparison tier at two checkpoints about 5.4 h with 6 workers.
 
 Box-only arm on A0, distractor boxes, a detector, predicted boxes (M3b).
 
-## Follow-on: M3b — predict the box, then act on it (approach C, scoped only)
+## Follow-on: M3b — predict the box, then act on it (approach C; **specified 2026-11-05 as a two-stage study: [M3b spec](2026-11-05-vla-inputs-m3b-predicted-box-design.md)**; the paragraph below is the original scoping)
 
 GraspVLA-style: the policy produces the target's box itself and the action is conditioned on that prediction, so no oracle is
 needed at test time. **Its spec is written only after A3's result. Start condition:** A3 meets the pre-registered criterion, or

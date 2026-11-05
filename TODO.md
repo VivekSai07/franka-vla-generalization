@@ -6,8 +6,7 @@
   state) scores 571/573 = 99.65% at 101,520 against A2's 523/573 = 91.3% at 88,830: +8.4 points [6.1, 10.6], b = 50, c = 2,
   exact McNemar p = 6.1e-13, amended-Holm p = 2.4e-12, criterion met (matched phase 101,520 vs 101,520: +9.4 [7.0, 11.9]).
   The prediction (0 to +4, probably not significant) was wrong; never-lifted fell 33 → 0. Oracle box, one seed, box given force.
-  [Report](docs/VLA_INPUTS_M3_20261105.md) · [RESULTS.md](docs/RESULTS.md). **Open, needs the user:** M3b's form (its start
-  condition is met; spec not written) and whether M4 should stay on layouts where A3 fails 2 of 573. The M3 download bundle is
+  [Report](docs/VLA_INPUTS_M3_20261105.md) · [RESULTS.md](docs/RESULTS.md). **M3b specified and approved (user, 2026-11-05):** [spec](docs/superpowers/specs/2026-11-05-vla-inputs-m3b-predicted-box-design.md) · [plan](docs/superpowers/plans/2026-11-05-vla-inputs-m3b-predicted-box.md); next, a build session. Two-stage form: A3's frozen policy fed a pixel-only box (A5) and a corrupted oracle box (A6-A9, no training); decision rule on R = (S - 523)/48; M4 stays on these 573 layouts and is judged on the same A2-to-A3 scale. The M3 download bundle is
   staged for Windows (`outputs/downloads_20261105/vla_inputs_m3/`, verified, not yet transferred or published). The M3 training output
   (6 checkpoints, 2 snapshots, five gate directories) stays on disk; delete nothing without the user.
 

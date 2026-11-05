@@ -1,5 +1,9 @@
 # Franka benchmark: start here
 
+## M3b specified: the box from pixels, on A3's frozen policy - 2026-11-05
+
+Approved by the user after the M3 handoff. M3's box is an oracle; M3b measures what survives without it, on one scale: A2 (no box, 523/573) is the floor, A3 (oracle box, 571/573) the ceiling, a gap of 48 layouts, so A3's saturation does not limit it. **Arms (no policy training):** A5 = A3 at 101,520 fed by a pixel-only detector trained on S0's boxes; A6-A9 = A3 fed the oracle box with one corruption each (jitter 6 px, jitter 18 px, gripper-camera box missing half the time, a distractor's box instead of the target's). **Questions:** Q1 recovery R = (S - 523)/48 and A5 against A2; Q2 what box error A3 tolerates; Q3 whether A3 follows the box or the language (A9); Q4 where a predicted box fails. **Decision rule fixed before any run:** R >= 0.75 closes M3b; 0.25 to 0.75 considers a retrain on noisy boxes (M3b-2); below 0.25 or not above A2 points to M4a. **Prediction recorded:** R 0.6 to 0.95, per-class ranges in the spec. **Found while writing it:** X-VLA's checkpoint holds only Florence-2's encoder (196 language-model tensors, all `encoder.*`), so GraspVLA-style box tokens need new decoder weights and are deferred (M3c). M4 stays on the same 573 layouts, judged by recovery between A2 and A3. Nothing built or run. [Spec](superpowers/specs/2026-11-05-vla-inputs-m3b-predicted-box-design.md) · [plan](superpowers/plans/2026-11-05-vla-inputs-m3b-predicted-box.md).
+
 ## M3 download bundle staged for Windows - 2026-11-05
 
 `outputs/downloads_20261105/vla_inputs_m3/` (M2's pattern; hardlinks, 63 MB of new bytes: `code/`, scripts, logs and READMEs): all six

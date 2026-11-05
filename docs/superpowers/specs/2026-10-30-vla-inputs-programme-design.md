@@ -28,6 +28,10 @@ M3 result. A numeric box no longer fits X-VLA's 20 state slots beside M2's 17 va
 rather than drawing them; that variant is **M3b**, scoped in the [M3 spec](2026-10-30-vla-inputs-m3-box-design.md) and specified
 only if A3 helps. Order: M3 → M3b → M4 → M1. No box pilot (pilots may promote, never drop, since M2's calibration).
 
+## Revision — 2026-11-05 (user): M3b specified as a two-stage study
+
+After M3 (A3 571/573, +8.4 over A2) M3b is a measurement on A3's frozen policy, with no policy training: arm A5 feeds a box predicted from pixels, arms A6-A9 feed a corrupted oracle box, all on the 573 layouts and read on the scale A2 (523, floor) to A3 (571, ceiling); [spec](2026-11-05-vla-inputs-m3b-predicted-box-design.md). The end-to-end GraspVLA-style variant (M3c) needs Florence-2 decoder weights X-VLA's checkpoint does not hold. M4 stays on the same layouts, judged on the same scale.
+
 ## Question
 
 Every phase so far changed the **dataset**. This programme holds the data fixed and changes **what the model sees** (and,
@@ -72,7 +76,7 @@ model is trained on stay the sealed ones.
 | M1 | [m1 pi0.5 on P2](2026-10-30-vla-inputs-m1-pi05-design.md) | M0 (for evaluation) | training | arm A1 |
 | M2 | [m2 force/torque in state](2026-10-30-vla-inputs-m2-force-design.md) | S0, M0 | training | arm A2 |
 | M3 | [m3 box drawn on the images, over M2's state](2026-10-30-vla-inputs-m3-box-design.md) | S0, M0, M2 (A2 evaluated) | training | arm A3, tested against A2 |
-| M3b | scoped in the M3 spec; own spec after A3 | A3 helps | to be decided | predicted box conditioning the actions |
+| M3b | [m3b box from pixels](2026-11-05-vla-inputs-m3b-predicted-box-design.md) | M3 (A3 helps: met) | none (rollouts, plus a small detector) | arms A5 (predicted box), A6-A9 (corrupted oracle), on A3's frozen policy |
 | M4 | [m4 output side](2026-10-30-vla-inputs-m4-outputs-design.md) | M3 result | training | arm A4 (M4a); M4b scoped only |
 
 Plans: [M0](../plans/2026-10-30-vla-inputs-m0-evaluation.md) · [S0](../plans/2026-10-30-vla-inputs-s0-signals.md) ·
@@ -104,6 +108,8 @@ flowchart LR
 | A2 | X-VLA | 9 + 8 (F/T 6, finger forces 2) = 17 | sealed P2 | P2 + S0 | M2 |
 | A3 | X-VLA | A2's 17 (redesigned 2026-11-03; was 9 + 10 box values) | sealed P2 with the target box drawn on both cameras | P2 + S0 | M3 |
 | A4 | X-VLA + auxiliary box head | 9 | sealed P2 | P2 + S0 (targets only) | M4a |
+| A5 | A3's policy at 101,520, box from a pixel-only detector | A2's 17 | frames drawn with the predicted target box | P2 + S0 (detector labels) | M3b |
+| A6-A9 | A3's policy at 101,520, the oracle box corrupted (jitter 6 px, jitter 18 px, gripper box missing half the time, a distractor's box) | A2's 17 | as A3, corrupted box | P2 + S0 | M3b |
 
 A2, A3 and A4 use P2's recipe unchanged (126,900 updates = 5.0 epochs, effective batch 8, the same checkpoint grid and the
 same sample order). X-VLA has 20 proprioception slots (`check_model_inputs` pads 9 to 20 with zeros), so 17 fits
