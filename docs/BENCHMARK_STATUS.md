@@ -1,5 +1,20 @@
 # Franka benchmark: start here
 
+## M3 download bundle staged for Windows - 2026-11-05
+
+`outputs/downloads_20261105/vla_inputs_m3/` (M2's pattern; hardlinks, 63 MB of new bytes: `code/`, scripts, logs and READMEs): all six
+selection-tier checkpoints (101,520 is the winner and matched-phase checkpoint) without `training_state.pt`, the A0 control checkpoint, the
+S0 sidecar, the whole M0 campaign (A0, A2 and A3 trials), the training record with the five gate records, the overlay sheets the user
+approved and the parity sample, the P2 data sections, the base bundle, a `git archive` of `138a89f`, re-evaluation scripts and an
+`hf_upload/` view with a model card. **Verified on RTX:** `verify_bundle.py` 49 checks passed (weights, which also equal the hashes the
+evaluation recorded, S0 and P2 seals, base bundle, training complete at 126,900 with 2 resumes, five gates, 573/573 trials for A0, A2 (both
+checkpoints) and A3, 79/79 at six selection checkpoints for A2 and A3, recorded successes 451/523/517/571 recomputed from the trial files);
+in a clean container mounting only the bundle, `prepare` reproduced the recorded core (`c4f6c303f2ae`) and the A0 and A3 arm hashes, the
+2 smoke trials and 3 comparison trials (a held-out success and **both of A3's failures**) re-ran with all 12 trace arrays bit-identical,
+and `compare` / `compare-a0` reproduced the three recorded compare files in every field. **Not run:** a retrain, a full comparison
+re-evaluation. **Not published, nothing deleted.** The builders are `outputs/downloads_20261105/build_vla_inputs_m3_part{1,2}.sh`; transfer
+and reclaim recipes are in the bundle's README.
+
 ## M3 trained and evaluated: the box helps on top of force, +8.4 points - 2026-11-05
 
 Training finished 2026-11-05 05:14 (126,900 updates, 29.6 h, two clean `--stop-at` pauses and a final resume, `final_data_binding_passed`

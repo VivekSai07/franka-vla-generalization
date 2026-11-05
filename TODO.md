@@ -7,7 +7,8 @@
   exact McNemar p = 6.1e-13, amended-Holm p = 2.4e-12, criterion met (matched phase 101,520 vs 101,520: +9.4 [7.0, 11.9]).
   The prediction (0 to +4, probably not significant) was wrong; never-lifted fell 33 → 0. Oracle box, one seed, box given force.
   [Report](docs/VLA_INPUTS_M3_20261105.md) · [RESULTS.md](docs/RESULTS.md). **Open, needs the user:** M3b's form (its start
-  condition is met; spec not written) and whether M4 should stay on layouts where A3 fails 2 of 573. The M3 training output
+  condition is met; spec not written) and whether M4 should stay on layouts where A3 fails 2 of 573. The M3 download bundle is
+  staged for Windows (`outputs/downloads_20261105/vla_inputs_m3/`, verified, not yet transferred or published). The M3 training output
   (6 checkpoints, 2 snapshots, five gate directories) stays on disk; delete nothing without the user.
 
 - **M2 done and evaluated (2026-11-03):** force/torque in the state raises success on M0's comparison tier from 78.7% (A0,

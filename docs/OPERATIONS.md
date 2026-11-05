@@ -135,6 +135,10 @@ the pinned image above on MuJoCo 3.13.0.
   re-evaluable and retrainable off RTX): `outputs/downloads_20261103/vla_inputs_m2/`, README inside; three checkpoints (88,830,
   101,520, 126,900), the S0 sidecar, the whole M0 campaign (A0 and A2) and the P2 data sections (identical to props_p2's, optional
   to transfer).
+- M3 (VLA inputs, the target's box drawn on the images) archive bundle, staged 2026-11-05 (hardlinks, 63 MB of new bytes, 20 GB of
+  checkpoints, 24 GB to transfer without the shared P2 sections and `hf_upload/`): `outputs/downloads_20261105/vla_inputs_m3/`,
+  README inside; all six selection-tier checkpoints of the run (101,520 is the winner), the whole M0 campaign (A0, A2 and A3), the
+  training and gate records, a `git archive` of `138a89f`; builders `outputs/downloads_20261105/build_vla_inputs_m3_part{1,2}.sh`.
 - Props P1 training (`experiments/xvla_props_p1/`, admission image, no simulator): forked from
   `xvla_b3_robosuite` — same `--check`/`--preflight`/`--resume-proof`/`--train [--resume]` gates, each
   output subdirectory (`_admission`, `_preflight`, `_resumeproof`, the main output) **must be its own

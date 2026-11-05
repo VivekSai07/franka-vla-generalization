@@ -79,7 +79,10 @@ container, run alone, matched originals that had run in 8-way parallel workers b
 hardlinks of the props_p2 bundle's and **optional to transfer** (`verify_bundle.py --p2-bundle`); adds `sidecar/`, the S0 sealed
 sidecar a force-state checkpoint's constants derive from, `training/gates/`, and a `bundle_evaluate.py` that wraps M0's frozen
 `prepare`/`worker`/`collect`/`compare` instead of replacing parts of an evaluator: its `prepare` re-derives the core and arm hashes
-from `code/` and refuses unless they equal the recorded ones).
+from `code/` and refuses unless they equal the recorded ones),
+`outputs/downloads_20261105/vla_inputs_m3/` (complete, same shape as M2's with all six selection-tier checkpoints; its
+`bundle_evaluate.py` adds `compare` for A3 against A2 and `compare-a0`, seeding the recorded control results; the clean-container
+check re-ran **both of the arm's failing trials** as well as a success, so failures are shown to reproduce too).
 
 **Never rename trial folders in an evaluation output** to make them easier to browse: the
 evaluators find trials by `trial_NNN_<layout_id>` for `--resume` and re-analysis. Build a
