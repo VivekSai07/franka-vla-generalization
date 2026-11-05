@@ -100,8 +100,15 @@ they live in a dedicated conda env, never in `base`:
   every `git commit|merge|cherry-pick|rebase` (checked in its source), which would spend tokens and
   touch `.ua/` mid-experiment, and never fires in Copilot. Revisit only with a way to bound the cost.
 - A refresh costs about the number of files `status` reports: 18 files cost 9 small analyzer batches,
-  a layers pass and a tour pass; 54 files cost 14 batches plus the same two passes. The deterministic
-  prepare/merge/save steps cost no tokens.
+  a layers pass and a tour pass; 54 files cost 14 batches plus the same two passes; 175 files (33k
+  lines, 22 batches in 6 analyzers, 24% of the 142k lines of a full rebuild) cost the same two passes.
+  The deterministic prepare/merge/save steps cost no tokens. Cost follows lines changed, so refresh
+  sooner than the plugin's 30-file limit forces; where to draw the line is a judgment (not measured).
+- An analyzer can emit a node id with the wrong prefix (`file:` for a Dockerfile, which is `service:`);
+  the merge then drops the edge and lists it under "Could not fix". Read that list and correct the id in
+  the scratch `.ua/intermediate/batch-N.json`, then re-merge (2 edges recovered on 2026-11-05).
+- Tour steps quote figures from reports: check each against the docs before saving (the 2026-11-05
+  step was checked this way, every number traced to TODO.md or the M2/M3 reports).
 - Benchmark: `python3 scripts/code_graph_bench.py` reproduces every figure above.
 
 ## 6. Installing the plugin
