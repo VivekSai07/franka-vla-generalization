@@ -1,5 +1,15 @@
 # Franka benchmark: start here
 
+## New direction: the generalization programme G specified; M3b to be stopped - 2026-11-06
+
+After reading GraspVLA (paper v3 with appendices, SynGrasp-1B, the code and playground), the user chose five capabilities to give and measure:
+distractors, lighting, background, spatial, closed-loop; categories last and not strict. GraspVLA's evidence is that capabilities 1-5 come from
+training-data diversity (randomized lighting, textures, table height, layouts, initial pose over 10 M trajectories) and closed-loop correction emerges
+without recovery demonstrations; categories need many categories and web co-training. Decisions: bin sorting stays (grasp-and-lift as a sub-metric),
+A2's inputs without the oracle box, X-VLA for G0-G2, pi0.5 for G3 (M1 folded in), G1 at about 3,000 episodes and M2's update budget, CC0 textures,
+M4a paused, **M3b stopped** (its open question, a predicted box, feeds no G decision since G drops the box). Night A's raw counts (analysis by the
+closing step): A6 542/573, A7 345/573, A8 545/573, A9 0/573. Nothing built for G. Specs and plans on branch `feat/generalization`.
+
 ## M3b built and gated; night A (the corrupted-box arms A6-A9) started - 2026-11-05
 
 Branch `feat/vla-inputs-m3b`, merged into `main` with `--no-ff` (`1bdbc66`, then `0f286fd` for the gate fix); every rollout runs from the detached worktree `.worktrees/m3b-eval` at `0f286fd`. **Nothing frozen was edited** (`git diff main` against the frozen list is empty); M0's core is still `c4f6c303f2ae` and `scripts/vla_inputs_eval.sh` is not in it (only `EXTRA_MOUNTS`, `gpu_module` and `MODULE_CORES` were added to the driver). **Built (CPU, tests first, every test confirmed against a deliberate mutation):** `experiments/vla_inputs_arm_xvla_force_box_noisy/` (A6-A9: A3's adapter with `corruption.apply`, constants pinned: sigma 6 px and 18 px, dropout 0.5, minimum side 2 px, noise seeded by sha256 of condition, box bytes and tick), `experiments/vla_inputs_m3b_analysis/` (R with a stratified layout bootstrap, McNemar, Holm over the four, failure classes, the detector's per-tick error; decision thresholds and the recorded prediction pinned in code) and `scripts/vla_inputs_m3b_eval.sh`. Measured on S0's sealed boxes, the corruptions' mean IoU with the true box (front / gripper camera): `jitter_small` 0.585 / 0.840, `jitter_large` 0.254 / 0.622, `dropout` 1.000 / 0.500; the front box is small (median 27 px), so 6 px already costs 0.4 of IoU there. All 576 comparison layouts were restored once (12 CPU shards): every one has one or two planned distractors, so the swap is defined everywhere.

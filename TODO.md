@@ -1,6 +1,14 @@
 # SmolVLA / X-VLA Franka TODO
 
-## Where things stand (2026-11-05)
+## Where things stand (2026-11-06)
+
+- **New direction (user, 2026-11-06): the generalization programme G.** Give the bin-sorting policy, and measure, five GraspVLA-style capabilities:
+  distractors, lighting, background, spatial, closed-loop (categories last, not strict). Order **G0 → G1 → G2 → G3**: G0 a frozen benchmark with five
+  perturbation axes paired with nominal (A2 and A0 first); G1 a 3,000-episode domain-randomized dataset trained on X-VLA with A2's inputs (no oracle box);
+  G2 recovery demonstrations for closed-loop; G3 categories with pi0.5 (M1 folded in). **M3b stopped** (night A recorded; detector and A5 not run);
+  M4a paused. Branch `feat/generalization`. [Programme](docs/superpowers/specs/2026-11-06-generalization-programme-design.md) ·
+  [G0 spec](docs/superpowers/specs/2026-11-06-g0-generalization-benchmark-design.md) · [G0 plan](docs/superpowers/plans/2026-11-06-g0-generalization-benchmark.md) ·
+  [G1 spec](docs/superpowers/specs/2026-11-06-g1-randomized-data-design.md) · [G1 plan](docs/superpowers/plans/2026-11-06-g1-randomized-data.md).
 
 - **M3b in progress (2026-11-05):** built, tested and merged (`feat/vla-inputs-m3b`, `main` at `0f286fd`); the live identity gate passed (attempt 1 failed because my gate did not share the worker's deterministic-algorithms runtime; fixed, attempt 2 identical on trials 1 and 291); night A, the comparison tier of the corrupted-box arms A6-A9 (6 workers x 7 cores, one arm after the other), started 20:57. **Open, in order:** read night A; the detector (frame stride and gate thresholds fixed in the contract first, then extraction on spare cores, training, the D5 gate); arm A5; night B; `docs/VLA_INPUTS_M3B_<date>.md` against the recorded prediction and D10; then ask the user which branch follows (M3b closes / M3b-2 / M4a). Do not start M3b-2, M4a or a download bundle without the user. [Status](docs/BENCHMARK_STATUS.md).
 
