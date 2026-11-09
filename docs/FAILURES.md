@@ -225,6 +225,27 @@ writing a prediction, list every failure class the input could plausibly touch a
 input is named for; and treat the headroom (here 8.7 points) as the plausible upper end, not the unlikely one. Prediction
 and result are both kept ([report](VLA_INPUTS_M3_20261105.md)).
 
+70. **M3b's first live identity gate failed because the gate did not run under the runtime of the run it was checking.** The gate re-runs A3's recorded
+    comparison trials 1 and 291 with a zero-corruption adapter and demands every trace array bit for bit. Attempt 1 (2026-11-05,
+    `outputs/vla_inputs_eval/m3b_identity_gate_20261105`) differed from tick 0: the state, props and scene were identical, the policy's raw action differed
+    by 3.2e-4, and trial 291 ended at 484 ticks against the recorded 313. The cause was in the gate harness, not the arm: M0's `worker` calls
+    `torch.use_deterministic_algorithms(True)` (and the comparison workers run with 7 CPU threads) and the gate's own entry point did not. Fixed with tests first
+    (`identity_gate.configure_runtime`, `MODULE_CORES`; each confirmed against a mutation); attempt 2 (`..._b`) was identical on both trials, all 12 arrays and every
+    `episode.json` field but the wall clock. **Lesson:** a bit-for-bit gate is only a gate if the harness reproduces the reference's runtime flags, not only its code and
+    weights; when a re-run differs at the first policy call and nowhere before it, look at numerics flags before suspecting the change under test. Nothing was
+    loosened between the two attempts and the failed output is kept.
+
+71. **A5's per-tick log collided, because the log name used the process id and every container worker is pid 1.** The six workers appended to
+    one `worker_1.jsonl` under colliding trial ids (`p1-r<resets>`) and the analysis refused it. Found only when the analysis ran, after the 573
+    rollouts. The headline (successes) does not use the log, so it was re-run without it; the Q4 read-out (detector error per tick) was recovered
+    by giving each trace tick the first unused log line, in file order, whose oracle box equals the trace's `target_box` byte for byte
+    (`analyse.detector_error(..., interleaved=True)`, tested and mutation-checked); all 573 traces assigned, exploratory. The chain's `analyse` step
+    had also failed silently because its output was filtered through a `grep`. **Lesson:** an identifier that must be unique per worker cannot come
+    from a process id inside containers (use an explicit worker index), and never filter a stage's output so hard that a traceback vanishes. The
+    smoke test was not run with several workers, which is the only way to see a cross-worker collision.
+    Also (pattern of #69): the M3b prediction undershot for A6/A7 (reasoned from "6 px is small" against a front box 27 px wide) and misjudged
+    A9's mechanism (22% wrong object, 78% never lifted).
+
 Broader lessons — every "just increment a counter" or "just leave state alone on retry" assumption in the fixed-layout pipeline broke under broad_workspace retries. Rejections need explicit cleanup for every piece of shared state (LeRobot buffer + PNG dir + attempts dir semantics + admit-count invariant). And a result is only interpretable once you know what the *absence* of the treatment scores on the same protocol.
 
 **Recurring meta-lesson — a green test suite is not evidence.** Six separate times (#10, #15, #20, #24, and twice while porting eval packages) the tests passed while the thing that actually runs was broken, because the tests exercised a *fixture*, a *constant*, the *wrong module*, or every path *except* the one the job takes. When adding a regression test, confirm it fails against the unfixed code. When forking a package, run the `symtable` undefined-name check from #24 before spending GPU time.

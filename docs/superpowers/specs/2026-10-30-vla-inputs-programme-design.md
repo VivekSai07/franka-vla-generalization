@@ -1,6 +1,6 @@
 # VLA inputs programme — same data, new information — design
 
-**Date:** 2026-10-30. **Status (2026-11-05): S0, M0, M2 and M3 done (A3 99.65%, +8.4 points over A2, criterion met; M3b's start condition is met, its spec is not written); M1 deferred to the end.** Originally a draft for
+**Date:** 2026-10-30. **Status (2026-11-09): S0, M0, M2 and M3 done (A3 99.65%, +8.4 points over A2, criterion met; M3b done 2026-11-06: A5 98.1%, R = 0.81 of the A2-to-A3 gap, [report](../../VLA_INPUTS_M3B_20261109.md)); M1 deferred to the end.** Originally a draft for
 external review. Direction, sub-projects and order approved by the user on
 2026-10-30; everything below the "Approved" table is proposed and open to review. Nothing has been built or run except
 the read-only checks cited here. Follows P3, closed as a failed attempt
@@ -30,7 +30,7 @@ only if A3 helps. Order: M3 → M3b → M4 → M1. No box pilot (pilots may prom
 
 ## Revision — 2026-11-06 (user): the programme hands over to G
 
-M3b is stopped after night A (A6–A9 measured; the detector and A5 not run). M4a is paused; M1 (pi0.5) is folded into the generalization programme's
+M3b was to be stopped after night A; its session completed A5 instead and M3b closed on 2026-11-09 (R = 0.81, [report](../../VLA_INPUTS_M3B_20261109.md)). M4a is paused; M1 (pi0.5) is folded into the generalization programme's
 last phase. Work continues in the [generalization programme](2026-11-06-generalization-programme-design.md), which builds on A2's inputs and drops the oracle box.
 
 ## Revision — 2026-11-05 (user): M3b specified as a two-stage study

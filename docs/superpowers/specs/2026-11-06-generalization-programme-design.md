@@ -39,18 +39,19 @@ and renderer.
 | A visual domain shift alone collapsed a policy: the B2 checkpoint scored 3/20 in the robosuite scene against 19/20 in its own | [ROBOSUITE_SIM2SIM_20261002.md](../../ROBOSUITE_SIM2SIM_20261002.md) |
 | Objects held out of training scored 5.7% (P3) | [PROPS_P3_EVALUATION_20261027.md](../../PROPS_P3_EVALUATION_20261027.md) |
 | On M0's 573 layouts: A0 78.7%, A2 (force) 91.3%, A3 (force + oracle box) 99.65% | [RESULTS.md](../../RESULTS.md) |
-| M3b night A (raw counts from `result.json`, analysis pending): A3 fed a box jittered by 6 px scored 542/573, by 18 px 345/573 (below A2's 523), with the gripper box missing half the time 545/573, and with a distractor's box **0/573** (446 never lifted, 126 wrong object) | `outputs/vla_inputs_eval/m0_20261030/arms/A6..A9`; to be reported by the M3b closing step |
+| M3b (done 2026-11-09): A3 fed a box from a pixel-only detector (A5) scored 562/573, R = 0.81 [0.65, 0.95] of the A2-to-A3 gap; a box jittered by 6 px 542/573, by 18 px 345/573 (below A2's 523), the gripper box missing half the time 545/573, a distractor's box **0/573**; A5's 11 failures are front-camera detector misses | [VLA_INPUTS_M3B_20261109.md](../../VLA_INPUTS_M3B_20261109.md) |
 | The props expert is phase-scripted; each phase's target is derived from the state when the phase starts (the close phase re-reads the object), so it re-targets at phase boundaries but never recovers a lost grasp | `experiments/props_scene/expert.py` |
 | P2's training data has one fixed lighting, one table/floor appearance, one table height, 1–2 distractors from the same six props, home jitter ≤ 1° | `experiments/props_scene/constants.py`, P2 plan |
 
-Consequence for the inputs: **the oracle box is dropped.** A3 follows whatever box it is given (A9), so a box input is a liability
-outside the oracle. Generalization arms use **A2's inputs** (9 joints + 8 force/torque values, two cameras, the instruction).
+Consequence for the inputs: **the box is dropped.** A box helps only when it is right: A3 follows whatever box it is given (A9), and the
+M3b detector was trained and tested only under P2's nominal lighting and appearance, exactly what G0 perturbs. *(Revised 2026-11-09: M3b was
+completed rather than stopped; A5's R = 0.81 does not change this decision, which the user made on 2026-11-06.)* Generalization arms use **A2's inputs** (9 joints + 8 force/torque values, two cameras, the instruction).
 
 ## Decisions (approved 2026-11-06)
 
 | id | decision |
 |---|---|
-| P1 | **Stop M3b** now (detector training and A5 not run); record night A (A6–A9) as M3b's partial result. The question it leaves open (a predicted box) does not feed any G decision, because G drops the box |
+| P1 | Stop M3b (decided 2026-11-06). *Overtaken: its session completed A5 before the stop took effect, and M3b closed on 2026-11-09 with R = 0.81 ([report](../../VLA_INPUTS_M3B_20261109.md)). No G decision depends on it* |
 | P2 | Task: bin sorting, grasp-and-lift as a sub-metric. No alternative task for now |
 | P3 | Inputs: A2's. No oracle box |
 | P4 | Model: X-VLA for G0–G2. No GraspVLA for now. pi0.5 for G3 (M1 folded into G3) |
@@ -96,7 +97,9 @@ flowchart LR
 
 ## Compute and disk (measured 2026-11-06)
 
-One RTX 6000 Ada 48 GB shared with others; 48 cores; 138 GB free on `/`. X-VLA trains at ~0.52 s/update raw, ~28–30 h per 126,900 updates
+One RTX 6000 Ada 48 GB shared with others; 48 cores; 138 GB free on `/` on 2026-11-06, **82 GB on 2026-11-09**: `/var/log` holds 106 GB
+(`syslog` grows about 25 GB a day, recurring; only an administrator can truncate it and find the source). G0 needs little disk; G1's
+collection (about 17 GB) plus training (65 GiB guard) does not fit until that is fixed. X-VLA trains at ~0.52 s/update raw, ~28–30 h per 126,900 updates
 with thermal pauses. M0-style rollouts: ~2.7 h per 573 trials with 6 workers. P2's collection: 540 episodes in 54 min with 12 shards.
 
 ## What the programme cannot show

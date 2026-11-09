@@ -1,31 +1,32 @@
 # SmolVLA / X-VLA Franka TODO
 
-## Where things stand (2026-11-06)
+## Where things stand (2026-11-09)
 
 - **New direction (user, 2026-11-06): the generalization programme G.** Give the bin-sorting policy, and measure, five GraspVLA-style capabilities:
   distractors, lighting, background, spatial, closed-loop (categories last, not strict). Order **G0 → G1 → G2 → G3**: G0 a frozen benchmark with five
   perturbation axes paired with nominal (A2 and A0 first); G1 a 3,000-episode domain-randomized dataset trained on X-VLA with A2's inputs (no oracle box);
-  G2 recovery demonstrations for closed-loop; G3 categories with pi0.5 (M1 folded in). **M3b stopped** (night A recorded; detector and A5 not run);
+  G2 recovery demonstrations for closed-loop; G3 categories with pi0.5 (M1 folded in). M3b closed (next bullet);
   M4a paused. Branch `feat/generalization`. [Programme](docs/superpowers/specs/2026-11-06-generalization-programme-design.md) ·
   [G0 spec](docs/superpowers/specs/2026-11-06-g0-generalization-benchmark-design.md) · [G0 plan](docs/superpowers/plans/2026-11-06-g0-generalization-benchmark.md) ·
   [G1 spec](docs/superpowers/specs/2026-11-06-g1-randomized-data-design.md) · [G1 plan](docs/superpowers/plans/2026-11-06-g1-randomized-data.md).
 
-- **M3b in progress (2026-11-05):** built, tested and merged (`feat/vla-inputs-m3b`, `main` at `0f286fd`); the live identity gate passed (attempt 1 failed because my gate did not share the worker's deterministic-algorithms runtime; fixed, attempt 2 identical on trials 1 and 291); night A, the comparison tier of the corrupted-box arms A6-A9 (6 workers x 7 cores, one arm after the other), started 20:57. **Open, in order:** read night A; the detector (frame stride and gate thresholds fixed in the contract first, then extraction on spare cores, training, the D5 gate); arm A5; night B; `docs/VLA_INPUTS_M3B_<date>.md` against the recorded prediction and D10; then ask the user which branch follows (M3b closes / M3b-2 / M4a). Do not start M3b-2, M4a or a download bundle without the user. [Status](docs/BENCHMARK_STATUS.md).
+- **M3b done (2026-11-06; report 2026-11-09): most of the oracle box's gain survives a box predicted from pixels.** Arm A5 (A3's frozen policy, force state, a pixel-only detector's box) scores 562/573 = 98.1% against A2's 523 and A3's 571:
+  **R = 0.8125 [0.647, 0.952]**, A5 against A2 +6.8 points (p = 4.0e-8); the D10 rule (R >= 0.75) closes M3b and puts M4a at lower priority (the interval straddles the threshold). Corrupted-box arms: 6 px noise 542, 18 px noise 345, gripper box missing half the time 545,
+  a distractor's box 0 (the box wins over the language; the policy mostly stalls). A5's 11 failures are front-camera detector misses. Forces still privileged, one seed, closed-set detector, A3 never saw noise. M3b-2 and M4a were not started; the user has set a different next direction.
+  [Report](docs/VLA_INPUTS_M3B_20261109.md) · [RESULTS.md](docs/RESULTS.md) · [Status](docs/BENCHMARK_STATUS.md). The M3b detector cache and the trial videos (`cameras.mp4`) of A5-A9 were deleted on 2026-11-09 to reclaim disk (records, traces and numbers are kept).
 
 - **M3 done and evaluated (2026-11-05): the box helps on top of force.** A3 (target box drawn on both cameras over M2's force
   state) scores 571/573 = 99.65% at 101,520 against A2's 523/573 = 91.3% at 88,830: +8.4 points [6.1, 10.6], b = 50, c = 2,
   exact McNemar p = 6.1e-13, amended-Holm p = 2.4e-12, criterion met (matched phase 101,520 vs 101,520: +9.4 [7.0, 11.9]).
   The prediction (0 to +4, probably not significant) was wrong; never-lifted fell 33 → 0. Oracle box, one seed, box given force.
-  [Report](docs/VLA_INPUTS_M3_20261105.md) · [RESULTS.md](docs/RESULTS.md). **M3b specified and approved (user, 2026-11-05):** [spec](docs/superpowers/specs/2026-11-05-vla-inputs-m3b-predicted-box-design.md) · [plan](docs/superpowers/plans/2026-11-05-vla-inputs-m3b-predicted-box.md); next, a build session. Two-stage form: A3's frozen policy fed a pixel-only box (A5) and a corrupted oracle box (A6-A9, no training); decision rule on R = (S - 523)/48; M4 stays on these 573 layouts and is judged on the same A2-to-A3 scale. The M3 download bundle is
-  staged for Windows (`outputs/downloads_20261105/vla_inputs_m3/`, verified, not yet transferred or published). The M3 training output
-  (6 checkpoints, 2 snapshots, five gate directories) stays on disk; delete nothing without the user.
+  [Report](docs/VLA_INPUTS_M3_20261105.md) · [RESULTS.md](docs/RESULTS.md). **M3b, specified and approved 2026-11-05, is done (first bullet):** [spec](docs/superpowers/specs/2026-11-05-vla-inputs-m3b-predicted-box-design.md) · [plan](docs/superpowers/plans/2026-11-05-vla-inputs-m3b-predicted-box.md). M4 stays on these 573 layouts if it is built, judged on the same A2-to-A3 scale. The M3 download bundle is
+  staged for Windows (`outputs/downloads_20261105/vla_inputs_m3/`, verified; the user was transferring it on 2026-11-06; completion not recorded here). The M3 training output keeps its 6 checkpoints (the resume snapshots, `training_state.pt` and `step_000001` were deleted on the user's go-ahead before 2026-11-09); `step_101520` is A3, M3b's policy: keep it. Delete nothing else without the user.
 
 - **M2 done and evaluated (2026-11-03):** force/torque in the state raises success on M0's comparison tier from 78.7% (A0,
   451/573) to 91.3% (checkpoint 88,830, p = 1.1e-10) and 90.2% (matched-phase 101,520); one training seed. The pre-run
   prediction (small or no effect) was wrong; the 10,000-update force pilot (+3.2, dropped) under-called it.
   [Report](docs/VLA_INPUTS_M2_20261103.md) · [RESULTS.md](docs/RESULTS.md). **Open:** a second training seed for A2 would bound
-  seed-to-seed variation; M3 is done (next bullet), then M3b, M4; M1 (pi0.5) last. Disk: the M2 run keeps 6 checkpoints (about 30 GB
-  each), delete nothing without the user.
+  seed-to-seed variation; M3 and M3b are done, M4 and M1 (pi0.5) are not started. Disk: the M2 run keeps 6 checkpoints (3.3 GB each; its M2 bundle was transferred, the resume snapshots and `training_state.pt` were deleted before 2026-11-09), delete nothing else without the user.
 
 - **M3 redesigned and approved (user, 2026-11-03); built, tested and merged into `main` the same day (`d4752a4`); trained 2026-11-03 to 11-05 (126,900 updates) and evaluated 2026-11-05 (above)**
   (branch `feat/vla-inputs-m3` merged; training worktree `.worktrees/m3-run`, evaluation worktree `.worktrees/m3-eval`; the overlay PNGs were approved by the user; training output `outputs/train/xvla_p2_force_box_v1`): the target's box is **drawn on both camera images** (magenta 4 px band,
@@ -37,7 +38,7 @@
   [Spec](docs/superpowers/specs/2026-10-30-vla-inputs-m3-box-design.md) · [plan](docs/superpowers/plans/2026-10-30-vla-inputs-m3-box.md).
 
 - **Order (user, 2026-10-31, extended 2026-11-03):** M2 → M3 → M3b → M4 → M1 (pi0.5) last. Done in that order so far: M2's
-  gates and training, the pilot build, pilot night 1 (decision recorded blind to M2's full result), M2's evaluation.
+  gates and training, the pilot build, pilot night 1 (decision recorded blind to M2's full result), M2's evaluation, M3, M3b (the user has since set a different direction; M4 and M1 are not started).
 
 - **Overnight pilots done and calibrated (2026-11-02/03; merged into `main`):** continuation pilots from the P2 checkpoint
   (10,000 updates, shared zero-input control, 192 fresh paired layouts, promote iff Δ ≥ +5 points). Night 1 ran `force` only:
@@ -84,7 +85,7 @@
   may overlap M1; GPU evaluation must be separately resource-gated. No experiment source or sealed artifacts changed.
 
 - **Next: the VLA inputs programme — specs and plans drafted 2026-10-30, under external review; only S0 is built (first bullet).** *(Historical
-  entry; as of 2026-11-03 S0, M0, M2 and M3 are done and M3b is next, bullets above.)* The data stays
+  entry; as of 2026-11-03 S0, M0, M2 and M3 are done and M3b followed (done 2026-11-06), bullets above.)* The data stays
   P2's 540 sealed episodes; what changes is what the model sees: M0 a common paired evaluation (fresh layouts, A0 = X-VLA 101,520
   as control), S0 a sealed sidecar of wrist force/torque, finger forces and target boxes for every P2 frame, M1 pi0.5 against
   X-VLA, M2 force/torque in the state, M3 the target box in the state (redesigned 2026-11-03: drawn on the images over M2's
