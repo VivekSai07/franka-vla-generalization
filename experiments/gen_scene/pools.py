@@ -34,6 +34,7 @@ PRIMITIVE_COLOURS = {
           "grey": (0.50, 0.50, 0.55), "olive": (0.55, 0.60, 0.10)},
 }
 PRIMITIVE_MASS_KG = 0.10
+PRIMITIVE_LYING = ("capsule",)  # capsules lie along the body x axis; the other shapes stand
 PRIMITIVE_FRICTION = (1.2, 0.005, 0.0001)  # as the props'
 
 
@@ -90,3 +91,25 @@ def verify_files(manifest=None, directory=None):
 def manifest_digest(manifest=None):
     manifest = manifest if manifest is not None else load_manifest()
     return hashlib.sha256(json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
+def primitive_extent(shape):
+    """(footprint radius, height) in metres of a primitive as `compose` places it: boxes, cylinders and spheres stand, an
+    ellipsoid's long axis and a lying capsule's axis are horizontal. The radius is the half-diagonal / half-length."""
+    for table in PRIMITIVE_SHAPES.values():
+        if shape in table:
+            kind, size = table[shape]
+            break
+    else:
+        raise ValueError(f"unknown primitive shape {shape!r}")
+    if kind == "box":
+        return float((size[0] ** 2 + size[1] ** 2) ** 0.5), 2 * size[2]
+    if kind == "cylinder":
+        return float(size[0]), 2 * size[1]
+    if kind == "sphere":
+        return float(size[0]), 2 * size[0]
+    if kind == "ellipsoid":
+        return float(max(size[0], size[1])), 2 * size[2]
+    if kind == "capsule":
+        return float(size[1] + size[0]), 2 * size[0]
+    raise ValueError(kind)
