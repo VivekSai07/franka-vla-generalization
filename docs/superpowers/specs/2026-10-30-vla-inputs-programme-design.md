@@ -1,6 +1,6 @@
 # VLA inputs programme — same data, new information — design
 
-**Date:** 2026-10-30. **Status (2026-11-05): S0, M0, M2 and M3 done (A3 99.65%, +8.4 points over A2, criterion met; M3b's start condition is met, its spec is not written); M1 deferred to the end.** Originally a draft for
+**Date:** 2026-10-30. **Status (2026-11-09): S0, M0, M2 and M3 done (A3 99.65%, +8.4 points over A2, criterion met; M3b done 2026-11-06: A5 98.1%, R = 0.81 of the A2-to-A3 gap, [report](../../VLA_INPUTS_M3B_20261109.md)); M1 deferred to the end.** Originally a draft for
 external review. Direction, sub-projects and order approved by the user on
 2026-10-30; everything below the "Approved" table is proposed and open to review. Nothing has been built or run except
 the read-only checks cited here. Follows P3, closed as a failed attempt

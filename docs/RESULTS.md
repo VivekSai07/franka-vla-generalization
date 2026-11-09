@@ -6,6 +6,26 @@ failures and lessons in [FAILURES.md](FAILURES.md).
 
 Download corresponding datasets/checkpoints: [HF artifact index](HUGGING_FACE_ARTIFACTS.md).
 
+## VLA inputs M3b, the box from pixels instead of the oracle, on A3's frozen policy (2026-11-06) — measured, not sealed
+
+Arms A5-A9 on M0's frozen comparison tier (core `c4f6c303f2ae`), all A3's policy at 101,520 with M2's force state; **no policy trained**; only the drawn box differs. 573 feasible layouts, paired, one trial each.
+Recovery **R = (S - 523) / 48** on the scale A2 (no box, 523) to A3 (oracle box, 571).
+
+| arm | box drawn | successes | against A3's 571 (A3-only / arm-only, exact McNemar p) |
+|---|---|---|---|
+| **A5** | **predicted from pixels** (detector gate met) | **562 (98.1%)** | 11 / 2, p = 0.022 (descriptive) |
+| A6 | oracle + 6 px noise | 542 (94.6%) | 31 / 2, p = 1.3e-7 |
+| A7 | oracle + 18 px noise | 345 (60.2%) | 226 / 0, p = 1.9e-68 |
+| A8 | oracle, gripper box missing half the time | 545 (95.1%) | 28 / 2, p = 8.7e-7 |
+| A9 | a distractor's box instead of the target's | 0 (0.0%) | 571 / 0, p = 2.6e-172 |
+
+- **R = 0.8125 [0.647, 0.952]** (matched-phase floor 517: 0.833 [0.694, 0.957]); the D10 rule (R >= 0.75) closes M3b by the point estimate, the interval straddles 0.75. **A5 against A2 (pre-registered): +6.8 points [4.4, 9.3], 46 / 7, p = 4.0e-8.**
+  A5's 11 failures: never lifted 7, dropped outside 2, timeout carrying 2, wrong object 0; they are front-camera detector misses (front box absent for 77% of ticks in the failures against 0.3% in the successes), not imprecise boxes.
+- Holm (A6-A9 against A3, exploratory) 2.6e-7, 5.6e-68, 8.7e-7, 1.0e-171. Almost all the loss in A6-A8 is "never lifted". A9's 0 is 446 never lifted and 126 wrong object, so the box wins over the language but the policy mostly stalls (mechanism untested).
+- **Prediction (2026-11-05):** A5 R 0.6-0.95 and the A5 class ranges held; A6 (560-571) and A7 (500-565) were too optimistic; A8 inside; A9's direction right, its mechanism wrong.
+- Caveats: the forces stay privileged (A5 needs a force sensor and a camera), closed-set detector in one scene, A3 never saw noise (A5's shortfall mixes poor information with an unseen input distribution), one training seed, the detector gate shares the 60 validation episodes with the checkpoint choice.
+  Report: [VLA_INPUTS_M3B_20261109.md](VLA_INPUTS_M3B_20261109.md).
+
 ## VLA inputs M3, the target's box drawn on both cameras over force (2026-11-05) — measured, not sealed
 
 Arm A3 on M0's frozen comparison tier (core `c4f6c303f2ae`, arm `150d3970b3b4`): A2's recipe, data and 17-value force state unchanged,

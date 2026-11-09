@@ -235,6 +235,17 @@ and result are both kept ([report](VLA_INPUTS_M3_20261105.md)).
     weights; when a re-run differs at the first policy call and nowhere before it, look at numerics flags before suspecting the change under test. Nothing was
     loosened between the two attempts and the failed output is kept.
 
+71. **A5's per-tick log collided, because the log name used the process id and every container worker is pid 1.** The six workers appended to
+    one `worker_1.jsonl` under colliding trial ids (`p1-r<resets>`) and the analysis refused it. Found only when the analysis ran, after the 573
+    rollouts. The headline (successes) does not use the log, so it was re-run without it; the Q4 read-out (detector error per tick) was recovered
+    by giving each trace tick the first unused log line, in file order, whose oracle box equals the trace's `target_box` byte for byte
+    (`analyse.detector_error(..., interleaved=True)`, tested and mutation-checked); all 573 traces assigned, exploratory. The chain's `analyse` step
+    had also failed silently because its output was filtered through a `grep`. **Lesson:** an identifier that must be unique per worker cannot come
+    from a process id inside containers (use an explicit worker index), and never filter a stage's output so hard that a traceback vanishes. The
+    smoke test was not run with several workers, which is the only way to see a cross-worker collision.
+    Also (pattern of #69): the M3b prediction undershot for A6/A7 (reasoned from "6 px is small" against a front box 27 px wide) and misjudged
+    A9's mechanism (22% wrong object, 78% never lifted).
+
 Broader lessons — every "just increment a counter" or "just leave state alone on retry" assumption in the fixed-layout pipeline broke under broad_workspace retries. Rejections need explicit cleanup for every piece of shared state (LeRobot buffer + PNG dir + attempts dir semantics + admit-count invariant). And a result is only interpretable once you know what the *absence* of the treatment scores on the same protocol.
 
 **Recurring meta-lesson — a green test suite is not evidence.** Six separate times (#10, #15, #20, #24, and twice while porting eval packages) the tests passed while the thing that actually runs was broken, because the tests exercised a *fixture*, a *constant*, the *wrong module*, or every path *except* the one the job takes. When adding a regression test, confirm it fails against the unfixed code. When forking a package, run the `symtable` undefined-name check from #24 before spending GPU time.

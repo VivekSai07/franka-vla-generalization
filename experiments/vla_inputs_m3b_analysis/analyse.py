@@ -22,6 +22,7 @@ and A5 at 101,520. It writes one new file, `m3b_analysis.json`, never inside an 
 """
 import argparse
 import json
+from collections import deque
 from pathlib import Path
 
 import numpy as np
@@ -219,13 +220,43 @@ def _read_logs(log_dir):
     return out
 
 
-def detector_error(log_dir, stage_dir):
+def _assign_interleaved(log_dir, stage_dir):
+    """Logs whose trial ids collide (every container worker was pid 1, so six workers appended to one file under one id): each trace tick takes
+    the first unused log line, in file order, whose oracle box equals the trace's `target_box` at that tick byte for byte. Returns the groups
+    keyed like `_read_logs` and the number of log lines left over. A trace that cannot be assigned completely has no group."""
+    queues = {}
+    for path in sorted(Path(log_dir).glob("*.jsonl")):
+        for line in path.read_text().splitlines():
+            if line.strip():
+                record = json.loads(line)
+                queues.setdefault(np.asarray(record["oracle"], dtype=np.float64).tobytes(), deque()).append(record["predicted"])
+    logs = {}
+    for folder in sorted(Path(stage_dir).glob("trial_*")):
+        with np.load(folder / "trace.npz") as trace:
+            oracle = np.asarray(trace["target_box"], dtype=np.float64)
+        predicted = []
+        for row in oracle:
+            queue = queues.get(row.tobytes())
+            if not queue:
+                break
+            predicted.append(queue.popleft())
+        else:
+            logs[("interleaved", folder.name)] = (np.array(predicted, dtype=np.float64), oracle)
+    return logs, sum(len(q) for q in queues.values())
+
+
+def detector_error(log_dir, stage_dir, interleaved=False):
     """Per-tick error of A5's predicted box against the live oracle box, from the adapter's logs and M0's traces.
 
     A log group (one trial's acts) is matched to a trial by the oracle box sequence, which must equal the trace's `target_box`
-    byte for byte; a trace without a log, and a log without a trace, are reported.
+    byte for byte; a trace without a log, and a log without a trace, are reported. `interleaved` reads logs whose trial ids collide
+    (see `_assign_interleaved`); `log_groups_without_trace` then counts leftover lines.
     """
-    logs = _read_logs(log_dir)
+    leftover = None
+    if interleaved:
+        logs, leftover = _assign_interleaved(log_dir, stage_dir)
+    else:
+        logs = _read_logs(log_dir)
     by_oracle = {}
     for key, (_, oracle) in logs.items():
         by_oracle.setdefault((oracle.shape, oracle.tobytes()), []).append(key)
@@ -252,7 +283,8 @@ def detector_error(log_dir, stage_dir):
             by_outcome[outcome][camera].append(part)
             row[camera] = _summary([part])
         per_trial.append(row)
-    return dict(trials_matched=len(matched), trials_without_log=without_log, log_groups_without_trace=len(logs) - len(used),
+    return dict(trials_matched=len(matched), trials_without_log=without_log,
+                log_groups_without_trace=len(logs) - len(used) if leftover is None else leftover, interleaved=interleaved,
                 overall={camera: _summary(parts) for camera, parts in pooled.items()},
                 by_outcome={k: dict(trials=v["trials"], front=_summary(v["front"]), gripper=_summary(v["gripper"])) for k, v in by_outcome.items()},
                 per_trial=per_trial, replan_stride=REPLAN_STRIDE)
@@ -274,7 +306,7 @@ def _load(root, arm, checkpoint, verify, repo):
     return prepared, stage
 
 
-def analyse(root, verify=True, repo=evaluate.ROOT, resamples=10_000, seed=0, box_log_dir=None):
+def analyse(root, verify=True, repo=evaluate.ROOT, resamples=10_000, seed=0, box_log_dir=None, interleaved_logs=False):
     """The M3b result: R and its interval, A5 against A2 and A3, A6-A9 against A3 with Holm, failure classes, the detector's error."""
     root = Path(root)
     stages = {}
@@ -319,7 +351,8 @@ def analyse(root, verify=True, repo=evaluate.ROOT, resamples=10_000, seed=0, box
                         **{arm: PREDICTION[arm] for arm in ("A6", "A7", "A8", "A9")}),
         corruptions=corruptions, holm=holm_over_corruptions(pvalues), not_run=not_run,
         a9_reading=a9_reading(corruptions["A9"]["rate"]) if "A9" in corruptions else None,
-        detector_error=(detector_error(log_dir, protocol.stage_dir(root, CANDIDATE, "comparison", CHECKPOINT)) if log_dir.is_dir() else None),
+        detector_error=(detector_error(log_dir, protocol.stage_dir(root, CANDIDATE, "comparison", CHECKPOINT), interleaved=interleaved_logs)
+                        if log_dir.is_dir() else None),
         caveat="conditional on these checkpoints and the one training seed; layouts are the independent units; the forces stay privileged")
     return result
 
@@ -331,9 +364,10 @@ def main(argv=None):
     run = commands.add_parser("analyse", help="write m3b_analysis.json under --root (never over an existing file)")
     run.add_argument("--no-verify", action="store_true", help="skip re-verifying the core and the arms against the repository")
     run.add_argument("--resamples", type=int, default=10_000)
+    run.add_argument("--interleaved-logs", action="store_true", help="the log lines of several workers share one trial id: assign them by oracle box")
     run.add_argument("--box-log-dir", help=f"A5's predicted-box logs (default: arms/A5/{BOX_LOG_DIRECTORY})")
     args = parser.parse_args(argv)
-    result = analyse(args.root, verify=not args.no_verify, resamples=args.resamples, box_log_dir=args.box_log_dir)
+    result = analyse(args.root, verify=not args.no_verify, resamples=args.resamples, box_log_dir=args.box_log_dir, interleaved_logs=args.interleaved_logs)
     evaluate.write_new_json(Path(args.root) / "m3b_analysis.json", result)
     print("M3B_ANALYSIS", json.dumps(dict(floor=result["floor"], ceiling=result["ceiling"], a5=result["a5"], R=round(result["recovery"]["R"], 4),
                                           branch=result["decision"]["branch"])), flush=True)

@@ -314,6 +314,31 @@ class DetectorError(unittest.TestCase):
         self.assertLess(by_layout["B"]["front"]["mean_iou"], 1.0)
         self.assertEqual(got["trials_matched"], 2)
 
+    def test_lines_of_several_workers_under_one_trial_id_are_assigned_by_oracle_box(self):
+        """The real A5 run: six containers, each pid 1, appended to one file under one trial id, ticks interleaved."""
+        one, two = oracle_sequence(20, ticks=30), oracle_sequence(21, ticks=40)
+        pred_one, pred_two = one.copy(), np.clip(two + 0.2, 0, 1)
+        for ordinal, (layout, oracle) in enumerate((("A", one), ("B", two)), start=1):
+            folder = self.stage / f"trial_{ordinal:03d}_{layout}"
+            folder.mkdir()
+            np.savez(folder / "trace.npz", target_box=oracle)
+            (folder / "episode.json").write_text(json.dumps(dict(ordinal=ordinal, layout_id=layout, task_success=layout == "A")))
+        lines = []
+        for t in range(40):
+            for oracle, predicted in ((one, pred_one), (two, pred_two)):
+                if t < len(oracle):
+                    lines.append(json.dumps(dict(trial="p1-r1", tick=t, predicted=predicted[t].tolist(), oracle=oracle[t].tolist())))
+        (self.logs / "worker_1.jsonl").write_text("\n".join(lines) + "\n")
+        with self.assertRaisesRegex(ValueError, "ticks are not"):
+            analyse.detector_error(self.logs, self.stage)
+        got = analyse.detector_error(self.logs, self.stage, interleaved=True)
+        by_layout = {t["layout_id"]: t for t in got["per_trial"]}
+        self.assertEqual(got["trials_matched"], 2)
+        self.assertEqual(got["log_groups_without_trace"], 0)
+        self.assertEqual(by_layout["A"]["front"]["mean_iou"], 1.0)  # trial A was assigned exactly its own lines
+        self.assertLess(by_layout["B"]["front"]["mean_iou"], by_layout["A"]["front"]["mean_iou"])
+        self.assertEqual((by_layout["A"]["ticks"], by_layout["B"]["ticks"]), (30, 40))
+
     def test_a_trace_without_a_log_or_a_log_without_a_trace_is_reported_not_ignored(self):
         oracle = oracle_sequence(6)
         self.trial(1, "A", oracle, oracle.copy())
