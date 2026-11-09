@@ -4,7 +4,7 @@
 shape). The numeric defaults (D3, D5, the thresholds in D10) are proposed and are fixed in the code before any run they govern.**
 Part of the [VLA inputs programme](2026-10-30-vla-inputs-programme-design.md). Depends on M3's result ([report](../../VLA_INPUTS_M3_20261105.md):
 A3, the policy trained with the target's box drawn on both camera images, 571/573 = 99.65%, +8.4 points over A2), on S0 (sealed boxes) and on
-M0's frozen core (`c4f6c303f2ae`). Nothing is built.
+M0's frozen core (`c4f6c303f2ae`). **Built and run 2026-11-05/06; result in the [report](../../VLA_INPUTS_M3B_20261109.md) (R = 0.81, D10: closes).** The text below is the design as approved.
 
 ## Why this exists
 

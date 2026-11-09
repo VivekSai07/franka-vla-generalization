@@ -51,10 +51,12 @@ as a sidecar (S0).
   wrong-object 4 → 0, milk 80% → 99%, held-out pairs 87.5% → 99%; every one of A2's 50 failures became a pass, 2 new failures.
   The box is an oracle (simulator state, perfect), one training seed, box given force not box alone: an upper bound, not a
   deployable gain. A3 leaves 2 failures, so the layout set has almost no headroom left.
-- **Next:** M3b (the policy predicts the box itself, GraspVLA-style; start condition met, needs the user's decision on its
-  form), M4 (output side; little headroom left on this layout set), and pi0.5 on the same data last (M1).
+- **M3b, the box from pixels (2026-11-06):** A3's frozen policy fed a pixel-only detector's box (A5) scores 562/573 = 98.1%, recovering **R = 0.81 [0.65, 0.95]** of the 48-layout gap between A2 (523) and the oracle
+  box (571). Noise on the oracle box: 6 px leaves 542, 18 px leaves 345 (worse than no box); a gripper box missing half the time leaves 545; a distractor's box is fatal (0/573). A5's 11 failures are front-camera detector misses.
+  Forces still privileged, one seed, closed-set detector.
+- **Next:** M4 (output side; little headroom left on this layout set) and pi0.5 on the same data last (M1); the user has set a different direction.
 
-Reports: [M0](docs/VLA_INPUTS_M0_20261031.md) · [S0](docs/VLA_INPUTS_S0_20261030.md) · [M2](docs/VLA_INPUTS_M2_20261103.md) · [M3](docs/VLA_INPUTS_M3_20261105.md) ·
+Reports: [M0](docs/VLA_INPUTS_M0_20261031.md) · [S0](docs/VLA_INPUTS_S0_20261030.md) · [M2](docs/VLA_INPUTS_M2_20261103.md) · [M3](docs/VLA_INPUTS_M3_20261105.md) · [M3b](docs/VLA_INPUTS_M3B_20261109.md) ·
 [programme spec](docs/superpowers/specs/2026-10-30-vla-inputs-programme-design.md). Nothing from this programme is published.
 
 ## Earlier (2026-10-27): Props P3 — Food vs Drinks evaluated, failed, deleted
