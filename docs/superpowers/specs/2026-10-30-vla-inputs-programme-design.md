@@ -28,6 +28,11 @@ M3 result. A numeric box no longer fits X-VLA's 20 state slots beside M2's 17 va
 rather than drawing them; that variant is **M3b**, scoped in the [M3 spec](2026-10-30-vla-inputs-m3-box-design.md) and specified
 only if A3 helps. Order: M3 → M3b → M4 → M1. No box pilot (pilots may promote, never drop, since M2's calibration).
 
+## Revision — 2026-11-06 (user): the programme hands over to G
+
+M3b was to be stopped after night A; its session completed A5 instead and M3b closed on 2026-11-09 (R = 0.81, [report](../../VLA_INPUTS_M3B_20261109.md)). M4a is paused; M1 (pi0.5) is folded into the generalization programme's
+last phase. Work continues in the [generalization programme](2026-11-06-generalization-programme-design.md), which builds on A2's inputs and drops the oracle box.
+
 ## Revision — 2026-11-05 (user): M3b specified as a two-stage study
 
 After M3 (A3 571/573, +8.4 over A2) M3b is a measurement on A3's frozen policy, with no policy training: arm A5 feeds a box predicted from pixels, arms A6-A9 feed a corrupted oracle box, all on the 573 layouts and read on the scale A2 (523, floor) to A3 (571, ceiling); [spec](2026-11-05-vla-inputs-m3b-predicted-box-design.md). The end-to-end GraspVLA-style variant (M3c) needs Florence-2 decoder weights X-VLA's checkpoint does not hold. M4 stays on the same layouts, judged on the same scale.

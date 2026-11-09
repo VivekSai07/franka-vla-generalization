@@ -1,6 +1,14 @@
 # SmolVLA / X-VLA Franka TODO
 
-## Where things stand (2026-11-05)
+## Where things stand (2026-11-09)
+
+- **New direction (user, 2026-11-06): the generalization programme G.** Give the bin-sorting policy, and measure, five GraspVLA-style capabilities:
+  distractors, lighting, background, spatial, closed-loop (categories last, not strict). Order **G0 → G1 → G2 → G3**: G0 a frozen benchmark with five
+  perturbation axes paired with nominal (A2 and A0 first); G1 a 3,000-episode domain-randomized dataset trained on X-VLA with A2's inputs (no oracle box);
+  G2 recovery demonstrations for closed-loop; G3 categories with pi0.5 (M1 folded in). M3b closed (next bullet);
+  M4a paused. Branch `feat/generalization`. [Programme](docs/superpowers/specs/2026-11-06-generalization-programme-design.md) ·
+  [G0 spec](docs/superpowers/specs/2026-11-06-g0-generalization-benchmark-design.md) · [G0 plan](docs/superpowers/plans/2026-11-06-g0-generalization-benchmark.md) ·
+  [G1 spec](docs/superpowers/specs/2026-11-06-g1-randomized-data-design.md) · [G1 plan](docs/superpowers/plans/2026-11-06-g1-randomized-data.md).
 
 - **M3b done (2026-11-06; report 2026-11-09): most of the oracle box's gain survives a box predicted from pixels.** Arm A5 (A3's frozen policy, force state, a pixel-only detector's box) scores 562/573 = 98.1% against A2's 523 and A3's 571:
   **R = 0.8125 [0.647, 0.952]**, A5 against A2 +6.8 points (p = 4.0e-8); the D10 rule (R >= 0.75) closes M3b and puts M4a at lower priority (the interval straddles the threshold). Corrupted-box arms: 6 px noise 542, 18 px noise 345, gripper box missing half the time 545,
