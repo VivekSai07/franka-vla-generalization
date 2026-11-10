@@ -39,6 +39,7 @@ later findings — add a new one and update the live documents.
 [VLA_INPUTS_PILOTS_20261102.md](VLA_INPUTS_PILOTS_20261102.md) — overnight pilot night 1 (force, +3.2 points, dropped) and its calibration against full M2: pilots may promote, never drop.
 [VLA_INPUTS_M2_20261103.md](VLA_INPUTS_M2_20261103.md) — M2, force/torque in the state (arm A2): gates, training, selection, 91.3% vs A0's 78.7% on the comparison tier.
 [VLA_INPUTS_M3_20261105.md](VLA_INPUTS_M3_20261105.md) — M3, the target's box drawn on both cameras over force (arm A3): 99.65% vs A2's 91.3% (+8.4 points, criterion met), the prediction against the result, caveats.
+[GEN_G0_20261110.md](GEN_G0_20261110.md) — G0, the generalization benchmark on A2 and A0: five axes paired with nominal, no axis held, spatial 4/142, the prediction against the result, caveats.
 [VLA_INPUTS_M3B_20261109.md](VLA_INPUTS_M3B_20261109.md) — M3b, the box from pixels on A3's frozen policy (arms A5-A9, no training): A5 562/573, R = 0.81 of the A2-to-A3 gap, the corrupted-box arms, the detector gate, the prediction against the result, caveats.
 
 

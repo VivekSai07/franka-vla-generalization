@@ -1,5 +1,16 @@
 # Franka benchmark: start here
 
+## G0 done: no axis held by A2 or A0, spatial collapses to 4/142 - 2026-11-10
+
+The G0 engine and evaluator were merged into `main` as `40da42d` (`--no-ff`) and run from the detached worktree `.worktrees/g0-eval`. Gates passed:
+texture pools pinned, engine equality (i), expert equality (ii), and (iii) A2's M0 trials 1 and 291 identical through `gen_eval` (twice, 2026-11-09). Plan and
+feasibility reproduced byte for byte (1,005 of 1,020 trials feasible; the 15 dropped are lemon layouts the expert cannot grasp). Smoke 12/12, then the benchmark
+tier, 849/849 trials per arm, no failure files: A2 18:03-22:08, A0 22:09-03:53. **Nominal A2 130/142 = 91.5%, A0 113/142 = 79.6%.** Paired drops, A2 / A0
+(points): background 7.0 / 16.9, lighting 16.9 / 19.7, distractors 36.2 / 31.9, disturbance 38.6 / 31.4, **spatial 88.7 / 77.5** (4/142 and 3/142 successes). Held (upper bound
+at most 10) for no axis. Recorded prediction: 2 of 9 numeric ranges hit; appearance axes were over-predicted and geometry under-predicted (FAILURES #72); the
+`never_lifted` label on `drop` trials means a failed recovery (FAILURES #73). Report [GEN_G0_20261110.md](GEN_G0_20261110.md); figures in [RESULTS.md](RESULTS.md).
+Next: G1 (the 96-episode expert gate and collection plan, its contact sheet for approval); no G1 collection or training started. A3 not run.
+
 ## M3b done: R = 0.81, the rule says it closes; M3b artifacts removed from RTX - 2026-11-09
 
 Night A (A6-A9, 20:57 to 06:13) and the chain (detector gate passed, A5 prepare, smoke, comparison 573 of 573; 2026-11-06 14:19 to 16:55) ran without a failed stage. **A5 (box from pixels) 562/573 = 98.1%: R = 0.8125 [0.647, 0.952]** (floor A2 523, ceiling A3 571), A5 against A2 +6.8 points, p = 4.0e-8; A6 542, A7 345, A8 545, A9 0. The detector (epoch 59, validation IoU 0.9746) met every gate threshold with large margins (front/gripper mean IoU 0.965/0.984 on both decoded and raw renders, presence F1 0.986/0.989). D10: R >= 0.75 closes M3b, M4a at lower priority; the interval straddles the threshold. Recorded prediction: A5 and its class ranges held, A6/A7 undershot, A9's mechanism wrong. **Found while analysing:** A5's per-tick log collided (every container worker is pid 1, so six workers wrote one file under one trial id and the analysis refused it); the headline does not use it, and the Q4 read-out was recovered by assigning lines to trials by oracle box (`analyse.detector_error(..., interleaved=True)`, FAILURES #71). Report [VLA_INPUTS_M3B_20261109.md](VLA_INPUTS_M3B_20261109.md); figures in [RESULTS.md](RESULTS.md).

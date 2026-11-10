@@ -246,6 +246,21 @@ and result are both kept ([report](VLA_INPUTS_M3_20261105.md)).
     Also (pattern of #69): the M3b prediction undershot for A6/A7 (reasoned from "6 px is small" against a front box 27 px wide) and misjudged
     A9's mechanism (22% wrong object, 78% never lifted).
 
+72. **G0's prediction missed 7 of 9 numeric ranges, all in one direction.** Written 2026-11-06 before any run: lighting 20-70, background 30-80,
+    distractors 5-25, spatial 10-90, with the appearance axes expected to hurt most and "joint-space reaching" expected to cost moderately.
+    Measured for A2: lighting 16.9, background 7.0, distractors 36.2, spatial 82.9-94.4 (only `table_up10` and `move` fell in range), and
+    `low_angle` rather than `dark` or `tinted` was the worst lighting level (`tinted` cost nothing). The policy is far more robust to appearance than
+    expected and far less robust to geometry (table height, start region, number of objects). The prediction priced the axes by how
+    different the images look, not by whether the learned reach depends on a fixed absolute height. **Lesson (pattern of #69):** for each axis,
+    ask what the policy's output depends on (here joint targets calibrated to one table height), not what changes in the pixels; and
+    keep the prediction and the result together ([report](GEN_G0_20261110.md)).
+
+73. **A failure label's meaning changes under a disturbance, and the numbers read as a contradiction.** On G0's `drop` trials the cause table
+    shows 24 `never_lifted` while grasp-and-lift is 66/66. `never_lifted` is P2's rule (the target never rose 2 cm for 15 ticks); the harness releases
+    the target 5 cm up, so it fires for a failed recovery as well as a failed grasp. Found when reading the compare file, before any claim was
+    written. **Lesson:** reuse of an earlier protocol's label needs a check on the new conditions; report the sub-metric next to the label
+    (here grasp-and-lift, and `recovered`). A cause split for disturbance trials (never lifted before vs after the disturbance) is open.
+
 Broader lessons — every "just increment a counter" or "just leave state alone on retry" assumption in the fixed-layout pipeline broke under broad_workspace retries. Rejections need explicit cleanup for every piece of shared state (LeRobot buffer + PNG dir + attempts dir semantics + admit-count invariant). And a result is only interpretable once you know what the *absence* of the treatment scores on the same protocol.
 
 **Recurring meta-lesson — a green test suite is not evidence.** Six separate times (#10, #15, #20, #24, and twice while porting eval packages) the tests passed while the thing that actually runs was broken, because the tests exercised a *fixture*, a *constant*, the *wrong module*, or every path *except* the one the job takes. When adding a regression test, confirm it fails against the unfixed code. When forking a package, run the `symtable` undefined-name check from #24 before spending GPU time.

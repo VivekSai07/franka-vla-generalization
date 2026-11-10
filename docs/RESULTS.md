@@ -6,6 +6,28 @@ failures and lessons in [FAILURES.md](FAILURES.md).
 
 Download corresponding datasets/checkpoints: [HF artifact index](HUGGING_FACE_ARTIFACTS.md).
 
+## G0, the generalization benchmark: A2 and A0 against five perturbation axes (2026-11-10) — measured, not sealed
+
+144 benchmark layouts, six trials each (nominal plus one level per axis, paired on the layout); 849 of 864 trials expert-feasible (15 dropped, all lemon).
+One checkpoint and one training seed per arm; core `512806282b1f…` shared. **Held** = the paired drop's 95% bootstrap interval upper bound at most 10 points
+(pre-registered). Per-level table, failure classes and the prediction scorecard: [GEN_G0_20261110.md](GEN_G0_20261110.md).
+
+| paired drop in points [95% CI] | A2 (88,830), nominal 130/142 = 91.5% | A0 (101,520), nominal 113/142 = 79.6% |
+|---|---|---|
+| background | 7.0 [2.1, 12.7] (120/142) | 16.9 [7.7, 26.1] (89/142) |
+| lighting | 16.9 [10.6, 23.2] (106/142) | 19.7 [11.3, 28.2] (85/142) |
+| distractors (3-5) | 36.2 [28.4, 44.0] (78/141) | 31.9 [23.4, 40.4] (67/141) |
+| disturbance (drop, move) | 38.6 [30.7, 46.4] (74/140) | 31.4 [22.1, 40.7] (68/140) |
+| spatial (table ±5 cm, +10 cm, outer start) | **88.7 [83.1, 93.7] (4/142)** | **77.5 [70.4, 83.8] (3/142)** |
+
+- **No axis is held by either arm.** Spatial is a total collapse at every level (A2 0, 0, 2, 2 successes of about 35 each).
+- Per level, A2 `tinted` (-2.9) and A0 `dark` (-5.6) pass the rule at about 35 layouts each; read as noise (the sign flips between arms on `dark`).
+- Largest A2 levels: `five` distractors 50.0, `move` 49.3, `low_angle` 37.1; A0: `low_angle` 62.9, `four` distractors 51.1.
+- `never_lifted` dominates every failure table; on `drop` trials it means the target was released by the harness and not re-lifted (grasp-and-lift 66/66).
+- **Prediction (2026-11-06):** nominal held; 2 of 9 numeric ranges hit (spatial `table_up10`, `move`); appearance axes over-predicted, geometry under-predicted (FAILURES #72).
+- Caveats: levels of an axis use different layouts (35-48 each); A2 and A0 are not matched-phase checkpoints; distractors 3-5 exceed P2's 1-2; the spatial
+  mechanism (hand reaches the same absolute height at every table height) is exploratory.
+
 ## VLA inputs M3b, the box from pixels instead of the oracle, on A3's frozen policy (2026-11-06) — measured, not sealed
 
 Arms A5-A9 on M0's frozen comparison tier (core `c4f6c303f2ae`), all A3's policy at 101,520 with M2's force state; **no policy trained**; only the drawn box differs. 573 feasible layouts, paired, one trial each.

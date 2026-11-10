@@ -30,7 +30,23 @@ manifest verification. No X-VLA local-varied or SmolVLA broad-workspace model pu
 
 ---
 
-## Latest (2026-11-05): VLA inputs programme — force in the robot state +12.6 points, the drawn target box on top +8.4 more
+## Latest (2026-11-10): G0, the generalization benchmark — no axis held, spatial collapses to 4/142
+
+P2's policy and A2 (P2's data plus force in the state) against five perturbation axes on 144 fresh layouts, six trials each, every perturbed
+trial paired with the same layout at nominal; held = paired-drop upper bound at most 10 points. Nominal A2 91.5%, A0 79.6%.
+
+| paired drop, points | A2 | A0 |
+|---|---|---|
+| background | 7.0 | 16.9 |
+| lighting | 16.9 | 19.7 |
+| distractors (3-5) | 36.2 | 31.9 |
+| disturbance (object dropped or moved) | 38.6 | 31.4 |
+| **spatial (table height, outer start)** | **88.7** (4/142) | **77.5** (3/142) |
+
+The prediction missed 7 of 9 ranges: appearance hurts far less than expected, geometry far more. Report
+[docs/GEN_G0_20261110.md](docs/GEN_G0_20261110.md); G1 (domain-randomized data) is next, nothing collected yet.
+
+## Previous (2026-11-05): VLA inputs programme — force in the robot state +12.6 points, the drawn target box on top +8.4 more
 
 Same data as Props P2 (540 sealed episodes), new information for the model. Every arm is evaluated by one frozen protocol (M0):
 573 fresh paired layouts disjoint from P2, one trial each, exact McNemar, a fixed Holm family. The extra signals (wrist

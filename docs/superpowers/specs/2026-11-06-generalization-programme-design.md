@@ -3,7 +3,8 @@
 **Date:** 2026-11-06. **Status: approved by the user 2026-11-06** (direction, order, model, task; decisions table below). Follows the
 VLA inputs programme ([spec](2026-10-30-vla-inputs-programme-design.md)), whose arms A0–A3 are the starting policies. Inspired by
 GraspVLA ([paper](https://arxiv.org/abs/2505.03233), [project](https://pku-epic.github.io/GraspVLA-web/),
-[SynGrasp-1B](https://huggingface.co/datasets/vegebirrd/SynGrasp-1B)). Nothing is built.
+[SynGrasp-1B](https://huggingface.co/datasets/vegebirrd/SynGrasp-1B)). **Status 2026-11-10: G0 is built and run** (A2 and A0 on the benchmark tier,
+no axis held, spatial 4/142; [report](../../GEN_G0_20261110.md)); G1-G3 are not built.
 
 ## Goal
 

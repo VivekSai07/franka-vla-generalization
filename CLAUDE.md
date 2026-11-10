@@ -35,6 +35,10 @@ and [docs/VLA_INPUTS_M2_20261103.md](docs/VLA_INPUTS_M2_20261103.md), [docs/VLA_
 [TODO.md](TODO.md) for what is open, and [HF artifacts](docs/HUGGING_FACE_ARTIFACTS.md)
 for the exact published datasets/checkpoints and re-evaluation dependencies.
 
+Since 2026-11-06 the **generalization programme G** (G0 benchmark, G1 randomized data, G2 recovery, G3 categories) builds on A2's inputs. **G0 finished
+2026-11-10**: A2 91.5% and A0 79.6% nominal; no axis held (paired-drop upper bound at most 10 points); drops A2 / A0 in points: background 7.0 / 16.9,
+lighting 16.9 / 19.7, distractors 36.2 / 31.9, disturbance 38.6 / 31.4, spatial 88.7 / 77.5; see [docs/GEN_G0_20261110.md](docs/GEN_G0_20261110.md). G1 is not started.
+
 ## Layout
 
 ```
@@ -156,6 +160,8 @@ results. Do not edit them even to fix a stale statement:
 - `experiments/xvla_p2_force/` (M2, trained 2026-11-01): its `SOURCE_FILES` bind A2's training run, and M0's arm closure binds
   its `eval_adapter.py`; M3 imports it read-only (fork, do not edit). `experiments/xvla_p2_pilot/` is bound the same way by its
   own `SOURCE_FILES` (pilot night 1, 2026-11-02)
+- `experiments/gen_scene/` and `experiments/gen_eval/` (G0, core `512806282b1f…`): both arms' `prepared.json` bind the core and `compare`/`final` refuse a
+  differing one, so any edit is a new protocol with new controls; the texture manifest and pool split are pinned too. Evaluate from `.worktrees/g0-eval`.
 
 Before editing anything under `experiments/`, check whether it is in `SOURCE_FILES` or reachable
 from `provenance()`. Package READMEs are always in both, except in `experiments/robosuite_sim2sim/`

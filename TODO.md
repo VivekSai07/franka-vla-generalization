@@ -1,12 +1,19 @@
 # SmolVLA / X-VLA Franka TODO
 
-## Where things stand (2026-11-09)
+## Where things stand (2026-11-10)
 
+- **G0 done (2026-11-10): no axis is held by A2 or A0; spatial collapses.** Paired drops (points), A2 / A0: background 7.0 / 16.9, lighting 16.9 / 19.7,
+  distractors 36.2 / 31.9, disturbance 38.6 / 31.4, **spatial 88.7 / 77.5 (4/142 and 3/142 successes)**; nominal 91.5% / 79.6%. The prediction hit 2 of 9
+  ranges (appearance over-predicted, geometry under-predicted, FAILURES #72). [Report](docs/GEN_G0_20261110.md) · [RESULTS.md](docs/RESULTS.md).
+  Merged into `main` as `40da42d`; run from `.worktrees/g0-eval` (detached, keep it until G1 reuses the engine). **Open:** G1 Tasks 1-2 on CPU (collection plan,
+  recorder, 96-episode expert gate, its contact sheet for approval); a cause split for `drop`/`move` trials (FAILURES #73); a hand-frame and video check of the
+  spatial mechanism before it is called a cause; A3 on G0 only if wanted; `docs/OPERATIONS.md` has no G0 section yet (a local edit there is uncommitted).
+  No G1 collection or training started.
 - **New direction (user, 2026-11-06): the generalization programme G.** Give the bin-sorting policy, and measure, five GraspVLA-style capabilities:
   distractors, lighting, background, spatial, closed-loop (categories last, not strict). Order **G0 → G1 → G2 → G3**: G0 a frozen benchmark with five
   perturbation axes paired with nominal (A2 and A0 first); G1 a 3,000-episode domain-randomized dataset trained on X-VLA with A2's inputs (no oracle box);
   G2 recovery demonstrations for closed-loop; G3 categories with pi0.5 (M1 folded in). M3b closed (next bullet);
-  M4a paused. Branch `feat/generalization`. [Programme](docs/superpowers/specs/2026-11-06-generalization-programme-design.md) ·
+  M4a paused. Branch `feat/generalization` (merged into `main` 2026-11-10 for G0). [Programme](docs/superpowers/specs/2026-11-06-generalization-programme-design.md) ·
   [G0 spec](docs/superpowers/specs/2026-11-06-g0-generalization-benchmark-design.md) · [G0 plan](docs/superpowers/plans/2026-11-06-g0-generalization-benchmark.md) ·
   [G1 spec](docs/superpowers/specs/2026-11-06-g1-randomized-data-design.md) · [G1 plan](docs/superpowers/plans/2026-11-06-g1-randomized-data.md).
 
