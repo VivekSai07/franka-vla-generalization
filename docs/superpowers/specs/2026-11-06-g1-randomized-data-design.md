@@ -1,6 +1,6 @@
 # G1 — a domain-randomized dataset for X-VLA (A2's inputs) — design
 
-**Date:** 2026-11-06. **Status: approved in outline by the user 2026-11-06 (decisions P2, P3, P4, P6, P7 of the
+**Date:** 2026-11-06, **revised 2026-11-10 after G0 (R1-R4, before any G1 episode)**. **Status: approved in outline by the user 2026-11-06 (decisions P2, P3, P4, P6, P7 of the
 [programme](2026-11-06-generalization-programme-design.md)); numbers below are fixed in code before the collection starts.** Nothing is built.
 Built on the CPU in parallel with G0's GPU nights; trained after G0's A2 result exists.
 
@@ -25,7 +25,37 @@ than A2?
 | D9 | **Evaluation:** checkpoint chosen on **G0's selection tier** (all conditions, the six candidates) by total successes, ties to the later checkpoint; then G0's benchmark tier at the winner and at the matched-phase checkpoint 101,520. Secondary: M0's comparison tier (nominal, 573 layouts) at the winner, against A2 | the selection never touches the benchmark tier |
 | D10 | **Primary test:** per axis 1–5, G1 against A2 on that axis's perturbed trials (paired by layout), exact McNemar, **Holm over the five axes**, α 0.05. **Criterion per axis:** G1 holds the axis (G0 D13 definition) and beats A2 at Holm p < 0.05. Nominal: G1 against A2 on G0's nominal trials and on M0's comparison tier, reported with intervals (a drop of more than 5 points on nominal is stated as a cost, not hidden) | pre-registered before any G1 run |
 
-## Prediction (2026-11-06, before any G1 run; A2's G0 numbers will exist first and anchor these)
+## Revision 2026-11-10, after G0 and before any G1 episode exists
+
+G0 ([report](../../GEN_G0_20261110.md)) measured A2 (paired drops, points): background 7.0, lighting 16.9 (`low_angle` 37.1), distractors 36.2
+(`three` 27.1, `five` 50.0), disturbance 38.6 (`move` 49.3, `drop` 28.2), **spatial 88.7** (4/142 succeed at every level); nominal 91.5%.
+No axis held. These amendments are made before any G1 data exists and supersede the rows they name; the original rows are kept below.
+
+| id | amendment | reason |
+|---|---|---|
+| R1 | **D3 distractors: 0 to 5 per episode** (props of the six and pool A primitives), drawn with weights 0:0.05, 1:0.15, 2:0.25, 3:0.25, 4:0.20, 5:0.10. Was 0 to 3 | G0's `three` already cost 27 points and `five` 50: P2's one or two is the likely cause, and GraspVLA trains in clutter. Counts 3-5 at test become in-range; **novelty stays in the types** (pool B primitives never reach training) |
+| R2 | **D3 is expressed only through `gen_scene.Condition(pool="train")` and `compose.reset(home_jitter_deg)`**, because `gen_scene` and `gen_eval` are bound by G0's core `512806282b1f…` and cannot change without a new protocol. Mapping: diffuse scale [0.25, 2.8], specular scale [0.5, 2.8], ambient scale [0.2, 1.5], headlight scale [0.3, 1.5], tint per channel [0.55, 1.0]; with probability 0.5 `light_dir` replaced by a direction at elevation [15°, 80°] and random azimuth, `light_shadows` with probability 0.5; table, floor and wall textures from the train pool (each with probability 0.85, else P2's default); `table_offset_m` [−0.07, +0.12]; `bin_shift_m` [−0.05, +0.05]; target `start` from P2's region or the outer ring (probability 0.3); home jitter ±10° per joint. **Dropped from D3** because `Condition` cannot express them: the *extra* directional light (replaced by the direction change above) and flat random-colour surfaces. Anything else the collector needs lives in `gen_g1_data`, never in `gen_scene` | the engine is frozen with G0's evaluator |
+| R3 | **D4 gate per object:** ≥ 90% expert success for each of the six objects as well (G0's feasibility dropped 15 lemon trials the expert could not grasp); the collector's rejection rate per object and per table-height quintile is reported, so a skew in the admitted data is visible | the admitted data must not under-represent an object or a height |
+| R4 | **Prediction replaced** (below, written 2026-11-10 before any G1 run). The 2026-11-06 prediction is kept for the record; it was written before G0 and FAILURES #72 shows its kind of reasoning (appearance over geometry) was wrong | |
+
+## Prediction (2026-11-10, before any G1 episode; anchored on A2's G0 result; ranges per axis and class, FAILURES #69 and #72)
+
+G1's paired drop on G0's benchmark tier (A2's in brackets), and whether the axis is held (upper bound ≤ 10):
+
+| axis / level | G1 paired drop, points | held? | main failure class |
+|---|---|---|---|
+| nominal success | 85-94% (91.5%); on M0's comparison tier −6 to +2 points against A2's 91.3% | – | never lifted |
+| spatial (88.7) | 5-35; `table_up5`/`down5` 0-25, `table_up10` 5-40, `outer_start` 5-30 | unlikely | never lifted, 5-30 layouts of 142 |
+| distractors (36.2) | 5-25; `five` worst | unlikely | never lifted; wrong object 2-10% of layouts |
+| disturbance (38.6) | `move` 20-45 (49.3), `drop` 15-35 (28.2); no recovery demonstrations, so little change on `drop` | no | failed re-acquisition |
+| lighting (16.9) | 0-12; `low_angle` worst, 5-25 | possible | never lifted |
+| background (7.0) | 0-8 | likely | never lifted |
+
+G1 beats A2 (Holm over five, spec D10) on spatial and distractors almost certainly, on lighting probably, on background and disturbance
+possibly not. If spatial stays above 35, the joint-space reach hypothesis of G0 is not fixed by data alone, and that is the first thing to
+diagnose. The headroom on spatial is 89 points; FAILURES #69 says treat it as the plausible upper end of the gain, not the unlikely one.
+
+## Prediction (2026-11-06, before any G1 run; superseded 2026-11-10 by the revision above)
 
 - **Lighting:** G1's paired drop 0 to 10 points (held), A2's large drop recovered almost fully. **Background:** 0 to 15 (held or nearly);
   novel textures are the hardest test, `both` worst. **Distractors:** 0 to 15, wrong-object still the main class at `five`.

@@ -98,10 +98,9 @@ flowchart LR
 
 ## Compute and disk (measured 2026-11-06)
 
-One RTX 6000 Ada 48 GB shared with others; 48 cores; 138 GB free on `/` on 2026-11-06, **82 GB on 2026-11-09**: `/var/log` holds 106 GB
-(`syslog` grows about 25 GB a day, recurring; only an administrator can truncate it and find the source). G0 needs little disk; G1's
-collection (about 17 GB) plus training (65 GiB guard) does not fit until that is fixed. X-VLA trains at ~0.52 s/update raw, ~28–30 h per 126,900 updates
-with thermal pauses. M0-style rollouts: ~2.7 h per 573 trials with 6 workers. P2's collection: 540 episodes in 54 min with 12 shards.
+One RTX 6000 Ada 48 GB shared with others; 48 cores. Free on `/`: 138 GB on 2026-11-06, 82 GB on 2026-11-09 (a runaway `/var/log/syslog`,
+cleared by the user on 2026-11-08, plus a reclaim on 11-09), **231 GB on 2026-11-10** after G0. `/var/log` was back at 29 GB on 2026-11-10;
+the syslog source is not fixed, so check `df -h /` before every collection, training and evaluation step.
 
 ## What the programme cannot show
 

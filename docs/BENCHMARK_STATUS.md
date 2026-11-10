@@ -1,5 +1,14 @@
 # Franka benchmark: start here
 
+## G1 spec revised after G0, before any G1 data - 2026-11-10
+
+Anchored on G0 (A2: spatial 88.7, distractors 36.2, disturbance 38.6, lighting 16.9, background 7.0 points; nominal 91.5%). R1: training distractors 0-5
+(was 0-3; G0's `three` already cost 27 and `five` 50), novelty kept in the pool-B types. R2: the training randomization is expressed only through
+`gen_scene.Condition(pool="train")`, because `gen_scene`/`gen_eval` are bound by G0's core `512806282b1f…`; the extra directional light and flat
+random colours are dropped (not expressible). R3: the expert gate is also per object (G0 dropped 15 lemon trials). R4: new prediction, e.g. spatial
+5-35, distractors 5-25, `move` 20-45, `drop` 15-35, lighting 0-12, background 0-8, nominal 85-94%. Nothing collected or trained. Branch
+`feat/g1-randomized-data`.
+
 ## G0 done: no axis held by A2 or A0, spatial collapses to 4/142 - 2026-11-10
 
 The G0 engine and evaluator were merged into `main` as `40da42d` (`--no-ff`) and run from the detached worktree `.worktrees/g0-eval`. Gates passed:
