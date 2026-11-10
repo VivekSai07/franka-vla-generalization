@@ -111,3 +111,21 @@ M0 comparison ~2.7 h.
 ## Plan
 
 [../plans/2026-11-06-g1-randomized-data.md](../plans/2026-11-06-g1-randomized-data.md).
+
+## Note 2026-11-10: lemon-only gate (pre-registered before it runs)
+
+The 96-attempt expert gate passed every bar except `object=lemon`: 14/16 = 87.5% (bar 90%); overall 94/96 = 97.9%. Both failures are
+`GenExpert` grasp failures, reproduced exactly on replay: the lemon rotates 15-18 degrees in the grip during the close phase and is
+squeezed out (fingers end at 8 and 15 mm against about 21 mm on the 14 successes). No neighbour or distractor contact was involved.
+P2's gate had the same weakness (lemon 22/24 = 91.7%). The expert is frozen, so there is no fix to make.
+
+Sixteen attempts cannot tell a true lemon rate near 88% from one near 95%, so the lemon bar is re-measured with more attempts. The bar
+itself does not move. Registered now, before any attempt runs:
+
+- 96 fresh lemon-only attempts (namespace `gen:g1:lemongate`, identities disjoint from every slot and from the 96 gate attempts, asserted):
+  lemon's four trained cells in equal shares, 16 per distractor count 0-5, table-height quintiles balanced, 30% outer start, every range
+  as in R2, first attempt only, unrendered, the same admission as the gate.
+- **Pass:** first-attempt admission of the 96 is at least 90%, i.e. at least 87/96 (86/96 = 89.6% fails). Counts per quintile, distractor
+  count, bin and region are reported, not barred (n is 16-20 per stratum).
+- **Pass** lets collection proceed on the committed code. **Fail** stops collection; the next step is then a decision, not another run.
+  The lemon-only gate is run once; the 14/16 stays on record next to its result.
