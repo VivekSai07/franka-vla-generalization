@@ -38,6 +38,38 @@ No axis held. These amendments are made before any G1 data exists and supersede 
 | R3 | **D4 gate per object:** ≥ 90% expert success for each of the six objects as well (G0's feasibility dropped 15 lemon trials the expert could not grasp); the collector's rejection rate per object and per table-height quintile is reported, so a skew in the admitted data is visible | the admitted data must not under-represent an object or a height |
 | R4 | **Prediction replaced** (below, written 2026-11-10 before any G1 run). The 2026-11-06 prediction is kept for the record; it was written before G0 and FAILURES #72 shows its kind of reasoning (appearance over geometry) was wrong | |
 
+### Mapping note, 2026-11-10 (written with the plan, before any G1 episode; where R2 was silent or the engine differs from what R2 assumed)
+
+Checked against `conditions.py`, `levels.py`, `compose.py` and the compiled scene (robosuite image):
+
+- **`ambient_scale` moves only the headlight's ambient.** The scene light's ambient is 0 (diffuse 0.7, specular 0.3, direction
+  (-0.19, -0.19, -0.96), 74° above the horizon, no shadows); the headlight is 0.4 / 0.5 / 0.1 (diffuse / specular / ambient). R2's ranges
+  are applied as written; the effective ambient is 0.1 x [0.2, 1.5] x headlight scale [0.3, 1.5] x tint.
+- **Light direction:** elevation uniform in angle over [15°, 80°], azimuth uniform; the default 74° lies inside the range.
+- **Where things live.** The target's used start is `layout["start"]` (`Condition.start` is never set, `extra_props` is never used);
+  prop distractors are `layout["distractors"]`, pool A primitives are `condition.primitives`. The scene is rebuilt with
+  `compose.model_for(layout, condition)` all the same.
+- **R1's mix:** each distractor is a prop of the six with probability 0.6 while props remain (five at most besides the target), else a
+  pool A primitive (36 shape x colour combinations). R1 did not say; the result is 949 / 1,143 / 649 / 212 / 43 / 4 slots with 0-5
+  primitives.
+- **Regions:** distractors in G0's distractor region (x 0.25-0.52, y +-0.20, radius at least 0.285 m); the target in P2's region (70%) or
+  G0's `outer_start` ring (x 0.42-0.50, y +-0.12, 30%), so G0's `outer_start` level lies **inside** the training range, as D3 intended.
+  Spacing is G0's `levels.spaced` (P2's rules plus primitives as neighbours), which also keeps every object 2 cm from both bins **at the
+  slot's bin shift**: a shift of -5 cm (bins together) therefore excludes some starts and distractor positions that +5 cm allows.
+- **Balance by decks, the rest by draws.** Cells (135 / 15 per cell), distractor counts (R1's weights, exact: 135 / 405 / 675 / 675 / 540 / 270 in
+  training), five equal-width table-height strata (540 / 60 each, uniform inside a stratum) and the start region (70 / 30) are shuffled
+  decks; the light redirect (0.5), shadows (0.5) and each texture (0.85) are independent per-slot draws; floor and wall are drawn
+  independently (G0's `room` level forces two different maps; here they may coincide).
+- **Home pose** +-10° per joint for the planned draw **and for every retry** (P2's retries drew +-1°).
+- **Substitution** (a slot that exhausts its attempts on one scene) redraws the whole scene inside the slot's stratum; the cell, count,
+  height stratum and region stay, so every stratum total of the admitted data is the plan's.
+- **The expert gate** (D4, R3): 96 first attempts (scene 0, draw 0), unrendered like P2's gate: 16 per target object, 16 per distractor
+  count, 19-20 per height stratum, 29 on the outer ring. At these sizes a bar of 90% means at most one failure per object or count
+  and at most one or two per stratum, and 95% overall means at most four.
+- **Not bound:** the collection's `provenance()` does not hash this spec or the plan document (FAILURES #52), so the docs pass after the result
+  cannot break the seal. The plan digest (`PLAN_SHA256` in `gen_g1_data/plan.py`) pins the plan itself.
+- Shards: 16 contiguous blocks of 188 (the first eight) and 187 slots (3,000 is not a multiple of 16).
+
 ## Prediction (2026-11-10, before any G1 episode; anchored on A2's G0 result; ranges per axis and class, FAILURES #69 and #72)
 
 G1's paired drop on G0's benchmark tier (A2's in brackets), and whether the axis is held (upper bound ≤ 10):
