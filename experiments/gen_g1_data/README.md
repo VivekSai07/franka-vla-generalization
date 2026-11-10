@@ -9,6 +9,20 @@ edited). The engine is `experiments/gen_scene/` (frozen by G0's core hash, impor
 |---|---|---|
 | `plan.py` | 3,000 slots (2,700 train / 300 validation, P2's 10 trained instruction pairs x 2 sides, milk-blue and bread-orange never collected) and 96 expert-gate attempts, namespace `gen:g1`, plan digest pinned in `PLAN_SHA256` | either |
 | `contract.py` | images, shard count, `provenance()`; the live design documents are deliberately not bound (FAILURES #52) | either |
+| `episode.py` | one attempt: `compose.model_for` + `GenExpert`, distractor motion and contacts, and S0's signals by exact replay (see below) | robosuite |
+| `validate.py` | `admit` (expert success, undisturbed distractors, frame count, replay, labels, schema, signals), dataset validation, rejection report, fingerprint, seal | either (imports no simulator) |
+| `record.py` | the collector: `--gate`, `--gate-summary`, `--determinism`, `--pilot`, `--collect`, `--resume`, `--status`; 16 shards, journal per shard | robosuite |
+| `merge.py` | `--merge`: aggregate the shards, verify every episode against its shard, validate, seal | robosuite |
+| `sheet.py` | contact sheets of 24 rendered gate attempts for the user's approval | robosuite |
+
+**Signals.** `GenExpert.run` (frozen) has no observation hook, so the force and box signals are computed by an exact in-process replay
+of the attempt: at every tick the replayed `qpos` and every object's pose must equal the recorded trace byte for byte, S0's
+`wrist_wrench`, `finger_force` and `props_box` (imported read-only) are evaluated at the observation instant, and the state after the
+last tick must equal the recorded one, or the attempt is rejected. Under the nominal condition the result equals S0's sealed sidecar byte
+for byte (`tests/test_episode.py`, sealed P2 episodes 0, 1 and 5).
+
+**Gate.** The D4 bars (overall at least 95%, at least 90% for every object, table-height stratum and distractor count) are applied to the
+first-attempt *admission* of the 96 gate attempts, which is stricter than the expert's success alone; both are reported.
 
 Each slot is one instruction cell and one scene drawn from the **train** pools only, as a `gen_scene.Condition(pool="train")`: lights,
 table/floor/wall textures, table height (five equal strata of -7 to +12 cm), bin shift, target start (P2's region, or G0's outer ring

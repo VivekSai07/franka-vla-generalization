@@ -1,4 +1,6 @@
 import json
+import os
+import subprocess
 import sys
 import unittest
 from pathlib import Path
@@ -90,8 +92,12 @@ class ContractTests(unittest.TestCase):
             contract.check_plan(changed)
 
     def test_plan_and_contract_import_no_simulator(self):
-        for name in ("mujoco", "robosuite", "torch", "lerobot"):
-            self.assertNotIn(name, sys.modules)
+        # a fresh interpreter: sys.modules here is polluted by whichever other tests ran first
+        code = ("import sys; from experiments.gen_g1_data import contract, plan; "
+                "print(sorted(n for n in ('mujoco', 'robosuite', 'torch', 'lerobot') if n in sys.modules))")
+        out = subprocess.run([sys.executable, "-c", code], cwd=contract.ROOT, capture_output=True, text=True, check=True,
+                             env={**os.environ, "PYTHONPATH": str(contract.ROOT)})
+        self.assertEqual(out.stdout.strip().splitlines()[-1], "[]")
 
 
 if __name__ == "__main__":
