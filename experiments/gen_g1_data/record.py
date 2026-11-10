@@ -3,6 +3,8 @@
 Modes (one per container):
   --gate <dir> --shard k --shards n          the expert gate: 96 first attempts across the ranges, unrendered
   --gate-summary <dir>                       the bars (D4, R3) over the 96 rows
+  --lemon-gate <dir> --shard k --shards n    the lemon-only gate (spec note 2026-11-10): 96 fresh lemon attempts, same admission
+  --lemon-gate-summary <dir>                 pass at >= 90% of the 96 admitted at the first attempt
   --determinism <dir> --tag t                12 rendered gate attempts; run twice, compare in --gate-summary
   --pilot <shards_dir> --shard k --slots ... named slots into a scratch shard
   --collect <shards_dir> --shard k [--resume]
@@ -330,13 +332,12 @@ def gate_row(attempt, result, verdict, wall):
             "wall_seconds": round(wall, 1)}
 
 
-def gate_shard(out, k, shards):
+def gate_shard(out, k, shards, attempts=None, tag="gate"):
     """Unrendered expert gate over this worker's share of the 96 gate attempts (rendering does not feed physics)."""
     _require_pinned_runtime()
-    plan = p.make_plan()
-    attempts = plan["gate_attempts"][k::shards]
+    attempts = (p.make_plan()["gate_attempts"] if attempts is None else attempts)[k::shards]
     execute = make_execute(render=False)
-    path = Path(out) / f"gate_{k:02d}.jsonl"
+    path = Path(out) / f"{tag}_{k:02d}.jsonl"
     if path.exists():
         raise SystemExit(f"No overwrite: {path}")
     for attempt in attempts:
@@ -410,7 +411,7 @@ def gate_summary(out):
 def main(argv=None):
     parser = argparse.ArgumentParser()
     mode = parser.add_mutually_exclusive_group(required=True)
-    for name in ("gate", "determinism", "gate_summary", "pilot", "collect", "status", "merge"):
+    for name in ("gate", "determinism", "gate_summary", "lemon_gate", "lemon_gate_summary", "pilot", "collect", "status", "merge"):
         mode.add_argument(f"--{name.replace('_', '-')}", dest=name, metavar="DIR")
     parser.add_argument("--shard", type=int)
     parser.add_argument("--shards", type=int, default=contract.SHARDS)
@@ -426,6 +427,12 @@ def main(argv=None):
         determinism(args.determinism, args.tag)
     elif args.gate_summary:
         gate_summary(args.gate_summary)
+    elif args.lemon_gate:
+        from experiments.gen_g1_data import lemon_gate
+        gate_shard(args.lemon_gate, args.shard, args.shards, attempts=lemon_gate.make_attempts(), tag="lemongate")
+    elif args.lemon_gate_summary:
+        from experiments.gen_g1_data import lemon_gate
+        lemon_gate.summary(args.lemon_gate_summary)
     elif args.pilot:
         collect_shard(args.pilot, args.shard, args.shards, slots=args.slots, pilot=True, resume=args.resume)
     elif args.collect:
