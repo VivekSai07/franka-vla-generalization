@@ -129,3 +129,6 @@ itself does not move. Registered now, before any attempt runs:
   count, bin and region are reported, not barred (n is 16-20 per stratum).
 - **Pass** lets collection proceed on the committed code. **Fail** stops collection; the next step is then a decision, not another run.
   The lemon-only gate is run once; the 14/16 stays on record next to its result.
+- **Result (2026-11-10):** 93/96 = 96.9% admitted at the first attempt (bar 90%), **passed**; the three failures are lemon grasps. By distractor
+  count 15/16, 16, 16, 16, 15, 15; by quintile 20/20, 17/19, 18/19, 19/19, 19/19; blue 46/48, orange 47/48; outer 29/29, P2 region 64/67.
+  Collection started on the committed code (`6441299`).
