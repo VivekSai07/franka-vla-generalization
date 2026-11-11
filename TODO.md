@@ -8,7 +8,9 @@
   Merged into `main` as `40da42d`; run from `.worktrees/g0-eval` (detached, keep it until G1 reuses the engine). **Open:** G1 Tasks 1-2 on CPU (collection plan,
   recorder, 96-episode expert gate, its contact sheet for approval); a cause split for `drop`/`move` trials (FAILURES #73); a hand-frame and video check of the
   spatial mechanism before it is called a cause; A3 on G0 only if wanted; `docs/OPERATIONS.md` has no G0 section yet (a local edit there is uncommitted).
-  No G1 collection or training started.
+  No G1 collection or training started. **G1 spec revised 2026-11-10 before any G1 data** (branch `feat/g1-randomized-data`): distractors 0-5 in
+  training, randomization expressed only through the frozen `gen_scene.Condition`, a per-object expert gate, and a new prediction anchored on G0
+  ([spec](docs/superpowers/specs/2026-11-06-g1-randomized-data-design.md), revision R1-R4).
 - **New direction (user, 2026-11-06): the generalization programme G.** Give the bin-sorting policy, and measure, five GraspVLA-style capabilities:
   distractors, lighting, background, spatial, closed-loop (categories last, not strict). Order **G0 → G1 → G2 → G3**: G0 a frozen benchmark with five
   perturbation axes paired with nominal (A2 and A0 first); G1 a 3,000-episode domain-randomized dataset trained on X-VLA with A2's inputs (no oracle box);

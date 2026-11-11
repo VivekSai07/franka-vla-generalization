@@ -1,5 +1,23 @@
 # Franka benchmark: start here
 
+## G1 collection launched after a lemon-only gate - 2026-11-10
+
+The 96-attempt expert gate (recorder commit `0668ce6`) passed overall (94/96, 97.9%) and every stratum except `object=lemon` (14/16 = 87.5%, bar 90%);
+the two failures are `GenExpert` grasp failures (the lemon turns 15-18 degrees in the grip and is squeezed out), the weakness P2's gate also had
+(22/24). The bar was kept and re-measured with 96 fresh lemon-only attempts, rule pre-registered in the spec (`8b86f12`): **93/96 = 96.9%, passed**
+(the three failures are grasps; none in the outer start region). Determinism twice equal. Collection of 3,000 episodes started in 16 detached shards
+(3 cores each, `LP_NUM_THREADS=3`) on commit `6441299`, output `outputs/gen_g1_data/g1_20261110_shards`. Caveat: the 14/16 stays on record; the
+unit that passed is the lemon-only gate, not the first one. Branch `feat/g1-randomized-data`.
+
+## G1 spec revised after G0, before any G1 data - 2026-11-10
+
+Anchored on G0 (A2: spatial 88.7, distractors 36.2, disturbance 38.6, lighting 16.9, background 7.0 points; nominal 91.5%). R1: training distractors 0-5
+(was 0-3; G0's `three` already cost 27 and `five` 50), novelty kept in the pool-B types. R2: the training randomization is expressed only through
+`gen_scene.Condition(pool="train")`, because `gen_scene`/`gen_eval` are bound by G0's core `512806282b1f…`; the extra directional light and flat
+random colours are dropped (not expressible). R3: the expert gate is also per object (G0 dropped 15 lemon trials). R4: new prediction, e.g. spatial
+5-35, distractors 5-25, `move` 20-45, `drop` 15-35, lighting 0-12, background 0-8, nominal 85-94%. Nothing collected or trained. Branch
+`feat/g1-randomized-data`.
+
 ## G0 done: no axis held by A2 or A0, spatial collapses to 4/142 - 2026-11-10
 
 The G0 engine and evaluator were merged into `main` as `40da42d` (`--no-ff`) and run from the detached worktree `.worktrees/g0-eval`. Gates passed:
