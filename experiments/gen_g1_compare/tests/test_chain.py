@@ -36,6 +36,11 @@ class Chain(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         base = Path(self.tmp.name)
+        probe = base / "probe"
+        probe.write_text("#!/usr/bin/env bash\n")
+        probe.chmod(0o755)
+        if not os.access(probe, os.X_OK) or subprocess.run([str(probe)], capture_output=True).returncode != 0:
+            self.skipTest("this temporary directory is mounted noexec (a container /tmp): run these on the host")
         self.out, self.m0c, self.wt, self.bin = base / "out", base / "m0", base / "wt", base / "bin"
         (self.out / "arms/A2").mkdir(parents=True)
         (self.out / "arms/A2/prepared.json").write_text("{}")
