@@ -37,7 +37,7 @@ for the exact published datasets/checkpoints and re-evaluation dependencies.
 
 Since 2026-11-06 the **generalization programme G** (G0 benchmark, G1 randomized data, G2 recovery, G3 categories) builds on A2's inputs. **G0 finished
 2026-11-10**: A2 91.5% and A0 79.6% nominal; no axis held (paired-drop upper bound at most 10 points); drops A2 / A0 in points: background 7.0 / 16.9,
-lighting 16.9 / 19.7, distractors 36.2 / 31.9, disturbance 38.6 / 31.4, spatial 88.7 / 77.5; see [docs/GEN_G0_20261110.md](docs/GEN_G0_20261110.md). G1 is not started.
+lighting 16.9 / 19.7, distractors 36.2 / 31.9, disturbance 38.6 / 31.4, spatial 88.7 / 77.5; see [docs/GEN_G0_20261110.md](docs/GEN_G0_20261110.md). **G1**: 3,000 randomized episodes sealed (seal `845ac940…`), X-VLA trained (126,900 updates, 0.89 epoch against A2's 5.0), evaluation launched 2026-11-13 from `.worktrees/g1-eval` through `scripts/gen_g1_chain.sh`; see [docs/GEN_G1_COLLECTION_20261111.md](docs/GEN_G1_COLLECTION_20261111.md). `experiments/vla_inputs_arm_xvla_g1/` (arm A1, README hash-bound by its arm manifest) and `experiments/gen_g1_compare/` (outside both cores) are new; do not edit the arm while the chain runs.
 
 ## Layout
 

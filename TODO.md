@@ -1,7 +1,14 @@
 # SmolVLA / X-VLA Franka TODO
 
-## Where things stand (2026-11-10)
+## Where things stand (2026-11-13)
 
+- **G1 evaluation running (launched 2026-11-13 10:39, detached chain).** Data sealed (3,000 episodes, 46 rejections, [collection report](docs/GEN_G1_COLLECTION_20261111.md)),
+  X-VLA trained on it (`outputs/train/xvla_g1_rand_v1`, 126,900 updates, A2's recipe, 0.89 epoch against A2's 5.0). Chain `scripts/gen_g1_chain.sh` from
+  `.worktrees/g1-eval` (detached at the merge `e088e2e`): prepare arm A1 (six candidates) -> smoke -> selection tier -> select -> benchmark tier at the winner and at
+  101,520 -> `experiments/gen_g1_compare` (G1 against A2 per axis, Holm over five, criterion "held and beats A2") -> M0's comparison tier at the winner (secondary).
+  Log `outputs/gen_g0/g0_20261109/chain_g1.log`; resume by re-running the chain command. Prediction to score: spec R4. **Open:** G2 starts only if an axis-5 level is
+  not held, and only after the user says so; a continuation of G1 training from 126,900 (more exposure) is a separate one-variable proposal, not started.
+  Keep `outputs/train/xvla_g1_rand_v1/` (with `resume/`) and its gate folders.
 - **G0 done (2026-11-10): no axis is held by A2 or A0; spatial collapses.** Paired drops (points), A2 / A0: background 7.0 / 16.9, lighting 16.9 / 19.7,
   distractors 36.2 / 31.9, disturbance 38.6 / 31.4, **spatial 88.7 / 77.5 (4/142 and 3/142 successes)**; nominal 91.5% / 79.6%. The prediction hit 2 of 9
   ranges (appearance over-predicted, geometry under-predicted, FAILURES #72). [Report](docs/GEN_G0_20261110.md) · [RESULTS.md](docs/RESULTS.md).

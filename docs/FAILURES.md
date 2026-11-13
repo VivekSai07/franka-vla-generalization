@@ -261,6 +261,16 @@ and result are both kept ([report](VLA_INPUTS_M3_20261105.md)).
     written. **Lesson:** reuse of an earlier protocol's label needs a check on the new conditions; report the sub-metric next to the label
     (here grasp-and-lift, and `recovered`). A cause split for disturbance trials (never lifted before vs after the disturbance) is open.
 
+74. **A wrapper for the G1 evaluation would have mounted G0's campaign as M0's, and the frozen driver's tests forbid the new arm.** Two near misses
+    while building the G1 chain, both caught by tests before any GPU time. (a) `scripts/gen_eval.sh` names only A0/A2/A3 and its tests, inside the
+    frozen `gen_eval` package, assert that every other arm is refused, so registering A1 there would have meant editing frozen tests: the driver was
+    forked (`scripts/gen_g1_eval.sh`) and the frozen one left alone. (b) In `OUT="$M0C" EXTRA_MOUNTS="-v $OUT:/g0:ro" cmd`, bash expands the later
+    assignment with the **new** `OUT`, so the G0 campaign was mounted as `/g0` from M0's directory; the dry-run test of the docker command caught it.
+    Also: a docker `--tmpfs /tmp` is `noexec`, so tests that execute scripts from a temp directory pass on the host and fail in the container
+    (they now skip there). **Lesson:** copy a driver instead of editing a frozen one; read the printed docker command for every mount, not just
+    the flags that changed; never reuse a variable name in a prefix-assignment list. The new package's files were first created in the main
+    checkout instead of the worktree and moved before any commit.
+
 Broader lessons — every "just increment a counter" or "just leave state alone on retry" assumption in the fixed-layout pipeline broke under broad_workspace retries. Rejections need explicit cleanup for every piece of shared state (LeRobot buffer + PNG dir + attempts dir semantics + admit-count invariant). And a result is only interpretable once you know what the *absence* of the treatment scores on the same protocol.
 
 **Recurring meta-lesson — a green test suite is not evidence.** Six separate times (#10, #15, #20, #24, and twice while porting eval packages) the tests passed while the thing that actually runs was broken, because the tests exercised a *fixture*, a *constant*, the *wrong module*, or every path *except* the one the job takes. When adding a regression test, confirm it fails against the unfixed code. When forking a package, run the `symtable` undefined-name check from #24 before spending GPU time.
