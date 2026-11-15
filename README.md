@@ -44,7 +44,7 @@ trial paired with the same layout at nominal; held = paired-drop upper bound at 
 | **spatial (table height, outer start)** | **88.7** (4/142) | **77.5** (3/142) |
 
 The prediction missed 7 of 9 ranges: appearance hurts far less than expected, geometry far more. Report
-[docs/GEN_G0_20261110.md](docs/GEN_G0_20261110.md); G1 (domain-randomized data): 3,000 episodes collected and sealed, X-VLA trained on them, evaluation on G0's benchmark running (2026-11-13), see [docs/GEN_G1_COLLECTION_20261111.md](docs/GEN_G1_COLLECTION_20261111.md).
+[docs/GEN_G0_20261110.md](docs/GEN_G0_20261110.md); G1 (domain-randomized data): 3,000 episodes, X-VLA trained on them, evaluated 2026-11-15: held on lighting, background and spatial (spatial 136/142 against A2's 4/142), not on distractors or disturbance; nominal unchanged (90.1% against 91.5%); see [docs/GEN_G1_20261115.md](docs/GEN_G1_20261115.md) and [docs/GEN_G1_COLLECTION_20261111.md](docs/GEN_G1_COLLECTION_20261111.md).
 
 ## Previous (2026-11-05): VLA inputs programme — force in the robot state +12.6 points, the drawn target box on top +8.4 more
 

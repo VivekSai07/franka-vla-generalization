@@ -1,14 +1,15 @@
 # SmolVLA / X-VLA Franka TODO
 
-## Where things stand (2026-11-13)
+## Where things stand (2026-11-15)
 
-- **G1 evaluation running (launched 2026-11-13 10:39, detached chain).** Data sealed (3,000 episodes, 46 rejections, [collection report](docs/GEN_G1_COLLECTION_20261111.md)),
-  X-VLA trained on it (`outputs/train/xvla_g1_rand_v1`, 126,900 updates, A2's recipe, 0.89 epoch against A2's 5.0). Chain `scripts/gen_g1_chain.sh` from
-  `.worktrees/g1-eval` (detached at the merge `e088e2e`): prepare arm A1 (six candidates) -> smoke -> selection tier -> select -> benchmark tier at the winner and at
-  101,520 -> `experiments/gen_g1_compare` (G1 against A2 per axis, Holm over five, criterion "held and beats A2") -> M0's comparison tier at the winner (secondary).
-  Log `outputs/gen_g0/g0_20261109/chain_g1.log`; resume by re-running the chain command. Prediction to score: spec R4. **Open:** G2 starts only if an axis-5 level is
-  not held, and only after the user says so; a continuation of G1 training from 126,900 (more exposure) is a separate one-variable proposal, not started.
-  Keep `outputs/train/xvla_g1_rand_v1/` (with `resume/`) and its gate folders.
+- **G1 done (2026-11-15): randomized data fixes spatial and lighting, not distractors or disturbance.** A1 (126,900, selection winner) against A2 on G0's benchmark:
+  nominal 128/142 = 90.1% (A2 130); held on lighting, background, spatial (drops -0.7, 1.4, -5.6 points), not on distractors (9.2, upper bound 15.6) or disturbance (15.7);
+  beats A2 on 4 of 5 axes (Holm), **criterion "held and beats A2" met on 2 of 5 (lighting, spatial)**, 3 of 5 at the matched-phase 101,520 (background too);
+  spatial 136/142 against A2's 4/142; M0 nominal 511/573 against 523 (-2.1 points, p 0.24). Prediction R4: 10 of 15 ranges hit, 5 missed, all in A1's favour.
+  Caveats: 0.89 epoch against A2's 5.0; spatial and lighting levels lie inside G1's training ranges by design. [Report](docs/GEN_G1_20261115.md) · [collection](docs/GEN_G1_COLLECTION_20261111.md).
+  **Open, the user decides:** G2 (recovery; its start condition holds: both disturbance levels fail the bar); a continuation of G1 training from 126,900 as a separate
+  one-variable run (more exposure, aimed at `five` distractors and `low_angle`); the chain ran from `.worktrees/g1-eval` (keep until the report is merged).
+  Keep `outputs/train/xvla_g1_rand_v1/` (with `resume/`) and its gate folders. **Disk: 37 GB free (96%); `/var/log/syslog*` holds 89 GB and only the user can clear it (sudo).**
 - **G0 done (2026-11-10): no axis is held by A2 or A0; spatial collapses.** Paired drops (points), A2 / A0: background 7.0 / 16.9, lighting 16.9 / 19.7,
   distractors 36.2 / 31.9, disturbance 38.6 / 31.4, **spatial 88.7 / 77.5 (4/142 and 3/142 successes)**; nominal 91.5% / 79.6%. The prediction hit 2 of 9
   ranges (appearance over-predicted, geometry under-predicted, FAILURES #72). [Report](docs/GEN_G0_20261110.md) · [RESULTS.md](docs/RESULTS.md).

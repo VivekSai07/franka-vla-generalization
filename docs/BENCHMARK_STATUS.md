@@ -1,5 +1,13 @@
 # Franka benchmark: start here
 
+## G1 evaluated - 2026-11-15
+
+Chain finished 2026-11-13 21:49 (11 h 10 min, no failures). Selection winner 126,900 (131/144; 101,520 129, 114,210 130). A1 against A2 on G0's benchmark: nominal 128/142 against
+130/142; **held on lighting, background, spatial; not on distractors (drop 9.2, upper bound 15.6) or disturbance (15.7)**; beats A2 on four axes (Holm); criterion "held and beats A2"
+met on lighting and spatial (3 of 5 at 101,520, background added); spatial 136/142 against 4/142; disturbance recovered 103/133 against 73/133; M0 nominal 511/573 against 523.
+Prediction R4: 10 of 15 ranges hit, 5 missed, all in A1's favour. Caveats: 0.89 epoch against A2's 5.0; spatial and lighting levels are inside the training ranges by design; one seed.
+G2's start condition holds (both disturbance levels fail the bar); not started. [Report](GEN_G1_20261115.md).
+
 ## G1 evaluation chain launched - 2026-11-13
 
 G1's data (3,000 episodes, [report](GEN_G1_COLLECTION_20261111.md)) and training (126,900 updates, 0.89 epoch against A2's 5.0 on the same recipe) are complete; no

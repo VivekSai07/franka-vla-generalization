@@ -6,6 +6,23 @@ failures and lessons in [FAILURES.md](FAILURES.md).
 
 Download corresponding datasets/checkpoints: [HF artifact index](HUGGING_FACE_ARTIFACTS.md).
 
+## G1, A1 (X-VLA trained on 3,000 randomized episodes) against A2 on G0's benchmark (2026-11-15) — measured, not sealed
+
+Same 144 benchmark layouts and trials as G0 (core `512806282b1f…`); A1 at 126,900 (selection winner, 131/144 on the selection tier) against A2 at 88,830. **A1 saw 0.89 epoch of
+its data, A2 5.0 epochs of P2's; spatial and lighting levels lie inside G1's training ranges by design.** One seed per arm. Per-level table, failure classes, the R4
+scorecard and the 101,520 reading: [GEN_G1_20261115.md](GEN_G1_20261115.md).
+
+| axis | A1 perturbed | A2 | A1 minus A2 [95% CI] (Holm p) | A1's own paired drop [95% CI] | held | criterion |
+|---|---|---|---|---|---|---|
+| nominal | 128/142 = 90.1% | 130/142 | -1.4 [-7.0, +4.2] (p 0.82) | | | |
+| lighting | 129/142 | 106 | +16.2 [+9.2, +23.2] (1e-4) | -0.7 [-5.6, 4.2] | yes | met |
+| background | 126/142 | 120 | +4.2 [-2.8, +11.3] (0.33) | 1.4 [-2.8, 5.6] | yes | not met (met at 101,520) |
+| distractors | 114/141 | 78 | +25.5 [+16.3, +34.8] (8e-6) | 9.2 [2.8, 15.6] | no | not met |
+| spatial | 136/142 | 4 | +93.0 [+88.7, +96.5] (2e-39) | -5.6 [-10.6, -0.7] | yes | met |
+| disturbance | 104/140 | 74 | +21.4 [+12.1, +31.4] (1.5e-4) | 15.7 [9.3, 22.9] | no | not met |
+
+M0 comparison tier (nominal, 573 layouts): A1 511 (89.2%) against A2 523 (91.3%), -2.1 points [-5.2, +1.0], McNemar p 0.24.
+
 ## G0, the generalization benchmark: A2 and A0 against five perturbation axes (2026-11-10) — measured, not sealed
 
 144 benchmark layouts, six trials each (nominal plus one level per axis, paired on the layout); 849 of 864 trials expert-feasible (15 dropped, all lemon).

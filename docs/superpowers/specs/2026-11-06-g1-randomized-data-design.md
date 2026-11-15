@@ -70,6 +70,11 @@ Checked against `conditions.py`, `levels.py`, `compose.py` and the compiled scen
   cannot break the seal. The plan digest (`PLAN_SHA256` in `gen_g1_data/plan.py`) pins the plan itself.
 - Shards: 16 contiguous blocks of 188 (the first eight) and 187 slots (3,000 is not a multiple of 16).
 
+## Result 2026-11-15
+
+Evaluated; see [the G1 report](../../GEN_G1_20261115.md). Criterion per axis (D10) met on lighting and spatial at the selection winner 126,900 (and on background at 101,520); distractors
+and disturbance beat A2 but are not held; nominal unchanged. R4: 10 of 15 ranges hit, 5 missed, all in the optimistic direction. Not edited above: the prediction stays as written.
+
 ## Prediction (2026-11-10, before any G1 episode; anchored on A2's G0 result; ranges per axis and class, FAILURES #69 and #72)
 
 G1's paired drop on G0's benchmark tier (A2's in brackets), and whether the axis is held (upper bound ≤ 10):

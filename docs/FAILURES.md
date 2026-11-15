@@ -271,6 +271,14 @@ and result are both kept ([report](VLA_INPUTS_M3_20261105.md)).
     the flags that changed; never reuse a variable name in a prefix-assignment list. The new package's files were first created in the main
     checkout instead of the worktree and moved before any commit.
 
+75. **G1's best result is an interpolation, and the prediction hedged the wrong way.** A1 scores 136/142 on spatial against A2's 4/142, and the R4 prediction
+    (written before any run) put the drop at 5-35 points and "held" as unlikely; five of its 15 ranges missed, all in A1's favour. The tempting headline,
+    "randomization generalizes spatially", is not what was measured: G0's spatial levels (table -5, +5, +10 cm, outer start) lie inside the ranges G1 was
+    trained on by design (D3), as do most lighting levels. Only background textures, distractor types and the disturbances are novel to A1, and there it
+    holds background, not distractors or disturbance. **Lesson:** before reading a pass as generalization, check whether the test condition is inside the
+    training distribution; state the range next to the figure. Also: a verdict that flips with the checkpoint (background: p 0.33 at 126,900, 0.0015 at
+    101,520) is reported with both, the pre-registered one first.
+
 Broader lessons — every "just increment a counter" or "just leave state alone on retry" assumption in the fixed-layout pipeline broke under broad_workspace retries. Rejections need explicit cleanup for every piece of shared state (LeRobot buffer + PNG dir + attempts dir semantics + admit-count invariant). And a result is only interpretable once you know what the *absence* of the treatment scores on the same protocol.
 
 **Recurring meta-lesson — a green test suite is not evidence.** Six separate times (#10, #15, #20, #24, and twice while porting eval packages) the tests passed while the thing that actually runs was broken, because the tests exercised a *fixture*, a *constant*, the *wrong module*, or every path *except* the one the job takes. When adding a regression test, confirm it fails against the unfixed code. When forking a package, run the `symtable` undefined-name check from #24 before spending GPU time.
