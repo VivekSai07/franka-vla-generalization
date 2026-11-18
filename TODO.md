@@ -13,10 +13,9 @@
 - **G0 done (2026-11-10): no axis is held by A2 or A0; spatial collapses.** Paired drops (points), A2 / A0: background 7.0 / 16.9, lighting 16.9 / 19.7,
   distractors 36.2 / 31.9, disturbance 38.6 / 31.4, **spatial 88.7 / 77.5 (4/142 and 3/142 successes)**; nominal 91.5% / 79.6%. The prediction hit 2 of 9
   ranges (appearance over-predicted, geometry under-predicted, FAILURES #72). [Report](docs/GEN_G0_20261110.md) · [RESULTS.md](docs/RESULTS.md).
-  Merged into `main` as `40da42d`; run from `.worktrees/g0-eval` (detached, keep it until G1 reuses the engine). **Open:** G1 Tasks 1-2 on CPU (collection plan,
-  recorder, 96-episode expert gate, its contact sheet for approval); a cause split for `drop`/`move` trials (FAILURES #73); a hand-frame and video check of the
+  Merged into `main` as `40da42d`; run from `.worktrees/g0-eval` (detached, kept: G1's evaluation reuses its campaign). **Open:** a cause split for `drop`/`move` trials (FAILURES #73); a hand-frame and video check of the
   spatial mechanism before it is called a cause; A3 on G0 only if wanted; `docs/OPERATIONS.md` has no G0 section yet (a local edit there is uncommitted).
-  No G1 collection or training started. **G1 spec revised 2026-11-10 before any G1 data** (branch `feat/g1-randomized-data`): distractors 0-5 in
+  G1 followed (first bullet above). **G1 spec revised 2026-11-10 before any G1 data** (merged from `feat/g1-randomized-data`): distractors 0-5 in
   training, randomization expressed only through the frozen `gen_scene.Condition`, a per-object expert gate, and a new prediction anchored on G0
   ([spec](docs/superpowers/specs/2026-11-06-g1-randomized-data-design.md), revision R1-R4).
 - **New direction (user, 2026-11-06): the generalization programme G.** Give the bin-sorting policy, and measure, five GraspVLA-style capabilities:

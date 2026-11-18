@@ -16,14 +16,13 @@ met on lighting and spatial (3 of 5 at 101,520, background added); spatial 136/1
 Prediction R4: 10 of 15 ranges hit, 5 missed, all in A1's favour. Caveats: 0.89 epoch against A2's 5.0; spatial and lighting levels are inside the training ranges by design; one seed.
 G2's start condition holds (both disturbance levels fail the bar); not started. [Report](GEN_G1_20261115.md).
 
-## G1 evaluation chain launched - 2026-11-13
+## G1 evaluation chain launched - 2026-11-13 (superseded by the entry above: the chain finished and the results are in)
 
-G1's data (3,000 episodes, [report](GEN_G1_COLLECTION_20261111.md)) and training (126,900 updates, 0.89 epoch against A2's 5.0 on the same recipe) are complete; no
-rollout has been run yet. Built on `feat/g1-eval`, merged `--no-ff` into `main` as `e088e2e`: arm A1 `experiments/vla_inputs_arm_xvla_g1/` (G1's force constants; closure
+G1's data (3,000 episodes, [report](GEN_G1_COLLECTION_20261111.md)) and training (126,900 updates, 0.89 epoch against A2's 5.0 on the same recipe) are complete; no rollout had been run at the time. Built on `feat/g1-eval`, merged `--no-ff` into `main` as `e088e2e`: arm A1 `experiments/vla_inputs_arm_xvla_g1/` (G1's force constants; closure
 and both shared cores unchanged: G0 `512806282b1f`, M0 `c4f6c303f2ae`; train/rollout parity byte for byte on replayed G1 episodes; inference boundaries at ticks 0/10/20),
 `experiments/gen_g1_compare/` (outside both cores), `scripts/gen_g1_eval.sh` (a fork of `gen_eval.sh`, whose frozen tests refuse any arm but A0/A2/A3) and
 `scripts/gen_g1_chain.sh`. A1 prepared in G0's campaign with A2's core, plan and 15 dropped trials; the six candidate hashes match training's. Chain launched 10:39 from
-`.worktrees/g1-eval`. **Caveat for every G1 figure:** 0.89 epoch of G1 data against A2's 5.0 of P2's; only the data differs, not the recipe. Selection winner and results: pending.
+`.worktrees/g1-eval`. **Caveat for every G1 figure:** 0.89 epoch of G1 data against A2's 5.0 of P2's; only the data differs, not the recipe. 
 
 ## G1 collection launched after a lemon-only gate - 2026-11-10
 

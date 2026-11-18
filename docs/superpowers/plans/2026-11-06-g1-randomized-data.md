@@ -4,6 +4,8 @@
 > superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 > This plan fixes files, interfaces, tests and gates; the code is written at execution time, test first, in the order below.
 
+**Status 2026-11-15: Tasks 1-5 are done** (the checkboxes below were not ticked as the work went; the record is [the collection report](../../GEN_G1_COLLECTION_20261111.md) and [the evaluation report](../../GEN_G1_20261115.md)).
+
 **Goal:** a sealed 3,000-episode randomized dataset with live force signals, X-VLA trained on it with A2's inputs and recipe, evaluated on G0.
 **Spec:** [../specs/2026-11-06-g1-randomized-data-design.md](../specs/2026-11-06-g1-randomized-data-design.md) (D1–D10).
 **Depends on:** G0 Tasks 1–3 (pools, engine, expert) merged; G0's evaluator and A2's G0 result before G1 is evaluated (not before it is built).

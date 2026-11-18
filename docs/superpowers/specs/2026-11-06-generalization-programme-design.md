@@ -4,7 +4,7 @@
 VLA inputs programme ([spec](2026-10-30-vla-inputs-programme-design.md)), whose arms A0–A3 are the starting policies. Inspired by
 GraspVLA ([paper](https://arxiv.org/abs/2505.03233), [project](https://pku-epic.github.io/GraspVLA-web/),
 [SynGrasp-1B](https://huggingface.co/datasets/vegebirrd/SynGrasp-1B)). **Status 2026-11-10: G0 is built and run** (A2 and A0 on the benchmark tier,
-no axis held, spatial 4/142; [report](../../GEN_G0_20261110.md)); G1-G3 are not built.
+no axis held, spatial 4/142; [report](../../GEN_G0_20261110.md)); G1-G3 are not built. **Update 2026-11-15: G1 is built, trained and evaluated** (A1 holds lighting, background and spatial, not distractors or disturbance; criterion met on 2 of 5 axes; [report](../../GEN_G1_20261115.md)). G2 is not started (its start condition holds); G3 is not built.
 
 ## Goal
 

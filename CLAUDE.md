@@ -162,6 +162,7 @@ results. Do not edit them even to fix a stale statement:
   own `SOURCE_FILES` (pilot night 1, 2026-11-02)
 - `experiments/gen_scene/` and `experiments/gen_eval/` (G0, core `512806282b1f…`): both arms' `prepared.json` bind the core and `compare`/`final` refuse a
   differing one, so any edit is a new protocol with new controls; the texture manifest and pool split are pinned too. Evaluate from `.worktrees/g0-eval`.
+- `experiments/gen_g1_data/` (its README and modules are in the seal's `provenance()`, seal `845ac940…`) and `experiments/xvla_g1_rand/` (its `SOURCE_FILES` bind the G1 training run), and `experiments/vla_inputs_arm_xvla_g1/` (arm A1: its README and modules are in the arm manifest `63a7f8a5…` of G0's campaign and in M0's): fork, do not edit. `experiments/gen_g1_compare/` and `scripts/gen_g1_eval.sh` / `gen_g1_chain.sh` are outside both cores.
 
 Before editing anything under `experiments/`, check whether it is in `SOURCE_FILES` or reachable
 from `provenance()`. Package READMEs are always in both, except in `experiments/robosuite_sim2sim/`
