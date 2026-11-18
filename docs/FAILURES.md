@@ -268,8 +268,12 @@ and result are both kept ([report](VLA_INPUTS_M3_20261105.md)).
     assignment with the **new** `OUT`, so the G0 campaign was mounted as `/g0` from M0's directory; the dry-run test of the docker command caught it.
     Also: a docker `--tmpfs /tmp` is `noexec`, so tests that execute scripts from a temp directory pass on the host and fail in the container
     (they now skip there). **Lesson:** copy a driver instead of editing a frozen one; read the printed docker command for every mount, not just
-    the flags that changed; never reuse a variable name in a prefix-assignment list. The new package's files were first created in the main
-    checkout instead of the worktree and moved before any commit.
+    the flags that changed; never reuse a variable name in a prefix-assignment list. The new package's files were first created in the main checkout instead of the worktree and moved before any commit.
+
+76. **Disk was "recovered" by deleting files that were hardlinks, and I had recommended it.** After G1 I listed `outputs/downloads_*/vla_inputs_m2` and `_m3` (13 + 21 GB by `du`) as reclaimable;
+    `docs/OPERATIONS.md` already said `outputs/downloads_*` are hardlinks of files under `outputs/train/`. The user deleted them on my list: free space rose by 17 GB, exactly the three pilot campaigns
+    deleted with them, and the bundles' own files (READMEs, gate `result.json` copies, upload staging) were lost for nothing. **Lesson:** `du` on a hardlinked tree counts the data once per path;
+    check `stat -c %h` or the storage notes before quoting a size as recoverable, and say what unique files a deletion loses, not only how big the tree looks.
 
 75. **G1's best result is an interpolation, and the prediction hedged the wrong way.** A1 scores 136/142 on spatial against A2's 4/142, and the R4 prediction
     (written before any run) put the drop at 5-35 points and "held" as unlikely; five of its 15 ranges missed, all in A1's favour. The tempting headline,

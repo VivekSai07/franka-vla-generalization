@@ -9,7 +9,7 @@
   Caveats: 0.89 epoch against A2's 5.0; spatial and lighting levels lie inside G1's training ranges by design. [Report](docs/GEN_G1_20261115.md) · [collection](docs/GEN_G1_COLLECTION_20261111.md).
   **Open, the user decides:** G2 (recovery; its start condition holds: both disturbance levels fail the bar); a continuation of G1 training from 126,900 as a separate
   one-variable run (more exposure, aimed at `five` distractors and `low_angle`); the chain ran from `.worktrees/g1-eval` (keep until the report is merged).
-  Keep `outputs/train/xvla_g1_rand_v1/` (with `resume/`) and its gate folders. **Disk: 37 GB free (96%); `/var/log/syslog*` holds 89 GB and only the user can clear it (sudo).**
+  Keep `outputs/train/xvla_g1_rand_v1/` (with `resume/`) and its gate folders. **Disk (2026-11-18): 127 GB free (85%) after the user cleared `/var/log/syslog` (it had reached 89 GB); re-measure before every long run.**
 - **G0 done (2026-11-10): no axis is held by A2 or A0; spatial collapses.** Paired drops (points), A2 / A0: background 7.0 / 16.9, lighting 16.9 / 19.7,
   distractors 36.2 / 31.9, disturbance 38.6 / 31.4, **spatial 88.7 / 77.5 (4/142 and 3/142 successes)**; nominal 91.5% / 79.6%. The prediction hit 2 of 9
   ranges (appearance over-predicted, geometry under-predicted, FAILURES #72). [Report](docs/GEN_G0_20261110.md) · [RESULTS.md](docs/RESULTS.md).
@@ -45,7 +45,7 @@
   seed-to-seed variation; M3 and M3b are done, M4 and M1 (pi0.5) are not started. Disk: the M2 run keeps 6 checkpoints (3.3 GB each; its M2 bundle was transferred, the resume snapshots and `training_state.pt` were deleted before 2026-11-09), delete nothing else without the user.
 
 - **M3 redesigned and approved (user, 2026-11-03); built, tested and merged into `main` the same day (`d4752a4`); trained 2026-11-03 to 11-05 (126,900 updates) and evaluated 2026-11-05 (above)**
-  (branch `feat/vla-inputs-m3` merged; training worktree `.worktrees/m3-run`, evaluation worktree `.worktrees/m3-eval`; the overlay PNGs were approved by the user; training output `outputs/train/xvla_p2_force_box_v1`): the target's box is **drawn on both camera images** (magenta 4 px band,
+  (branch `feat/vla-inputs-m3` merged; training worktree `.worktrees/m3-run`, evaluation worktree `.worktrees/m3-eval` (both removed 2026-11-18); the overlay PNGs were approved by the user; training output `outputs/train/xvla_p2_force_box_v1`): the target's box is **drawn on both camera images** (magenta 4 px band,
   outside the box) on top of **M2's 17-value force state**, and A3 is tested **against A2** (Holm family amended to
   {A1 vs A0, A2 vs A0, A3 vs A2, A4 vs A0} before any result). A numeric box no longer fits X-VLA's 20 state slots beside M2's
   17. No box pilot. Package `experiments/xvla_p2_force_box/` (fork of the frozen `xvla_p2_force`), arm
