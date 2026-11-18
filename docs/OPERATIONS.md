@@ -132,7 +132,7 @@ the pinned image above on MuJoCo 3.13.0.
   unrendered, takes under a minute in 12 shards. Report: [PROPS_P2_EVALUATION_20261016.md](PROPS_P2_EVALUATION_20261016.md).
   Archive bundle (hardlinks, 14 GB, re-evaluable and retrainable off RTX): `outputs/downloads_20261017/props_p2/`, README inside.
 - M2 (VLA inputs, force in the state) archive bundle, staged 2026-11-03 (hardlinks, 23 GB without the `hf_upload/` view,
-  re-evaluable and retrainable off RTX): `outputs/downloads_20261103/vla_inputs_m2/`, README inside; three checkpoints (88,830,
+  re-evaluable and retrainable off RTX; **deleted 2026-11-18, see the reclaim note; the files it linked are still under `outputs/train` and `outputs/vla_inputs_*`**): `outputs/downloads_20261103/vla_inputs_m2/`, README inside; three checkpoints (88,830,
   101,520, 126,900), the S0 sidecar, the whole M0 campaign (A0 and A2) and the P2 data sections (identical to props_p2's, optional
   to transfer).
 - Props P1 training (`experiments/xvla_props_p1/`, admission image, no simulator): forked from
@@ -169,6 +169,21 @@ the pinned image above on MuJoCo 3.13.0.
   from `experiments.vla_inputs_arm_*` modules (FAILURES #67). **Pilots:** `scripts/vla_inputs_pilot_night.sh <night_root>
   <variants>` from a dedicated worktree; refuses a busy GPU; dry night first (`PILOT_SMOKE=1`). Report:
   [VLA_INPUTS_PILOTS_20261102.md](VLA_INPUTS_PILOTS_20261102.md).
+- **Generalization programme (G0 benchmark, G1 randomized data; specs in `superpowers/specs/2026-11-06-*`).**
+  *G0* (`experiments/gen_scene/` randomization engine, `experiments/gen_eval/` evaluator; robosuite image + GPU; core `512806282b1f…` is frozen once an arm is
+  prepared): `scripts/gen_eval.sh plan|feasibility <shards> <cores>|prepare <arm>|smoke|selection|select|benchmark|compare|final|identity_gate` from a dedicated detached
+  worktree (`.worktrees/g0-eval`), `WT=<worktree> OUT=outputs/gen_g0/g0_20261109`; 6 workers x 7 cores per checkpoint pool; needs `.cache/gen_textures` (120 CC0 textures,
+  `scripts/gen_fetch_textures.sh`), the P2 bundle, `outputs/props_p2_data`, `outputs/vla_inputs_signals` and `outputs/vla_inputs_eval` read-only. Arms A0, A2, A3 only. Report:
+  [GEN_G0_20261110.md](GEN_G0_20261110.md). *G1 collection* (`experiments/gen_g1_data/`, sealed, fork do not edit): 16 shard containers pinned to 3 cores each
+  (`LP_NUM_THREADS=3`), the P2 pattern; 96-attempt expert gate, then a pre-registered lemon-only gate; 3,000 episodes, 33 GB at `outputs/gen_g1_data/g1_20261110`. Report:
+  [GEN_G1_COLLECTION_20261111.md](GEN_G1_COLLECTION_20261111.md). *G1 training* (`experiments/xvla_g1_rand/`, admission image, no simulator): P2's gates, run from the detached worktree
+  `.worktrees/g1-run` through `scripts/xvla_g1_night.sh fresh|resume|check|status "<deadline>"`; 126,900 updates took 30.7 h with one resume; keep the run folder, `resume/` and the
+  gate folders if a continuation is possible. *G1 evaluation* (arm A1, `experiments/vla_inputs_arm_xvla_g1/`): `scripts/gen_g1_eval.sh` is a fork of `gen_eval.sh` (the original's frozen tests
+  refuse any arm but A0/A2/A3), `scripts/gen_g1_chain.sh` runs prepare, smoke, selection (six candidates at once, one 8-core worker each), select, benchmark at the winner and at
+  101,520, `experiments/gen_g1_compare`, then M0's comparison tier, detached (`setsid nohup`, a COPY of the script), resumable, polled with `docker ps`; stops when free disk is
+  under 40 GB or the GPU is held by another job. **Every container of this arm mounts `outputs/gen_g1_data` read-only** (the arm binds G1's signals). Measured: selection 251 min,
+  benchmark 157 and 155 min per checkpoint, M0 comparison 100 min, whole chain 11 h 10 min. Docker `--tmpfs /tmp` is `noexec`: tests that run scripts from a temp directory skip in a
+  container and run on the host. Report: [GEN_G1_20261115.md](GEN_G1_20261115.md).
 - **pi0.5 (M1, deferred to the end):** images `vla-pi05:*` above; restarting needs `pi05_base` re-downloaded at the pinned
   revision and every gate re-run (see `TODO.md`).
 
@@ -365,20 +380,40 @@ pass here. Cause of the shortage: `/var/log/syslog` at 134 GB (33 GB/day), root-
 `.worktrees/p3-train` and the stopped P3 containers. None of it was on Windows or the Hub. Code and docs stay on branch `feat/props-p3`.
 
 **Reclaimed 2026-11-04 (user instruction, ~46 GB; free 165 to 211 GiB):** `~/.cache/uv` (8.7 GB listed, about 1 GB freed: uv hardlinks into environments), M2's scratch gate runs
-`outputs/train/xvla_p2_force_v1_preflight` and `outputs/train/xvla_p2_force_v1_resumeproof` (23 GB each; their `result.json` copies stay in the bundle `outputs/downloads_20261103/vla_inputs_m2/training/gates/`,
+`outputs/train/xvla_p2_force_v1_preflight` and `outputs/train/xvla_p2_force_v1_resumeproof` (23 GB each; their `result.json` copies stayed in the bundle `outputs/downloads_20261103/vla_inputs_m2/training/gates/` (bundle deleted 2026-11-18),
 sha256 `17e9affe…` and `cd4213ae…`, the hashes M2's `result.json` pins; M2's scratch run can no longer be re-verified or resumed), and the SmolVLA-only outputs:
 `outputs/train/smolvla_franka_stacking_localvaried_v1_20260919` (with `_admission` and `_logs`), `smolvla_fixed_layout_20260918_admission`,
 `smolvla_franka_stacking_broadworkspace_v1_20260921_admission`, `outputs/evaluation/smolvla_pilot_tuning_20260916`, and `outputs/implementation/smolvla_fixed_layout_20260918`,
 `smolvla_local_varied_20260919`, `smolvla_local_varied_20260920`, `smolvla_local_varied_eval_20260920`. The step-5,000 SmolVLA models and the fixed-layout and local-varied datasets stay on the Hub.
 `outputs/implementation/local_position_probe_20260919` was kept (its SmolVLA control jobs are 7 MB of a probe shared with X-VLA).
 
-**Disk.** As of 2026-10-17: 879 GB total, **248 GB free (71% full)** after the reclaim below (it was 59 GB, 94%; 203 GB before the
+**Reclaimed 2026-11-09 (user instruction, ~79 GB; free 178 to 257 GiB, after the user cleared a runaway `/var/log/syslog`, ~100 GB, 11-08):** M3's scratch gate runs
+`outputs/train/xvla_p2_force_box_v1_preflight` and `_resumeproof` (23 GB each; their `result.json` copies stayed in `outputs/downloads_20261105/vla_inputs_m3/training/gates/` (bundle deleted 2026-11-18),
+sha256 `15690c71…` and `f512d59d…`, the latter pinned by M3's `result.json` as `resume_proof_sha256`; checked identical before deleting) and `~/.cache/huggingface/hub` (33 GB, another project's Qwen models, re-downloadable).
+
+**Reclaimed 2026-11-18 (user instruction, per path; free 112 to 129 GiB, 17 GB):** the pilot campaigns `outputs/vla_inputs_eval/m0_pilot_night1_20261102` (7.2 GB),
+`m0_pilot_dry2_20261102` (6.6 GB) and `m0_pilot_dry_20261101` (3.3 GB), and the two bundles `outputs/downloads_20261105/vla_inputs_m3` and `outputs/downloads_20261103/vla_inputs_m2`.
+**The bundles freed about nothing** (they are hardlinks, see above: 34 + 10 GB listed by `du`, the free-space gain equals the pilots' 17 GB); what was lost is their own files only: READMEs,
+the gate `result.json` copies and the upload staging. No copy of either bundle was found on `/media/data1` or recorded off the machine. The checkpoints, P2 data and S0 sidecar they
+linked are intact under `outputs/train`, `outputs/props_p2_data` and `outputs/vla_inputs_signals`. The pilot decisions are in the dated docs. Worktrees removed the same day (all clean, all
+merged, branches kept): `feat-g1`, `feat-g1-eval`, `feat-generalization`, `feat-vla-inputs`, `feat-vla-inputs-m3`, `m2-eval`, `m2-run`, `m3-eval`, `m3-run`, `pilot-run`; kept: `g0-eval`, `g1-eval`,
+`g1-run`, `m1-run`, and the two worktrees of the unmerged branches `feat/vla-inputs-m1` and `feat/vla-inputs-pilots`.
+
+**Disk.** As of 2026-11-18: 879 GB total, **127 GB free (85% full)**. `/var/log/syslog` had grown to 89 GB (19.6 GB + `syslog.1` 69.5 GB, root-owned) by 2026-11-15, which put free space at 37 GB;
+the user cleared it (2.8 MB on 2026-11-18). It has refilled this way before (2026-10-22, 2026-11-08): re-measure `df -h /` and `ls -la /var/log/syslog*` before every long run.
+(Older figures, kept for history:) As of 2026-10-17: 879 GB total, **248 GB free (71% full)** after the reclaim below (it was 59 GB, 94%; 203 GB before the
 P1/P2 intermediates went).
 As of 2026-10-05: 879 GB total, ~96 GB free (89% full). Check `df -h .` before
 any new collection or training launch; the checkpoint schedule alone can need 20-30 GB. See
 Storage census below for what is safe to reclaim.
 
-## Current outputs/ census (updated 2026-10-05)
+## Current outputs/ census (updated 2026-10-05; partly historical)
+
+**This census predates the reclaims above (2026-10-17 to 2026-11-18): many datasets and checkpoints listed below no longer exist on RTX (see the reclaim notes), and it does not list the
+VLA inputs programme or G0/G1.** Added since: `outputs/gen_g1_data/g1_20261110` (G1, sealed, 33 GB, only copy, seal `845ac940…`) with its pilot, gate, lemon-gate and sheet folders;
+`outputs/train/xvla_g1_rand_v1` (50 GB incl. 20 GB of `resume/` snapshots, plus `_preflight` and `_resumeproof` at 23 GB each, `_admission`, `_equivalence`, `_m2equivalence`);
+`outputs/gen_g0/g0_20261109` (G0 and G1 evaluation campaign, 6.6 GB: A0, A2, A1 arms, plan, feasibility, final); `outputs/vla_inputs_eval/m0_20261030` (M0 campaign, now also arm A1's
+comparison tier); `outputs/train/xvla_p2_force_v1` and `xvla_p2_force_box_v1` (20 GB each, A2 and A3).
 
 Sealed, results-worthy datasets (all under `outputs/`, each is the *collection root* — the
 HF-Hub-ready LeRobot payload is the `dataset/` subdirectory only, ~1.1 GB; `attempts/`, `rejected/`,
@@ -464,7 +499,9 @@ and commit it, all as described in
 ## What must never be deleted or edited
 
 - `datasets/` — deleting the pilot manifest permanently broke `local_varied` provenance
-- any sealed dataset under `outputs/`
+- any sealed dataset under `outputs/`, including `outputs/gen_g1_data/g1_20261110` (the only copy)
+- `outputs/train/xvla_g1_rand_v1` (with `resume/`) and its gate folders while a continuation from update 126,900 is possible; `outputs/gen_g0/g0_20261109` (the control A2 and A0 results and A1's)
+
 - any `*_preflight/result.json` whose run report records `scratch_result_sha256`
 - any file in a contract's `SOURCE_FILES`, or reachable from `provenance()`, **while a run is live**
 
