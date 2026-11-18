@@ -1,5 +1,13 @@
 # Franka benchmark: start here
 
+## Disk reclaimed - 2026-11-18
+
+At the user's instruction, per path: `outputs/downloads_20261105/vla_inputs_m3` (34 GB), `outputs/downloads_20261103/vla_inputs_m2` (10 GB) and the pilot campaigns
+`outputs/vla_inputs_eval/m0_pilot_night1_20261102`, `m0_pilot_dry2_20261102`, `m0_pilot_dry_20261101` (17 GB) were deleted; free space 112 GB to 129 GB. No copy of the two bundles was found on
+`/media/data1` and no off-machine copy is recorded, so the re-evaluation bundles of M2 and M3 (README, gate `result.json` copies, upload staging) no longer exist; the checkpoints, the
+P2 data and S0 sidecar they pointed at are still under `outputs/train/xvla_p2_force*_v1`, `outputs/props_p2_data` and `outputs/vla_inputs_signals`. `docs/OPERATIONS.md` still names the two
+bundles (lines 135, 368, 376; left alone, it holds the user's uncommitted edit). The pilot decisions are recorded in the dated docs, not in those folders.
+
 ## G1 evaluated - 2026-11-15
 
 Chain finished 2026-11-13 21:49 (11 h 10 min, no failures). Selection winner 126,900 (131/144; 101,520 129, 114,210 130). A1 against A2 on G0's benchmark: nominal 128/142 against
