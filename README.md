@@ -8,6 +8,48 @@ Everything runs inside digest-pinned Docker images (two for all runs so far, two
 
 The central question: **how much and what kind of data does a VLA need to generalise?** Since 2026-10-30 a second one, with
 the data held fixed: **what should the model see?** (the VLA inputs programme below).
+Since 2026-11-06 a third: **does randomizing the training data make the policy robust?** (the generalization programme G0-G3, latest result below).
+How a result is made, from collecting data to closing the branch: [the diagram below](#how-a-result-is-made).
+
+## How a result is made
+
+Every experiment in this repo follows the same path. The rule that holds it together: **data, code and model weights are fingerprinted (hashed),
+and a run refuses to start if any of them changed.** That is what makes a number reproducible.
+
+```mermaid
+flowchart TD
+    A["<b>1. Plan</b><br/>write the question and a prediction<br/>before any run<br/>open a new branch and worktree"]
+    B["<b>2. Build the collector</b><br/>copy the last sealed package<br/>tests must fail on broken code"]
+    C{"<b>Expert gate</b><br/>does the scripted expert<br/>succeed often enough?"}
+    D["<b>3. Collect data</b><br/>16 parallel shards<br/>scripted expert demonstrates"]
+    E["<b>Merge and seal</b><br/>every episode re-checked<br/>dataset gets a fingerprint"]
+    F["<b>4. Train</b><br/>four safety gates first<br/>then one 30 hour run"]
+    G["<b>5. Evaluate</b><br/>smoke test, then a selection tier<br/>picks the checkpoint, then the<br/>benchmark tier measures it"]
+    H["<b>6. Analyse</b><br/>paired against a control model<br/>on the same layouts<br/>score the prediction"]
+    I["<b>7. Update all docs</b><br/>every changed number fixed<br/>everywhere, mistakes logged"]
+    J["<b>8. Close the branch</b><br/>merge into main, remove the worktree<br/>sealed data is never deleted"]
+    K(["Fingerprint check<br/>a run refuses to start if<br/>code, data or weights changed"])
+
+    A --> B --> C
+    C -- "no, fix and retry" --> B
+    C -- "yes" --> D --> E --> F --> G --> H --> I --> J
+    K -.-> E
+    K -.-> F
+    K -.-> G
+
+    classDef plan fill:#e8f0fe,stroke:#4a6fa5,color:#111;
+    classDef data fill:#fff4e0,stroke:#c98a1b,color:#111;
+    classDef model fill:#e6f6ea,stroke:#3d8b4f,color:#111;
+    classDef close fill:#f3e8fd,stroke:#8a4fb3,color:#111;
+    classDef guard fill:#fde8e8,stroke:#b34a4a,color:#111;
+    class A,B plan;
+    class C,D,E data;
+    class F,G,H model;
+    class I,J close;
+    class K guard;
+```
+
+---
 
 ## Published datasets and checkpoints
 
@@ -30,7 +72,33 @@ manifest verification. No X-VLA local-varied or SmolVLA broad-workspace model pu
 
 ---
 
-## Latest (2026-11-10): G0, the generalization benchmark — no axis held, spatial collapses to 4/142
+## Latest (2026-11-15): G1, randomized training data — spatial and lighting fixed, distractors and disturbance not
+
+G0 showed that A2 (P2's data plus force in the state) collapses on spatial changes (4 of 142). G1 asks whether **randomizing the training data** helps. 3,000 expert
+episodes were collected with randomized lighting, textures, table height, start region, bin position, 0-5 distractors and initial arm pose (46 rejected, sealed, 33 GB); a new
+model, **A1**, was trained with exactly A2's recipe (126,900 updates, same inputs). Only the data differs. A1 and A2 then ran the same 144 layouts of G0's benchmark, six trials each, paired.
+
+| axis | A1 (G1) | A2 | A1 minus A2, points [95% CI] | A1's own drop vs nominal, points | held (≤ 10) | criterion "held and beats A2" |
+|---|---|---|---|---|---|---|
+| nominal | 128/142 = 90.1% | 130/142 = 91.5% | −1.4 [−7.0, +4.2] | – | – | – |
+| lighting | 129/142 | 106 | +16.2 [+9.2, +23.2] | −0.7 | yes | **met** |
+| background | 126/142 | 120 | +4.2 [−2.8, +11.3] | 1.4 | yes | not met (met at checkpoint 101,520) |
+| distractors (3-5) | 114/141 | 78 | +25.5 [+16.3, +34.8] | 9.2 (upper bound 15.6) | **no** | not met |
+| **spatial** | **136/142** | **4/142** | **+93.0** [+88.7, +96.5] | −5.6 | yes | **met** |
+| disturbance (moved or dropped) | 104/140 | 74 | +21.4 [+12.1, +31.4] | 15.7 (upper bound 22.9) | **no** | not met |
+
+- **Checkpoint:** 126,900, picked on a separate selection tier (131 of 144 trials; 101,520 and 114,210 scored 129 and 130). Holm correction over the five axes; one training seed per arm.
+- **What it answers:** randomization fixes spatial, lighting and background and costs nothing on the nominal task (also 511/573 against 523/573 on a second 573-layout tier). It does not fix
+  distractors (`five` is worst, 17.4 points) or disturbances, though A1 recovers far more often (103 of 133 against 73). No recovery demonstration was in the data, so G2 (recovery data) is the logical next step.
+- **Read with care:** A1 saw 0.89 epoch of its data, A2 5.0 epochs of P2's. Most spatial and lighting test levels lie **inside** the ranges G1 trained on, so those two results show
+  interpolation within a trained range, not generalization beyond it. Only background textures, distractor shapes and disturbances were novel to A1.
+- **Prediction** written before any run: 10 of 15 ranges hit; the 5 misses were all in A1's favour (mostly spatial).
+
+Report [docs/GEN_G1_20261115.md](docs/GEN_G1_20261115.md), data [docs/GEN_G1_COLLECTION_20261111.md](docs/GEN_G1_COLLECTION_20261111.md). The G1 dataset and checkpoints are not published yet.
+
+---
+
+## Previous (2026-11-10): G0, the generalization benchmark — no axis held, spatial collapses to 4/142
 
 P2's policy and A2 (P2's data plus force in the state) against five perturbation axes on 144 fresh layouts, six trials each, every perturbed
 trial paired with the same layout at nominal; held = paired-drop upper bound at most 10 points. Nominal A2 91.5%, A0 79.6%.
@@ -44,7 +112,7 @@ trial paired with the same layout at nominal; held = paired-drop upper bound at 
 | **spatial (table height, outer start)** | **88.7** (4/142) | **77.5** (3/142) |
 
 The prediction missed 7 of 9 ranges: appearance hurts far less than expected, geometry far more. Report
-[docs/GEN_G0_20261110.md](docs/GEN_G0_20261110.md); G1 (domain-randomized data): 3,000 episodes, X-VLA trained on them, evaluated 2026-11-15: held on lighting, background and spatial (spatial 136/142 against A2's 4/142), not on distractors or disturbance; nominal unchanged (90.1% against 91.5%); see [docs/GEN_G1_20261115.md](docs/GEN_G1_20261115.md) and [docs/GEN_G1_COLLECTION_20261111.md](docs/GEN_G1_COLLECTION_20261111.md).
+[docs/GEN_G0_20261110.md](docs/GEN_G0_20261110.md).
 
 ## Previous (2026-11-05): VLA inputs programme — force in the robot state +12.6 points, the drawn target box on top +8.4 more
 
@@ -232,6 +300,10 @@ Report: [docs/B3_XVLA_EVALUATION_20261005.md](docs/B3_XVLA_EVALUATION_20261005.m
 | 2026-10-27 | Props P3, robosuite (Food vs Drinks, fixed prompt, two objects never collected) | 85% on trained objects, 5.7% on held-out: failed, data deleted |
 | 2026-10-31 | VLA inputs M0: P2's checkpoint on 573 fresh paired layouts (control A0) | 78.7% [75.4, 82.0], milk 53% |
 | 2026-11-03 | VLA inputs M2: wrist force/torque + finger forces in the state | 91.3%, +12.6 points over A0, p = 1.1e-10 (one seed) |
+| 2026-11-05 | VLA inputs M3: the target's box drawn on both camera images, on top of M2 | 99.65% (571/573), +8.4 points over A2 |
+| 2026-11-06 | VLA inputs M3b: the box predicted from pixels instead | 98.1% (562/573) |
+| 2026-11-10 | G0: A2 and A0 against five perturbation axes | no axis held, spatial 4/142 |
+| 2026-11-15 | G1: trained on 3,000 randomized episodes, same recipe | held on lighting, background, spatial (136/142); not on distractors or disturbance; nominal unchanged |
 
 Every number with its protocol and caveats: [docs/RESULTS.md](docs/RESULTS.md).
 
